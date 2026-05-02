@@ -2,7 +2,5 @@ streamlit
 pandas
 numpy
 Pillow
-easyocr
+pytesseract
 opencv-python-headless
-torch
-torchvision
