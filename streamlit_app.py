@@ -1,151 +1,150 @@
 import streamlit as st
 import pandas as pd
-import math
-from pathlib import Path
 
-# Set the title and favicon that appear in the Browser's tab bar.
-st.set_page_config(
-    page_title='GDP dashboard',
-    page_icon=':earth_americas:', # This is an emoji shortcode. Could be a URL too.
-)
+# ========== الدوال الطبية (ثابتة كما هي) ==========
+def calculate_crcl(age, weight, sex, serum_creatinine):
+    if None in (age, weight, serum_creatinine) or weight <= 0 or serum_creatinine <= 0:
+        return None
+    crcl = ((140 - age) * weight) / (72 * serum_creatinine)
+    if sex == "أنثى":
+        crcl *= 0.85
+    return round(crcl, 1)
 
-# -----------------------------------------------------------------------------
-# Declare some useful functions.
+def get_renal_alerts(antibiotic, crcl):
+    if crcl is None or crcl >= 30:
+        return ""
+    alerts = {
+        "Nitrofurantoin": "⚠️ يُمنع استخدامه إذا CrCl < 30 (يجب استبداله)",
+        "Gentamicin": "⚠️ يحتاج تعديل جرعة كبير / تمديد الفاصل بين الجرعات",
+        "Amikacin": "⚠️ يحتاج تعديل جرعة كبير / تمديد الفاصل بين الجرعات",
+        "Tobramycin": "⚠️ يحتاج تعديل جرعة كبير / تمديد الفاصل بين الجرعات",
+        "Vancomycin": "⚠️ مراقبة المستوى وتعديل الجرعة ضروري",
+        "Ciprofloxacin": "⚠️ قد تحتاج لتقليل الجرعة إذا CrCl منخفض جداً",
+        "Levofloxacin": "⚠️ قد تحتاج لتقليل الجرعة",
+        "Trimethoprim/Sulfamethoxazole": "⚠️ تقليل الجرعة أو تجنبه في القصور الشديد"
+    }
+    return alerts.get(antibiotic, "")
 
-@st.cache_data
-def get_gdp_data():
-    """Grab GDP data from a CSV file.
+def get_pregnancy_alerts(antibiotic, is_pregnant):
+    if not is_pregnant:
+        return ""
+    unsafe_drugs = [
+        "Tetracycline", "Doxycycline", "Minocycline",
+        "Ciprofloxacin", "Levofloxacin", "Moxifloxacin",
+        "Gentamicin", "Amikacin", "Tobramycin",
+        "Trimethoprim/Sulfamethoxazole",
+        "Nitrofurantoin"
+    ]
+    if antibiotic in unsafe_drugs:
+        return "🚫 غير آمن في الحمل – يوصى باستبداله"
+    return ""
 
-    This uses caching to avoid having to read the file every time. If we were
-    reading from an HTTP endpoint instead of a file, it's a good idea to set
-    a maximum age to the cache with the TTL argument: @st.cache_data(ttl='1d')
-    """
+def process_culture_with_alerts(df_culture, crcl, is_pregnant):
+    if df_culture.empty:
+        return df_culture
+    df = df_culture.copy()
+    df["Renal Alert"] = df["Antibiotic"].apply(lambda x: get_renal_alerts(x, crcl))
+    df["Pregnancy Alert"] = df["Antibiotic"].apply(lambda x: get_pregnancy_alerts(x, is_pregnant))
+    return df
 
-    # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
-    DATA_FILENAME = Path(__file__).parent/'data/gdp_data.csv'
-    raw_gdp_df = pd.read_csv(DATA_FILENAME)
+# ========== واجهة المستخدم ==========
+st.set_page_config(page_title="دعم قرار المضادات الحيوية", layout="wide")
+st.title("🩺 نظام دعم القرار لاختيار المضاد الحيوي")
+st.markdown("**أدخل نتائج المزرعة وبيانات المريض لتحصل على توصيات فورية (بدون OCR معقد)**")
 
-    MIN_YEAR = 1960
-    MAX_YEAR = 2022
+# ----- الشريط الجانبي: بيانات المريض -----
+with st.sidebar:
+    st.header("🧬 بيانات المريض")
+    age = st.number_input("العمر (سنوات)", min_value=0, max_value=120, value=40, step=1)
+    sex = st.selectbox("الجنس", ["ذكر", "أنثى"])
+    weight = st.number_input("الوزن (كجم) - مطلوب لحساب CrCl", min_value=30.0, max_value=300.0, value=70.0, step=0.1)
+    serum_creatinine = st.number_input("الكرياتينين في الدم (mg/dL)", min_value=0.1, max_value=15.0, value=0.9, step=0.1)
 
-    # The data above has columns like:
-    # - Country Name
-    # - Country Code
-    # - [Stuff I don't care about]
-    # - GDP for 1960
-    # - GDP for 1961
-    # - GDP for 1962
-    # - ...
-    # - GDP for 2022
-    #
-    # ...but I want this instead:
-    # - Country Name
-    # - Country Code
-    # - Year
-    # - GDP
-    #
-    # So let's pivot all those year-columns into two: Year and GDP
-    gdp_df = raw_gdp_df.melt(
-        ['Country Code'],
-        [str(x) for x in range(MIN_YEAR, MAX_YEAR + 1)],
-        'Year',
-        'GDP',
-    )
+    is_pregnant = False
+    if sex == "أنثى":
+        is_pregnant = st.checkbox("المريضة حامل؟")
 
-    # Convert years from string to integers
-    gdp_df['Year'] = pd.to_numeric(gdp_df['Year'])
+    st.divider()
+    calculate_btn = st.button("🔄 حساب CrCl وتقييم النتائج")
 
-    return gdp_df
+# ----- المنطقة الرئيسية: إدخال نتائج المزرعة -----
+st.header("🔬 نتائج المزرعة (حساسية المضادات الحيوية)")
 
-gdp_df = get_gdp_data()
+tab1, tab2 = st.tabs(["✍️ إدخال نصي", "📋 جدول تفاعلي"])
 
-# -----------------------------------------------------------------------------
-# Draw the actual page
-
-# Set the title that appears at the top of the page.
-'''
-# :earth_americas: GDP dashboard
-
-Browse GDP data from the [World Bank Open Data](https://data.worldbank.org/) website. As you'll
-notice, the data only goes to 2022 right now, and datapoints for certain years are often missing.
-But it's otherwise a great (and did I mention _free_?) source of data.
-'''
-
-# Add some spacing
-''
-''
-
-min_value = gdp_df['Year'].min()
-max_value = gdp_df['Year'].max()
-
-from_year, to_year = st.slider(
-    'Which years are you interested in?',
-    min_value=min_value,
-    max_value=max_value,
-    value=[min_value, max_value])
-
-countries = gdp_df['Country Code'].unique()
-
-if not len(countries):
-    st.warning("Select at least one country")
-
-selected_countries = st.multiselect(
-    'Which countries would you like to view?',
-    countries,
-    ['DEU', 'FRA', 'GBR', 'BRA', 'MEX', 'JPN'])
-
-''
-''
-''
-
-# Filter the data
-filtered_gdp_df = gdp_df[
-    (gdp_df['Country Code'].isin(selected_countries))
-    & (gdp_df['Year'] <= to_year)
-    & (from_year <= gdp_df['Year'])
-]
-
-st.header('GDP over time', divider='gray')
-
-''
-
-st.line_chart(
-    filtered_gdp_df,
-    x='Year',
-    y='GDP',
-    color='Country Code',
-)
-
-''
-''
-
-
-first_year = gdp_df[gdp_df['Year'] == from_year]
-last_year = gdp_df[gdp_df['Year'] == to_year]
-
-st.header(f'GDP in {to_year}', divider='gray')
-
-''
-
-cols = st.columns(4)
-
-for i, country in enumerate(selected_countries):
-    col = cols[i % len(cols)]
-
-    with col:
-        first_gdp = first_year[first_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-        last_gdp = last_year[last_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-
-        if math.isnan(first_gdp):
-            growth = 'n/a'
-            delta_color = 'off'
+with tab1:
+    st.markdown("انسخ نتائج المزرعة كما تظهر في التقرير (كل سطر: اسم المضاد ثم S / I / R)")
+    default_text = """Amoxicillin S
+Ciprofloxacin R
+Gentamicin S
+Nitrofurantoin S
+Trimethoprim/Sulfamethoxazole S"""
+    culture_text = st.text_area("الصق التقرير هنا", value=default_text, height=200)
+    if st.button("تحليل النص المدخل"):
+        lines = culture_text.strip().split('\n')
+        antibiotics = []
+        results = []
+        for line in lines:
+            parts = line.strip().split()
+            if len(parts) >= 2 and parts[-1].upper() in ('S', 'I', 'R'):
+                ab = ' '.join(parts[:-1])
+                res = parts[-1].upper()
+                antibiotics.append(ab)
+                results.append(res)
+        if antibiotics:
+            df_culture = pd.DataFrame({"Antibiotic": antibiotics, "Result": results})
+            st.session_state['df_culture'] = df_culture
+            st.success("تم استخراج الجدول بنجاح")
         else:
-            growth = f'{last_gdp / first_gdp:,.2f}x'
-            delta_color = 'normal'
+            st.warning("لم يتم التعرف على بيانات صالحة. تأكد من كتابة النتيجة (S/I/R) في نهاية كل سطر.")
+            st.session_state['df_culture'] = pd.DataFrame()
 
-        st.metric(
-            label=f'{country} GDP',
-            value=f'{last_gdp:,.0f}B',
-            delta=growth,
-            delta_color=delta_color
-        )
+with tab2:
+    st.markdown("قم بملء الجدول مباشرة:")
+    # جدول افتراضي قابل للتعديل
+    if 'editable_df' not in st.session_state:
+        st.session_state.editable_df = pd.DataFrame([
+            {"Antibiotic": "Amoxicillin", "Result": "S"},
+            {"Antibiotic": "Ciprofloxacin", "Result": "R"},
+            {"Antibiotic": "Gentamicin", "Result": "S"}
+        ])
+    edited_df = st.data_editor(
+        st.session_state.editable_df,
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "Result": st.column_config.SelectboxColumn(
+                "النتيجة",
+                options=["S", "I", "R"],
+                required=True
+            )
+        }
+    )
+    if st.button("اعتماد الجدول التفاعلي"):
+        st.session_state['df_culture'] = edited_df
+        st.success("تم اعتماد الجدول.")
+
+# عرض النتائج عند الطلب
+if calculate_btn or ('df_culture' in st.session_state and not st.session_state.df_culture.empty):
+    crcl = calculate_crcl(age, weight, sex, serum_creatinine)
+    if crcl is not None:
+        st.sidebar.metric("CrCl (ml/min)", crcl)
+        if crcl < 30:
+            st.sidebar.error("⚠️ تحذير: قصور كلوي شديد (CrCl < 30)")
+    else:
+        st.sidebar.warning("الوزن مطلوب لحساب CrCl")
+
+    df_culture = st.session_state.get('df_culture', pd.DataFrame())
+    if not df_culture.empty:
+        df_with_alerts = process_culture_with_alerts(df_culture, crcl, is_pregnant)
+        st.subheader("📊 نتائج المزرعة مع التنبيهات")
+        st.dataframe(df_with_alerts, use_container_width=True, hide_index=True)
+
+        # تنبيهات منفصلة
+        for _, row in df_with_alerts.iterrows():
+            if row["Renal Alert"]:
+                st.warning(f"{row['Antibiotic']} – {row['Renal Alert']}")
+            if row["Pregnancy Alert"]:
+                st.error(f"{row['Antibiotic']} – {row['Pregnancy Alert']}")
+    else:
+        st.info("يرجى إدخال نتائج المزرعة أولاً (تبويب الإدخال النصي أو الجدول).")
