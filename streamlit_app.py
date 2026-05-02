@@ -1,8 +1,17 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+from PIL import Image
+import easyocr
+import re
 
-# ========== الدوال الطبية (ثابتة كما هي) ==========
+# ========== الدوال الطبية (المنطق) ==========
+
 def calculate_crcl(age, weight, sex, serum_creatinine):
+    """
+    حساب معدل تصفية الكرياتينين (CrCl) بمعادلة Cockcroft-Gault.
+    يُرجع القيمة ml/min أو None إن لم تتوفر المدخلات.
+    """
     if None in (age, weight, serum_creatinine) or weight <= 0 or serum_creatinine <= 0:
         return None
     crcl = ((140 - age) * weight) / (72 * serum_creatinine)
@@ -10,8 +19,55 @@ def calculate_crcl(age, weight, sex, serum_creatinine):
         crcl *= 0.85
     return round(crcl, 1)
 
+
+def extract_culture_results(uploaded_image):
+    """
+    استخراج نتائج المزرعة من صورة باستخدام EasyOCR.
+    يُرجع DataFrame بالأعمدة: Antibiotic, Result
+    """
+    # حفظ الصورة مؤقتاً
+    with open("temp_culture.jpg", "wb") as f:
+        f.write(uploaded_image.getbuffer())
+    
+    # تهيئة EasyOCR (يدعم الإنجليزية والعربية)
+    reader = easyocr.Reader(['en', 'ar'], gpu=False)
+    results = reader.readtext("temp_culture.jpg", detail=0)
+    
+    # تنظيف النص المستخرج – نحاول التعرف على سطور الجدول
+    cleaned_lines = []
+    for line in results:
+        # إزالة التشويش والمسافات الزائدة
+        line = re.sub(r'\s+', ' ', line).strip()
+        if line:
+            cleaned_lines.append(line)
+    
+    # محاولة بناء DataFrame من النص:
+    # نفترض أن كل سطر يتكون من اسم المضاد ثم النتيجة S / I / R
+    antibiotics = []
+    sensitivity = []
+    for line in cleaned_lines:
+        # نبحث عن أحد الرموز S, I, R في آخر السطر
+        match = re.search(r'\b([SIR])\b\s*$', line.upper())
+        if match:
+            result_code = match.group(1)
+            # اسم المضاد هو كل ما قبل النتيجة
+            ab_name = line[:match.start()].strip().rstrip(':-* ')
+            antibiotics.append(ab_name)
+            sensitivity.append(result_code)
+    
+    df = pd.DataFrame({
+        "Antibiotic": antibiotics,
+        "Result": sensitivity
+    })
+    return df
+
+
 def get_renal_alerts(antibiotic, crcl):
-    if crcl is None or crcl >= 30:
+    """
+    تحقق من حاجة المضاد لتعديل الجرعة بناءً على CrCl.
+    يُرجع رسالة التنبيه أو سلسلة فارغة.
+    """
+    if crcl is None:
         return ""
     alerts = {
         "Nitrofurantoin": "⚠️ يُمنع استخدامه إذا CrCl < 30 (يجب استبداله)",
@@ -23,128 +79,114 @@ def get_renal_alerts(antibiotic, crcl):
         "Levofloxacin": "⚠️ قد تحتاج لتقليل الجرعة",
         "Trimethoprim/Sulfamethoxazole": "⚠️ تقليل الجرعة أو تجنبه في القصور الشديد"
     }
-    return alerts.get(antibiotic, "")
+    if crcl < 30:
+        return alerts.get(antibiotic, "")
+    return ""
+
 
 def get_pregnancy_alerts(antibiotic, is_pregnant):
-    if not is_pregnant:
-        return ""
+    """
+    يُرجع تنبيهاً إذا كان المضاد غير آمن في الحمل.
+    (مبنية على أحدث الدلائل الإرشادية – فئة D/X أو ما ينصح بتجنبه)
+    """
     unsafe_drugs = [
-        "Tetracycline", "Doxycycline", "Minocycline",
-        "Ciprofloxacin", "Levofloxacin", "Moxifloxacin",
-        "Gentamicin", "Amikacin", "Tobramycin",
-        "Trimethoprim/Sulfamethoxazole",
-        "Nitrofurantoin"
+        "Tetracycline", "Doxycycline", "Minocycline",       # تيتراسيكلينات
+        "Ciprofloxacin", "Levofloxacin", "Moxifloxacin",    # فلوروكينولونات
+        "Gentamicin", "Amikacin", "Tobramycin",             # أمينوغليكوزيدات
+        "Trimethoprim/Sulfamethoxazole",                    # في الثلث الأول والأخير
+        "Nitrofurantoin"                                    # في الثلث الثالث
     ]
-    if antibiotic in unsafe_drugs:
+    if is_pregnant and antibiotic in unsafe_drugs:
         return "🚫 غير آمن في الحمل – يوصى باستبداله"
     return ""
 
+
 def process_culture_with_alerts(df_culture, crcl, is_pregnant):
+    """
+    دمج نتائج المزرعة مع التنبيهات السريرية (كلوي / حمل).
+    """
     if df_culture.empty:
         return df_culture
+    
     df = df_culture.copy()
     df["Renal Alert"] = df["Antibiotic"].apply(lambda x: get_renal_alerts(x, crcl))
     df["Pregnancy Alert"] = df["Antibiotic"].apply(lambda x: get_pregnancy_alerts(x, is_pregnant))
     return df
 
-# ========== واجهة المستخدم ==========
+
+# ========== واجهة المستخدم (Streamlit) ==========
+
 st.set_page_config(page_title="دعم قرار المضادات الحيوية", layout="wide")
 st.title("🩺 نظام دعم القرار لاختيار المضاد الحيوي")
-st.markdown("**أدخل نتائج المزرعة وبيانات المريض لتحصل على توصيات فورية (بدون OCR معقد)**")
+st.markdown("**ادمج قراءة المزرعة، وظائف الكلى، وحالة الحمل للحصول على توصيات فورية**")
 
 # ----- الشريط الجانبي: بيانات المريض -----
 with st.sidebar:
-    st.header("🧬 بيانات المريض")
-    age = st.number_input("العمر (سنوات)", min_value=0, max_value=120, value=40, step=1)
+    st.header("بيانات المريض")
+    age = st.number_input("العمر (سنوات)", min_value=0, max_value=120, value=50, step=1)
     sex = st.selectbox("الجنس", ["ذكر", "أنثى"])
-    weight = st.number_input("الوزن (كجم) - مطلوب لحساب CrCl", min_value=30.0, max_value=300.0, value=70.0, step=0.1)
-    serum_creatinine = st.number_input("الكرياتينين في الدم (mg/dL)", min_value=0.1, max_value=15.0, value=0.9, step=0.1)
-
+    weight = st.number_input("الوزن (كجم) - اختياري", min_value=0.0, max_value=300.0, value=70.0, step=0.1)
+    serum_creatinine = st.number_input("الكرياتينين في الدم (mg/dL)", min_value=0.1, max_value=20.0, value=1.0, step=0.1)
+    
     is_pregnant = False
     if sex == "أنثى":
-        is_pregnant = st.checkbox("المريضة حامل؟")
-
+        is_pregnant = st.checkbox("المريضة حامل حالياً؟")
+    
     st.divider()
-    calculate_btn = st.button("🔄 حساب CrCl وتقييم النتائج")
+    calculate_btn = st.button("🔄 حساب CrCl وإعادة التقييم")
 
-# ----- المنطقة الرئيسية: إدخال نتائج المزرعة -----
-st.header("🔬 نتائج المزرعة (حساسية المضادات الحيوية)")
+# ----- المنطقة الرئيسية: رفع صورة المزرعة -----
+st.header("📤 رفع تقرير المزرعة")
+uploaded_file = st.file_uploader("اختر صورة لتقرير المزرعة (JPG/PNG)", type=["jpg", "jpeg", "png"])
 
-tab1, tab2 = st.tabs(["✍️ إدخال نصي", "📋 جدول تفاعلي"])
+# ----- معالجة الصورة واستخراج النتائج -----
+if uploaded_file is not None:
+    with st.spinner("⏳ جارٍ استخراج النتائج من الصورة... (قد يستغرق عدة ثوانٍ)"):
+        try:
+            df_culture = extract_culture_results(uploaded_file)
+            if not df_culture.empty:
+                st.success("✅ تم استخراج الجدول بنجاح")
+                st.subheader("نتائج المزرعة المُستخرجة")
+                st.dataframe(df_culture, use_container_width=True)
+            else:
+                st.warning("⚠️ لم يتم التعرف على أي نتائج بصيغة (مضاد حيوي + S/I/R). تأكد من وضوح الصورة.")
+                df_culture = pd.DataFrame()
+        except Exception as e:
+            st.error(f"فشل استخراج النص: {e}")
+            df_culture = pd.DataFrame()
+else:
+    st.info("ℹ️ ارفع صورة المزرعة أولاً")
+    df_culture = pd.DataFrame()
 
-with tab1:
-    st.markdown("انسخ نتائج المزرعة كما تظهر في التقرير (كل سطر: اسم المضاد ثم S / I / R)")
-    default_text = """Amoxicillin S
-Ciprofloxacin R
-Gentamicin S
-Nitrofurantoin S
-Trimethoprim/Sulfamethoxazole S"""
-    culture_text = st.text_area("الصق التقرير هنا", value=default_text, height=200)
-    if st.button("تحليل النص المدخل"):
-        lines = culture_text.strip().split('\n')
-        antibiotics = []
-        results = []
-        for line in lines:
-            parts = line.strip().split()
-            if len(parts) >= 2 and parts[-1].upper() in ('S', 'I', 'R'):
-                ab = ' '.join(parts[:-1])
-                res = parts[-1].upper()
-                antibiotics.append(ab)
-                results.append(res)
-        if antibiotics:
-            df_culture = pd.DataFrame({"Antibiotic": antibiotics, "Result": results})
-            st.session_state['df_culture'] = df_culture
-            st.success("تم استخراج الجدول بنجاح")
-        else:
-            st.warning("لم يتم التعرف على بيانات صالحة. تأكد من كتابة النتيجة (S/I/R) في نهاية كل سطر.")
-            st.session_state['df_culture'] = pd.DataFrame()
-
-with tab2:
-    st.markdown("قم بملء الجدول مباشرة:")
-    # جدول افتراضي قابل للتعديل
-    if 'editable_df' not in st.session_state:
-        st.session_state.editable_df = pd.DataFrame([
-            {"Antibiotic": "Amoxicillin", "Result": "S"},
-            {"Antibiotic": "Ciprofloxacin", "Result": "R"},
-            {"Antibiotic": "Gentamicin", "Result": "S"}
-        ])
-    edited_df = st.data_editor(
-        st.session_state.editable_df,
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "Result": st.column_config.SelectboxColumn(
-                "النتيجة",
-                options=["S", "I", "R"],
-                required=True
-            )
-        }
-    )
-    if st.button("اعتماد الجدول التفاعلي"):
-        st.session_state['df_culture'] = edited_df
-        st.success("تم اعتماد الجدول.")
-
-# عرض النتائج عند الطلب
-if calculate_btn or ('df_culture' in st.session_state and not st.session_state.df_culture.empty):
+# ----- حساب CrCl والتنبيهات (إذا دخل المستخدم زر الحساب أو تلقائياً) -----
+if calculate_btn or (uploaded_file is not None and not df_culture.empty):
     crcl = calculate_crcl(age, weight, sex, serum_creatinine)
+    
     if crcl is not None:
-        st.sidebar.metric("CrCl (ml/min)", crcl)
+        st.sidebar.metric("تصفية الكرياتينين (CrCl)", f"{crcl} ml/min")
         if crcl < 30:
-            st.sidebar.error("⚠️ تحذير: قصور كلوي شديد (CrCl < 30)")
+            st.sidebar.error("⚠️ تحذير: قصور كلوي شديد (CrCl < 30). معظم الأدوية تحتاج تعديل جرعة أو تغيير.")
     else:
-        st.sidebar.warning("الوزن مطلوب لحساب CrCl")
-
-    df_culture = st.session_state.get('df_culture', pd.DataFrame())
+        st.sidebar.info("ℹ️ أدخل الوزن لحساب CrCl")
+        crcl = None
+    
+    # تطبيق التنبيهات على جدول المزرعة
     if not df_culture.empty:
         df_with_alerts = process_culture_with_alerts(df_culture, crcl, is_pregnant)
-        st.subheader("📊 نتائج المزرعة مع التنبيهات")
-        st.dataframe(df_with_alerts, use_container_width=True, hide_index=True)
-
-        # تنبيهات منفصلة
-        for _, row in df_with_alerts.iterrows():
+        st.subheader("🔔 المضادات مع التنبيهات السريرية")
+        
+        # تلوين الصفوف حسب وجود تحذير
+        def highlight_rows(row):
+            if row["Renal Alert"] or row["Pregnancy Alert"]:
+                return ['background-color: #fff3cd'] * len(row)
+            return [''] * len(row)
+        
+        styled_df = df_with_alerts.style.apply(highlight_rows, axis=1)
+        st.dataframe(styled_df, use_container_width=True, hide_index=True)
+        
+        # عرض تفصيلي للتنبيهات
+        for idx, row in df_with_alerts.iterrows():
             if row["Renal Alert"]:
                 st.warning(f"{row['Antibiotic']} – {row['Renal Alert']}")
             if row["Pregnancy Alert"]:
                 st.error(f"{row['Antibiotic']} – {row['Pregnancy Alert']}")
-    else:
-        st.info("يرجى إدخال نتائج المزرعة أولاً (تبويب الإدخال النصي أو الجدول).")
