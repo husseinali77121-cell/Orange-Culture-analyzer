@@ -4,19 +4,18 @@ import numpy as np
 import cv2
 import pytesseract
 import re
-from sklearn.cluster import KMeans
 
-st.set_page_config(page_title="Antibiotic Decision PRO", layout="wide")
-st.title("🧬 نظام دعم القرار للمضادات الحيوية (نسخة احترافية)")
+st.set_page_config(page_title="Clinical Review Engine", layout="wide")
+st.title("🧬 نظام مراجعة تقارير المزارع (OCR + Clinical Engine)")
 
 # =========================
-# 🖼️ تحسين الصورة
+# 🖼️ Image Preprocessing
 # =========================
 def preprocess(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray = cv2.fastNlMeansDenoising(gray, None, 30, 7, 21)
 
-    thresh = cv2.adaptiveThreshold(
+    th = cv2.adaptiveThreshold(
         gray, 255,
         cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
         cv2.THRESH_BINARY,
@@ -24,206 +23,255 @@ def preprocess(img):
     )
 
     # deskew
-    coords = np.column_stack(np.where(thresh > 0))
-    angle = cv2.minAreaRect(coords)[-1]
-    angle = -(90 + angle) if angle < -45 else -angle
-
-    (h, w) = thresh.shape
-    M = cv2.getRotationMatrix2D((w//2, h//2), angle, 1.0)
-    thresh = cv2.warpAffine(thresh, M, (w, h),
+    coords = np.column_stack(np.where(th > 0))
+    if len(coords) > 0:
+        angle = cv2.minAreaRect(coords)[-1]
+        angle = -(90 + angle) if angle < -45 else -angle
+        (h, w) = th.shape
+        M = cv2.getRotationMatrix2D((w//2, h//2), angle, 1.0)
+        th = cv2.warpAffine(th, M, (w, h),
                             flags=cv2.INTER_CUBIC,
                             borderMode=cv2.BORDER_REPLICATE)
-
-    return thresh
-
+    return th
 
 # =========================
-# 🔍 استخراج الجدول الحقيقي
+# 🧾 Demographics Extraction
 # =========================
-def extract_structured_antibiogram(file):
+def extract_demographics(text):
+    data = {
+        "name": None,
+        "age": None,
+        "sex": None,
+        "pregnant": None,
+        "creatinine": None
+    }
+
+    # Name (Arabic/English after Name:)
+    m = re.search(r'Name\s*:\s*(.+)', text, re.I)
+    if m:
+        data["name"] = m.group(1).strip()
+
+    # Age
+    m = re.search(r'Age\s*:\s*(\d+)', text, re.I)
+    if m:
+        data["age"] = int(m.group(1))
+
+    # Sex
+    m = re.search(r'Sex\s*:\s*(Male|Female|ذكر|أنثى)', text, re.I)
+    if m:
+        val = m.group(1).lower()
+        data["sex"] = "أنثى" if ("female" in val or "أنثى" in val) else "ذكر"
+
+    # Creatinine (لو مذكورة)
+    m = re.search(r'Creatinine\s*[:\-]?\s*([\d\.]+)', text, re.I)
+    if m:
+        data["creatinine"] = float(m.group(1))
+
+    # Pregnancy (من checkbox في UI لاحقًا غالبًا)
+    return data
+
+# =========================
+# 🦠 Organism + Specimen
+# =========================
+def extract_micro(text):
+    m = re.search(r'(Klebsiella|Escherichia coli|E\.?\s*coli|Pseudomonas|Staphylococcus|Enterococcus)', text, re.I)
+    org = m.group(1) if m else "Unknown"
+
+    spec = "Other"
+    if re.search(r'Urine', text, re.I): spec = "Urine"
+    elif re.search(r'Blood', text, re.I): spec = "Blood"
+    elif re.search(r'Sputum', text, re.I): spec = "Sputum"
+
+    return org, spec
+
+# =========================
+# 💊 Drug Normalization
+# =========================
+DRUG_MAP = {
+    "amoxycillin clavulanate": "Amoxicillin/Clavulanate",
+    "amoxicillin clavulanate": "Amoxicillin/Clavulanate",
+    "cefoperazone sulbactam": "Cefoperazone/Sulbactam",
+    "tazobactam": "Piperacillin/Tazobactam",
+    "piptazo": "Piperacillin/Tazobactam",
+    "tmp smx": "Trimethoprim/Sulfamethoxazole",
+    "co trimoxazole": "Trimethoprim/Sulfamethoxazole",
+}
+
+def normalize_drug(name):
+    n = name.lower().strip()
+    n = re.sub(r'[^a-z/\+\- ]', '', n)
+    for k,v in DRUG_MAP.items():
+        if k in n:
+            return v
+    return name.strip()
+
+# =========================
+# 🔍 Extract Antibiogram (3 columns rule-based)
+# =========================
+def extract_antibiogram(file):
     file_bytes = np.asarray(bytearray(file.read()), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-
     if img is None:
         return pd.DataFrame(), ""
 
-    processed = preprocess(img)
-
-    data = pytesseract.image_to_data(processed, output_type=pytesseract.Output.DICT)
-    full_text = pytesseract.image_to_string(processed)
+    th = preprocess(img)
+    data = pytesseract.image_to_data(th, output_type=pytesseract.Output.DICT)
+    text = pytesseract.image_to_string(th)
 
     words = []
     for i in range(len(data['text'])):
-        txt = data['text'][i].strip()
-        if txt:
+        t = data['text'][i].strip()
+        if t:
             words.append({
-                "text": txt,
+                "text": t,
                 "x": data['left'][i],
                 "y": data['top'][i]
             })
 
     if len(words) < 10:
-        return pd.DataFrame(), full_text
+        return pd.DataFrame(), text
 
-    # =========================
-    # 📊 تقسيم الأعمدة
-    # =========================
-    x_vals = np.array([w['x'] for w in words]).reshape(-1,1)
-    kmeans = KMeans(n_clusters=3, random_state=0).fit(x_vals)
+    width = th.shape[1]
 
-    for i, w in enumerate(words):
-        w['col'] = kmeans.labels_[i]
-
-    # ترتيب الأعمدة
-    col_centers = {}
-    for c in range(3):
-        xs = [w['x'] for w in words if w['col']==c]
-        col_centers[c] = np.mean(xs)
-
-    sorted_cols = sorted(col_centers, key=lambda c: col_centers[c])
-
-    col_map = {
-        sorted_cols[0]: 'S',
-        sorted_cols[1]: 'I',
-        sorted_cols[2]: 'R'
-    }
-
-    # =========================
-    # 🧪 تجميع الأسطر (حل مشكلة multi-line)
-    # =========================
-    rows = {}
-
+    # assign columns by x (no sklearn)
     for w in words:
-        col = col_map[w['col']]
-        y_key = round(w['y']/12)*12
+        if w['x'] < width*0.33:
+            w['col'] = 'S'
+        elif w['x'] < width*0.66:
+            w['col'] = 'I'
+        else:
+            w['col'] = 'R'
 
-        if y_key not in rows:
-            rows[y_key] = {"S":[], "I":[], "R":[]}
+    # group rows
+    rows = {}
+    for w in words:
+        yk = round(w['y']/12)*12
+        if yk not in rows:
+            rows[yk] = {"S":[], "I":[], "R":[]}
+        rows[yk][w['col']].append(w['text'])
 
-        rows[y_key][col].append(w['text'])
-
-    antibiotics = []
-    results = []
+    abx, res = [], []
 
     for y in sorted(rows.keys()):
-        for col in ['S','I','R']:
-            txt = " ".join(rows[y][col]).strip()
-
-            # تنظيف
-            txt = re.sub(r'[^a-zA-Z/\+\- ]', '', txt)
+        for c in ['S','I','R']:
+            txt = " ".join(rows[y][c]).strip()
+            txt = normalize_drug(txt)
 
             if len(txt) > 4 and txt.lower() not in ['sensitive','intermediate','resistant']:
-                antibiotics.append(txt)
-                results.append(col)
+                abx.append(txt)
+                res.append(c)
 
-    df = pd.DataFrame({"Antibiotic": antibiotics, "Result": results})
-
-    # تنظيف junk
-    df = df[df['Antibiotic'].str.len() > 4]
+    df = pd.DataFrame({"Antibiotic": abx, "Result": res})
     df = df.drop_duplicates()
-
-    return df, full_text
-
+    return df, text
 
 # =========================
-# 🦠 استخراج البكتيريا
-# =========================
-def extract_organism(text):
-    match = re.search(r'(Klebsiella|Escherichia coli|Pseudomonas|Staphylococcus)', text, re.I)
-    return match.group(1) if match else "Unknown"
-
-
-# =========================
-# 💊 حساب الكلى
+# 🧪 Renal Function
 # =========================
 def calc_crcl(age, weight, cr, sex):
-    crcl = ((140-age)*weight)/(72*cr)
+    if not age or not weight or not cr:
+        return None
+    val = ((140-age)*weight)/(72*cr)
     if sex == "أنثى":
-        crcl *= 0.85
-    return round(crcl,1)
+        val *= 0.85
+    return round(val,1)
 
+# =========================
+# ⚠️ Contraindications
+# =========================
+def check_contra(ab, pregnant, age, crcl):
+    alerts = []
+    ab = ab.lower()
+
+    if pregnant:
+        if any(x in ab for x in ["tetracycline","doxycycline"]):
+            alerts.append("❌ contraindicated in pregnancy")
+        if "fluoro" in ab or "cipro" in ab:
+            alerts.append("⚠️ avoid in pregnancy")
+
+    if age and age < 18:
+        if "cipro" in ab:
+            alerts.append("⚠️ avoid in pediatrics")
+
+    if crcl and crcl < 30:
+        if "nitrofurantoin" in ab:
+            alerts.append("❌ avoid (renal)")
+
+    return alerts
 
 # =========================
 # 🧠 Clinical Engine
 # =========================
-def clinical_engine(df, organism, crcl):
+def clinical_decision(df, org, spec, pregnant, age, crcl):
 
-    sensitive = df[df['Result']=='S']['Antibiotic'].tolist()
-    intermediate = df[df['Result']=='I']['Antibiotic'].tolist()
-    resistant = df[df['Result']=='R']['Antibiotic'].tolist()
+    S = df[df.Result=="S"]["Antibiotic"].tolist()
+    I = df[df.Result=="I"]["Antibiotic"].tolist()
+    R = df[df.Result=="R"]["Antibiotic"].tolist()
 
     report = []
+    report.append(f"### 🦠 Organism: {org}")
+    report.append(f"### 🧫 Specimen: {spec}")
+    report.append(f"S:{len(S)} | I:{len(I)} | R:{len(R)}")
 
-    report.append(f"### 🦠 Organism: {organism}")
-    report.append(f"### 📊 S:{len(sensitive)} | I:{len(intermediate)} | R:{len(resistant)}")
+    safe = []
+    for d in S:
+        alerts = check_contra(d, pregnant, age, crcl)
+        if not any("❌" in a for a in alerts):
+            safe.append((d, alerts))
 
-    # Klebsiella logic
-    if 'klebsiella' in organism.lower():
-        report.append("🧠 Klebsiella infection detected")
+    # selection logic
+    best = None
 
-        if any('imipenem' in s.lower() for s in sensitive):
-            best = "Imipenem"
-            report.append("✅ First-line: Carbapenem (Imipenem)")
+    if "urine" in spec.lower():
+        for pref in ["Nitrofurantoin","Fosfomycin","Cephalexin"]:
+            for d,_ in safe:
+                if pref.lower() in d.lower():
+                    best = d
+                    break
+            if best: break
 
-        elif any('piperacillin' in s.lower() for s in sensitive):
-            best = "Piperacillin/Tazobactam"
-            report.append("✅ Alternative: Piperacillin/Tazobactam")
+    if not best and safe:
+        best = safe[0][0]
 
-        else:
-            best = sensitive[0] if sensitive else None
+    # flags
+    if len(R) > len(S):
+        report.append("🚨 MDR suspected")
 
-        if any('cipro' in i.lower() for i in intermediate):
-            report.append("⚠️ Fluoroquinolones not reliable (Intermediate)")
+    if any("clavulanate" in r.lower() for r in R):
+        report.append("⚠️ possible ESBL")
 
-        if len(resistant) > len(sensitive):
-            report.append("🚨 MDR suspected")
-
-        if any('amox' in r.lower() for r in resistant):
-            report.append("⚠️ Possible ESBL producer")
-
-    else:
-        best = sensitive[0] if sensitive else None
-
-    # الجرعة
-    dose = ""
+    report.append("### 💊 Recommendation")
     if best:
-        if 'imipenem' in best.lower():
-            dose = "500 mg IV every 6 hours"
-        elif 'piperacillin' in best.lower():
-            dose = "4.5 g IV every 6-8 hours"
-
-    report.append(f"### 💊 Recommended: {best}")
-    report.append(f"Dose: {dose}")
-
-    report.append(f"### 🧪 CrCl: {crcl} ml/min")
+        report.append(f"Use: {best}")
+    else:
+        report.append("No safe antibiotic found")
 
     return "\n".join(report)
-
 
 # =========================
 # UI
 # =========================
-uploaded = st.file_uploader("📸 ارفع صورة المزرعة")
+uploaded = st.file_uploader("📸 ارفع التقرير")
 
 age = st.number_input("Age", 1, 100, 40)
 sex = st.selectbox("Sex", ["ذكر","أنثى"])
 weight = st.number_input("Weight", 30.0, 150.0, 70.0)
 cr = st.number_input("Creatinine", 0.1, 10.0, 1.0)
+preg = st.checkbox("Pregnant") if sex=="أنثى" else False
 
 if uploaded:
-    df, text = extract_structured_antibiogram(uploaded)
+    df, text = extract_antibiogram(uploaded)
+
+    demo = extract_demographics(text)
+    org, spec = extract_micro(text)
+    crcl = calc_crcl(age, weight, cr, sex)
 
     if not df.empty:
-        st.success("✅ تم استخراج الجدول بدقة حقيقية")
         st.dataframe(df)
 
-        organism = extract_organism(text)
-        crcl = calc_crcl(age, weight, cr, sex)
-
-        report = clinical_engine(df, organism, crcl)
+        report = clinical_decision(df, org, spec, preg, age, crcl)
 
         st.markdown("---")
         st.markdown(report)
-
     else:
-        st.error("❌ فشل استخراج البيانات")
+        st.error("فشل استخراج البيانات")
