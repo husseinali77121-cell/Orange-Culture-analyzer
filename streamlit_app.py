@@ -5,216 +5,131 @@ import cv2
 import pytesseract
 import re
 
-st.set_page_config(layout="wide")
-st.title("🧬 Clinical Culture Analyzer PRO")
+# إعداد الصفحة وتنسيقها
+st.set_page_config(layout="wide", page_title="Clinical Analyzer PRO")
 
-# =========================
-# 🖼️ Image Processing
-# =========================
-def preprocess(img):
+def preprocess_image(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray = cv2.fastNlMeansDenoising(gray, None, 30, 7, 21)
+    # تقنية لتحسين النصوص الباهتة في التقارير
+    gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    return gray
 
-    th = cv2.adaptiveThreshold(
-        gray,255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY,11,2
-    )
-    return th
+def extract_all_data(uploaded_file):
+    # تحويل الصورة
+    img = cv2.imdecode(np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8), 1)
+    processed = preprocess_image(img)
+    
+    # استخراج البيانات مع الإحداثيات (بمنتهى الدقة)
+    ocr_data = pytesseract.image_to_data(processed, output_type=pytesseract.Output.DICT)
+    full_text = pytesseract.image_to_string(processed)
 
-# =========================
-# 🧾 Patient Extraction
-# =========================
-def extract_patient(text):
-
-    def safe_search(pattern):
-        m = re.search(pattern, text, re.I)
-        return m.group(1).strip() if m else None
-
-    name = safe_search(r'Name\s*:\s*(.+)')
-    age = safe_search(r'Age\s*:\s*(\d+)')
-    sex = safe_search(r'Sex\s*:\s*(Male|Female|ذكر|أنثى)')
-
-    if sex:
-        sex = "أنثى" if "female" in sex.lower() or "أنثى" in sex else "ذكر"
-
-    return {
-        "name": name,
-        "age": int(age) if age else None,
-        "sex": sex
+    # 1. استخراج بيانات المريض
+    patient = {
+        "Name": re.search(r"Name\s*:\s*([^\n|]+)", full_text, re.I).group(1).strip() if re.search(r"Name", full_text) else "N/A",
+        "Age": re.search(r"Age\s*:\s*(\d+)", full_text, re.I).group(1) if re.search(r"Age", full_text) else "N/A",
+        "Sex": "Female" if "female" in full_text.lower() else "Male",
+        "Organism": re.search(r"\((.*?)\)", full_text).group(1).strip() if re.search(r"Culture", full_text) else "Unknown"
     }
 
-# =========================
-# 🦠 Organism
-# =========================
-def extract_organism(text):
-    pattern = r'(Klebsiella|E\.?\s*coli|Escherichia coli|Pseudomonas|Staphylococcus)'
-    m = re.search(pattern, text, re.I)
-    return m.group(1) if m else "Unknown"
+    # 2. استخراج جدول المضادات الحيوية (خوارزمية الإحداثيات السطرية)
+    # نحدد أماكن الكلمات المفتاحية (S, I, R) في الصورة
+    words = ocr_data['text']
+    lefts = ocr_data['left']
+    tops = ocr_data['top']
+    
+    sensitive_x = 0
+    resistant_x = 1000
+    
+    for i, word in enumerate(words):
+        if "Sensitive" in word: sensitive_x = lefts[i]
+        if "Resistant" in word: resistant_x = lefts[i]
 
-# =========================
-# 💊 Drug Normalization
-# =========================
-DRUG_FIX = {
-    "amoxycillin clavulanate": "Amoxicillin/Clavulanate",
-    "cefoperazone sulbactam": "Cefoperazone/Sulbactam",
-    "tazobactam": "Piperacillin/Tazobactam",
-}
+    antibiogram = []
+    
+    # تجميع النص بناءً على الارتفاع (Y-axis) لضمان عدم اختلاط السطور
+    lines = {}
+    for i in range(len(words)):
+        if words[i].strip():
+            y = tops[i] // 10 * 10 # تقريب الإحداثي لجمع الكلمات على نفس السطر
+            if y not in lines: lines[y] = []
+            lines[y].append({"text": words[i], "x": lefts[i]})
 
-def normalize_drug(txt):
-    txt = txt.lower()
-    txt = re.sub(r'[^a-z/\+\- ]', '', txt)
+    for y in sorted(lines.keys()):
+        line_text = " ".join([w['text'] for w in sorted(lines[y], key=lambda x: x['x'])])
+        
+        # استبعاد سطور الترويسة
+        if any(x in line_text for x in ["ANTIBIOGRAM", "Sensitive", "Culture", "Name"]): continue
+        
+        # تحديد النتيجة بناءً على مكان أول كلمة في السطر بالنسبة للأعمدة
+        first_word_x = lines[y][0]['x']
+        
+        result = "I" # الافتراضي
+        if first_word_x < (sensitive_x + 50): result = "S"
+        elif first_word_x > (resistant_x - 50): result = "R"
+        
+        # تنظيف اسم المضاد من أي شوائب
+        drug_name = re.sub(r'[^a-zA-Z\s\+]', '', line_text).strip()
+        if len(drug_name) > 3:
+            antibiogram.append({"Antibiotic": drug_name, "Result": result})
 
-    for k,v in DRUG_FIX.items():
-        if k in txt:
-            return v
+    return patient, pd.DataFrame(antibiogram)
 
-    return txt.title()
-
-# =========================
-# 🔍 Antibiogram Extraction
-# =========================
-def extract_antibiogram(file):
-
-    img = cv2.imdecode(np.asarray(bytearray(file.read()), dtype=np.uint8), 1)
-    th = preprocess(img)
-
-    data = pytesseract.image_to_data(th, output_type=pytesseract.Output.DICT)
-    text = pytesseract.image_to_string(th)
-
-    words = []
-    for i in range(len(data['text'])):
-        t = data['text'][i].strip()
-        if t:
-            words.append({
-                "text": t,
-                "x": data['left'][i],
-                "y": data['top'][i]
-            })
-
-    width = th.shape[1]
-
-    # column split
-    for w in words:
-        if w['x'] < width*0.33:
-            w['col'] = 'S'
-        elif w['x'] < width*0.66:
-            w['col'] = 'I'
-        else:
-            w['col'] = 'R'
-
-    rows = {}
-
-    for w in words:
-        yk = round(w['y']/12)*12
-        if yk not in rows:
-            rows[yk] = {"S":[], "I":[], "R":[]}
-        rows[yk][w['col']].append(w['text'])
-
-    abx, res = [], []
-
-    for y in sorted(rows.keys()):
-        for c in ['S','I','R']:
-            txt = " ".join(rows[y][c]).strip()
-            txt = normalize_drug(txt)
-
-            if len(txt) > 4 and txt.lower() not in ['sensitive','intermediate','resistant']:
-                abx.append(txt)
-                res.append(c)
-
-    df = pd.DataFrame({"Antibiotic":abx,"Result":res})
-    df = df.drop_duplicates()
-
-    return df, text
-
-# =========================
-# ⚠️ Contraindications
-# =========================
-def check_contra(drug, age, pregnant):
-
+def clinical_guidelines(drug, age, is_pregnant):
     d = drug.lower()
-    issues = []
+    notes = []
+    
+    # قوانين صارمة بناءً على Guidelines
+    if is_pregnant:
+        if any(x in d for x in ["tetracycline", "doxycyclin"]):
+            notes.append("❌ ممنوع تماماً في الحمل (يؤثر على عظام وأسنان الجنين)")
+        if any(x in d for x in ["ciprofloxacin", "norfloxacin", "levofloxacin", "ofloxacin"]):
+            notes.append("⚠️ يفضل تجنبه في الحمل (خطر على المفاصل)")
+        if "nitrofurantoin" in d:
+            notes.append("✅ خيار أول آمن (ما عدا في الشهر التاسع)")
+        if "trimethoprim" in d:
+            notes.append("❌ ممنوع في الشهور الثلاثة الأولى")
 
-    if pregnant:
-        if any(x in d for x in ["doxycycline","tetracycline"]):
-            issues.append("❌ contraindicated in pregnancy")
-        if "cipro" in d:
-            issues.append("⚠️ avoid in pregnancy")
+    if age and int(age) < 18:
+        if any(x in d for x in ["cipro", "levo", "oflox"]):
+            notes.append("⚠️ يراعى الحذر تحت سن 18 (تأثير على الغضاريف)")
 
-    if age and age < 18:
-        if "cipro" in d:
-            issues.append("⚠️ avoid in children")
+    return notes
 
-    return issues
-
-# =========================
-# 🧠 Decision Engine
-# =========================
-def clinical_engine(df, organism, age, pregnant):
-
-    S = df[df.Result=="S"]["Antibiotic"].tolist()
-    I = df[df.Result=="I"]["Antibiotic"].tolist()
-    R = df[df.Result=="R"]["Antibiotic"].tolist()
-
-    report = []
-
-    report.append(f"### 🦠 Organism: {organism}")
-    report.append(f"S:{len(S)} | I:{len(I)} | R:{len(R)}")
-
-    safe = []
-
-    for d in S:
-        alerts = check_contra(d, age, pregnant)
-
-        if not any("❌" in a for a in alerts):
-            safe.append((d, alerts))
-
-    best = None
-
-    # organism-based
-    if "klebsiella" in organism.lower():
-        for d,_ in safe:
-            if "imipenem" in d.lower():
-                best = d
-                break
-
-    if not best and safe:
-        best = safe[0][0]
-
-    if len(R) > len(S):
-        report.append("🚨 MDR suspected")
-
-    report.append("### 💊 Recommendation")
-    report.append(best if best else "No suitable antibiotic")
-
-    report.append("### ⚠️ Notes")
-    for d,a in safe:
-        if a:
-            report.append(f"{d}: {a}")
-
-    return "\n".join(report)
-
-# =========================
-# UI
-# =========================
-uploaded = st.file_uploader("📸 Upload report")
+# واجهة البرنامج
+st.title("🛡️ نظام تحليل المزارع الذكي")
+uploaded = st.file_uploader("ارفع صورة المزرعة هنا", type=['jpg', 'png', 'jpeg'])
 
 if uploaded:
-    df, text = extract_antibiogram(uploaded)
-    patient = extract_patient(text)
-    organism = extract_organism(text)
+    patient, df = extract_all_data(uploaded)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("📋 بيانات المريض المستخرجة")
+        st.write(f"**الاسم:** {patient['Name']}")
+        st.write(f"**العمر:** {patient['Age']}")
+        st.write(f"**الجنس:** {patient['Sex']}")
+        st.info(f"**الميكروب:** {patient['Organism']}")
+        
+        is_pregnant = False
+        if patient['Sex'] == "Female":
+            is_pregnant = st.checkbox("هل المريضة حامل؟")
 
-    preg = False
-    if patient["sex"] == "أنثى":
-        preg = st.checkbox("Pregnant")
+    with col2:
+        st.subheader("🧬 نتائج الحساسية")
+        st.dataframe(df)
 
-    st.subheader("📋 Patient")
-    st.write(patient)
+    st.divider()
+    st.subheader("📝 التقرير الطبي المقترح")
+    
+    for index, row in df.iterrows():
+        if row['Result'] == 'S':
+            alerts = clinical_guidelines(row['Antibiotic'], patient['Age'], is_pregnant)
+            color = "green" if not alerts else "orange"
+            icon = "✅" if not alerts else "⚠️"
+            
+            with st.expander(f"{icon} {row['Antibiotic']}"):
+                if alerts:
+                    for a in alerts: st.error(a)
+                else:
+                    st.success("مناسب للحالة من حيث العمر والجنس.")
 
-    st.subheader("🧫 Antibiogram")
-    st.dataframe(df)
-
-    report = clinical_engine(df, organism, patient["age"], preg)
-
-    st.markdown("---")
-    st.markdown(report)
