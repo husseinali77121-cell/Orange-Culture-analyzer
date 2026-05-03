@@ -1,6 +1,6 @@
 streamlit
 pandas
 numpy
-Pillow
-pytesseract
 opencv-python-headless
+pytesseract
+scikit-learn
