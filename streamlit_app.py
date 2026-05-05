@@ -7,7 +7,6 @@ import re
 # ==========================================
 # 📋 قاعدة بيانات شاملة للتعرف الذكي وبروتوكول الكلى
 # ==========================================
-# إضافة مفتاح 'renal_limit' لتحديد مستوى التصفية الذي يبدأ عنده التعديل
 ABX_GUIDELINES = {
     "Nitrofurantoin": {"priority": 1, "class": "Urinary Antiseptic", "note": "🎯 الخيار الأول للمسالك البولية.", "renal_limit": 30, "renal_note": "🚫 ممنوع إذا كانت التصفية < 30 مل/د (فقدان الفعالية وخطر السمية)."},
     "Fosfomycin": {"priority": 1, "class": "Phosphonic Acid", "note": "🎯 خيار مثالي بجرعة واحدة.", "renal_limit": 10, "renal_note": "⚠️ يستخدم بحذر في القصور الشديد."},
@@ -31,14 +30,18 @@ ABX_GUIDELINES = {
 }
 
 def extract_all_data(uploaded_file):
+    # معالجة الصورة
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, 1)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     denoised = cv2.fastNlMeansDenoising(gray, h=10)
-    thresh = cv2.threshold(denoised, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[span_9](start_span)[span_9](end_span)
+    _, thresh = cv2.threshold(denoised, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    
+    # تحويل الصورة لنص
     full_text = pytesseract.image_to_string(thresh, config='--psm 6')
     
-    detected_drugs =
+    # استخراج المضادات المكتشفة
+    detected_drugs = []
     lines = full_text.split('\n')
     for line in lines:
         clean_line = line.strip().lower()
@@ -48,15 +51,20 @@ def extract_all_data(uploaded_file):
                 detected_drugs.append(abx_name)
     
     unique_drugs = list(set(detected_drugs))
+    
+    # استخراج بيانات المريض
+    age_match = re.search(r"Age\s*[:/-]?\s*(\d+)", full_text, re.I)
+    org_match = re.search(r"Growth\s*[:/-]?\s*([^\n|]+)", full_text, re.I)
+    
     patient_data = {
-        "Age": re.search(r"Age\s*[:/-]?\s*(\d+)", full_text, re.I).group(1) if re.search(r"Age", full_text) else "25",
+        "Age": age_match.group(1) if age_match else "25",
         "Sex": "Female" if "female" in full_text.lower() else "Male",
-        "Organism": re.search(r"Growth\s*[:/-]?\s*([^\n|]+)", full_text, re.I).group(1).strip() if re.search(r"Growth", full_text) else "Klebsiella spp."
+        "Organism": org_match.group(1).strip() if org_match else "Klebsiella spp."
     }
     return patient_data, unique_drugs
 
 # ==========================================
-# 🖥️ واجهة التطبيق المحدثة
+# 🖥️ واجهة التطبيق
 # ==========================================
 st.set_page_config(page_title="Renal-Aware Culture Analyzer", layout="wide")
 st.title("🛡️ محرك تحليل المزارع الذكي (بروتوكول الكلى المدمج)")
@@ -65,12 +73,12 @@ uploaded = st.file_uploader("ارفع صورة المزرعة", type=['jpg', 'pn
 
 if uploaded:
     patient, drugs = extract_all_data(uploaded)
-    col1, col2 = st.columns()
+    col1, col2 = st.columns(2)
     
-    with co[span_1](start_span)[span_1](end_span)[span_3](start_span)[span_3](end_span)l1:
+    with col1:
         st.subheader("👤 بيانات المريض")
         age = st.number_input("العمر", value=int(patient['Age']))
-        sex = st.selectbox("الجنس", ["Female", "Male"], index=0 if patient=="Female" else 1)
+        sex = st.selectbox("الجنس", ["Female", "Male"], index=0 if patient['Sex']=="Female" else 1)
         
         st.divider()
         is_renal = st.checkbox("🚩 هل المريض يعاني من قصور كلوي؟")
@@ -84,12 +92,12 @@ if uploaded:
 
     with col2:
         st.subheader(f"✅ تحليل المضادات الحيوية المكتشفة ({len(drugs)})")
-        allowed, banned, warning_renal =,,
+        allowed, banned, warning_renal = [], [], []
         
         for d in drugs:
             drug_info = ABX_GUIDELINES.get(d, {"priority": 5, "class": "Others", "note": "يستخدم حسب التعليمات.", "renal_limit": 0, "renal_note": ""})
             
-            # 1. فلترة الحمل
+            # 1. فلترة الحمل (الأدوية الممنوعة للحامل)
             if is_preg and any(x in d.lower() for x in ["cipro", "levo", "norf", "oflox", "tetra", "doxy"]):
                 banned.append(f"💊 {d}: خطر على الجنين.")
             
@@ -116,11 +124,12 @@ if uploaded:
                     st.write(f"**الفئة:** {item['class']}")
                     st.write(f"**ملاحظة طبية:** {item['note']}")
 
-        st.success("🟢 أدوية آمنة أو مناسبة (مع مراعاة الجرعات القياسية)")
-        allowed_sorted = sorted(allowed, key=lambda x: x['priority'])
-        for item in allowed_sorted:
-            with st.expander(f"💊 {item['name']}"):
-                st.write(f"**الفئة:** {item['class']}")
-                st.info(item['note'])
+        if allowed:
+            st.success("🟢 أدوية آمنة أو مناسبة (مع مراعاة الجرعات القياسية)")
+            allowed_sorted = sorted(allowed, key=lambda x: x['priority'])
+            for item in allowed_sorted:
+                with st.expander(f"💊 {item['name']}"):
+                    st.write(f"**الفئة:** {item['class']}")
+                    st.info(item['note'])
 
 st.caption("ملاحظة: هذا النظام أداة مساعدة للطبيب ولا يغني عن الاستشارة السريرية المباشرة.")
