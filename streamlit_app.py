@@ -5,7 +5,7 @@ import pytesseract
 import re
 
 # ==========================================
-# 📋 قاعدة البيانات: تشمل الإضافات الجديدة والبروتوكول الكلوي
+# 📋 قاعدة بيانات المضادات الحيوية والبروتوكول الكلوي
 # ==========================================
 ABX_GUIDELINES = {
     "Sulfamethoxazole + Trimethoprim": {"priority": 2, "class": "Sulfonamide", "note": "✅ فعال لالتهابات المسالك والبروستاتا.", "renal_limit": 30, "renal_note": "⚖️ خفض الجرعة للنصف (CrCl 15-30)."},
@@ -27,22 +27,21 @@ def process_image(uploaded_file):
     _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     text = pytesseract.image_to_string(thresh, config='--psm 6').lower()
     
-    # محاولة استخراج منطقة الـ Sensitive فقط لزيادة الدقة
+    # محاولة استخراج منطقة الـ Sensitive فقط
     start = max(text.find("highly"), text.find("sensitive"), 0)
     end = text.find("resistant") if "resistant" in text else len(text)
     roi = text[start:end]
 
     detected = [abx for abx in ABX_GUIDELINES.keys() if re.search(r'\b' + re.escape(abx.lower()) + r'\b', roi)]
     
-    # استخراج العمر والجنس (افتراضات ذكية)
-    age = re.search(r"age\s*[:/-]?\s*(\d+)", text)
+    age_match = re.search(r"age\s*[:/-]?\s*(\d+)", text)
     sex = "Female" if "female" in text else "Male"
-    return (age.group(1) if age else "35"), sex, list(set(detected))
+    return (age_match.group(1) if age_match else "35"), sex, list(set(detected))
 
 # ==========================================
-# 🖥️ واجهة التطبيق
+# 🖥️ واجهة التطبيق المستحدثة
 # ==========================================
-st.set_page_config(page_title="Lab Analyzer Pro", layout="wide")
+st.set_page_config(page_title="Orange Lab Analyzer", layout="wide")
 st.title("🛡️ محلل المزارع الذكي الشامل")
 
 file = st.file_uploader("ارفع صورة المزرعة", type=['jpg', 'png', 'jpeg'])
@@ -55,7 +54,7 @@ if file:
     with col1:
         st.subheader("👤 بيانات المريض")
         age = st.number_input("العمر", value=int(age_str))
-        weight = st.number_input("الوزن (kg)", value=70)
+        weight = st.number_input("الوزن (kg)", value=75)
         sex = st.radio("الجنس", ["Male", "Female"], index=0 if sex_detected=="Male" else 1)
         
         st.divider()
@@ -67,17 +66,17 @@ if file:
         if sex == "Female": crcl *= 0.85
         
         color = "green" if crcl > 60 else "orange" if crcl > 30 else "red"
-        st.markdown(f"تصفية الكرياتينين: <b style='color:{color}'>{crcl:.1f} ml/min</b>", unsafe_content_group=True, unsafe_allow_html=True)
+        st.markdown(f"تصفية الكرياتينين: <b style='color:{color}'>{crcl:.1f} ml/min</b>", unsafe_allow_html=True)
 
     with col2:
         st.subheader("💊 الأدوية الحساسة (Sensitive)")
         
-        # 1. الإضافة اليدوية لأي نقص
+        # الإضافة اليدوية لأي نقص
         manual = st.multiselect("➕ أضف/عدل المضادات الحساسة المكتشفة:", 
                                options=sorted(list(ABX_GUIDELINES.keys())), 
                                default=drugs)
         
-        # 2. إضافة دواء غير موجود نهائياً في القائمة
+        # إضافة دواء غير موجود نهائياً في القائمة
         custom = st.text_input("📝 دواء غير مدرج في القائمة؟ اكتبه هنا:")
         
         final_list = list(set(manual + ([custom] if custom else [])))
@@ -85,12 +84,11 @@ if file:
         st.divider()
         
         if not final_list:
-            st.info("لم يتم اكتشاف أدوية. يرجى الاختيار يدوياً أو التأكد من جودة الصورة.")
+            st.info("لم يتم اكتشاف أدوية تلقائياً. يرجى الاختيار يدوياً.")
         
         for d in final_list:
             info = ABX_GUIDELINES.get(d)
             if info:
-                # التحقق من القيود الكلوية
                 if crcl <= info['renal_limit'] and info['renal_limit'] > 0:
                     with st.expander(f"⚠️ {d} - يحتاج تعديل"):
                         st.error(info['renal_note'])
@@ -101,5 +99,5 @@ if file:
             else:
                 st.warning(f"🔹 {d}: دواء مضاف يدوياً؛ يرجى مراجعة بروتوكول الجرعة للقصور الكلوي.")
 
-st.caption("تطوير: نظام دعم القرار السريري - معامل اورانج لاب / Orange Lab
-Dr/Hussein Ali المطور")
+st.divider()
+st.caption("تطوير : دكتور حسين علي / معمل اورانج لاب اكتوبر / Orange lab")
