@@ -77,8 +77,8 @@ def extract_all_data(uploaded_file):
 # ==========================================
 # 🖥️ Interface
 # ==========================================
-st.set_page_config(page_title="Universal Culture & Sensitivity Analyzer", layout="wide")
-st.title("🛡️ Universal Culture & Sensitivity Analyzer (OCR + Manual)")
+st.set_page_config(page_title="Orange culture analyzer", layout="wide")
+st.title("🛡️ Orange Culture Analyzer (OCR + Manual)")
 
 uploaded = st.file_uploader("Upload Culture Report Image", type=['jpg', 'png', 'jpeg'])
 
@@ -176,6 +176,6 @@ st.divider()
 # Developer Imprint
 st.markdown("""
 <div style="text-align: center; color: gray; font-size: 0.8em;">
-    Developed by Dr. Hussein Ali | Universal Solutions Branch
+    Developed by: Dr Hussein Ali , Orange Lab
 </div>
 """, unsafe_allow_html=True)
