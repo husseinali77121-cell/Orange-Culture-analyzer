@@ -5,10 +5,8 @@ import pytesseract
 import re
 
 # ==========================================
-# 📋 Comprehensive Antibiotics Database (Expanded from Images)
+# 📋 Comprehensive Antibiotics Database (Expanded)
 # ==========================================
-# Keys are standard names. Values include clinical guidelines.
-# renal_limit: CrCl level below which adjustment is needed.
 ABX_GUIDELINES = {
     # Urinary Antiseptics
     "Nitrofurantoin": {"priority": 1, "class": "Urinary Antiseptic", "note": "🎯 الخيار الأول للمسالك.", "renal_limit": 30, "renal_note": "🚫 ممنوع إذا كانت التصفية < 30 مل/د (فقدان الفعالية)."},
@@ -50,28 +48,24 @@ ABX_GUIDELINES = {
 }
 
 def extract_all_data(uploaded_file):
-    # OCR Logic kept intact as requested for best quality
+    # OCR Logic kept exactly as requested
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, 1)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     full_text = pytesseract.image_to_string(thresh, config='--psm 6')
     
-    # محاولة حصر النص في قسم الـ Sensitive لتقليل الأخطاء
     text_lower = full_text.lower()
     start_pos = text_lower.find("highly")
     end_pos = text_lower.find("resistant")
     
-    # إذا لم يجد الكلمات المفتاحية، يبحث في النص كاملاً
     search_area = full_text[start_pos:end_pos] if (start_pos != -1 and end_pos != -1) else full_text
 
     detected_drugs = []
     for abx_name in ABX_GUIDELINES.keys():
-        # استخدام re.escape للتعامل مع الرموز مثل '+' في اسم الدواء
         if re.search(r'\b' + re.escape(abx_name.lower()) + r'\b', search_area.lower()):
             detected_drugs.append(abx_name)
     
-    # استخراج البيانات الأساسية للمريض
     age_match = re.search(r"Age\s*[:/-]?\s*(\d+)", full_text, re.I)
     patient_data = {
         "Age": age_match.group(1) if age_match else "49",
@@ -81,9 +75,8 @@ def extract_all_data(uploaded_file):
     return patient_data, list(set(detected_drugs))
 
 # ==========================================
-# 🖥️ Interface (English Rebranding)
+# 🖥️ Interface
 # ==========================================
-# Title updated to English
 st.set_page_config(page_title="Universal Culture & Sensitivity Analyzer", layout="wide")
 st.title("🛡️ Universal Culture & Sensitivity Analyzer (OCR + Manual)")
 
@@ -97,7 +90,13 @@ if uploaded:
         st.subheader("👤 Patient Details")
         age = st.number_input("Age (Years)", value=int(patient['Age']))
         sex = st.selectbox("Gender", ["Female", "Male"], index=0 if patient['Sex']=="Female" else 1)
-        weight = st.number_input("Weight (kg)", min_value=10, value=70)
+        
+        # Pediatric Notification
+        is_pediatric = age < 18
+        if is_pediatric:
+            st.info("👶 **تفعيل تلقائي:** بروتوكول الأطفال نشط.")
+
+        weight = st.number_input("Weight (kg)", min_value=10, value=70 if not is_pediatric else 30)
         
         st.divider()
         is_renal = st.checkbox("🚩 Evaluate Renal Function (CrCl)")
@@ -109,24 +108,21 @@ if uploaded:
             if sex == "Female": cl_cr *= 0.85
             st.metric("Creatinine Clearance (CrCl)", f"{cl_cr:.1f} ml/min")
         
-        # Pregnancy question logic
+        # Pregnancy logic (hidden if child under 12)
         is_preg = False
-        if sex == "Female":
+        if sex == "Female" and age >= 12:
             is_preg = st.checkbox("🤰 Is Pregnant?")
 
     with col2:
         st.subheader("💊 Sensitive Antibiotics (Analysis)")
         
-        # خانة الإضافة اليدوية تشمل الآن قاعدة البيانات الموسعة
         manual_add = st.multiselect(
             "➕ Manually add Sensitive Antibiotics (if OCR missed any):",
             options=[k for k in ABX_GUIDELINES.keys() if k not in drugs],
             help="Select antibiotics marked as 'Sensitive' on the report that were not detected automatically."
         )
         
-        # دمج الأدوية (المكتشفة + اليدوية)
         total_drugs = list(set(drugs + manual_add))
-        
         st.info(f"Total Antibiotics under Analysis: {len(total_drugs)}")
         
         allowed, banned, warnings = [], [], []
@@ -134,20 +130,31 @@ if uploaded:
         for d in total_drugs:
             info = ABX_GUIDELINES.get(d, {"priority": 5, "class": "Others", "note": "يستخدم حسب التعليمات السريرية.", "renal_limit": 0, "renal_note": ""})
             
-            # 1. فلترة Pregnancy contraindications (expanded list)
+            # --- 1. Pregnancy Protocol ---
             if is_preg and any(x in d.lower() for x in ["cipro", "levo", "oflox", "tetra", "doxy", "genta", "amikacin"]):
                 banned.append(f"💊 {d}: خطر على الجنين (Teratogenic/Toxicity).")
-            # 2. فلترة Renal absolute contraindications (Nitrofurantoin specific)
-            elif is_renal and d == "Nitrofurantoin" and cl_cr < 30:
+            
+            # --- 2. Pediatric Protocol ---
+            elif is_pediatric and age < 8 and any(x in d.lower() for x in ["tetra", "doxy"]):
+                banned.append(f"💊 {d}: ممنوع للأطفال < 8 سنوات (تصبغ دائم للأسنان وتأثير على العظام).")
+            elif is_pediatric and any(x in d.lower() for x in ["cipro", "levo", "oflox"]):
+                banned.append(f"💊 {d}: لا ينصح به للأطفال < 18 سنة (خطر على نمو الغضاريف) إلا للضرورة القصوى.")
+            
+            # --- 3. Renal Protocol (Absolute contraindications) ---
+            elif is_renal and "nitrofurantoin" in d.lower() and cl_cr < 30:
                 banned.append(f"💊 {d}: ممنوع في القصور الكلوي الشديد (CrCl < 30) لفقدان الفعالية.")
-            # 3. تحذيرات تعديل الجرعة والسمية الكلوية
+            
+            # --- 4. Warnings (Dose adjustments or minor age limits) ---
+            elif is_pediatric and age < 12 and "fosfomycin" in d.lower():
+                warnings.append({"name": d, **info, "note": "⚠️ غير معتمد عادة للأطفال أقل من 12 سنة.", "renal_note": "Pediatric Alert"})
             elif is_renal and info['renal_limit'] > 0 and cl_cr <= info['renal_limit']:
                 warnings.append({"name": d, **info})
-            # 4. الأدوية المسموحة
+            
+            # --- 5. Allowed ---
             else:
                 allowed.append({"name": d, **info})
 
-        # --- عرض النتائج النهائية ---
+        # --- Display Results ---
         if banned:
             st.error("🚫 Contraindicated / Forbidden for this Case")
             for b in banned: st.write(b)
@@ -155,7 +162,7 @@ if uploaded:
         if warnings:
             st.warning("⚖️ Requires Dose Adjustment or Extreme Caution")
             for item in warnings:
-                with st.expander(f"⚠️ {item['name']} - {item['renal_note']}"):
+                with st.expander(f"⚠️ {item['name']} - {item.get('renal_note', '')}"):
                     st.write(item['note'])
 
         if allowed:
@@ -166,7 +173,7 @@ if uploaded:
                     st.info(item['note'])
 
 st.divider()
-# Developer Imprint added to the bottom
+# Developer Imprint
 st.markdown("""
 <div style="text-align: center; color: gray; font-size: 0.8em;">
     Developed by Dr. Hussein Ali | Universal Solutions Branch
