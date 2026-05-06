@@ -78,7 +78,7 @@ def extract_all_data(uploaded_file):
 # 🖥️ Interface
 # ==========================================
 st.set_page_config(page_title="Orange culture analyzer", layout="wide")
-st.title("🛡️ Orange Culture Analyzer (OCR + Manual)")
+st.title("🛡️ Orange Culture Analyzer")
 
 uploaded = st.file_uploader("Upload Culture Report Image", type=['jpg', 'png', 'jpeg'])
 
