@@ -6,9 +6,8 @@ import re
 from datetime import datetime
 
 # ==========================================
-# 📋 Comprehensive Antibiotics Database (Upgraded)
+# 📋 Comprehensive Antibiotics Database
 # ==========================================
-# تمت إضافة: aware (تصنيف WHO), high_po (قابلية التحويل لفموي), interacts_with (التفاعلات الدوائية)
 ABX_GUIDELINES = {
     # --- Urinary Antiseptics ---
     "Nitrofurantoin": {"priority": 1, "class": "Urinary Antiseptic", "note": "🎯 الخيار الأول للمسالك البسيطة.", "renal_limit": 30, "renal_note": "🚫 ممنوع إذا كانت التصفية < 30 مل/د.", "aware": "Access", "high_po": True, "interacts_with": ["Antacids (مضادات الحموضة)"]},
@@ -21,7 +20,7 @@ ABX_GUIDELINES = {
     "Augmentin": {"priority": 2, "class": "Beta-lactamase Inhibitor", "note": "✅ خيار قياسي فعال.", "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "aware": "Access", "high_po": True, "interacts_with": []},
     "Piperacillin + Tazobactam": {"priority": 4, "class": "Anti-pseudomonal", "note": "🛑 مضاد احتياطي واسع الطيف.", "renal_limit": 40, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "aware": "Watch", "high_po": False, "interacts_with": []},
     
-    # --- Cephalosporins (1st - 5th Gen) ---
+    # --- Cephalosporins ---
     "Cephalexin": {"priority": 2, "class": "1st Gen Cephalosporin", "note": "✅ آمن وفعال للالتهابات البسيطة.", "renal_limit": 40, "renal_note": "⚖️ مباعدة الجرعات مطلوب.", "aware": "Access", "high_po": True, "interacts_with": []},
     "Cefazolin": {"priority": 2, "class": "1st Gen Cephalosporin", "note": "💉 يعطى حقناً، فعال للعمليات الجراحية.", "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "aware": "Access", "high_po": False, "interacts_with": []},
     "Cefuroxime": {"priority": 2, "class": "2nd Gen Cephalosporin", "note": "✅ فعال للجراثيم الموجبة والسالبة.", "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "aware": "Watch", "high_po": True, "interacts_with": ["Antacids (مضادات الحموضة)"]},
@@ -31,36 +30,29 @@ ABX_GUIDELINES = {
     "Cefixime": {"priority": 2, "class": "3rd Gen Cephalosporin (Oral)", "note": "✅ خيار فموي جيد للمسالك.", "renal_limit": 20, "renal_note": "⚖️ خفض الجرعة.", "aware": "Watch", "high_po": True, "interacts_with": []},
     "Cefepime": {"priority": 4, "class": "4th Gen Cephalosporin", "note": "⚠️ قوي جداً للحالات الحرجة والمقاومة.", "renal_limit": 50, "renal_note": "🛑 خطر سمية عصبية.", "aware": "Watch", "high_po": False, "interacts_with": []},
     
-    # --- Carbapenems (Big Guns) ---
+    # --- Carbapenems ---
     "Imipenem": {"priority": 5, "class": "Carbapenem", "note": "🛑 خيار الملاذ الأخير (ESBL/MDR).", "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة لمنع التشنجات.", "aware": "Watch", "high_po": False, "interacts_with": []},
     "Meropenem": {"priority": 5, "class": "Carbapenem", "note": "🛑 خيار الملاذ الأخير؛ آمن عصبياً.", "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "aware": "Watch", "high_po": False, "interacts_with": []},
     "Ertapenem": {"priority": 4, "class": "Carbapenem", "note": "🛑 لا يغطي Pseudomonas.", "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "aware": "Watch", "high_po": False, "interacts_with": []},
 
-    # --- Fluoroquinolones ---
-    "Ciprofloxacin": {"priority": 2, "class": "Fluoroquinolone", "note": "⚠️ يستخدم بحذر؛ يفضل ادخاره.", "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "aware": "Watch", "high_po": True, "interacts_with": ["Antacids (مضادات الحموضة)", "Warfarin (مضادات التخثر)", "NSAIDs (مسكنات الألم)"]},
-    "Levofloxacin": {"priority": 2, "class": "Fluoroquinolone", "note": "⚠️ يغطي الرئة والمسالك.", "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "aware": "Watch", "high_po": True, "interacts_with": ["Antacids (مضادات الحموضة)", "Warfarin (مضادات التخثر)", "NSAIDs (مسكنات الألم)"]},
-    "Norfloxacin": {"priority": 2, "class": "Fluoroquinolone", "note": "✅ مخصص لالتهابات المسالك فقط.", "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "aware": "Watch", "high_po": True, "interacts_with": ["Antacids (مضادات الحموضة)"]},
+    # --- Fluoroquinolones (Updated) ---
+    "Ofloxacin": {"priority": 2, "class": "Fluoroquinolone", "note": "⚠️ واسع المدى؛ فعال للمسالك والعدوى التنفسية.", "renal_limit": 50, "renal_note": "⚖️ يتطلب تعديل جرعة إذا التصفية < 50.", "aware": "Watch", "high_po": True, "interacts_with": ["Antacids (مضادات الحموضة)", "Warfarin (مضادات التخثر)"]},
+    "Ciprofloxacin": {"priority": 2, "class": "Fluoroquinolone", "note": "⚠️ يستخدم بحذر؛ يفضل ادخاره للمسالك المعقدة.", "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "aware": "Watch", "high_po": True, "interacts_with": ["Antacids (مضادات الحموضة)", "Warfarin (مضادات التخثر)", "NSAIDs (مسكنات الألم)"]},
+    "Levofloxacin": {"priority": 2, "class": "Fluoroquinolone", "note": "⚠️ يغطي الرئة والمسالك بفعالية عالية.", "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "aware": "Watch", "high_po": True, "interacts_with": ["Antacids (مضادات الحموضة)", "Warfarin (مضادات التخثر)", "NSAIDs (مسكنات الألم)"]},
+    "Norfloxacin": {"priority": 2, "class": "Fluoroquinolone", "note": "✅ مخصص لالتهابات المسالك فقط (إطراح بولي عالٍ).", "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "aware": "Watch", "high_po": True, "interacts_with": ["Antacids (مضادات الحموضة)"]},
     
-    # --- Aminoglycosides ---
+    # --- Others ---
     "Amikacin": {"priority": 4, "class": "Aminoglycoside", "note": "💉 فعال ضد السلبيات المقاومة.", "renal_limit": 60, "renal_note": "⚖️ مراقبة وظائف الكلى.", "aware": "Access", "high_po": False, "interacts_with": ["NSAIDs (مسكنات الألم)"]},
     "Gentamicin": {"priority": 4, "class": "Aminoglycoside", "note": "💉 يستخدم غالباً كعلاج مضاف.", "renal_limit": 60, "renal_note": "⚖️ مراقبة وظائف الكلى.", "aware": "Access", "high_po": False, "interacts_with": ["NSAIDs (مسكنات الألم)"]},
-    "Tobramycin": {"priority": 4, "class": "Aminoglycoside", "note": "💉 فعالية قوية ضد Pseudomonas.", "renal_limit": 60, "renal_note": "⚖️ مراقبة الكلى.", "aware": "Access", "high_po": False, "interacts_with": ["NSAIDs (مسكنات الألم)"]},
-
-    # --- Others ---
     "Sulfamethoxazole + Trimethoprim": {"priority": 2, "class": "Sulfonamide", "note": "✅ فعال للمسالك والبروستاتا.", "renal_limit": 30, "renal_note": "⚖️ خفض الجرعة للنصف.", "aware": "Access", "high_po": True, "interacts_with": ["Warfarin (مضادات التخثر)"]},
     "Vancomycin": {"priority": 5, "class": "Glycopeptide", "note": "🛑 خاص بـ MRSA.", "renal_limit": 50, "renal_note": "⚖️ مراقبة المستوى في الدم.", "aware": "Watch", "high_po": False, "interacts_with": []},
-    "Linezolid": {"priority": 5, "class": "Oxazolidinone", "note": "🛑 للموجبات المقاومة.", "renal_limit": 0, "renal_note": "🟢 لا يحتاج تعديل.", "aware": "Reserve", "high_po": True, "interacts_with": ["SSRI (أدوية الاكتئاب)"]},
-    "Clindamycin": {"priority": 3, "class": "Lincosamide", "note": "✅ للالتهابات اللاهوائية والموجبات.", "renal_limit": 0, "renal_note": "🟢 لا يحتاج تعديل.", "aware": "Access", "high_po": True, "interacts_with": []},
-    "Doxycycline": {"priority": 3, "class": "Tetracycline", "note": "✅ فعال للمسببات غير النمطية.", "renal_limit": 0, "renal_note": "🟢 آمن كلوياً.", "aware": "Access", "high_po": True, "interacts_with": ["Antacids (مضادات الحموضة)"]},
-    "Colistin": {"priority": 5, "class": "Polymyxin", "note": "🛑 الملاذ الأخير.", "renal_limit": 50, "renal_note": "🛑 سمية كلوية عالية.", "aware": "Reserve", "high_po": False, "interacts_with": []}
+    "Doxycycline": {"priority": 3, "class": "Tetracycline", "note": "✅ فعال للمسببات غير النمطية وآمن كلوياً.", "renal_limit": 0, "renal_note": "🟢 لا يحتاج تعديل.", "aware": "Access", "high_po": True, "interacts_with": ["Antacids (مضادات الحموضة)"]},
+    "Colistin": {"priority": 5, "class": "Polymyxin", "note": "🛑 الملاذ الأخير للبكتيريا المقاومة جداً.", "renal_limit": 50, "renal_note": "🛑 سمية كلوية عالية.", "aware": "Reserve", "high_po": False, "interacts_with": []}
 }
 
-# قوائم التعرف
 SPECIMEN_TYPES = ["Urine", "Blood", "Sputum", "Wound Swab", "Pus", "Stool", "CSF", "Ear Swab", "Throat Swab"]
 BACTERIA_TYPES = ["E. coli", "Klebsiella spp.", "Pseudomonas aeruginosa", "Staphylococcus aureus", "MRSA", "Proteus mirabilis", "Enterococcus faecalis", "Acinetobacter baumannii", "Streptococcus", "Enterobacter"]
 COMMON_MEDS = ["Antacids (مضادات الحموضة)", "Warfarin (مضادات التخثر)", "NSAIDs (مسكنات الألم)", "SSRI (أدوية الاكتئاب)", "Statins (أدوية الكوليسترول)"]
-
-# ألوان تصنيف AWaRe
 AWARE_COLORS = {"Access": "🟢 (Access)", "Watch": "🟡 (Watch)", "Reserve": "🔴 (Reserve)"}
 
 def extract_all_data(uploaded_file):
@@ -83,6 +75,7 @@ def extract_all_data(uploaded_file):
             detected_organism = b
             break
 
+    # البحث عن الأدوية الحساسة
     start_pos = text_lower.find("highly")
     if start_pos == -1: start_pos = text_lower.find("sensitive")
     end_pos = text_lower.find("resistant")
@@ -102,43 +95,42 @@ def extract_all_data(uploaded_file):
     }
     return patient_data, list(set(detected_drugs))
 
-def generate_report(patient_info, allowed_drugs, banned_drugs, warnings, organism, specimen, interactions_found):
-    date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+def generate_report(age, sex, weight, crcl, allowed_drugs, banned_drugs, warnings, organism, specimen, interactions):
+    date_str = datetime.now().strftime("%Y-%m-%d %H:%M")
     report = f"==========================================\n"
     report += f"   🛡️ ORANGE LAB - CLINICAL DECISION REPORT\n"
     report += f"==========================================\n"
     report += f"Date: {date_str}\n\n"
     report += f"👤 PATIENT DETAILS:\n"
-    report += f"- Age: {patient_info['Age']} | Gender: {patient_info['Sex']} | Weight: {patient_info['Weight']} kg\n"
-    if patient_info.get('CrCl'):
-         report += f"- Estimated CrCl: {patient_info['CrCl']:.1f} ml/min\n"
+    report += f"- Age: {age} Years | Gender: {sex} | Weight: {weight} kg\n"
+    if crcl < 100:
+         report += f"- Estimated CrCl: {crcl:.1f} ml/min\n"
     
     report += f"\n🧫 CULTURE DETAILS:\n"
     report += f"- Specimen: {specimen}\n"
     report += f"- Identified Organism: {organism}\n\n"
     
-    if interactions_found:
-        report += f"⚠️ IDENTIFIED DRUG INTERACTIONS:\n"
-        for i in interactions_found: report += f"- {i}\n"
+    if interactions:
+        report += f"⚠️ DRUG INTERACTIONS:\n"
+        for i in interactions: report += f"- {i}\n"
         report += "\n"
 
-    report += f"🟢 RECOMMENDED / SAFE ANTIBIOTICS:\n"
+    report += f"🟢 RECOMMENDED ANTIBIOTICS:\n"
     for item in allowed_drugs:
-        report += f"- {item['name']} ({item['aware']}) | Class: {item['class']}\n"
-        if item.get('high_po_msg'): report += f"  > 💊 IV to PO: {item['high_po_msg']}\n"
+        report += f"- {item['name']} ({item['aware']})\n"
+        if item.get('high_po_msg'): report += f"  > 🔄 IV to PO: Possible\n"
     
     if warnings:
-        report += f"\n🟡 REQUIRES DOSE ADJUSTMENT (Renal):\n"
+        report += f"\n🟡 RENAL DOSAGE WARNINGS:\n"
         for item in warnings:
             report += f"- {item['name']}: {item['renal_note']}\n"
             
     if banned_drugs:
-        report += f"\n🔴 CONTRAINDICATED:\n"
+        report += f"\n🔴 CONTRAINDICATED (Avoid):\n"
         for b in banned_drugs: report += f"- {b}\n"
         
     report += f"\n==========================================\n"
     report += f"Developed by: Dr. Hussein Ali | Orange Lab\n"
-    report += f"Note: Clinical judgment should always supersede AI suggestions.\n"
     return report
 
 # ==========================================
@@ -150,118 +142,98 @@ st.title("🛡️ Orange Culture Analyzer")
 uploaded = st.file_uploader("Upload Culture Report Image", type=['jpg', 'png', 'jpeg'])
 
 if uploaded:
-    patient, drugs = extract_all_data(uploaded)
+    # نقرأ البيانات من الـ OCR مرة واحدة عند الرفع
+    if 'ocr_data' not in st.session_state:
+        patient_init, drugs_init = extract_all_data(uploaded)
+        st.session_state.ocr_data = (patient_init, drugs_init)
+    
+    patient, drugs_from_ocr = st.session_state.ocr_data
     col1, col2 = st.columns([1, 1.5])
     
     with col1:
-        st.subheader("👤 Patient & Report Details")
-        
+        st.subheader("👤 Patient Details")
         culture_type = st.selectbox("🧫 Specimen Type", SPECIMEN_TYPES, index=SPECIMEN_TYPES.index(patient['Specimen']) if patient['Specimen'] in SPECIMEN_TYPES else 0)
-        organism_type = st.selectbox("🦠 Identified Bacteria", BACTERIA_TYPES, index=BACTERIA_TYPES.index(patient['Organism']) if patient['Organism'] in BACTERIA_TYPES else 0)
+        organism_type = st.selectbox("🦠 Bacteria", BACTERIA_TYPES, index=BACTERIA_TYPES.index(patient['Organism']) if patient['Organism'] in BACTERIA_TYPES else 0)
         
         st.divider()
-        age = st.number_input("Age (Years)", value=int(patient['Age']))
+        # هنا المستخدم يدخل العمر الحقيقي (يعدل الـ 1 سنة لو ظهرت)
+        age = st.number_input("Age (Years)", value=int(patient['Age']), min_value=0, max_value=120)
         sex = st.selectbox("Gender", ["Female", "Male"], index=0 if patient['Sex']=="Female" else 1)
-        weight = st.number_input("Weight (kg)", min_value=10, value=70 if age >= 18 else 30)
-        patient['Weight'] = weight
-        is_pediatric = age < 18
+        weight = st.number_input("Weight (kg)", min_value=5, value=70 if age >= 18 else 30)
         
-        st.divider()
-        is_renal = st.checkbox("🚩 Evaluate Renal Function (CrCl)")
+        is_renal = st.checkbox("🚩 Evaluate Renal Function")
         cl_cr = 100
         if is_renal:
             s_creat = st.number_input("Serum Creatinine (mg/dL)", min_value=0.1, value=1.0, step=0.1)
             cl_cr = ((140 - age) * weight) / (72 * s_creat)
             if sex == "Female": cl_cr *= 0.85
-            st.metric("Creatinine Clearance (CrCl)", f"{cl_cr:.1f} ml/min")
-            patient['CrCl'] = cl_cr
+            st.metric("CrCl", f"{cl_cr:.1f} ml/min")
         
-        is_preg = False
-        if sex == "Female" and age >= 12:
-            is_preg = st.checkbox("🤰 Is Pregnant?")
-            
-        st.divider()
-        st.write("💊 **Current Medications (التفاعلات الدوائية)**")
-        current_meds = st.multiselect("اختر الأدوية التي يتناولها المريض حالياً:", COMMON_MEDS)
+        is_preg = st.checkbox("🤰 Is Pregnant?") if sex == "Female" and age >= 12 else False
+        current_meds = st.multiselect("💊 Current Medications:", COMMON_MEDS)
 
     with col2:
-        st.subheader("💊 Analysis & Clinical Decision")
-        st.caption(f"Analysis for: **{organism_type}** in **{culture_type}**")
+        st.subheader("💊 Antibiotics List (Edit/Verify)")
         
-        manual_add = st.multiselect("➕ Manually add Antibiotics (Search here):", options=sorted(list(ABX_GUIDELINES.keys())))
-        total_drugs = list(set(drugs + manual_add))
+        # الحل لمشكلة الحذف: نضع الأدوية المكتشفة كـ default في الـ multiselect
+        # المستخدم يمكنه الآن الضغط على x لحذف أي دواء خطأ
+        final_drugs = st.multiselect(
+            "تحقق من القائمة (يمكنك حذف الخطأ أو إضافة جديد):",
+            options=sorted(list(ABX_GUIDELINES.keys())),
+            default=[d for d in drugs_from_ocr if d in ABX_GUIDELINES]
+        )
         
         allowed, banned, warnings, interactions_alerts = [], [], [], []
         
-        for d in total_drugs:
-            info = ABX_GUIDELINES.get(d, {"priority": 5, "class": "Others", "note": "", "renal_limit": 0, "renal_note": "", "aware": "Access", "high_po": False, "interacts_with": []})
+        for d in final_drugs:
+            info = ABX_GUIDELINES[d]
             d_low = d.lower()
             
-            # --- 1. Drug Interactions Check ---
-            has_interaction = False
+            # Interactions
             for med in current_meds:
                 if med in info['interacts_with']:
-                    interactions_alerts.append(f"⚡ تعارض محتمل: **{d}** مع **{med}**")
-                    has_interaction = True
+                    interactions_alerts.append(f"⚡ تعارض: **{d}** مع **{med}**")
 
-            # --- 2. Logic Checks ---
-            preg_banned = ["cipro", "levo", "norflox", "tetra", "doxy", "genta", "amikacin", "tobra", "imipenem", "meropenem"]
-            if is_preg and any(x in d_low for x in preg_banned):
-                banned.append(f"💊 {d}: غير آمن أثناء الحمل.")
-            elif is_pediatric and age < 15 and any(x in d_low for x in ["cipro", "levo"]):
-                 banned.append(f"💊 {d}: يفضل تجنبه للأطفال (تأثير على الغضاريف).")
-            elif is_pediatric and age < 8 and any(x in d_low for x in ["tetra", "doxy"]):
-                banned.append(f"💊 {d}: ممنوع للأطفال (تأثير على الأسنان).")
+            # Constraints
+            p_banned = ["cipro", "levo", "oflox", "norflox", "tetra", "doxy", "genta", "amikacin", "imipenem", "meropenem"]
+            if is_preg and any(x in d_low for x in p_banned):
+                banned.append(f"💊 {d}: خطر على الجنين.")
+            elif age < 18 and any(x in d_low for x in ["cipro", "levo", "oflox", "norflox"]):
+                 banned.append(f"💊 {d}: يفضل تجنبه للأطفال (الغضاريف).")
             elif is_renal and "nitrofurantoin" in d_low and cl_cr < 30:
-                banned.append(f"💊 {d}: يفقد فعاليته ويزيد السمية في القصور الكلوي الشديد.")
+                banned.append(f"💊 {d}: ممنوع في القصور الكلوي.")
             elif is_renal and info['renal_limit'] > 0 and cl_cr <= info['renal_limit']:
                 warnings.append({"name": d, **info})
             else:
-                allowed_item = {"name": d, **info}
-                if info['high_po']:
-                    allowed_item['high_po_msg'] = "التوافر الحيوي ممتاز فموياً. فكر في التحويل (IV to PO Switch) إذا كانت حالة المريض مستقرة."
-                allowed.append(allowed_item)
+                item = {"name": d, **info}
+                if info['high_po']: item['high_po_msg'] = "Available in PO"
+                allowed.append(item)
 
-        # --- Display Results ---
+        # UI Results
         if interactions_alerts:
-            st.warning("⚡ **Drug Interactions (تداخلات دوائية محتملة)**")
-            for alert in set(interactions_alerts): st.write(alert)
+            st.warning("**Drug Interactions Detected**")
+            for a in set(interactions_alerts): st.write(a)
 
         if banned:
-            st.error("🚫 Contraindicated (موانع استخدام)")
+            st.error("🚫 Contraindicated")
             for b in banned: st.write(b)
             
         if warnings:
-            st.warning("⚖️ Requires Dose Adjustment (يتطلب تعديل جرعة بناءً على الكلى)")
-            for item in warnings:
-                with st.expander(f"⚠️ {item['name']} - {AWARE_COLORS[item['aware']]}"):
-                    st.write(f"**السبب:** {item['renal_note']}")
+            st.warning("⚖️ Renal Adjustment Needed")
+            for item in warnings: st.write(f"- {item['name']}: {item['renal_note']}")
 
         if allowed:
-            st.success("🟢 Generally Safe / Recommended (خيارات آمنة)")
+            st.success("🟢 Safe Options")
             for item in sorted(allowed, key=lambda x: x['priority']):
-                with st.expander(f"💊 {item['name']} | WHO Class: {AWARE_COLORS[item['aware']]}"):
-                    st.write(f"**العائلة:** {item['class']}")
-                    st.write(f"**ملاحظة السريرية:** {item['note']}")
-                    if item.get('high_po_msg'):
-                        st.info(f"🔄 **IV to PO:** {item['high_po_msg']}")
-        
-        # --- PDF/Text Report Export ---
-        if total_drugs:
+                with st.expander(f"{item['name']} {AWARE_COLORS[item['aware']]}"):
+                    st.write(item['note'])
+                    if item.get('high_po_msg'): st.info("🔄 يمكن التحويل من وريدي إلى فموي (IV to PO).")
+
+        # Export (بإرسال المتغيرات المحدثة يدوياً)
+        if final_drugs:
             st.divider()
-            report_text = generate_report(patient, allowed, banned, warnings, organism_type, culture_type, interactions_alerts)
-            st.download_button(
-                label="📄 Download Clinical Report (.txt)",
-                data=report_text,
-                file_name=f"OrangeLab_Report_{datetime.now().strftime('%Y%m%d')}.txt",
-                mime="text/plain",
-                use_container_width=True
-            )
+            full_report = generate_report(age, sex, weight, cl_cr, allowed, banned, warnings, organism_type, culture_type, interactions_alerts)
+            st.download_button("📄 Download Updated Report", full_report, f"Orange_Report_{datetime.now().day}.txt", use_container_width=True)
 
 st.divider()
-st.markdown("""
-<div style="text-align: center; color: gray; font-size: 0.8em;">
-    Developed by: Dr Hussein Ali , Orange Lab <br>
-    WHO AWaRe Classification: 🟢 Access (First choice) | 🟡 Watch (Use with caution) | 🔴 Reserve (Last resort)
-</div>
-""", unsafe_allow_html=True)
+st.markdown('<div style="text-align: center; color: gray;">Developed by: Dr Hussein Ali, Orange Lab</div>', unsafe_allow_html=True)
