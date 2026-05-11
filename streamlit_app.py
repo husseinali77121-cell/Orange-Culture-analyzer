@@ -211,16 +211,14 @@ if uploaded:
             st.download_button("📄 Download Final Report", full_report, f"Orange_Report_{datetime.now().strftime('%H%M%S')}.txt", use_container_width=True)
 
 st.divider()
-# --- Developer Info & WHO AWaRe Classification ---
+
+# --- الجزء الذي تم تعديله ليتطابق مع الصورة تماماً ---
 st.markdown("""
-<div style="text-align: center; background-color: #f0f2f6; padding: 20px; border-radius: 10px;">
-    <p style="margin-bottom: 5px;"><strong>Developed by: Dr Hussein Ali, Orange Lab</strong></p>
-    <hr style="width: 50%; margin: 10px auto;">
-    <p style="font-size: 0.9em; color: #555;"><strong>🌍 WHO AWaRe Classification (معنى تصنيف منظمة الصحة العالمية):</strong></p>
-    <div style="display: flex; justify-content: center; gap: 20px; font-size: 0.85em;">
-        <span>🟢 <strong>Access:</strong> الخيار الأول؛ فعالة، آمنة، وأقل عرضة للتسبب في مقاومة البكتيريا.</span>
-        <span>🟡 <strong>Watch:</strong> مضادات أوسع طيفاً؛ يجب استخدامها بحذر لحالات محددة لتجنب المقاومة.</span>
-        <span>🔴 <strong>Reserve:</strong> مضادات الملاذ الأخير؛ تُستخدم فقط في حالات العدوى المستعصية والمقاومة للأدوية.</span>
-    </div>
+<div style="text-align: center;">
+    <strong>Developed by: Dr Hussein Ali, Orange Lab</strong><br><br>
+    WHO AWaRe Classification: 🟢<br>
+    Access (First choice) | 🟡 Watch<br>
+    (Use with caution) | 🔴 Reserve<br>
+    (Last resort)
 </div>
 """, unsafe_allow_html=True)
