@@ -1068,7 +1068,6 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
     r.append("   ORANGE LAB — CLINICAL DECISION REPORT")
     r.append(SEP)
     r.append(f"  Date      : {now}")
-    r.append(f"  Guidelines: EUCAST 2026 | CLSI M100 2026 | IDSA AMR 2025 | Egypt National")
     r.append(SEP)
 
     r.append("\nPATIENT DETAILS:")
@@ -1122,11 +1121,12 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
             r.append(f"  WHO AWaRe : {item['aware']}")
             r.append(f"  Class     : {item['class']}")
             r.append(f"  Route     : {'Oral (PO)' if item['high_po'] else 'IV only'}")
-            r.append(f"  Note      : {item['note']}")
-            # عرض الـ specimen-specific note إن وجدت
+            # ✅ دمج specimen note مع سطر الـ Note
             spec_note = item.get("specimen_notes", {}).get(specimen, "")
             if spec_note:
-                r.append(f"  ({specimen}) : {spec_note}")
+                r.append(f"  Note      : {item['note']}  |  [{specimen}]: {spec_note}")
+            else:
+                r.append(f"  Note      : {item['note']}")
             if is_renal:
                 r.append(f"  Renal     : {item['renal_note']}")
             if is_preg and item["preg_status"] == "Warn":
@@ -1258,7 +1258,8 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
     r.append("  هذا التقرير مساعد للقرار الطبي وليس بديلاً عنه.")
     r.append("  القرار النهائي في الوصف يعود للطبيب المعالج.")
     r.append(SEP)
-    r.append("  WHO AWaRe Note: 🟢 Access = First choice | 🟡 Watch = Caution | 🔴 Reserve = Last resort")
+    r.append("  Guidelines : EUCAST 2026 | CLSI M100 2026 | IDSA AMR 2025 | Egypt National")
+    r.append("  WHO AWaRe  : 🟢 Access = First choice | 🟡 Watch = Caution | 🔴 Reserve = Last resort")
     r.append(SEP)
     r.append("  Developed by: Dr. Hussein Ali | Orange Lab")
     r.append(SEP)
