@@ -526,51 +526,208 @@ ABX_GUIDELINES = {
 # 🦠 Organism → First-line / Avoid mapping
 # ==========================================
 ORGANISM_PROFILE = {
+    # ── E. coli ───────────────────────────────────────────────
+    # Guidelines: EUCAST 2024 / IDSA UTI Guidelines 2023
+    # Norfloxacin: UTI-only fluoroquinolone — 2nd line (EUCAST)
+    # Cefuroxime sodium: IV option when oral not possible
+    # Ertapenem: reserve for ESBL-producing strains only
     "E. coli": {
-        "first_line": ["Nitrofurantoin","Fosfomycin",
-                       "Trimethoprim/Sulfamethoxazole","Amoxicillin + Clavulanic acid"],
-        "second_line": ["Cefuroxime","Cefixime","Ciprofloxacin"],
+        "first_line": [
+            "Nitrofurantoin",           # IDSA: 1st line uncomplicated UTI
+            "Fosfomycin",               # IDSA: 1st line single-dose UTI
+            "Trimethoprim/Sulfamethoxazole",  # IDSA: 1st line if local resistance <20%
+            "Amoxicillin + Clavulanic acid",  # EAU: 1st line if sensitive
+        ],
+        "second_line": [
+            "Cefuroxime",               # EAU: oral 2nd line
+            "Cefuroxime sodium",        # EAU: IV equivalent when oral impossible
+            "Cefixime",                 # EAU: oral 3rd-gen option
+            "Norfloxacin",              # EUCAST: UTI-specific FQ, use only for UTI
+            "Ciprofloxacin",            # IDSA: 2nd line — preserve for complicated UTI
+        ],
+        "third_line": [
+            "Ertapenem",                # IDSA/EAU: reserve for ESBL E. coli only
+            "Meropenem",                # last resort — MDR only
+        ],
         "avoid": [],
+        "urine_note": (
+            "Norfloxacin: مخصص للمسالك البولية فقط (لا يصل لتركيز علاجي خارج البول).\n"
+            "Ertapenem: يُحفظ للـ ESBL-producing E. coli فقط — لا يُستخدم روتينياً."
+        ),
         "note": "🔬 الأكثر شيوعاً في مزارع البول.",
     },
+
+    # ── Klebsiella spp. ───────────────────────────────────────
+    # Guidelines: EUCAST 2024 / EAU Urological Infections 2023
+    # Norfloxacin: 2nd line UTI if sensitive (EUCAST)
+    # Cefuroxime sodium: IV alternative (EAU)
+    # Ertapenem: ESBL-producing Klebsiella — drug of choice (IDSA)
     "Klebsiella spp.": {
-        "first_line": ["Amoxicillin + Clavulanic acid","Cefuroxime","Cefixime","Cefuroxime sodium"],
-        "second_line": ["Piperacillin + Tazobactam","Ceftriaxone","Meropenem","Norfloxacin","Ertapenem"],
-        "avoid": ["Ampicillin"],
-        "note": "🔬 مقاومة لبعض البيتا-لاكتام بطبيعتها.",
+        "first_line": [
+            "Amoxicillin + Clavulanic acid",  # EAU: 1st line if sensitive
+            "Cefuroxime",                      # EAU: oral option
+            "Cefixime",                        # EAU: oral 3rd-gen
+        ],
+        "second_line": [
+            "Cefuroxime sodium",   # IV when oral not possible
+            "Norfloxacin",         # UTI-only — 2nd line if sensitive (EUCAST)
+            "Ciprofloxacin",       # EAU: 2nd line
+            "Piperacillin + Tazobactam",  # complicated UTI / pyelonephritis
+            "Ceftriaxone",         # IV — pyelonephritis
+        ],
+        "third_line": [
+            "Ertapenem",           # IDSA: drug of choice for ESBL Klebsiella
+            "Meropenem",           # MDR / carbapenem-sensitive KPC
+        ],
+        "avoid": ["Ampicillin"],   # intrinsic resistance
+        "urine_note": (
+            "Ertapenem: الخيار الأول لـ ESBL-producing Klebsiella\n"
+            "  وفق IDSA 2023 — يفضل على Meropenem للحفاظ على الكاربابينيم.\n"
+            "Norfloxacin: مخصص للمسالك فقط — لا يُستخدم في الحالات الشديدة."
+        ),
+        "note": "🔬 مقاومة لبعض البيتا-لاكتام بطبيعتها — تحقق من ESBL.",
     },
+
+    # ── Pseudomonas aeruginosa ────────────────────────────────
+    # Guidelines: EUCAST / EAU / ATS-IDSA
+    # Norfloxacin: لا يغطي Pseudomonas بتركيز كافٍ — تجنب
+    # Cefuroxime sodium: لا نشاط ضد Pseudomonas — تجنب
+    # Ertapenem: لا يغطي Pseudomonas — تجنب قطعياً
     "Pseudomonas aeruginosa": {
-        "first_line": ["Piperacillin + Tazobactam","Ceftazidime","Ciprofloxacin"],
-        "second_line": ["Cefepime","Meropenem","Amikacin"],
-        "avoid": ["Nitrofurantoin","Fosfomycin","Trimethoprim/Sulfamethoxazole",
-                  "Cephalexin","Cefadroxil","Cefaclor"],
-        "note": "🔬 جرثومة انتهازية تحتاج مضادات متخصصة.",
+        "first_line": [
+            "Piperacillin + Tazobactam",  # EAU/IDSA: 1st line anti-pseudomonal
+            "Ceftazidime",                 # EUCAST: 1st line anti-pseudomonal
+            "Ciprofloxacin",              # EUCAST: الفلوروكينولون الوحيد الفعال
+        ],
+        "second_line": [
+            "Cefepime",    # 4th-gen — anti-pseudomonal
+            "Meropenem",   # anti-pseudomonal carbapenem
+            "Amikacin",    # aminoglycoside — combination therapy
+        ],
+        "third_line": [],
+        "avoid": [
+            "Nitrofurantoin",
+            "Fosfomycin",
+            "Trimethoprim/Sulfamethoxazole",
+            "Cephalexin","Cefadroxil","Cefaclor",
+            "Norfloxacin",       # لا يصل لـ MIC كافٍ ضد Pseudomonas
+            "Cefuroxime sodium", # لا نشاط ضد Pseudomonas
+            "Ertapenem",         # لا يغطي Pseudomonas — خطر فشل علاجي
+        ],
+        "urine_note": (
+            "Ertapenem: ممنوع لـ Pseudomonas — لا نشاط (EUCAST/EAU).\n"
+            "Norfloxacin: تركيز غير كافٍ ضد Pseudomonas.\n"
+            "Ciprofloxacin هو الفلوروكينولون الوحيد الفعال ضد Pseudomonas."
+        ),
+        "note": "🔬 جرثومة انتهازية — تحتاج مضادات anti-pseudomonal متخصصة.",
     },
+
+    # ── Staphylococcus aureus ─────────────────────────────────
+    # Guidelines: EUCAST / IDSA SSTI Guidelines
+    # Norfloxacin: نشاط محدود ضد S. aureus في البول — ليس خياراً مفضلاً
+    # Cefuroxime sodium: فعال IV
+    # Ertapenem: فعال لكن لا يُستخدم روتينياً لـ MSSA
     "Staphylococcus aureus": {
-        "first_line": ["Cephalexin","Cefadroxil","Amoxicillin + Clavulanic acid"],
-        "second_line": ["Azithromycin","Clarithromycin","Doxycycline"],
+        "first_line": [
+            "Cephalexin",                    # IDSA: 1st line MSSA oral
+            "Cefadroxil",                    # IDSA: 1st line MSSA oral
+            "Amoxicillin + Clavulanic acid", # EAU: 1st line
+        ],
+        "second_line": [
+            "Cefuroxime sodium",  # IV — عند الحاجة لحقن
+            "Azithromycin",
+            "Doxycycline",
+        ],
+        "third_line": [],
         "avoid": [],
-        "note": "🔬 تحقق من MRSA - قد يحتاج Vancomycin.",
+        "urine_note": (
+            "Norfloxacin: نشاط ضعيف ضد S. aureus في مزارع البول — ليس خياراً مثالياً.\n"
+            "تحقق من MRSA — إذا MRSA: Vancomycin أو Linezolid فقط."
+        ),
+        "note": "🔬 تحقق من MRSA — قد يحتاج Vancomycin.",
     },
+
+    # ── MRSA ──────────────────────────────────────────────────
+    # Guidelines: IDSA MRSA Guidelines 2011 (updated 2023)
     "MRSA": {
         "first_line": ["Vancomycin","Linezolid"],
         "second_line": ["Trimethoprim/Sulfamethoxazole","Doxycycline"],
-        "avoid": ["Cephalexin","Cefadroxil","Cefaclor","Cefuroxime","Ceftriaxone",
-                  "Amoxicillin + Clavulanic acid","Ampicillin/Sulbactam",
-                  "Piperacillin + Tazobactam"],
-        "note": "🔴 مقاوم لجميع البيتا-لاكتام!",
+        "third_line": [],
+        "avoid": [
+            "Cephalexin","Cefadroxil","Cefaclor",
+            "Cefuroxime","Cefuroxime sodium","Ceftriaxone",
+            "Amoxicillin + Clavulanic acid","Ampicillin/Sulbactam",
+            "Piperacillin + Tazobactam",
+            "Ertapenem",  # لا نشاط ضد MRSA
+        ],
+        "urine_note": (
+            "جميع البيتا-لاكتام بما فيها Cefuroxime sodium وErtapenem\n"
+            "  لا تعمل على MRSA (mecA gene — PBP2a resistance)."
+        ),
+        "note": "🔴 مقاوم لجميع البيتا-لاكتام! — Vancomycin أو Linezolid فقط.",
     },
+
+    # ── Proteus mirabilis ─────────────────────────────────────
+    # Guidelines: EAU Urological Infections 2023
+    # Norfloxacin: 2nd line UTI إذا حساس (EUCAST)
+    # Cefuroxime sodium: فعال IV
+    # Ertapenem: reserve للحالات المقاومة
     "Proteus mirabilis": {
-        "first_line": ["Amoxicillin + Clavulanic acid","Cefuroxime","Cefixime"],
-        "second_line": ["Ciprofloxacin","Trimethoprim/Sulfamethoxazole"],
-        "avoid": ["Nitrofurantoin","Tetracyclines"],
-        "note": "🔬 مقاوم طبيعياً لـ Nitrofurantoin.",
+        "first_line": [
+            "Amoxicillin + Clavulanic acid",  # EAU: 1st line
+            "Cefuroxime",                      # EAU: oral
+            "Cefixime",                        # EAU: oral 3rd-gen
+        ],
+        "second_line": [
+            "Cefuroxime sodium",   # IV equivalent
+            "Norfloxacin",         # EUCAST: UTI 2nd line إذا حساس
+            "Ciprofloxacin",       # EAU: 2nd line
+            "Trimethoprim/Sulfamethoxazole",
+        ],
+        "third_line": [
+            "Ertapenem",  # complicated UTI / MDR Proteus
+        ],
+        "avoid": [
+            "Nitrofurantoin",   # intrinsic resistance — EUCAST
+            "Tetracyclines",    # intrinsic resistance
+        ],
+        "urine_note": (
+            "Nitrofurantoin: مقاوم طبيعياً لـ Proteus (intrinsic) — EUCAST.\n"
+            "Norfloxacin: فعال في UTI فقط — لا يُستخدم في bacteremia أو pyelonephritis."
+        ),
+        "note": "🔬 مقاوم طبيعياً لـ Nitrofurantoin — لا تستخدمه أبداً.",
     },
+
+    # ── Enterococcus faecalis ─────────────────────────────────
+    # Guidelines: EUCAST / EAU 2023
+    # Norfloxacin: نشاط متغير — ليس خياراً موثوقاً
+    # Cefuroxime sodium: لا نشاط ضد Enterococcus — تجنب
+    # Ertapenem: لا نشاط ضد Enterococcus — تجنب
     "Enterococcus faecalis": {
-        "first_line": ["Amoxicillin + Clavulanic acid","Fosfomycin","Nitrofurantoin"],
-        "second_line": ["Ampicillin/Sulbactam","Vancomycin","Linezolid"],
-        "avoid": ["Cephalosporins (كل الجيل)","Trimethoprim/Sulfamethoxazole"],
-        "note": "🔬 مقاوم طبيعياً لجميع السيفالوسبورين.",
+        "first_line": [
+            "Amoxicillin + Clavulanic acid",  # EUCAST/EAU: 1st line
+            "Fosfomycin",                      # EAU: UTI 1st line
+            "Nitrofurantoin",                  # EAU: UTI 1st line
+        ],
+        "second_line": [
+            "Ampicillin/Sulbactam",  # IV
+            "Vancomycin",            # VRE suspected
+            "Linezolid",             # VRE confirmed
+        ],
+        "third_line": [],
+        "avoid": [
+            "Cephalosporins (كل الجيل)",        # intrinsic resistance — EUCAST
+            "Trimethoprim/Sulfamethoxazole",     # intrinsic resistance
+            "Cefuroxime sodium",                 # cephalosporin — لا نشاط
+            "Ertapenem",                         # لا نشاط ضد Enterococcus — EUCAST
+            "Norfloxacin",                       # نشاط غير موثوق
+        ],
+        "urine_note": (
+            "Ertapenem وCefuroxime sodium: لا نشاط ضد Enterococcus (EUCAST).\n"
+            "Norfloxacin: نشاط متغير وغير موثوق — تجنب.\n"
+            "جميع السيفالوسبورين مقاومة طبيعياً لـ Enterococcus."
+        ),
+        "note": "🔬 مقاوم طبيعياً للسيفالوسبورين وErtapenem — Amoxicillin هو الأساس.",
     },
 }
 
@@ -928,6 +1085,7 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
     r.append("  هذا التقرير مساعد للقرار الطبي وليس بديلاً عنه.")
     r.append("  القرار النهائي في الوصف يعود للطبيب المعالج.")
     r.append(SEP)
+    # >>> إضافة سطر WHO AWaRe note هنا <<<
     r.append("  WHO AWaRe Note: 🟢 Access = First choice | 🟡 Watch = Caution | 🔴 Reserve = Last resort")
     r.append(SEP)
     r.append("  Developed by: Dr. Hussein Ali | Orange Lab")
