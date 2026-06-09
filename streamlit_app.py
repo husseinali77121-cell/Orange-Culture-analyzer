@@ -655,136 +655,281 @@ def extract_all_data(uploaded_file):
 
 # ==========================================
 # 📄 Report Generator — full detail
+# banned is now a list of dicts:
+#   {"name", "reason_short", "reason_detail", "category"}
+# category: "resistant"|"renal"|"hepatic"|"pregnancy"|"child"|"organism"|"other"
 # ==========================================
+WHO_AWARE_EXPLANATION = """
+WHO AWaRe CLASSIFICATION — EXPLANATION:
+  Access  (🟢) — First-choice antibiotics for common infections.
+                  Low resistance potential. Should be widely available
+                  and affordable. Use these FIRST whenever possible.
+                  Examples: Amoxicillin, Nitrofurantoin, TMP/SMX.
+
+  Watch   (🟡) — Higher resistance potential. Use only when Access
+                  antibiotics are not suitable (allergy, resistance,
+                  culture result, severity). Require closer monitoring.
+                  Examples: Ciprofloxacin, Ceftriaxone, Levofloxacin.
+
+  Reserve (🔴) — Last-resort antibiotics. Use ONLY for confirmed or
+                  suspected infections with multi-drug resistant (MDR)
+                  organisms when all other options have failed.
+                  Overuse threatens their effectiveness globally.
+                  Examples: Linezolid, Colistin, Tigecycline.
+
+  Key rule: Always prefer the lowest AWaRe category that is effective
+  for the specific culture & patient to minimise resistance development.
+"""
+
+RENAL_BAN_REASONS = {
+    "nitrofurantoin": (
+        "Nitrofurantoin يحتاج وظيفة كلى سليمة ليتركز في البول.\n"
+        "  عند CrCl < 30 مل/د:\n"
+        "  - لا يصل لتركيز علاجي كافٍ في البول → لا يقتل الجرثومة.\n"
+        "  - يتراكم في الدم → خطر سُمية رئوية وعصبية.\n"
+        "  السبب الطبي: الدواء يُطرح كلياً عبر الترشيح الكبيبي."
+    ),
+}
+
+CHILD_BAN_REASONS = {
+    "fluoroquinolone": (
+        "الفلوروكينولونات (Cipro/Levo/Oflox/Norflox) تؤثر على غضاريف\n"
+        "  النمو (cartilage) في الأطفال والمراهقين < 18 سنة.\n"
+        "  أثبتت الدراسات الحيوانية تلف مفصلي دائم.\n"
+        "  تُستخدم فقط عند انعدام البدائل الأخرى تماماً."
+    ),
+    "tetracycline": (
+        "Doxycycline والتتراسيكلينات تترسب في العظام والأسنان\n"
+        "  النامية → تلوين دائم للأسنان وتثبيط نمو العظام.\n"
+        "  ممنوعة < 8 سنوات بشكل مطلق، وتُتجنب حتى 18 سنة."
+    ),
+}
+
+
 def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
                     allowed, warned, banned, preg_warn_items,
                     organism, specimen, interactions, sir_map):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
-    r   = []
+    SEP  = "=" * 50
+    SEP2 = "-" * 50
+    r    = []
 
-    r.append("==========================================")
-    r.append(" ORANGE LAB — CLINICAL DECISION REPORT")
-    r.append("==========================================")
-    r.append(f"Date: {now}\n")
+    # ── Header ───────────────────────────────────────
+    r.append(SEP)
+    r.append("   ORANGE LAB — CLINICAL DECISION REPORT")
+    r.append(SEP)
+    r.append(f"  Date: {now}")
+    r.append(f"  Developed by: Dr. Hussein Ali | Orange Lab")
+    r.append(SEP)
 
-    # Patient
-    r.append("PATIENT DETAILS:")
-    r.append(f"  Age    : {age} years")
-    r.append(f"  Gender : {sex}")
-    r.append(f"  Weight : {weight} kg")
-    r.append(f"  Renal  : {'IMPAIRED — CrCl ' + f'{cl_cr:.1f} ml/min' if is_renal else 'Normal'}")
-    r.append(f"  Hepatic: {'IMPAIRED' if is_hepatic else 'Normal'}")
+    # ── Patient ───────────────────────────────────────
+    r.append("\nPATIENT DETAILS:")
+    r.append(f"  Age     : {age} years")
+    r.append(f"  Gender  : {sex}")
+    r.append(f"  Weight  : {weight} kg")
+    renal_str = (f"IMPAIRED  |  CrCl = {cl_cr:.1f} ml/min  "
+                 f"({'Mild' if cl_cr>=60 else 'Moderate' if cl_cr>=30 else 'Severe'})")
+    r.append(f"  Renal   : {renal_str if is_renal else 'Normal'}")
+    r.append(f"  Hepatic : {'IMPAIRED' if is_hepatic else 'Normal'}")
     if sex == "Female":
         r.append(f"  Pregnancy: {'PREGNANT' if is_preg else 'Not pregnant'}")
 
-    # Culture
+    # ── Culture ───────────────────────────────────────
     r.append(f"\nCULTURE:")
     r.append(f"  Specimen : {specimen}")
     r.append(f"  Organism : {organism}")
     if organism in ORGANISM_PROFILE:
-        r.append(f"  Note     : {ORGANISM_PROFILE[organism]['note']}")
+        op = ORGANISM_PROFILE[organism]
+        r.append(f"  Note     : {op['note']}")
+        r.append(f"  First-line (guidelines): {', '.join(op['first_line'])}")
+        if op["avoid"]:
+            r.append(f"  Avoid (intrinsic resistance): {', '.join(op['avoid'])}")
 
-    # S/I/R table
+    # ── S/I/R ─────────────────────────────────────────
     if sir_map:
-        r.append("\nSENSITIVITY RESULTS (from image):")
-        sensitive  = [k for k,v in sir_map.items() if v == "S"]
-        resistant  = [k for k,v in sir_map.items() if v == "R"]
-        interm     = [k for k,v in sir_map.items() if v == "I"]
-        if sensitive:
-            r.append("  Sensitive (S):")
-            for d in sensitive: r.append(f"    + {d}")
-        if interm:
-            r.append("  Intermediate (I):")
-            for d in interm: r.append(f"    ~ {d}")
-        if resistant:
-            r.append("  Resistant (R):")
-            for d in resistant: r.append(f"    x {d}")
+        r.append(f"\nSENSITIVITY RESULTS (extracted from image):")
+        r.append(f"  {'Antibiotic':<35} Result")
+        r.append(f"  {'-'*35} ------")
+        for drug, res in sir_map.items():
+            icon = "Sensitive (S)" if res=="S" else ("Resistant (R)" if res=="R" else "Intermediate (I)")
+            r.append(f"  {drug:<35} {icon}")
 
-    # Drug interactions / hepatic alerts
-    non_preg = [i for i in interactions if "تحذير حمل" not in i and "🤰" not in i]
+    # ── Interactions ──────────────────────────────────
+    non_preg = [i for i in interactions if "🤰" not in i]
     if non_preg:
-        r.append("\nDRUG INTERACTIONS / HEPATIC WARNINGS:")
+        r.append(f"\nDRUG INTERACTIONS / WARNINGS:")
         for i in sorted(set(non_preg)):
             r.append(f"  ! {i}")
 
-    # ── Recommended ──────────────────────────────
-    r.append("\n" + "="*42)
-    r.append("RECOMMENDED ANTIBIOTICS:")
-    r.append("="*42)
+    # ══════════════════════════════════════════════════
+    # ── RECOMMENDED ───────────────────────────────────
+    # ══════════════════════════════════════════════════
+    r.append(f"\n{SEP}")
+    r.append("  RECOMMENDED ANTIBIOTICS")
+    r.append(SEP)
     if allowed:
         for item in sorted(allowed, key=lambda x: x["priority"]):
-            sir_tag = f" [{sir_map.get(item['name'],'?')}]" if sir_map else ""
-            r.append(f"\n  [{item['aware']}] {item['name']}{sir_tag}")
-            r.append(f"  Class : {item['class']}")
-            r.append(f"  Route : {'Oral (PO)' if item['high_po'] else 'IV only'}")
-            r.append(f"  Note  : {item['note']}")
-            if is_renal and item['renal_note'] not in ("🟢 آمن كلوياً.","🟢 آمن كلوياً نسبياً."):
-                r.append(f"  Renal : {item['renal_note']}")
+            sir_tag  = f"  [Culture: {sir_map.get(item['name'],'?')}]" if sir_map else ""
+            preg_tag = "  [Pregnancy: Use with caution]" if (is_preg and item["preg_status"]=="Warn") else ""
+            r.append(f"\n  {item['name']}{sir_tag}{preg_tag}")
+            r.append(f"  {SEP2}")
+            r.append(f"  WHO AWaRe : {item['aware']}")
+            r.append(f"  Class     : {item['class']}")
+            r.append(f"  Route     : {'Oral (PO)' if item['high_po'] else 'IV only'}")
+            r.append(f"  Note      : {item['note']}")
+            r.append(f"  Renal     : {item['renal_note']}")
+            if is_preg and item["preg_status"] == "Warn":
+                r.append(f"  Pregnancy : {item['preg_note'].splitlines()[0]}")
     else:
         r.append("  No recommended options after applying all restrictions.")
 
-    # ── Dose Adjustment ───────────────────────────
+    # ══════════════════════════════════════════════════
+    # ── DOSE ADJUSTMENT (Renal) ───────────────────────
+    # ══════════════════════════════════════════════════
     if warned:
-        r.append("\n" + "="*42)
-        r.append("DOSE ADJUSTMENT REQUIRED (use with caution):")
-        r.append("="*42)
+        r.append(f"\n{SEP}")
+        r.append("  DOSE ADJUSTMENT REQUIRED")
+        r.append(f"  (Antibiotic is still effective but needs modified dosing)")
+        r.append(SEP)
+        r.append(f"\n  WHY dose adjustment is needed in renal impairment:")
+        r.append(f"  Most antibiotics are eliminated by the kidneys.")
+        r.append(f"  When kidney function is reduced (low CrCl), the drug")
+        r.append(f"  accumulates in the blood → risk of toxicity.")
+        r.append(f"  Reducing the dose or extending the interval maintains")
+        r.append(f"  efficacy while avoiding toxic accumulation.")
+        r.append(f"  Patient CrCl = {cl_cr:.1f} ml/min\n")
         for item in warned:
-            sir_tag = f" [{sir_map.get(item['name'],'?')}]" if sir_map else ""
-            r.append(f"\n  {item['name']}{sir_tag}")
-            r.append(f"  {item['renal_note']}")
+            sir_tag = f"  [Culture: {sir_map.get(item['name'],'?')}]" if sir_map else ""
+            r.append(f"  {item['name']}{sir_tag}")
+            r.append(f"  {SEP2}")
+            r.append(f"  WHO AWaRe : {item['aware']}")
+            r.append(f"  Class     : {item['class']}")
+            r.append(f"  Renal note: {item['renal_note']}")
+            r.append(f"  Limit CrCl: Dose adjustment required when CrCl <= {item['renal_limit']} ml/min")
+            r.append("")
 
-    # ── Pregnancy WARN ────────────────────────────
+    # ══════════════════════════════════════════════════
+    # ── PREGNANCY WARN ────────────────────────────────
+    # ══════════════════════════════════════════════════
     if is_preg and preg_warn_items:
-        r.append("\n" + "="*42)
-        r.append("PREGNANCY — USE WITH CAUTION:")
-        r.append("(القرار النهائي للطبيب المعالج حصراً)")
-        r.append("="*42)
-        r.append("")
-        r.append("  الأدوية التالية ليست محظورة تلقائياً،")
-        r.append("  لكنها تحتاج تقييم طبي دقيق في الحمل.")
-        r.append("  بعضها أُعيد تقييمه في الأدبيات الحديثة")
-        r.append("  (ACCP Journal 2025 وغيرها).")
-        r.append("")
+        r.append(f"\n{SEP}")
+        r.append("  PREGNANCY — USE WITH CAUTION")
+        r.append(f"  (Final decision belongs to the treating physician)")
+        r.append(SEP)
+        r.append("  These antibiotics are NOT automatically banned.")
+        r.append("  They require careful medical evaluation.")
+        r.append("  Some have been re-evaluated in recent literature")
+        r.append("  (ACCP Journal 2025 and others).")
+        r.append("  The detailed reason for caution is listed below.\n")
         for item in preg_warn_items:
-            r.append(f"  ── {item['name']} ──")
-            for line in item['preg_note'].splitlines():
+            r.append(f"  {item['name']}")
+            r.append(f"  {SEP2}")
+            for line in item["preg_note"].splitlines():
                 r.append(f"  {line}")
             r.append("")
 
-    # ── Contraindicated ───────────────────────────
+    # ══════════════════════════════════════════════════
+    # ── CONTRAINDICATED ───────────────────────────────
+    # ══════════════════════════════════════════════════
     if banned:
-        r.append("="*42)
-        r.append("CONTRAINDICATED:")
-        r.append("="*42)
+        r.append(f"\n{SEP}")
+        r.append("  CONTRAINDICATED / INEFFECTIVE")
+        r.append(SEP)
 
-        resist = [b for b in banned if "مقاوم" in b]
-        preg_b = [b for b in banned if "ممنوع في الحمل" in b or "Category D" in b
-                  or "ototoxicity" in b or "فوليك" in b or "kernicterus" in b
-                  or "تشوهات" in b or "بيانات غير" in b]
-        child  = [b for b in banned if "18 سنة" in b]
-        other  = [b for b in banned
-                  if b not in resist and b not in preg_b and b not in child]
+        # Group by category
+        cat_resist   = [b for b in banned if b["category"] == "resistant"]
+        cat_renal    = [b for b in banned if b["category"] == "renal"]
+        cat_preg     = [b for b in banned if b["category"] == "pregnancy"]
+        cat_child    = [b for b in banned if b["category"] == "child"]
+        cat_organism = [b for b in banned if b["category"] == "organism"]
+        cat_other    = [b for b in banned if b["category"] == "other"]
 
-        if resist:
-            r.append("\n  [Resistant in Culture]")
-            for b in resist: r.append(f"    x {b}")
-        if preg_b:
-            r.append("\n  [Contraindicated in Pregnancy]")
-            for b in preg_b: r.append(f"    x {b}")
-        if child:
-            r.append("\n  [Not suitable < 18 years]")
-            for b in child: r.append(f"    x {b}")
-        if other:
-            r.append("\n  [Other Contraindications]")
-            for b in other: r.append(f"    x {b}")
+        if cat_resist:
+            r.append(f"\n  [A] RESISTANT IN CULTURE:")
+            r.append(f"  Reason: The laboratory confirmed this antibiotic")
+            r.append(f"  does NOT inhibit the organism's growth (MIC too high).")
+            r.append(f"  Using it will lead to treatment failure.\n")
+            for b in cat_resist:
+                r.append(f"    x {b['name']}")
+                r.append(f"      {b['reason_detail']}\n")
 
-    # Footer
-    r.append("\n" + "="*42)
-    r.append("DISCLAIMER:")
+        if cat_renal:
+            r.append(f"\n  [B] CONTRAINDICATED IN RENAL IMPAIRMENT:")
+            r.append(f"  Patient CrCl = {cl_cr:.1f} ml/min\n")
+            for b in cat_renal:
+                r.append(f"    x {b['name']}")
+                r.append(f"      Short reason : {b['reason_short']}")
+                # Detailed reason from RENAL_BAN_REASONS if available
+                detail_key = b["name"].lower().replace(" ","")
+                for k, v in RENAL_BAN_REASONS.items():
+                    if k in detail_key:
+                        r.append(f"      Detail       :")
+                        for ln in v.splitlines():
+                            r.append(f"        {ln}")
+                        break
+                else:
+                    r.append(f"      Detail       : {b['reason_detail']}")
+                r.append("")
+
+        if cat_preg:
+            r.append(f"\n  [C] CONTRAINDICATED IN PREGNANCY:")
+            r.append(f"  The following are banned due to confirmed fetal risk.\n")
+            for b in cat_preg:
+                r.append(f"    x {b['name']}")
+                r.append(f"      Short reason : {b['reason_short']}")
+                r.append(f"      Full detail  :")
+                for ln in b["reason_detail"].splitlines():
+                    r.append(f"        {ln}")
+                r.append("")
+
+        if cat_child:
+            r.append(f"\n  [D] NOT SUITABLE FOR PATIENTS < 18 YEARS:")
+            r.append(f"  Patient age = {age} years\n")
+            for b in cat_child:
+                r.append(f"    x {b['name']}")
+                r.append(f"      Short reason : {b['reason_short']}")
+                # Detailed reason from CHILD_BAN_REASONS
+                cls = ABX_GUIDELINES.get(b["name"],{}).get("class","").lower()
+                if "fluoroquinolone" in cls:
+                    for ln in CHILD_BAN_REASONS["fluoroquinolone"].splitlines():
+                        r.append(f"        {ln}")
+                elif "tetracycline" in cls:
+                    for ln in CHILD_BAN_REASONS["tetracycline"].splitlines():
+                        r.append(f"        {ln}")
+                else:
+                    r.append(f"        {b['reason_detail']}")
+                r.append("")
+
+        if cat_organism:
+            r.append(f"\n  [E] INEFFECTIVE FOR THIS ORGANISM ({organism}):")
+            r.append(f"  These antibiotics have intrinsic (natural) resistance")
+            r.append(f"  to this organism regardless of culture sensitivity.\n")
+            for b in cat_organism:
+                r.append(f"    x {b['name']}")
+                r.append(f"      {b['reason_detail']}\n")
+
+        if cat_other:
+            r.append(f"\n  [F] OTHER CONTRAINDICATIONS:")
+            for b in cat_other:
+                r.append(f"    x {b['name']}")
+                r.append(f"      {b['reason_detail']}\n")
+
+    # ══════════════════════════════════════════════════
+    # ── WHO AWaRe EXPLANATION ─────────────────────────
+    # ══════════════════════════════════════════════════
+    r.append(f"\n{SEP}")
+    r.append("  WHO AWaRe CLASSIFICATION — REFERENCE GUIDE")
+    r.append(SEP)
+    r.append(WHO_AWARE_EXPLANATION)
+
+    # ── Footer ────────────────────────────────────────
+    r.append(SEP)
+    r.append("  DISCLAIMER:")
     r.append("  هذا التقرير مساعد للقرار الطبي وليس بديلاً عنه.")
     r.append("  القرار النهائي في الوصف يعود للطبيب المعالج.")
-    r.append("="*42)
-    r.append("Developed by: Dr. Hussein Ali | Orange Lab")
+    r.append(SEP)
+    r.append("  Developed by: Dr. Hussein Ali | Orange Lab")
+    r.append(SEP)
     return "\n".join(r)
 
 
@@ -893,7 +1038,15 @@ if uploaded:
 
             # ① Resistant in culture
             if sir_map.get(d) == "R":
-                banned.append(f"💊 {d}: مقاوم (R) في نتيجة المزرعة.")
+                banned.append({
+                    "name": d, "category": "resistant",
+                    "reason_short": "مقاوم (R) في نتيجة المزرعة.",
+                    "reason_detail": (
+                        f"المزرعة أثبتت أن {d} لا يثبط نمو الجرثومة.\n"
+                        f"        الـ MIC أعلى من الحد العلاجي.\n"
+                        f"        الاستخدام سيؤدي لفشل علاجي مؤكد."
+                    ),
+                })
                 continue
 
             # ② Drug interactions
@@ -909,20 +1062,39 @@ if uploaded:
             # ④ Organism-specific avoid
             if any(av.lower() in d_low or d_low in av.lower()
                    for av in organism_avoid):
-                banned.append(f"💊 {d}: غير فعال لـ {organism_type} طبيعياً.")
+                banned.append({
+                    "name": d, "category": "organism",
+                    "reason_short": f"غير فعال لـ {organism_type} طبيعياً.",
+                    "reason_detail": (
+                        f"{d} لديه مقاومة طبيعية (intrinsic resistance)\n"
+                        f"        لجرثومة {organism_type} بغض النظر عن نتيجة المزرعة.\n"
+                        f"        الاستخدام سيؤدي لفشل علاجي."
+                    ),
+                })
                 continue
 
             # ⑤ MRSA beta-lactam rule
             if organism_type == "MRSA":
                 bl_classes = ["Penicillin","Cephalosporin"]
                 if any(c in info["class"] for c in bl_classes):
-                    banned.append(f"💊 {d}: بيتا-لاكتام — لا يعمل على MRSA.")
+                    banned.append({
+                        "name": d, "category": "organism",
+                        "reason_short": "بيتا-لاكتام — لا يعمل على MRSA.",
+                        "reason_detail": (
+                            f"MRSA يحمل جين mecA الذي يُنتج بروتين PBP2a.\n"
+                            f"        هذا البروتين لا يرتبط بأي بيتا-لاكتام.\n"
+                            f"        → جميع البنسيلين والسيفالوسبورين غير فعالة."
+                        ),
+                    })
                     continue
 
             # ⑥ Pregnancy — BANNED
             if is_preg and info["preg_status"] == "Banned":
-                banned.append(
-                    f"💊 {d}: ممنوع في الحمل — {info['preg_note'].splitlines()[0]}")
+                banned.append({
+                    "name": d, "category": "pregnancy",
+                    "reason_short": info["preg_note"].splitlines()[0],
+                    "reason_detail": info["preg_note"],
+                })
                 continue
 
             # ⑦ Pregnancy — WARN (stays in allowed but flagged)
@@ -931,12 +1103,31 @@ if uploaded:
 
             # ⑧ Child < 18
             if age < 18 and not info["child_safe"]:
-                banned.append(f"💊 {d}: غير مناسب لمن هم دون 18 سنة.")
+                cls = info["class"].lower()
+                if "fluoroquinolone" in cls:
+                    detail = "فلوروكينولون — خطر تلف غضاريف النمو < 18 سنة."
+                elif "tetracycline" in cls:
+                    detail = "تتراسيكلين — يتراسب في العظام والأسنان النامية."
+                else:
+                    detail = f"غير مرخص للاستخدام في الأطفال < 18 سنة."
+                banned.append({
+                    "name": d, "category": "child",
+                    "reason_short": f"غير مناسب لمن هم دون 18 سنة.",
+                    "reason_detail": detail,
+                })
                 continue
 
             # ⑨ Nitrofurantoin hard cutoff
             if is_renal and "nitrofurantoin" in d_low and cl_cr < 30:
-                banned.append(f"💊 {d}: ممنوع — CrCl < 30 مل/د.")
+                banned.append({
+                    "name": d, "category": "renal",
+                    "reason_short": f"ممنوع — CrCl {cl_cr:.1f} < 30 مل/د.",
+                    "reason_detail": (
+                        f"CrCl المريض = {cl_cr:.1f} مل/د (أقل من الحد المطلوب 30).\n"
+                        f"        Nitrofurantoin لا يصل لتركيز علاجي في البول\n"
+                        f"        عند ضعف الكلى، ويتراكم في الدم مسبباً سُمية."
+                    ),
+                })
                 continue
 
             # ⑩ Renal dose adjustment
@@ -971,7 +1162,15 @@ if uploaded:
         if banned:
             with st.expander("🚫 Contraindicated / Ineffective", expanded=True):
                 for b in banned:
-                    st.error(b)
+                    cat_label = {
+                        "resistant": "مقاوم في المزرعة",
+                        "renal":     "قصور كلوي",
+                        "pregnancy": "ممنوع في الحمل",
+                        "child":     "غير مناسب < 18 سنة",
+                        "organism":  "غير فعال للجرثومة",
+                        "other":     "موانع أخرى",
+                    }.get(b["category"], "")
+                    st.error(f"💊 {b['name']}  [{cat_label}]\n{b['reason_short']}")
 
         # ── Display: Dose Adjustment ───────────────────────
         if warned:
