@@ -534,8 +534,8 @@ ORGANISM_PROFILE = {
         "note": "🔬 الأكثر شيوعاً في مزارع البول.",
     },
     "Klebsiella spp.": {
-        "first_line": ["Amoxicillin + Clavulanic acid","Cefuroxime","Cefixime"],
-        "second_line": ["Piperacillin + Tazobactam","Ceftriaxone","Meropenem"],
+        "first_line": ["Amoxicillin + Clavulanic acid","Cefuroxime","Cefixime","Cefuroxime sodium"],
+        "second_line": ["Piperacillin + Tazobactam","Ceftriaxone","Meropenem","Norfloxacin","Ertapenem"],
         "avoid": ["Ampicillin"],
         "note": "🔬 مقاومة لبعض البيتا-لاكتام بطبيعتها.",
     },
@@ -927,6 +927,8 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
     r.append("  DISCLAIMER:")
     r.append("  هذا التقرير مساعد للقرار الطبي وليس بديلاً عنه.")
     r.append("  القرار النهائي في الوصف يعود للطبيب المعالج.")
+    r.append(SEP)
+    r.append("  WHO AWaRe Note: 🟢 Access = First choice | 🟡 Watch = Caution | 🔴 Reserve = Last resort")
     r.append(SEP)
     r.append("  Developed by: Dr. Hussein Ali | Orange Lab")
     r.append(SEP)
