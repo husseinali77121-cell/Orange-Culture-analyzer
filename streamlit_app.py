@@ -527,27 +527,23 @@ ABX_GUIDELINES = {
 # ==========================================
 ORGANISM_PROFILE = {
     # ── E. coli ───────────────────────────────────────────────
-    # Guidelines: EUCAST 2024 / IDSA UTI Guidelines 2023
-    # Norfloxacin: UTI-only fluoroquinolone — 2nd line (EUCAST)
-    # Cefuroxime sodium: IV option when oral not possible
-    # Ertapenem: reserve for ESBL-producing strains only
     "E. coli": {
         "first_line": [
-            "Nitrofurantoin",           # IDSA: 1st line uncomplicated UTI
-            "Fosfomycin",               # IDSA: 1st line single-dose UTI
-            "Trimethoprim/Sulfamethoxazole",  # IDSA: 1st line if local resistance <20%
-            "Amoxicillin + Clavulanic acid",  # EAU: 1st line if sensitive
+            "Nitrofurantoin",
+            "Fosfomycin",
+            "Trimethoprim/Sulfamethoxazole",
+            "Amoxicillin + Clavulanic acid",
         ],
         "second_line": [
-            "Cefuroxime",               # EAU: oral 2nd line
-            "Cefuroxime sodium",        # EAU: IV equivalent when oral impossible
-            "Cefixime",                 # EAU: oral 3rd-gen option
-            "Norfloxacin",              # EUCAST: UTI-specific FQ, use only for UTI
-            "Ciprofloxacin",            # IDSA: 2nd line — preserve for complicated UTI
+            "Cefuroxime",
+            "Cefuroxime sodium",
+            "Cefixime",
+            "Norfloxacin",
+            "Ciprofloxacin",
         ],
         "third_line": [
-            "Ertapenem",                # IDSA/EAU: reserve for ESBL E. coli only
-            "Meropenem",                # last resort — MDR only
+            "Ertapenem",
+            "Meropenem",
         ],
         "avoid": [],
         "urine_note": (
@@ -558,28 +554,24 @@ ORGANISM_PROFILE = {
     },
 
     # ── Klebsiella spp. ───────────────────────────────────────
-    # Guidelines: EUCAST 2024 / EAU Urological Infections 2023
-    # Norfloxacin: 2nd line UTI if sensitive (EUCAST)
-    # Cefuroxime sodium: IV alternative (EAU)
-    # Ertapenem: ESBL-producing Klebsiella — drug of choice (IDSA)
     "Klebsiella spp.": {
         "first_line": [
-            "Amoxicillin + Clavulanic acid",  # EAU: 1st line if sensitive
-            "Cefuroxime",                      # EAU: oral option
-            "Cefixime",                        # EAU: oral 3rd-gen
+            "Amoxicillin + Clavulanic acid",
+            "Cefuroxime",
+            "Cefixime",
         ],
         "second_line": [
-            "Cefuroxime sodium",   # IV when oral not possible
-            "Norfloxacin",         # UTI-only — 2nd line if sensitive (EUCAST)
-            "Ciprofloxacin",       # EAU: 2nd line
-            "Piperacillin + Tazobactam",  # complicated UTI / pyelonephritis
-            "Ceftriaxone",         # IV — pyelonephritis
+            "Cefuroxime sodium",
+            "Norfloxacin",
+            "Ciprofloxacin",
+            "Piperacillin + Tazobactam",
+            "Ceftriaxone",
         ],
         "third_line": [
-            "Ertapenem",           # IDSA: drug of choice for ESBL Klebsiella
-            "Meropenem",           # MDR / carbapenem-sensitive KPC
+            "Ertapenem",
+            "Meropenem",
         ],
-        "avoid": ["Ampicillin"],   # intrinsic resistance
+        "avoid": ["Ampicillin"],
         "urine_note": (
             "Ertapenem: الخيار الأول لـ ESBL-producing Klebsiella\n"
             "  وفق IDSA 2023 — يفضل على Meropenem للحفاظ على الكاربابينيم.\n"
@@ -589,20 +581,16 @@ ORGANISM_PROFILE = {
     },
 
     # ── Pseudomonas aeruginosa ────────────────────────────────
-    # Guidelines: EUCAST / EAU / ATS-IDSA
-    # Norfloxacin: لا يغطي Pseudomonas بتركيز كافٍ — تجنب
-    # Cefuroxime sodium: لا نشاط ضد Pseudomonas — تجنب
-    # Ertapenem: لا يغطي Pseudomonas — تجنب قطعياً
     "Pseudomonas aeruginosa": {
         "first_line": [
-            "Piperacillin + Tazobactam",  # EAU/IDSA: 1st line anti-pseudomonal
-            "Ceftazidime",                 # EUCAST: 1st line anti-pseudomonal
-            "Ciprofloxacin",              # EUCAST: الفلوروكينولون الوحيد الفعال
+            "Piperacillin + Tazobactam",
+            "Ceftazidime",
+            "Ciprofloxacin",
         ],
         "second_line": [
-            "Cefepime",    # 4th-gen — anti-pseudomonal
-            "Meropenem",   # anti-pseudomonal carbapenem
-            "Amikacin",    # aminoglycoside — combination therapy
+            "Cefepime",
+            "Meropenem",
+            "Amikacin",
         ],
         "third_line": [],
         "avoid": [
@@ -610,9 +598,9 @@ ORGANISM_PROFILE = {
             "Fosfomycin",
             "Trimethoprim/Sulfamethoxazole",
             "Cephalexin","Cefadroxil","Cefaclor",
-            "Norfloxacin",       # لا يصل لـ MIC كافٍ ضد Pseudomonas
-            "Cefuroxime sodium", # لا نشاط ضد Pseudomonas
-            "Ertapenem",         # لا يغطي Pseudomonas — خطر فشل علاجي
+            "Norfloxacin",
+            "Cefuroxime sodium",
+            "Ertapenem",
         ],
         "urine_note": (
             "Ertapenem: ممنوع لـ Pseudomonas — لا نشاط (EUCAST/EAU).\n"
@@ -623,18 +611,14 @@ ORGANISM_PROFILE = {
     },
 
     # ── Staphylococcus aureus ─────────────────────────────────
-    # Guidelines: EUCAST / IDSA SSTI Guidelines
-    # Norfloxacin: نشاط محدود ضد S. aureus في البول — ليس خياراً مفضلاً
-    # Cefuroxime sodium: فعال IV
-    # Ertapenem: فعال لكن لا يُستخدم روتينياً لـ MSSA
     "Staphylococcus aureus": {
         "first_line": [
-            "Cephalexin",                    # IDSA: 1st line MSSA oral
-            "Cefadroxil",                    # IDSA: 1st line MSSA oral
-            "Amoxicillin + Clavulanic acid", # EAU: 1st line
+            "Cephalexin",
+            "Cefadroxil",
+            "Amoxicillin + Clavulanic acid",
         ],
         "second_line": [
-            "Cefuroxime sodium",  # IV — عند الحاجة لحقن
+            "Cefuroxime sodium",
             "Azithromycin",
             "Doxycycline",
         ],
@@ -648,7 +632,6 @@ ORGANISM_PROFILE = {
     },
 
     # ── MRSA ──────────────────────────────────────────────────
-    # Guidelines: IDSA MRSA Guidelines 2011 (updated 2023)
     "MRSA": {
         "first_line": ["Vancomycin","Linezolid"],
         "second_line": ["Trimethoprim/Sulfamethoxazole","Doxycycline"],
@@ -658,7 +641,7 @@ ORGANISM_PROFILE = {
             "Cefuroxime","Cefuroxime sodium","Ceftriaxone",
             "Amoxicillin + Clavulanic acid","Ampicillin/Sulbactam",
             "Piperacillin + Tazobactam",
-            "Ertapenem",  # لا نشاط ضد MRSA
+            "Ertapenem",
         ],
         "urine_note": (
             "جميع البيتا-لاكتام بما فيها Cefuroxime sodium وErtapenem\n"
@@ -668,28 +651,24 @@ ORGANISM_PROFILE = {
     },
 
     # ── Proteus mirabilis ─────────────────────────────────────
-    # Guidelines: EAU Urological Infections 2023
-    # Norfloxacin: 2nd line UTI إذا حساس (EUCAST)
-    # Cefuroxime sodium: فعال IV
-    # Ertapenem: reserve للحالات المقاومة
     "Proteus mirabilis": {
         "first_line": [
-            "Amoxicillin + Clavulanic acid",  # EAU: 1st line
-            "Cefuroxime",                      # EAU: oral
-            "Cefixime",                        # EAU: oral 3rd-gen
+            "Amoxicillin + Clavulanic acid",
+            "Cefuroxime",
+            "Cefixime",
         ],
         "second_line": [
-            "Cefuroxime sodium",   # IV equivalent
-            "Norfloxacin",         # EUCAST: UTI 2nd line إذا حساس
-            "Ciprofloxacin",       # EAU: 2nd line
+            "Cefuroxime sodium",
+            "Norfloxacin",
+            "Ciprofloxacin",
             "Trimethoprim/Sulfamethoxazole",
         ],
         "third_line": [
-            "Ertapenem",  # complicated UTI / MDR Proteus
+            "Ertapenem",
         ],
         "avoid": [
-            "Nitrofurantoin",   # intrinsic resistance — EUCAST
-            "Tetracyclines",    # intrinsic resistance
+            "Nitrofurantoin",
+            "Tetracyclines",
         ],
         "urine_note": (
             "Nitrofurantoin: مقاوم طبيعياً لـ Proteus (intrinsic) — EUCAST.\n"
@@ -699,28 +678,24 @@ ORGANISM_PROFILE = {
     },
 
     # ── Enterococcus faecalis ─────────────────────────────────
-    # Guidelines: EUCAST / EAU 2023
-    # Norfloxacin: نشاط متغير — ليس خياراً موثوقاً
-    # Cefuroxime sodium: لا نشاط ضد Enterococcus — تجنب
-    # Ertapenem: لا نشاط ضد Enterococcus — تجنب
     "Enterococcus faecalis": {
         "first_line": [
-            "Amoxicillin + Clavulanic acid",  # EUCAST/EAU: 1st line
-            "Fosfomycin",                      # EAU: UTI 1st line
-            "Nitrofurantoin",                  # EAU: UTI 1st line
+            "Amoxicillin + Clavulanic acid",
+            "Fosfomycin",
+            "Nitrofurantoin",
         ],
         "second_line": [
-            "Ampicillin/Sulbactam",  # IV
-            "Vancomycin",            # VRE suspected
-            "Linezolid",             # VRE confirmed
+            "Ampicillin/Sulbactam",
+            "Vancomycin",
+            "Linezolid",
         ],
         "third_line": [],
         "avoid": [
-            "Cephalosporins (كل الجيل)",        # intrinsic resistance — EUCAST
-            "Trimethoprim/Sulfamethoxazole",     # intrinsic resistance
-            "Cefuroxime sodium",                 # cephalosporin — لا نشاط
-            "Ertapenem",                         # لا نشاط ضد Enterococcus — EUCAST
-            "Norfloxacin",                       # نشاط غير موثوق
+            "Cephalosporins (كل الجيل)",
+            "Trimethoprim/Sulfamethoxazole",
+            "Cefuroxime sodium",
+            "Ertapenem",
+            "Norfloxacin",
         ],
         "urine_note": (
             "Ertapenem وCefuroxime sodium: لا نشاط ضد Enterococcus (EUCAST).\n"
@@ -811,33 +786,8 @@ def extract_all_data(uploaded_file):
 
 
 # ==========================================
-# 📄 Report Generator — full detail
-# banned is now a list of dicts:
-#   {"name", "reason_short", "reason_detail", "category"}
-# category: "resistant"|"renal"|"hepatic"|"pregnancy"|"child"|"organism"|"other"
+# 📄 Report Generator
 # ==========================================
-WHO_AWARE_EXPLANATION = """
-WHO AWaRe CLASSIFICATION — EXPLANATION:
-  Access  (🟢) — First-choice antibiotics for common infections.
-                  Low resistance potential. Should be widely available
-                  and affordable. Use these FIRST whenever possible.
-                  Examples: Amoxicillin, Nitrofurantoin, TMP/SMX.
-
-  Watch   (🟡) — Higher resistance potential. Use only when Access
-                  antibiotics are not suitable (allergy, resistance,
-                  culture result, severity). Require closer monitoring.
-                  Examples: Ciprofloxacin, Ceftriaxone, Levofloxacin.
-
-  Reserve (🔴) — Last-resort antibiotics. Use ONLY for confirmed or
-                  suspected infections with multi-drug resistant (MDR)
-                  organisms when all other options have failed.
-                  Overuse threatens their effectiveness globally.
-                  Examples: Linezolid, Colistin, Tigecycline.
-
-  Key rule: Always prefer the lowest AWaRe category that is effective
-  for the specific culture & patient to minimise resistance development.
-"""
-
 RENAL_BAN_REASONS = {
     "nitrofurantoin": (
         "Nitrofurantoin يحتاج وظيفة كلى سليمة ليتركز في البول.\n"
@@ -876,7 +826,6 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
     r.append("   ORANGE LAB — CLINICAL DECISION REPORT")
     r.append(SEP)
     r.append(f"  Date: {now}")
-    r.append(f"  Developed by: Dr. Hussein Ali | Orange Lab")
     r.append(SEP)
 
     # ── Patient ───────────────────────────────────────
@@ -934,7 +883,9 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
             r.append(f"  Class     : {item['class']}")
             r.append(f"  Route     : {'Oral (PO)' if item['high_po'] else 'IV only'}")
             r.append(f"  Note      : {item['note']}")
-            r.append(f"  Renal     : {item['renal_note']}")
+            # ⬇️ إظهار ملاحظة الكلى فقط إذا كان المريض يعاني من قصور كلوي
+            if is_renal:
+                r.append(f"  Renal     : {item['renal_note']}")
             if is_preg and item["preg_status"] == "Warn":
                 r.append(f"  Pregnancy : {item['preg_note'].splitlines()[0]}")
     else:
@@ -1016,7 +967,6 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
             for b in cat_renal:
                 r.append(f"    x {b['name']}")
                 r.append(f"      Short reason : {b['reason_short']}")
-                # Detailed reason from RENAL_BAN_REASONS if available
                 detail_key = b["name"].lower().replace(" ","")
                 for k, v in RENAL_BAN_REASONS.items():
                     if k in detail_key:
@@ -1045,7 +995,6 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
             for b in cat_child:
                 r.append(f"    x {b['name']}")
                 r.append(f"      Short reason : {b['reason_short']}")
-                # Detailed reason from CHILD_BAN_REASONS
                 cls = ABX_GUIDELINES.get(b["name"],{}).get("class","").lower()
                 if "fluoroquinolone" in cls:
                     for ln in CHILD_BAN_REASONS["fluoroquinolone"].splitlines():
@@ -1072,20 +1021,13 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
                 r.append(f"      {b['reason_detail']}\n")
 
     # ══════════════════════════════════════════════════
-    # ── WHO AWaRe EXPLANATION ─────────────────────────
+    # ── FOOTER ────────────────────────────────────────
     # ══════════════════════════════════════════════════
-    r.append(f"\n{SEP}")
-    r.append("  WHO AWaRe CLASSIFICATION — REFERENCE GUIDE")
-    r.append(SEP)
-    r.append(WHO_AWARE_EXPLANATION)
-
-    # ── Footer ────────────────────────────────────────
     r.append(SEP)
     r.append("  DISCLAIMER:")
     r.append("  هذا التقرير مساعد للقرار الطبي وليس بديلاً عنه.")
     r.append("  القرار النهائي في الوصف يعود للطبيب المعالج.")
     r.append(SEP)
-    # >>> إضافة سطر WHO AWaRe note هنا <<<
     r.append("  WHO AWaRe Note: 🟢 Access = First choice | 🟡 Watch = Caution | 🔴 Reserve = Last resort")
     r.append(SEP)
     r.append("  Developed by: Dr. Hussein Ali | Orange Lab")
