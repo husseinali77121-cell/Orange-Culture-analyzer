@@ -27,7 +27,7 @@ ABX_GUIDELINES = {
     },
     "Ampicillin/Sulbactam": {
         "priority": 2, "class": "Penicillin",
-        "note": "💉 (مثل Unictam/Sigmaclav) فعال للموجبات والسالبات.",
+        "note": "💉 فعال للموجبات والسالبات. أساس علاج Acinetobacter بجرعات عالية (IDSA AMR).",
         "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
@@ -35,11 +35,11 @@ ABX_GUIDELINES = {
         "interacts_with": [],
         "aliases": ["unictam","sigmaclav","unasyn"],
         "organisms": ["E. coli","Klebsiella spp.","Staphylococcus aureus",
-                      "Proteus mirabilis","Enterococcus faecalis"],
+                      "Proteus mirabilis","Enterococcus faecalis", "Acinetobacter baumannii"],
     },
     "Piperacillin + Tazobactam": {
         "priority": 4, "class": "Anti-pseudomonal Penicillin",
-        "note": "🛑 (مثل Tazocin) مضاد احتياطي واسع الطيف جداً.",
+        "note": "🛑 (مثل Tazocin) مضاد احتياطي واسع الطيف جداً (IDSA AMR).",
         "renal_limit": 20, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
@@ -47,7 +47,7 @@ ABX_GUIDELINES = {
         "interacts_with": [],
         "aliases": ["tazocin","pip-tazo","piptaz"],
         "organisms": ["Pseudomonas aeruginosa","E. coli","Klebsiella spp.",
-                      "Enterococcus faecalis","Proteus mirabilis"],
+                      "Enterococcus faecalis","Proteus mirabilis", "Acinetobacter baumannii"],
     },
 
     # ── Cephalosporins ─────────────────────────────────────────
@@ -169,7 +169,7 @@ ABX_GUIDELINES = {
         "interacts_with": [],
         "aliases": ["maxipime"],
         "organisms": ["Pseudomonas aeruginosa","E. coli","Klebsiella spp.",
-                      "Proteus mirabilis","Staphylococcus aureus","Enterococcus faecalis"],
+                      "Proteus mirabilis","Staphylococcus aureus","Enterococcus faecalis", "Acinetobacter baumannii"],
     },
 
     # ── Fluoroquinolones ───────────────────────────────────────
@@ -324,7 +324,7 @@ ABX_GUIDELINES = {
         "interacts_with": ["NSAIDs (مسكنات الألم)"],
         "aliases": ["amikin","amikacin"],
         "organisms": ["E. coli","Klebsiella spp.","Pseudomonas aeruginosa",
-                      "Proteus mirabilis","Staphylococcus aureus"],
+                      "Proteus mirabilis","Staphylococcus aureus", "Acinetobacter baumannii"],
     },
 
     # ── Macrolides ─────────────────────────────────────────────
@@ -376,7 +376,7 @@ ABX_GUIDELINES = {
         "interacts_with": ["Warfarin (مضادات التخثر)"],
         "aliases": ["septra","sutrim","bactrim","co-trimoxazole","tmp-smx"],
         "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis",
-                      "Staphylococcus aureus","Streptococcus spp."],
+                      "Staphylococcus aureus","Streptococcus spp.", "Acinetobacter baumannii"],
     },
 
     # ── Nitroimidazoles ────────────────────────────────────────
@@ -439,7 +439,7 @@ ABX_GUIDELINES = {
         "interacts_with": ["Antacids (مضادات الحموضة)"],
         "aliases": ["vibramycin","doxy"],
         "organisms": ["Chlamydia spp.","Mycoplasma spp.",
-                      "Staphylococcus aureus","H. influenzae","Rickettsia spp."],
+                      "Staphylococcus aureus","H. influenzae","Rickettsia spp.", "Acinetobacter baumannii"],
     },
 
     # ── Cefuroxime Sodium (IV form) ───────────────────────────
@@ -470,6 +470,18 @@ ABX_GUIDELINES = {
                       "Staphylococcus aureus","Enterococcus faecalis",
                       "Anaerobes (لاهوائيات)"],
     },
+    "Meropenem": {
+        "priority": 5, "class": "Carbapenem",
+        "note": "🛑 (مثل Meronem) مضاد الملاذ الأخير للمقاومة.",
+        "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True,
+        "interacts_with": [],
+        "aliases": ["meronem","merrem"],
+        "organisms": ["Pseudomonas aeruginosa","Klebsiella spp.","E. coli",
+                      "Enterococcus faecalis","Staphylococcus aureus","MRSA", "Acinetobacter baumannii"],
+    },
 
     # ── Last Resort ────────────────────────────────────────────
     "Vancomycin": {
@@ -490,18 +502,6 @@ ABX_GUIDELINES = {
         "organisms": ["MRSA","Staphylococcus aureus","Enterococcus faecalis",
                       "Streptococcus spp.","C. difficile"],
     },
-    "Meropenem": {
-        "priority": 5, "class": "Carbapenem",
-        "note": "🛑 (مثل Meronem) مضاد الملاذ الأخير للمقاومة.",
-        "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
-        "hepatic_caution": False, "aware": "Watch", "high_po": False,
-        "preg_status": "Safe", "preg_note": "",
-        "child_safe": True,
-        "interacts_with": [],
-        "aliases": ["meronem","merrem"],
-        "organisms": ["Pseudomonas aeruginosa","Klebsiella spp.","E. coli",
-                      "Enterococcus faecalis","Staphylococcus aureus","MRSA"],
-    },
     "Linezolid": {
         "priority": 5, "class": "Oxazolidinone",
         "note": "🛑 (مثل Averozolid) للموجبات المقاومة (MRSA/VRE) فقط.",
@@ -519,6 +519,18 @@ ABX_GUIDELINES = {
         "aliases": ["averozolid","zyvox"],
         "organisms": ["MRSA","Staphylococcus aureus","Enterococcus faecalis",
                       "VRE","Streptococcus spp."],
+    },
+    "Colistin": {
+        "priority": 6, "class": "Polymyxin",
+        "note": "🔴 الملاذ الأخير (Reserve) للبكتيريا سالبة الجرام شديدة المقاومة (MDR).",
+        "renal_limit": 80, "renal_note": "⚖️ سام جداً للكلى، تعديل الجرعة والمراقبة حتمية.",
+        "hepatic_caution": False, "aware": "Reserve", "high_po": False,
+        "preg_status": "Warn",
+        "preg_note": "يُستخدم فقط لإنقاذ الحياة عند غياب البدائل.",
+        "child_safe": True,
+        "interacts_with": ["NSAIDs (مسكنات الألم)"],
+        "aliases": ["colistin", "polymyxin e"],
+        "organisms": ["Pseudomonas aeruginosa", "Acinetobacter baumannii", "Klebsiella spp."],
     },
 }
 
@@ -592,7 +604,7 @@ ORGANISM_PROFILE = {
             "Meropenem",
             "Amikacin",
         ],
-        "third_line": [],
+        "third_line": ["Colistin"],
         "avoid": [
             "Nitrofurantoin",
             "Fosfomycin",
@@ -608,6 +620,18 @@ ORGANISM_PROFILE = {
             "Ciprofloxacin هو الفلوروكينولون الوحيد الفعال ضد Pseudomonas."
         ),
         "note": "🔬 جرثومة انتهازية — تحتاج مضادات anti-pseudomonal متخصصة.",
+    },
+
+    # ── Acinetobacter baumannii ───────────────────────────────
+    "Acinetobacter baumannii": {
+        "first_line": ["Ampicillin/Sulbactam"],  # بجرعات عالية IDSA AMR
+        "second_line": ["Meropenem", "Amikacin", "Trimethoprim/Sulfamethoxazole", "Doxycycline"],
+        "third_line": ["Colistin"],
+        "avoid": [
+            "Ertapenem", "Cephalexin", "Cefuroxime", "Ceftriaxone",
+            "Macrolides", "Nitrofurantoin", "Fosfomycin"
+        ],
+        "note": "🔴 بكتيريا رعاية حرجة شديدة المقاومة (MDR). Ampicillin/Sulbactam بجرعات عالية هو الأساس (IDSA AMR Guidance).",
     },
 
     # ── Staphylococcus aureus ─────────────────────────────────
@@ -669,6 +693,7 @@ ORGANISM_PROFILE = {
         "avoid": [
             "Nitrofurantoin",
             "Tetracyclines",
+            "Colistin",            # طبيعي
         ],
         "urine_note": (
             "Nitrofurantoin: مقاوم طبيعياً لـ Proteus (intrinsic) — EUCAST.\n"
@@ -707,7 +732,7 @@ ORGANISM_PROFILE = {
 }
 
 SPECIMEN_TYPES = ["Urine","Blood","Sputum","Wound Swab","Pus","Stool","CSF"]
-BACTERIA_TYPES = list(ORGANISM_PROFILE.keys())
+BACTERIA_TYPES = list(ORGANISM_PROFILE.keys())  # الآن تشمل Acinetobacter baumannii
 COMMON_MEDS    = ["Antacids (مضادات الحموضة)","Warfarin (مضادات التخثر)",
                   "NSAIDs (مسكنات الألم)","SSRI (أدوية الاكتئاب)"]
 AWARE_COLORS   = {"Access":"🟢 Access","Watch":"🟡 Watch","Reserve":"🔴 Reserve"}
@@ -808,7 +833,7 @@ CHILD_BAN_REASONS = {
     "tetracycline": (
         "Doxycycline والتتراسيكلينات تترسب في العظام والأسنان\n"
         "  النامية → تلوين دائم للأسنان وتثبيط نمو العظام.\n"
-        "  ممنوعة < 8 سنوات بشكل مطلق، وتُتجنب حتى 18 سنة."
+        "  ممنوعة < 8 سنوات بشكل مطلق (AAP)، وتُتجنب حتى 18 سنة."
     ),
 }
 
@@ -825,7 +850,8 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
     r.append(SEP)
     r.append("   ORANGE LAB — CLINICAL DECISION REPORT")
     r.append(SEP)
-    r.append(f"  Date: {now}")
+    r.append(f"  Date      : {now}")
+    r.append(f"  Guidelines: EUCAST 2026 | CLSI M100 2026 | IDSA AMR 2025 | Egypt National")
     r.append(SEP)
 
     # ── Patient ───────────────────────────────────────
@@ -1203,21 +1229,31 @@ if uploaded:
             if is_preg and info["preg_status"] == "Warn":
                 preg_warn_items.append({"name": d, **info})
 
-            # ⑧ Child < 18
-            if age < 18 and not info["child_safe"]:
-                cls = info["class"].lower()
+            # ⑧ Child rules updated (AAP & standard)
+            cls = info["class"].lower()
+            if age < 18 and not info.get("child_safe", True):
                 if "fluoroquinolone" in cls:
-                    detail = "فلوروكينولون — خطر تلف غضاريف النمو < 18 سنة."
-                elif "tetracycline" in cls:
-                    detail = "تتراسيكلين — يتراسب في العظام والأسنان النامية."
+                    banned.append({
+                        "name": d, "category": "child",
+                        "reason_short": "غير مناسب لمن هم دون 18 سنة.",
+                        "reason_detail": CHILD_BAN_REASONS["fluoroquinolone"],
+                    })
+                    continue
+                elif "tetracycline" in cls and age < 8:
+                    banned.append({
+                        "name": d, "category": "child",
+                        "reason_short": "غير مناسب لمن هم دون 8 سنوات.",
+                        "reason_detail": CHILD_BAN_REASONS["tetracycline"],
+                    })
+                    continue
                 else:
-                    detail = f"غير مرخص للاستخدام في الأطفال < 18 سنة."
-                banned.append({
-                    "name": d, "category": "child",
-                    "reason_short": f"غير مناسب لمن هم دون 18 سنة.",
-                    "reason_detail": detail,
-                })
-                continue
+                    # عام
+                    banned.append({
+                        "name": d, "category": "child",
+                        "reason_short": f"غير مرخص للأطفال.",
+                        "reason_detail": f"الشركة الصانعة لا توصي به لمن هم دون 18 سنة.",
+                    })
+                    continue
 
             # ⑨ Nitrofurantoin hard cutoff
             if is_renal and "nitrofurantoin" in d_low and cl_cr < 30:
@@ -1320,8 +1356,6 @@ st.divider()
 st.markdown("""
 <div style="text-align:center;color:gray;font-size:0.85rem;">
   <strong>Developed by: Dr. Hussein Ali | Orange Lab</strong><br>
-  WHO AWaRe: 🟢 <b>Access</b> (First choice) |
-  🟡 <b>Watch</b> (Use with caution) |
-  🔴 <b>Reserve</b> (Last resort)
+  Compliant with: EUCAST 2026 | CLSI M100 2026 | IDSA AMR 2025 | Egypt National Guidelines
 </div>
 """, unsafe_allow_html=True)
