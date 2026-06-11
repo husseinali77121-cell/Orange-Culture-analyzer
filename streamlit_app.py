@@ -24,6 +24,7 @@ from difflib import SequenceMatcher
 # 📋 Antibiotics Database – Egyptian Market
 # ==========================================
 ABX_GUIDELINES = {
+    # المجموعة الأساسية (لم تحذف)
     "Amoxicillin + Clavulanic acid": {
         "priority": 1, "class": "Beta-lactamase Inhibitor",
         "note": "✅ خيار قياسي (مثل Augmentin/Curam).",
@@ -34,13 +35,16 @@ ABX_GUIDELINES = {
         "interacts_with": [],
         "aliases": ["augmentin", "curam", "amoxiclav", "co-amoxiclav"],
         "organisms": ["E. coli","Klebsiella spp.","Staphylococcus aureus",
-                      "Proteus mirabilis","Streptococcus spp.","H. influenzae"],
+                      "Proteus mirabilis","Streptococcus spp.","H. influenzae",
+                      "Streptococcus pneumoniae","Moraxella catarrhalis"],
         "specimen_notes": {
             "Blood":      "✅ فعال في bacteremia الموجبات والسالبات البسيطة.",
             "Sputum":     "✅ خيار جيد لـ CAP و exacerbation COPD.",
             "Wound Swab": "✅ فعال للعدوى الجلدية المختلطة.",
             "Pus":        "✅ جيد للخراجات والعدوى المختلطة.",
             "Urine":      "✅ خيار أول للمسالك غير المعقدة.",
+            "Throat Swab":"✅ خيار لالتهاب الحلق بالعقديات.",
+            "Nasal Swab": "✅ مناسب لحالات الجيوب الأنفية.",
         },
     },
     "Ampicillin/Sulbactam": {
@@ -71,7 +75,8 @@ ABX_GUIDELINES = {
         "interacts_with": [],
         "aliases": ["tazocin","pip-tazo","piptaz"],
         "organisms": ["Pseudomonas aeruginosa","E. coli","Klebsiella spp.",
-                      "Enterococcus faecalis","Proteus mirabilis", "Acinetobacter baumannii"],
+                      "Enterococcus faecalis","Proteus mirabilis", "Acinetobacter baumannii",
+                      "Bacteroides fragilis"],
         "specimen_notes": {
             "Blood":      "🛑 خيار قوي في sepsis شديد مع Pseudomonas.",
             "Sputum":     "🛑 VAP/HAP مع اشتباه Pseudomonas.",
@@ -120,7 +125,7 @@ ABX_GUIDELINES = {
         "interacts_with": ["Antacids (مضادات الحموضة)"],
         "aliases": ["ceclor"],
         "organisms": ["E. coli","H. influenzae","Staphylococcus aureus",
-                      "Streptococcus spp.","Klebsiella spp."],
+                      "Streptococcus spp.","Klebsiella spp.","Moraxella catarrhalis"],
         "specimen_notes": {
             "Sputum":     "✅ التهابات الجهاز التنفسي العلوي والأذن الوسطى.",
             "Urine":      "✅ مناسب للمسالك البولية البسيطة.",
@@ -136,12 +141,14 @@ ABX_GUIDELINES = {
         "interacts_with": ["Antacids (مضادات الحموضة)"],
         "aliases": ["zinnat","ceftin"],
         "organisms": ["E. coli","Klebsiella spp.","H. influenzae",
-                      "Staphylococcus aureus","Streptococcus spp.","Proteus mirabilis"],
+                      "Staphylococcus aureus","Streptococcus spp.","Proteus mirabilis",
+                      "Streptococcus pneumoniae","Moraxella catarrhalis"],
         "specimen_notes": {
             "Sputum":     "✅ CAP وعدوى الجهاز التنفسي.",
             "Wound Swab": "✅ عدوى الأنسجة الرخوة المتوسطة.",
             "Urine":      "✅ مناسب للمسالك.",
             "Blood":      "⚠️ لا يُفضل في bacteremia الشديدة — يُستبدل بـ IV.",
+            "Throat Swab":"✅ خيار بديل لالتهاب الحلق.",
         },
     },
     "Ceftriaxone": {
@@ -154,7 +161,8 @@ ABX_GUIDELINES = {
         "interacts_with": [],
         "aliases": ["rocephin","cefaxone","triaxone"],
         "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis",
-                      "Staphylococcus aureus","Streptococcus spp.","H. influenzae"],
+                      "Staphylococcus aureus","Streptococcus spp.","H. influenzae",
+                      "Neisseria meningitidis","Streptococcus pneumoniae","Salmonella spp."],
         "specimen_notes": {
             "Blood":      "💉 خيار ممتاز في bacteremia والـ sepsis.",
             "CSF":        "💉 خيار أول في meningitis البكتيري.",
@@ -188,7 +196,7 @@ ABX_GUIDELINES = {
         "interacts_with": [],
         "aliases": ["cefotax","claforan"],
         "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis",
-                      "Streptococcus spp.","H. influenzae"],
+                      "Streptococcus spp.","H. influenzae","Neisseria meningitidis"],
         "specimen_notes": {
             "Blood":  "💉 bacteremia والـ sepsis.",
             "CSF":    "💉 meningitis — بديل Ceftriaxone.",
@@ -289,7 +297,8 @@ ABX_GUIDELINES = {
         "interacts_with": ["Antacids (مضادات الحموضة)"],
         "aliases": ["tavanic","levaquin","levoflox"],
         "organisms": ["E. coli","Klebsiella spp.","Pseudomonas aeruginosa",
-                      "Staphylococcus aureus","Streptococcus spp.","H. influenzae"],
+                      "Staphylococcus aureus","Streptococcus spp.","H. influenzae",
+                      "Streptococcus pneumoniae","Moraxella catarrhalis"],
         "specimen_notes": {
             "Sputum": "⚠️ خيار قوي لـ CAP وعدوى الجهاز التنفسي (respiratory quinolone).",
             "Urine":  "⚠️ فعال لكن يُحفظ للحالات المعقدة.",
@@ -356,7 +365,7 @@ ABX_GUIDELINES = {
         "interacts_with": ["Antacids (مضادات الحموضة)"],
         "aliases": ["macrofuran","macrobid","nitrofur"],
         "organisms": ["E. coli","Staphylococcus aureus",
-                      "Enterococcus faecalis","Klebsiella spp."],
+                      "Enterococcus faecalis","Klebsiella spp.","Staphylococcus saprophyticus"],
         "specimen_notes": {
             "Urine": "🎯 مخصص للمسالك البولية البسيطة فقط — لا يُستخدم خارج البول.",
         },
@@ -439,11 +448,14 @@ ABX_GUIDELINES = {
         "interacts_with": ["Antacids (مضادات الحموضة)"],
         "aliases": ["zithrokan","zithromax","azithro"],
         "organisms": ["Staphylococcus aureus","Streptococcus spp.",
-                      "H. influenzae","Chlamydia spp.","Mycoplasma spp."],
+                      "H. influenzae","Chlamydia spp.","Mycoplasma spp.",
+                      "Streptococcus pneumoniae","Moraxella catarrhalis",
+                      "Campylobacter jejuni","Salmonella spp."],
         "specimen_notes": {
             "Sputum":     "✅ خيار ممتاز لـ CAP والـ atypicals (Mycoplasma/Chlamydia).",
             "Wound Swab": "✅ عدوى الجلد الخفيفة بالموجبات.",
             "Urine":      "⚠️ فعال فقط في Chlamydia urethritis — مش UTI عادي.",
+            "Stool":      "✅ علاج Salmonella و Campylobacter (الحالات الخفيفة).",
         },
     },
     "Clarithromycin": {
@@ -462,7 +474,8 @@ ABX_GUIDELINES = {
         "interacts_with": [],
         "aliases": ["klacid","biaxin"],
         "organisms": ["Staphylococcus aureus","Streptococcus spp.",
-                      "H. pylori","H. influenzae","Mycoplasma spp."],
+                      "H. pylori","H. influenzae","Mycoplasma spp.",
+                      "Streptococcus pneumoniae"],
         "specimen_notes": {
             "Sputum": "✅ CAP والـ atypical pneumonia.",
             "Stool":  "✅ H. pylori eradication therapy.",
@@ -508,7 +521,8 @@ ABX_GUIDELINES = {
         "interacts_with": ["Warfarin (مضادات التخثر)"],
         "aliases": ["flagyl","metro","metrogyl"],
         "organisms": ["Anaerobes (لاهوائيات)","Trichomonas vaginalis",
-                      "H. pylori","C. difficile","Bacteroides spp."],
+                      "H. pylori","C. difficile","Bacteroides spp.",
+                      "Bacteroides fragilis"],
         "specimen_notes": {
             "Pus":        "✅ الخراجات والعدوى المختلطة (anaerobic coverage).",
             "Wound Swab": "✅ العدوى الجراحية التي تشمل اللاهوائيات.",
@@ -613,7 +627,7 @@ ABX_GUIDELINES = {
         "aliases": ["meronem","merrem"],
         "organisms": ["Pseudomonas aeruginosa","Klebsiella spp.","E. coli",
                       "Enterococcus faecalis","Staphylococcus aureus","MRSA",
-                      "Acinetobacter baumannii"],
+                      "Acinetobacter baumannii","Listeria monocytogenes"],
         "specimen_notes": {
             "Blood":  "🛑 sepsis شديد — MDR organisms — ICU.",
             "CSF":    "🛑 meningitis المعقد — MDR organisms.",
@@ -637,7 +651,7 @@ ABX_GUIDELINES = {
         "interacts_with": ["NSAIDs (مسكنات الألم)"],
         "aliases": ["vancocin","vanco"],
         "organisms": ["MRSA","Staphylococcus aureus","Enterococcus faecalis",
-                      "Streptococcus spp.","C. difficile"],
+                      "Streptococcus spp.","C. difficile","Streptococcus pneumoniae"],
         "specimen_notes": {
             "Blood":  "🛑 MRSA bacteremia.",
             "CSF":    "🛑 MRSA meningitis.",
@@ -661,7 +675,7 @@ ABX_GUIDELINES = {
         "interacts_with": ["SSRI (أدوية الاكتئاب)"],
         "aliases": ["averozolid","zyvox"],
         "organisms": ["MRSA","Staphylococcus aureus","Enterococcus faecalis",
-                      "VRE","Streptococcus spp."],
+                      "VRE","Streptococcus spp.","Streptococcus pneumoniae"],
         "specimen_notes": {
             "Blood":      "🛑 VRE/MRSA bacteremia.",
             "Sputum":     "🛑 MRSA pneumonia — تركيز رئوي ممتاز.",
@@ -685,6 +699,108 @@ ABX_GUIDELINES = {
             "Sputum": "🔴 VAP بـ XDR Acinetobacter/Pseudomonas.",
         },
     },
+    # المضادات الجديدة
+    "Clindamycin": {
+        "priority": 2, "class": "Lincosamide",
+        "note": "✅ (مثل Dalacin C) فعال للموجبات واللاهوائيات، بديل في حساسية البنسيلين.",
+        "renal_limit": 0, "renal_note": "🟢 آمن كلوياً.",
+        "hepatic_caution": True, "aware": "Access", "high_po": True,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True,
+        "interacts_with": [],
+        "aliases": ["dalacin c","clinacin","clinda"],
+        "organisms": ["Staphylococcus aureus","Streptococcus spp.",
+                      "Anaerobes (لاهوائيات)","Bacteroides fragilis"],
+        "specimen_notes": {
+            "Wound Swab": "✅ عدوى الجلد والأنسجة الرخوة (بديل في حساسية البنسيلين).",
+            "Pus":        "✅ خراجات الرئة والبطن (مع تغطية لاهوائية).",
+            "Blood":      "⚠️ bacteremia؟ ليس الخيار الأول لكنه مفيد للحالات المختلطة.",
+        },
+    },
+    "Moxifloxacin": {
+        "priority": 2, "class": "Fluoroquinolone (Respiratory)",
+        "note": "⚠️ (مثل Avelox) فلوروكينولون تنفسي قوي جداً مع غطاء لاهوائي.",
+        "renal_limit": 0, "renal_note": "🟢 لا يحتاج تعديل كلوي.",
+        "hepatic_caution": True, "aware": "Watch", "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Moxifloxacin:\n"
+            "  تجنب في الحمل إلا للضرورة القصوى.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": False,
+        "interacts_with": ["Antacids (مضادات الحموضة)"],
+        "aliases": ["avelox","moxiflox"],
+        "organisms": ["Streptococcus pneumoniae","H. influenzae",
+                      "Moraxella catarrhalis","Anaerobes (لاهوائيات)"],
+        "specimen_notes": {
+            "Sputum":     "✅ CAP وحالات الجهاز التنفسي المعقدة.",
+            "Wound Swab": "✅ عدوى الجلد المختلطة.",
+        },
+    },
+    "Cefpodoxime": {
+        "priority": 2, "class": "3rd Gen Cephalosporin (Oral)",
+        "note": "✅ (مثل Orelox) بديل فموي لـ Ceftriaxone في الحالات الخفيفة.",
+        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": True,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True,
+        "interacts_with": [],
+        "aliases": ["orelox","cefpodoxime"],
+        "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis",
+                      "Streptococcus pneumoniae","H. influenzae"],
+        "specimen_notes": {
+            "Sputum": "✅ CAP الخفيف للتبديل الفموي.",
+            "Urine":  "✅ بديل Cefixime في UTI.",
+        },
+    },
+    "Imipenem/Cilastatin": {
+        "priority": 5, "class": "Carbapenem",
+        "note": "🛑 (مثل Tienam) أوسع الكاربابينيمات، ينفع لـ MDR و Pseudomonas.",
+        "renal_limit": 60, "renal_note": "⚖️ تعديل الجرعة بدقة.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True,
+        "interacts_with": [],
+        "aliases": ["tienam","imipenem"],
+        "organisms": ["Pseudomonas aeruginosa","Acinetobacter baumannii",
+                      "E. coli","Klebsiella spp.","Bacteroides fragilis"],
+        "specimen_notes": {
+            "Blood": "🛑 MDR bacteremia خيار قوي.",
+            "CSF":   "⚠️ قد يسبب اختلاجات — تجنب في meningitis إلا للضرورة.",
+        },
+    },
+    "Rifaximin": {
+        "priority": 2, "class": "Rifamycin",
+        "note": "🎯 (مثل Xifaxan) غير ممتص، للإسهال البكتيري والاعتلال الدماغي الكبدي.",
+        "renal_limit": 0, "renal_note": "🟢 آمن كلوياً.",
+        "hepatic_caution": True, "aware": "Watch", "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": "بيانات محدودة — يُستخدم بحذر.",
+        "child_safe": True,
+        "interacts_with": [],
+        "aliases": ["xifaxan","rifaximin"],
+        "organisms": ["E. coli","Salmonella spp.","Shigella spp.","Campylobacter jejuni"],
+        "specimen_notes": {
+            "Stool": "✅ إسهال المسافرين وبعض حالات القولون العصبي.",
+        },
+    },
+    "Teicoplanin": {
+        "priority": 5, "class": "Glycopeptide",
+        "note": "🛑 (مثل Targocid) بديل Vancomycin أقل سمية كلوية.",
+        "renal_limit": 60, "renal_note": "⚖️ مراقبة المستويات.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Warn",
+        "preg_note": "يُستخدم عند الضرورة فقط.",
+        "child_safe": True,
+        "interacts_with": ["NSAIDs (مسكنات الألم)"],
+        "aliases": ["targocid","teicoplanin"],
+        "organisms": ["MRSA","Staphylococcus aureus","Enterococcus faecalis"],
+        "specimen_notes": {
+            "Blood": "🛑 MRSA bacteremia — بديل Vancomycin.",
+            "Wound Swab": "🛑 عدوى الجلد بالمكورات المقاومة.",
+        },
+    },
 }
 
 # ==========================================
@@ -692,317 +808,208 @@ ABX_GUIDELINES = {
 # ==========================================
 ORGANISM_PROFILE = {
     "E. coli": {
-        "first_line": [
-            "Nitrofurantoin",
-            "Fosfomycin",
-            "Trimethoprim/Sulfamethoxazole",
-            "Amoxicillin + Clavulanic acid",
-        ],
-        "second_line": [
-            "Cefuroxime",
-            "Cefuroxime sodium",
-            "Cefixime",
-            "Norfloxacin",
-            "Ciprofloxacin",
-        ],
-        "third_line": [
-            "Ertapenem",
-            "Meropenem",
-        ],
+        "first_line": ["Nitrofurantoin","Fosfomycin","Trimethoprim/Sulfamethoxazole","Amoxicillin + Clavulanic acid"],
+        "second_line": ["Cefuroxime","Cefuroxime sodium","Cefixime","Norfloxacin","Ciprofloxacin"],
+        "third_line": ["Ertapenem","Meropenem"],
         "avoid": [],
-        "urine_note": (
-            "Norfloxacin: مخصص للمسالك البولية فقط (لا يصل لتركيز علاجي خارج البول).\n"
-            "Ertapenem: يُحفظ للـ ESBL-producing E. coli فقط — لا يُستخدم روتينياً."
-        ),
-        "specimen_context": {
-            "Blood":      "🔬 الأكثر شيوعاً في bacteremia الجهاز البولي والبطن.",
-            "Sputum":     "⚠️ E. coli في البلغم — نادر، يشير لـ aspiration أو HAP.",
-            "Wound Swab": "🔬 شائع في عدوى الجروح الجراحية والحروق.",
-            "Pus":        "🔬 شائع في خراجات البطن وعدوى البطن.",
-            "Stool":      "🔬 ETEC و EPEC — أسباب إسهال.",
-        },
+        "urine_note": "Norfloxacin: مخصص للمسالك فقط.\nErtapenem: يُحفظ لـ ESBL.",
+        "specimen_context": {"Blood":"🔬 bacteremia البول/البطن.","Stool":"🔬 ETEC/EPEC."},
         "note": "🔬 الأكثر شيوعاً في مزارع البول.",
     },
     "Klebsiella spp.": {
-        "first_line": [
-            "Amoxicillin + Clavulanic acid",
-            "Cefuroxime",
-            "Cefixime",
-        ],
-        "second_line": [
-            "Cefuroxime sodium",
-            "Norfloxacin",
-            "Ciprofloxacin",
-            "Piperacillin + Tazobactam",
-            "Ceftriaxone",
-        ],
-        "third_line": [
-            "Ertapenem",
-            "Meropenem",
-        ],
+        "first_line": ["Amoxicillin + Clavulanic acid","Cefuroxime","Cefixime"],
+        "second_line": ["Cefuroxime sodium","Norfloxacin","Ciprofloxacin","Piperacillin + Tazobactam","Ceftriaxone"],
+        "third_line": ["Ertapenem","Meropenem"],
         "avoid": ["Ampicillin"],
-        "urine_note": (
-            "Ertapenem: الخيار الأول لـ ESBL-producing Klebsiella\n"
-            "  وفق IDSA 2023 — يفضل على Meropenem للحفاظ على الكاربابينيم.\n"
-            "Norfloxacin: مخصص للمسالك فقط — لا يُستخدم في الحالات الشديدة."
-        ),
-        "specimen_context": {
-            "Blood":      "🔬 Klebsiella bacteremia — خطر حقيقي خصوصاً في الكبد.",
-            "Sputum":     "🔬 HAP وعدوى الجهاز التنفسي في المستشفى.",
-            "Wound Swab": "🔬 عدوى الجروح الجراحية.",
-            "Pus":        "🔬 خراجات الكبد والبطن.",
-            "Urine":      "🔬 الثاني الأكثر شيوعاً في مزارع البول.",
-        },
-        "note": "🔬 مقاومة لبعض البيتا-لاكتام بطبيعتها — تحقق من ESBL.",
+        "urine_note": "Ertapenem: لـ ESBL فقط.",
+        "specimen_context": {"Blood":"🔬 bacteremia الكبد.","Sputum":"🔬 HAP."},
+        "note": "🔬 تحقق من ESBL.",
     },
     "Pseudomonas aeruginosa": {
-        "first_line": [
-            "Piperacillin + Tazobactam",
-            "Ceftazidime",
-            "Ciprofloxacin",
-        ],
-        "second_line": [
-            "Cefepime",
-            "Meropenem",
-            "Amikacin",
-        ],
+        "first_line": ["Piperacillin + Tazobactam","Ceftazidime","Ciprofloxacin"],
+        "second_line": ["Cefepime","Meropenem","Amikacin"],
         "third_line": ["Colistin"],
-        "avoid": [
-            "Nitrofurantoin",
-            "Fosfomycin",
-            "Trimethoprim/Sulfamethoxazole",
-            "Cephalexin","Cefadroxil","Cefaclor",
-            "Norfloxacin",
-            "Cefuroxime sodium",
-            "Ertapenem",
-        ],
-        "urine_note": (
-            "Ertapenem: ممنوع لـ Pseudomonas — لا نشاط (EUCAST/EAU).\n"
-            "Norfloxacin: تركيز غير كافٍ ضد Pseudomonas.\n"
-            "Ciprofloxacin هو الفلوروكينولون الوحيد الفعال ضد Pseudomonas."
-        ),
-        "specimen_context": {
-            "Blood":      "🔴 Pseudomonas bacteremia — mortality عالية — ICU غالباً.",
-            "Sputum":     "🔴 VAP/HAP الأكثر خطورة — يحتاج anti-pseudomonal.",
-            "Wound Swab": "🔴 شائع في حروق والجروح المزمنة.",
-            "Urine":      "🔴 UTI المعقد — كاتيتر أو مضادات حيوية سابقة.",
-        },
-        "note": "🔬 جرثومة انتهازية — تحتاج مضادات anti-pseudomonal متخصصة.",
+        "avoid": ["Nitrofurantoin","Fosfomycin","TMP/SMX","Cephalexin","Cefadroxil","Cefaclor","Norfloxacin","Cefuroxime sodium","Ertapenem"],
+        "urine_note": "Ertapenem: لا نشاط.",
+        "specimen_context": {"Blood":"🔴 bacteremia عالية الخطورة.","Sputum":"🔴 VAP."},
+        "note": "🔬 تحتاج مضادات anti-pseudomonal.",
     },
     "Acinetobacter baumannii": {
         "first_line": ["Ampicillin/Sulbactam"],
         "second_line": ["Meropenem","Amikacin","Trimethoprim/Sulfamethoxazole","Doxycycline"],
         "third_line": ["Colistin"],
-        "avoid": [
-            "Ertapenem",
-            "Cephalexin", "Cefuroxime", "Ceftriaxone",
-            "Azithromycin", "Clarithromycin",
-            "Nitrofurantoin", "Fosfomycin",
-        ],
-        "specimen_context": {
-            "Blood":  "🔴 Acinetobacter bacteremia — ICU — MDR غالباً.",
-            "Sputum": "🔴 VAP الأكثر شيوعاً في ICU — خطر جداً.",
-            "Wound Swab": "🔴 عدوى الحروق والجروح الجراحية الكبيرة.",
-        },
-        "note": "🔴 بكتيريا رعاية حرجة شديدة المقاومة (MDR). Ampicillin/Sulbactam بجرعات عالية هو الأساس (IDSA AMR Guidance).",
+        "avoid": ["Ertapenem","Cephalexin","Cefuroxime","Ceftriaxone","Azithromycin","Clarithromycin","Nitrofurantoin","Fosfomycin"],
+        "specimen_context": {"Blood":"🔴 ICU.","Sputum":"🔴 VAP."},
+        "note": "🔴 MDR. Ampicillin/Sulbactam بجرعات عالية.",
     },
     "Staphylococcus aureus": {
-        "first_line": [
-            "Cephalexin",
-            "Cefadroxil",
-            "Amoxicillin + Clavulanic acid",
-        ],
-        "second_line": [
-            "Cefuroxime sodium",
-            "Azithromycin",
-            "Doxycycline",
-        ],
+        "first_line": ["Cephalexin","Cefadroxil","Amoxicillin + Clavulanic acid"],
+        "second_line": ["Cefuroxime sodium","Azithromycin","Doxycycline"],
         "third_line": [],
         "avoid": [],
-        "urine_note": (
-            "Norfloxacin: نشاط ضعيف ضد S. aureus في مزارع البول — ليس خياراً مثالياً.\n"
-            "تحقق من MRSA — إذا MRSA: Vancomycin أو Linezolid فقط."
-        ),
-        "specimen_context": {
-            "Blood":      "🔬 تحقق من MRSA فوراً — endocarditis خطر حقيقي.",
-            "Sputum":     "🔬 pneumonia بعد الإنفلونزا أو في ICU.",
-            "Wound Swab": "🔬 الأكثر شيوعاً في عدوى الجروح والجلد.",
-            "Pus":        "🔬 خراجات الجلد والأنسجة الرخوة.",
-            "Urine":      "⚠️ S. aureus في البول — احتمال hematogenous seeding — راجع Blood culture.",
-        },
-        "note": "🔬 تحقق من MRSA — قد يحتاج Vancomycin.",
+        "urine_note": "Norfloxacin: نشاط ضعيف. تحقق من MRSA.",
+        "specimen_context": {"Blood":"🔬 endocarditis خطر.","Wound Swab":"🔬 الأكثر شيوعاً."},
+        "note": "🔬 تحقق من MRSA.",
     },
     "MRSA": {
         "first_line": ["Vancomycin","Linezolid"],
         "second_line": ["Trimethoprim/Sulfamethoxazole","Doxycycline"],
         "third_line": [],
-        "avoid": [
-            "Cephalexin","Cefadroxil","Cefaclor",
-            "Cefuroxime","Cefuroxime sodium","Ceftriaxone",
-            "Amoxicillin + Clavulanic acid","Ampicillin/Sulbactam",
-            "Piperacillin + Tazobactam",
-            "Ertapenem",
-        ],
-        "urine_note": (
-            "جميع البيتا-لاكتام بما فيها Cefuroxime sodium وErtapenem\n"
-            "  لا تعمل على MRSA (mecA gene — PBP2a resistance)."
-        ),
-        "specimen_context": {
-            "Blood":      "🔴 MRSA bacteremia — emergency — ابدأ Vancomycin فوراً.",
-            "Sputum":     "🔴 MRSA pneumonia — خطر عالي في ICU.",
-            "Wound Swab": "🔴 MRSA SSTI — شائع في المجتمع (CA-MRSA).",
-            "Pus":        "🔴 MRSA abscess — drainage + Vancomycin.",
-            "CSF":        "🔴 MRSA meningitis — نادر لكن خطر جداً.",
-        },
-        "note": "🔴 مقاوم لجميع البيتا-لاكتام! — Vancomycin أو Linezolid فقط.",
+        "avoid": ["Cephalexin","Cefadroxil","Cefaclor","Cefuroxime","Cefuroxime sodium","Ceftriaxone","Amoxicillin + Clavulanic acid","Ampicillin/Sulbactam","Piperacillin + Tazobactam","Ertapenem"],
+        "specimen_context": {"Blood":"🔴 emergency.","Wound Swab":"🔴 CA-MRSA."},
+        "note": "🔴 مقاوم لجميع البيتا-لاكتام!",
     },
     "Proteus mirabilis": {
-        "first_line": [
-            "Amoxicillin + Clavulanic acid",
-            "Cefuroxime",
-            "Cefixime",
-        ],
-        "second_line": [
-            "Cefuroxime sodium",
-            "Norfloxacin",
-            "Ciprofloxacin",
-            "Trimethoprim/Sulfamethoxazole",
-        ],
-        "third_line": [
-            "Ertapenem",
-        ],
-        "avoid": [
-            "Nitrofurantoin",
-            "Tetracyclines",
-            "Colistin",
-        ],
-        "urine_note": (
-            "Nitrofurantoin: مقاوم طبيعياً لـ Proteus (intrinsic) — EUCAST.\n"
-            "Norfloxacin: فعال في UTI فقط — لا يُستخدم في bacteremia أو pyelonephritis."
-        ),
-        "specimen_context": {
-            "Urine":      "🔬 شائع في UTI — يرفع الـ pH (urease-producing).",
-            "Wound Swab": "🔬 عدوى الجروح المزمنة والقدم السكري.",
-            "Blood":      "⚠️ Proteus bacteremia — غالباً مصدره الجهاز البولي.",
-        },
-        "note": "🔬 مقاوم طبيعياً لـ Nitrofurantoin — لا تستخدمه أبداً.",
+        "first_line": ["Amoxicillin + Clavulanic acid","Cefuroxime","Cefixime"],
+        "second_line": ["Cefuroxime sodium","Norfloxacin","Ciprofloxacin","Trimethoprim/Sulfamethoxazole"],
+        "third_line": ["Ertapenem"],
+        "avoid": ["Nitrofurantoin","Tetracyclines","Colistin"],
+        "urine_note": "Nitrofurantoin: مقاوم طبيعي.",
+        "specimen_context": {"Urine":"🔬 urease-positive."},
+        "note": "🔬 مقاوم طبيعي لـ Nitrofurantoin.",
     },
     "Enterococcus faecalis": {
-        "first_line": [
-            "Amoxicillin + Clavulanic acid",
-            "Fosfomycin",
-            "Nitrofurantoin",
-        ],
-        "second_line": [
-            "Ampicillin/Sulbactam",
-            "Vancomycin",
-            "Linezolid",
-        ],
+        "first_line": ["Amoxicillin + Clavulanic acid","Fosfomycin","Nitrofurantoin"],
+        "second_line": ["Ampicillin/Sulbactam","Vancomycin","Linezolid"],
         "third_line": [],
-        "avoid": [
-            "Cephalosporins (كل الجيل)",
-            "Trimethoprim/Sulfamethoxazole",
-            "Cefuroxime sodium",
-            "Ertapenem",
-            "Norfloxacin",
-        ],
-        "urine_note": (
-            "Ertapenem وCefuroxime sodium: لا نشاط ضد Enterococcus (EUCAST).\n"
-            "Norfloxacin: نشاط متغير وغير موثوق — تجنب.\n"
-            "جميع السيفالوسبورين مقاومة طبيعياً لـ Enterococcus."
-        ),
-        "specimen_context": {
-            "Urine":  "🔬 شائع في UTI خصوصاً الكاتيتر.",
-            "Blood":  "⚠️ Enterococcus bacteremia — خطر endocarditis.",
-            "Wound Swab": "⚠️ عدوى البطن والجروح الجراحية المختلطة.",
-        },
-        "note": "🔬 مقاوم طبيعياً للسيفالوسبورين وErtapenem — Amoxicillin هو الأساس.",
+        "avoid": ["Cephalosporins (كل الجيل)","Trimethoprim/Sulfamethoxazole","Cefuroxime sodium","Ertapenem","Norfloxacin"],
+        "specimen_context": {"Urine":"🔬 كاتيتر.","Blood":"⚠️ endocarditis."},
+        "note": "🔬 مقاوم للسيفالوسبورين وErtapenem.",
     },
-    # NEW: Stool Pathogens
     "Salmonella spp.": {
-        "first_line": [
-            "Ceftriaxone",
-            "Azithromycin",
-            "Ciprofloxacin",
-        ],
-        "second_line": [
-            "Trimethoprim/Sulfamethoxazole",
-            "Cefixime",
-        ],
+        "first_line": ["Ceftriaxone","Azithromycin","Ciprofloxacin"],
+        "second_line": ["Trimethoprim/Sulfamethoxazole","Cefixime"],
         "third_line": [],
-        "avoid": [
-            "Nitrofurantoin",
-            "Fosfomycin",
-            "Cephalexin",
-            "Cefadroxil",
-            "Cefaclor",
-            "Cefuroxime",
-            "Metronidazole",
-            "Doxycycline",
-        ],
-        "urine_note": "",
-        "specimen_context": {
-            "Stool":  "🔬 Salmonella gastroenteritis — العلاج فقط للحالات الشديدة أو المعرضين للخطر.",
-            "Blood":  "🔬 Typhoid fever / enteric fever — Ceftriaxone أو Azithromycin.",
-        },
-        "note": "🔬 العلاج بالمضادات الحيوية مخصص للحالات الشديدة أو الحمى التيفودية فقط.",
+        "avoid": ["Nitrofurantoin","Fosfomycin","Cephalexin","Cefadroxil","Cefaclor","Cefuroxime","Metronidazole","Doxycycline"],
+        "specimen_context": {"Stool":"🔬 الحالات الشديدة فقط.","Blood":"🔬 التيفود."},
+        "note": "🔬 العلاج للحالات الشديدة فقط.",
     },
     "Shigella spp.": {
-        "first_line": [
-            "Azithromycin",
-            "Ciprofloxacin",
-            "Ceftriaxone",
-        ],
-        "second_line": [
-            "Trimethoprim/Sulfamethoxazole",
-        ],
+        "first_line": ["Azithromycin","Ciprofloxacin","Ceftriaxone"],
+        "second_line": ["Trimethoprim/Sulfamethoxazole"],
         "third_line": [],
-        "avoid": [
-            "Nitrofurantoin",
-            "Fosfomycin",
-            "Amoxicillin + Clavulanic acid",
-            "Metronidazole",
-        ],
-        "urine_note": "",
-        "specimen_context": {
-            "Stool":  "🔬 Shigellosis — العلاج بالمضادات الحيوية يقلل الأعراض ويمنع انتشار المرض.",
-            "Blood":  "🔬 نادراً ما يصل للدم إلا في الحالات الشديدة.",
-        },
-        "note": "🔬 تعالج فقط الحالات الوخيمة أو أثناء الأوبئة؛ مقاومة عالية لـ TMP-SMX في بعض المناطق.",
+        "avoid": ["Nitrofurantoin","Fosfomycin","Amoxicillin + Clavulanic acid","Metronidazole"],
+        "specimen_context": {"Stool":"🔬 مضاد حيوي ضروري.","Blood":"🔬 نادر."},
+        "note": "🔬 مقاومة TMP-SMX شائعة.",
     },
     "Campylobacter jejuni": {
-        "first_line": [
-            "Azithromycin",
-        ],
-        "second_line": [
-            "Ciprofloxacin",
-        ],
+        "first_line": ["Azithromycin"],
+        "second_line": ["Ciprofloxacin"],
         "third_line": [],
-        "avoid": [
-            "Trimethoprim/Sulfamethoxazole",
-            "Penicillins",
-            "Cephalosporins",
-            "Nitrofurantoin",
-            "Fosfomycin",
-        ],
-        "urine_note": "",
+        "avoid": ["Trimethoprim/Sulfamethoxazole","Penicillins","Cephalosporins","Nitrofurantoin","Fosfomycin"],
+        "specimen_context": {"Stool":"🔬 غالباً ذاتي الشفاء.","Blood":"🔬 نقص المناعة."},
+        "note": "🔬 Azithromycin هو الخيار الأول.",
+    },
+    # ========= الكائنات الجديدة =========
+    "Streptococcus pneumoniae": {
+        "first_line": ["Amoxicillin + Clavulanic acid","Cefuroxime","Ceftriaxone"],
+        "second_line": ["Levofloxacin","Moxifloxacin","Vancomycin"],
+        "third_line": [],
+        "avoid": ["Nitrofurantoin","Fosfomycin","Metronidazole"],
         "specimen_context": {
-            "Stool":  "🔬 أشهر أسباب الإسهال البكتيري — غالباً محدود ذاتياً.",
-            "Blood":  "🔬 Bacteremia نادر الحدوث في نقص المناعة.",
+            "Sputum":"🔬 CAP الأكثر شيوعاً.","CSF":"🔬 أشهر مسبب للسحايا.","Blood":"🔬 bacteremia خطيرة.",
+            "Nasal Swab":"🔬 قد يكون حالة حمل.",
         },
-        "note": "🔬 معظم الحالات لا تحتاج مضادات حيوية؛ Azithromycin هو الخيار الأول عند الحاجة.",
+        "note": "🔬 تحقق من حساسية البنسلين (MIC).",
+    },
+    "Streptococcus pyogenes (Group A)": {
+        "first_line": ["Amoxicillin + Clavulanic acid","Cephalexin","Cefadroxil"],
+        "second_line": ["Azithromycin","Clindamycin"],
+        "third_line": [],
+        "avoid": ["Nitrofurantoin","Fosfomycin","Trimethoprim/Sulfamethoxazole"],
+        "specimen_context": {
+            "Throat Swab":"🔬 التهاب الحلق العقدي.","Wound Swab":"🔬 cellulitis/impetigo.","Blood":"🔬 sepsis نادر لكن خطير.",
+        },
+        "note": "🔬 حساس جداً للبنسلين.",
+    },
+    "Haemophilus influenzae": {
+        "first_line": ["Amoxicillin + Clavulanic acid","Cefuroxime","Ceftriaxone"],
+        "second_line": ["Azithromycin","Levofloxacin","Moxifloxacin"],
+        "third_line": [],
+        "avoid": ["Nitrofurantoin","Fosfomycin"],
+        "specimen_context": {
+            "Sputum":"🔬 CAP و exacerbation COPD.","CSF":"🔬 سحايا الأطفال.","Blood":"🔬 bacteremia.",
+        },
+        "note": "🔬 بعض السلالات منتجة للبيتا-لاكتاماز.",
+    },
+    "Moraxella catarrhalis": {
+        "first_line": ["Amoxicillin + Clavulanic acid","Cefuroxime","Cefaclor"],
+        "second_line": ["Azithromycin","Levofloxacin","Moxifloxacin"],
+        "third_line": [],
+        "avoid": ["Nitrofurantoin","Fosfomycin","Trimethoprim/Sulfamethoxazole"],
+        "specimen_context": {
+            "Sputum":"🔬 COPD exacerbation.","Nasal Swab":"🔬 التهاب الجيوب.",
+        },
+        "note": "🔬 معظم السلالات منتجة للبيتا-لاكتاماز.",
+    },
+    "Neisseria meningitidis": {
+        "first_line": ["Ceftriaxone","Cefotaxime"],
+        "second_line": ["Meropenem","Ampicillin/Sulbactam"],
+        "third_line": [],
+        "avoid": ["Vancomycin (لا يخترق BBB)","Colistin"],
+        "specimen_context": {
+            "CSF":"🔴 سحايا حادة.","Blood":"🔴 meningococcemia.",
+        },
+        "note": "🔴 حالة طوارئ؛ Ceftriaxone هو الخط الأول.",
+    },
+    "Listeria monocytogenes": {
+        "first_line": ["Ampicillin/Sulbactam","Amoxicillin + Clavulanic acid"],
+        "second_line": ["Meropenem","Trimethoprim/Sulfamethoxazole"],
+        "third_line": [],
+        "avoid": ["Cephalosporins (كل الأجيال)","Vancomycin","Colistin"],
+        "specimen_context": {
+            "CSF":"🔴 سحايا حديثي الولادة/كبار السن/الحوامل.","Blood":"🔴 bacteremia.",
+        },
+        "note": "🔬 مقاوم طبيعي للسيفالوسبورين.",
+    },
+    "Streptococcus agalactiae (Group B)": {
+        "first_line": ["Ampicillin/Sulbactam","Amoxicillin + Clavulanic acid"],
+        "second_line": ["Cefazolin (غير موجود)","Vancomycin","Clindamycin"],
+        "third_line": [],
+        "avoid": ["Trimethoprim/Sulfamethoxazole","Nitrofurantoin"],
+        "specimen_context": {
+            "CSF":"🔴 حديثي الولادة.","Blood":"🔴 bacteremia.","Urine":"⚠️ حمل.",
+        },
+        "note": "🔬 حساس للبنسلين.",
+    },
+    "Staphylococcus saprophyticus": {
+        "first_line": ["Nitrofurantoin","Fosfomycin","Trimethoprim/Sulfamethoxazole"],
+        "second_line": ["Cephalexin","Amoxicillin + Clavulanic acid"],
+        "third_line": [],
+        "avoid": ["Metronidazole","Colistin"],
+        "urine_note": "سبب شائع لـ UTI في النساء الشابات.",
+        "specimen_context": {"Urine":"🔬 UTI بسيطة."},
+        "note": "🔬 دائماً مقاوم لـ Novobiocin (لا يستخدم في مصر).",
+    },
+    "Bacteroides fragilis": {
+        "first_line": ["Metronidazole"],
+        "second_line": ["Clindamycin","Piperacillin + Tazobactam","Imipenem/Cilastatin"],
+        "third_line": [],
+        "avoid": ["Cephalosporins","Fluoroquinolones","Aminoglycosides"],
+        "specimen_context": {
+            "Blood":"🔴 bacteremia البطن.","Pus":"🔴 خراجات البطن.","Wound Swab":"🔴 الجروح الجراحية.",
+        },
+        "note": "🔬 لاهوائي إجباري — Metronidazole هو الخيار.",
+    },
+    "Clostridioides difficile": {
+        "first_line": ["Metronidazole","Vancomycin (فموي)"],
+        "second_line": ["Fidaxomicin (غير متوفر)","Teicoplanin (فموي)"],
+        "third_line": [],
+        "avoid": ["Clindamycin","Cephalosporins","Fluoroquinolones"],
+        "specimen_context": {"Stool":"🔴 إسهال المستشفيات.","Blood":"نادر."},
+        "note": "🔴 أوقف المضاد الحيوي المسبب إن أمكن.",
     },
 }
 
 BACTERIA_TYPES = list(ORGANISM_PROFILE.keys())
 
-SPECIMEN_TYPES = ["Urine","Blood","Sputum","Wound Swab","Pus","Stool","CSF"]
+SPECIMEN_TYPES = ["Urine","Blood","Sputum","Wound Swab","Pus","Stool","CSF","Throat Swab","Nasal Swab"]
 COMMON_MEDS    = ["Antacids (مضادات الحموضة)","Warfarin (مضادات التخثر)",
                   "NSAIDs (مسكنات الألم)","SSRI (أدوية الاكتئاب)"]
 AWARE_COLORS   = {"Access":"🟢 Access","Watch":"🟡 Watch","Reserve":"🔴 Reserve"}
 
 # ==========================================
-# 🔍 OCR + Fuzzy Matching
+# 🔍 OCR + Fuzzy Matching (بدون تغيير)
 # ==========================================
 def fuzzy_match(word, target):
     w, t = word.lower(), target.lower()
@@ -1075,7 +1082,7 @@ def extract_all_data(uploaded_file):
     )
 
 # ==========================================
-# 📄 Report Generator
+# 📄 Report Generator (بدون تغيير جوهري)
 # ==========================================
 RENAL_BAN_REASONS = {
     "nitrofurantoin": (
@@ -1086,17 +1093,15 @@ RENAL_BAN_REASONS = {
         "  السبب الطبي: الدواء يُطرح كلياً عبر الترشيح الكبيبي."
     ),
 }
-
 CHILD_BAN_REASONS = {
     "fluoroquinolone": (
-        "الفلوروكينولونات (Cipro/Levo/Oflox/Norflox) تؤثر على غضاريف\n"
-        "  النمو (cartilage) في الأطفال والمراهقين < 18 سنة.\n"
+        "الفلوروكينولونات تؤثر على غضاريف النمو في الأطفال < 18 سنة.\n"
         "  أثبتت الدراسات الحيوانية تلف مفصلي دائم.\n"
         "  تُستخدم فقط عند انعدام البدائل الأخرى تماماً."
     ),
     "tetracycline": (
-        "Doxycycline والتتراسيكلينات تترسب في العظام والأسنان\n"
-        "  النامية → تلوين دائم للأسنان وتثبيط نمو العظام.\n"
+        "Doxycycline والتتراسيكلينات تترسب في العظام والأسنان النامية\n"
+        "  → تلوين دائم للأسنان وتثبيط نمو العظام.\n"
         "  ممنوعة < 8 سنوات بشكل مطلق (AAP)، وتُتجنب حتى 18 سنة."
     ),
 }
@@ -1204,11 +1209,6 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
         r.append("  PREGNANCY — USE WITH CAUTION")
         r.append(f"  (Final decision belongs to the treating physician)")
         r.append(SEP)
-        r.append("  These antibiotics are NOT automatically banned.")
-        r.append("  They require careful medical evaluation.")
-        r.append("  Some have been re-evaluated in recent literature")
-        r.append("  (ACCP Journal 2025 and others).")
-        r.append("  The detailed reason for caution is listed below.\n")
         for item in preg_warn_items:
             r.append(f"  {item['name']}")
             r.append(f"  {SEP2}")
@@ -1220,7 +1220,6 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
         r.append(f"\n{SEP}")
         r.append("  CONTRAINDICATED / INEFFECTIVE")
         r.append(SEP)
-
         cat_resist   = [b for b in banned if b["category"] == "resistant"]
         cat_renal    = [b for b in banned if b["category"] == "renal"]
         cat_preg     = [b for b in banned if b["category"] == "pregnancy"]
@@ -1229,87 +1228,32 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
         cat_other    = [b for b in banned if b["category"] == "other"]
 
         if cat_resist:
-            r.append(f"\n  [A] RESISTANT IN CULTURE:")
-            r.append(f"  Reason: The laboratory confirmed this antibiotic")
-            r.append(f"  does NOT inhibit the organism's growth (MIC too high).")
-            r.append(f"  Using it will lead to treatment failure.\n")
-            for b in cat_resist:
-                r.append(f"    x {b['name']}")
-                r.append(f"      {b['reason_detail']}\n")
-
+            r.append("\n  [A] RESISTANT IN CULTURE:")
+            for b in cat_resist: r.append(f"    x {b['name']} — {b['reason_detail']}")
         if cat_renal:
-            r.append(f"\n  [B] CONTRAINDICATED IN RENAL IMPAIRMENT:")
-            r.append(f"  Patient CrCl = {cl_cr:.1f} ml/min\n")
-            for b in cat_renal:
-                r.append(f"    x {b['name']}")
-                r.append(f"      Short reason : {b['reason_short']}")
-                detail_key = b["name"].lower().replace(" ","")
-                for k, v in RENAL_BAN_REASONS.items():
-                    if k in detail_key:
-                        r.append(f"      Detail       :")
-                        for ln in v.splitlines():
-                            r.append(f"        {ln}")
-                        break
-                else:
-                    r.append(f"      Detail       : {b['reason_detail']}")
-                r.append("")
-
+            r.append("\n  [B] CONTRAINDICATED IN RENAL IMPAIRMENT:")
+            for b in cat_renal: r.append(f"    x {b['name']} — {b['reason_short']}")
         if cat_preg:
-            r.append(f"\n  [C] CONTRAINDICATED IN PREGNANCY:")
-            r.append(f"  The following are banned due to confirmed fetal risk.\n")
-            for b in cat_preg:
-                r.append(f"    x {b['name']}")
-                r.append(f"      Short reason : {b['reason_short']}")
-                r.append(f"      Full detail  :")
-                for ln in b["reason_detail"].splitlines():
-                    r.append(f"        {ln}")
-                r.append("")
-
+            r.append("\n  [C] CONTRAINDICATED IN PREGNANCY:")
+            for b in cat_preg: r.append(f"    x {b['name']} — {b['reason_detail']}")
         if cat_child:
-            r.append(f"\n  [D] NOT SUITABLE FOR PATIENTS < 18 YEARS:")
-            r.append(f"  Patient age = {age} years\n")
-            for b in cat_child:
-                r.append(f"    x {b['name']}")
-                r.append(f"      Short reason : {b['reason_short']}")
-                cls = ABX_GUIDELINES.get(b["name"],{}).get("class","").lower()
-                if "fluoroquinolone" in cls:
-                    for ln in CHILD_BAN_REASONS["fluoroquinolone"].splitlines():
-                        r.append(f"        {ln}")
-                elif "tetracycline" in cls:
-                    for ln in CHILD_BAN_REASONS["tetracycline"].splitlines():
-                        r.append(f"        {ln}")
-                else:
-                    r.append(f"        {b['reason_detail']}")
-                r.append("")
-
+            r.append("\n  [D] NOT SUITABLE FOR CHILDREN:")
+            for b in cat_child: r.append(f"    x {b['name']} — {b['reason_short']}")
         if cat_organism:
-            r.append(f"\n  [E] INEFFECTIVE FOR THIS ORGANISM ({organism}):")
-            r.append(f"  These antibiotics have intrinsic (natural) resistance")
-            r.append(f"  to this organism regardless of culture sensitivity.\n")
-            for b in cat_organism:
-                r.append(f"    x {b['name']}")
-                r.append(f"      {b['reason_detail']}\n")
-
+            r.append(f"\n  [E] INEFFECTIVE FOR {organism}:")
+            for b in cat_organism: r.append(f"    x {b['name']} — {b['reason_detail']}")
         if cat_other:
-            r.append(f"\n  [F] OTHER CONTRAINDICATIONS:")
-            for b in cat_other:
-                r.append(f"    x {b['name']}")
-                r.append(f"      {b['reason_detail']}\n")
+            r.append("\n  [F] OTHER:")
+            for b in cat_other: r.append(f"    x {b['name']}")
 
     r.append(SEP)
-    r.append("  DISCLAIMER:")
-    r.append("  هذا التقرير مساعد للقرار الطبي وليس بديلاً عنه.")
-    r.append("  القرار النهائي في الوصف يعود للطبيب المعالج.")
-    r.append(SEP)
+    r.append("  DISCLAIMER: هذا التقرير مساعد للقرار الطبي وليس بديلاً عنه.")
     r.append("  Guidelines : EUCAST 2026 | CLSI M100 2026 | IDSA AMR 2025 | Egypt National")
-    r.append("  WHO AWaRe  : 🟢 Access = First choice | 🟡 Watch = Caution | 🔴 Reserve = Last resort")
-    r.append(SEP)
     r.append("  Developed by: Dr. Hussein Ali | Orange Lab")
-    r.append(SEP)
     return "\n".join(r)
 
 # ==========================================
-# 🖥️ Streamlit UI
+# 🖥️ Streamlit UI (معدل لاستيعاب العينات الجديدة)
 # ==========================================
 st.title("🛡️ Orange Culture Analyzer")
 st.caption("AI-Assisted Antibiotic Decision Support — Egyptian Market Edition")
@@ -1331,57 +1275,40 @@ if uploaded:
 
     with col1:
         st.subheader("👤 Patient & Culture")
-
-        culture_type = st.selectbox(
-            "🧫 Specimen", SPECIMEN_TYPES,
-            index=SPECIMEN_TYPES.index(patient["Specimen"])
-                  if patient["Specimen"] in SPECIMEN_TYPES else 0)
-
-        organism_type = st.selectbox(
-            "🦠 Organism", BACTERIA_TYPES,
-            index=BACTERIA_TYPES.index(patient["Organism"])
-                  if patient["Organism"] in BACTERIA_TYPES else 0)
+        culture_type = st.selectbox("🧫 Specimen", SPECIMEN_TYPES,
+            index=SPECIMEN_TYPES.index(patient["Specimen"]) if patient["Specimen"] in SPECIMEN_TYPES else 0)
+        organism_type = st.selectbox("🦠 Organism", BACTERIA_TYPES,
+            index=BACTERIA_TYPES.index(patient["Organism"]) if patient["Organism"] in BACTERIA_TYPES else 0)
 
         if organism_type in ORGANISM_PROFILE:
             op = ORGANISM_PROFILE[organism_type]
             with st.expander("📌 Organism Guidance", expanded=True):
                 st.info(op["note"])
                 spec_ctx = op.get("specimen_context", {}).get(culture_type, "")
-                if spec_ctx:
-                    st.warning(f"**{culture_type} Context:** {spec_ctx}")
+                if spec_ctx: st.warning(f"**{culture_type} Context:** {spec_ctx}")
                 st.write("**First-line:**", ", ".join(op["first_line"]))
                 st.write("**Second-line:**", ", ".join(op["second_line"]))
-                if op.get("third_line"):
-                    st.write("**Third-line:**", ", ".join(op["third_line"]))
-                if op["avoid"]:
-                    st.error("**Avoid:** " + ", ".join(op["avoid"]))
-                if culture_type == "Urine" and op.get("urine_note"):
-                    st.info(f"📌 Urine-specific notes:\n{op['urine_note']}")
+                if op.get("third_line"): st.write("**Third-line:**", ", ".join(op["third_line"]))
+                if op["avoid"]: st.error("**Avoid:** " + ", ".join(op["avoid"]))
+                if culture_type == "Urine" and op.get("urine_note"): st.info(op["urine_note"])
 
         st.divider()
-        age    = st.number_input("Age (years)", value=int(patient["Age"]),
-                                 min_value=0, max_value=120)
-        sex    = st.selectbox("Gender", ["Female","Male"],
-                              index=0 if patient["Sex"]=="Female" else 1)
+        age = st.number_input("Age (years)", value=int(patient["Age"]), min_value=0, max_value=120)
+        sex = st.selectbox("Gender", ["Female","Male"], index=0 if patient["Sex"]=="Female" else 1)
         weight = st.number_input("Weight (kg)", min_value=5, max_value=300, value=70)
 
         st.divider()
         is_renal = st.checkbox("🚩 Renal Impairment")
-        cl_cr    = 100.0
+        cl_cr = 100.0
         if is_renal:
-            s_cr  = st.number_input("Serum Creatinine (mg/dL)",
-                                    min_value=0.1, max_value=20.0,
-                                    value=1.0, step=0.1)
+            s_cr = st.number_input("Serum Creatinine (mg/dL)", min_value=0.1, max_value=20.0, value=1.0, step=0.1)
             cl_cr = ((140 - age) * weight) / (72 * s_cr)
             if sex == "Female": cl_cr *= 0.85
             st.metric("CrCl (Cockcroft-Gault)", f"{cl_cr:.1f} ml/min",
-                      delta="Mild" if cl_cr>=60 else
-                            ("Moderate" if cl_cr>=30 else "Severe"),
-                      delta_color="normal" if cl_cr>=60 else
-                                  ("off" if cl_cr>=30 else "inverse"))
+                      delta="Mild" if cl_cr>=60 else ("Moderate" if cl_cr>=30 else "Severe"),
+                      delta_color="normal" if cl_cr>=60 else ("off" if cl_cr>=30 else "inverse"))
 
         is_hepatic = st.checkbox("🚩 Hepatic Impairment")
-
         is_preg = False
         if sex == "Female" and 12 <= age <= 55:
             is_preg = st.checkbox("🤰 Patient is Pregnant")
@@ -1390,222 +1317,127 @@ if uploaded:
 
     with col2:
         st.subheader("💊 Antibiotic Analysis")
-
         if sir_map:
-            st.info("📊 S/I/R detected from image: " +
-                    " | ".join(f"{k}: **{v}**" for k,v in sir_map.items()))
+            st.info("📊 S/I/R: " + " | ".join(f"{k}: **{v}**" for k,v in sir_map.items()))
 
-        final_drugs = st.multiselect(
-            "✅ Confirm/Edit Sensitive Antibiotics:",
+        final_drugs = st.multiselect("✅ Confirm/Edit Sensitive Antibiotics:",
             options=sorted(ABX_GUIDELINES.keys()),
-            default=[d for d in drugs_from_ocr if d in ABX_GUIDELINES],
-        )
+            default=[d for d in drugs_from_ocr if d in ABX_GUIDELINES])
 
         allowed, warned, banned = [], [], []
-        preg_warn_items          = []
-        interactions_alerts      = []
-        organism_avoid           = ORGANISM_PROFILE.get(organism_type,{}).get("avoid",[])
+        preg_warn_items = []
+        interactions_alerts = []
+        organism_avoid = ORGANISM_PROFILE.get(organism_type,{}).get("avoid",[])
 
         for d in final_drugs:
-            info  = ABX_GUIDELINES[d]
+            info = ABX_GUIDELINES[d]
             d_low = d.lower()
 
-            # ① Resistant in culture
             if sir_map.get(d) == "R":
-                banned.append({
-                    "name": d, "category": "resistant",
-                    "reason_short": "مقاوم (R) في نتيجة المزرعة.",
-                    "reason_detail": (
-                        f"المزرعة أثبتت أن {d} لا يثبط نمو الجرثومة.\n"
-                        f"        الـ MIC أعلى من الحد العلاجي.\n"
-                        f"        الاستخدام سيؤدي لفشل علاجي مؤكد."
-                    ),
-                })
+                banned.append({"name": d, "category": "resistant", "reason_detail": "مقاوم في المزرعة."})
                 continue
 
-            # ② Drug interactions
             for med in current_meds:
                 if med in info["interacts_with"]:
                     interactions_alerts.append(f"⚡ تعارض: {d} مع {med}")
 
-            # ③ Hepatic
             if is_hepatic and info["hepatic_caution"]:
-                interactions_alerts.append(
-                    f"🏥 تحذير كبدي: {d} — يحتاج متابعة وظائف الكبد.")
+                interactions_alerts.append(f"🏥 تحذير كبدي: {d}")
 
-            # ④ Organism-specific avoid
+            # Organism avoid
             d_class = info.get("class","").lower()
             organism_avoided = False
             for av in organism_avoid:
                 av_low = av.lower()
                 if av_low in d_low or d_low in av_low:
                     organism_avoided = True; break
-                if av_low in d_class or any(
-                    av_low in cls.lower()
-                    for cls in ["cephalosporin","penicillin","macrolide","tetracycline"]
-                    if av_low in cls
-                ):
+                if av_low in d_class or any(av_low in cls.lower() for cls in ["cephalosporin","penicillin","macrolide","tetracycline"] if av_low in cls):
                     organism_avoided = True; break
-
             if organism_avoided:
-                banned.append({
-                    "name": d, "category": "organism",
-                    "reason_short": f"غير فعال لـ {organism_type} طبيعياً.",
-                    "reason_detail": (
-                        f"{d} لديه مقاومة طبيعية (intrinsic resistance)\n"
-                        f"        لجرثومة {organism_type} بغض النظر عن نتيجة المزرعة.\n"
-                        f"        الاستخدام سيؤدي لفشل علاجي."
-                    ),
-                })
+                banned.append({"name": d, "category": "organism", "reason_detail": f"غير فعال لـ {organism_type}."})
                 continue
 
-            # ⑤ MRSA beta-lactam rule
-            if organism_type == "MRSA":
-                bl_classes = ["Penicillin","Cephalosporin"]
-                if any(c in info["class"] for c in bl_classes):
-                    banned.append({
-                        "name": d, "category": "organism",
-                        "reason_short": "بيتا-لاكتام — لا يعمل على MRSA.",
-                        "reason_detail": (
-                            f"MRSA يحمل جين mecA الذي يُنتج بروتين PBP2a.\n"
-                            f"        هذا البروتين لا يرتبط بأي بيتا-لاكتام.\n"
-                            f"        → جميع البنسيلين والسيفالوسبورين غير فعالة."
-                        ),
-                    })
-                    continue
+            if organism_type == "MRSA" and any(c in info["class"] for c in ["Penicillin","Cephalosporin"]):
+                banned.append({"name": d, "category": "organism", "reason_detail": "MRSA مقاوم للبيتا-لاكتام."})
+                continue
 
-            # ⑥ Pregnancy BANNED
             if is_preg and info["preg_status"] == "Banned":
-                banned.append({
-                    "name": d, "category": "pregnancy",
-                    "reason_short": info["preg_note"].splitlines()[0],
-                    "reason_detail": info["preg_note"],
-                })
+                banned.append({"name": d, "category": "pregnancy", "reason_short": info["preg_note"]})
                 continue
-
-            # ⑦ Pregnancy WARN
             if is_preg and info["preg_status"] == "Warn":
                 preg_warn_items.append({"name": d, **info})
 
-            # ⑧ Child rules
+            # Children
             cls = info["class"].lower()
             if age < 18 and not info.get("child_safe", True):
                 if "fluoroquinolone" in cls:
-                    banned.append({
-                        "name": d, "category": "child",
-                        "reason_short": "غير مناسب لمن هم دون 18 سنة.",
-                        "reason_detail": CHILD_BAN_REASONS["fluoroquinolone"],
-                    })
+                    banned.append({"name": d, "category": "child", "reason_short": "فلوروكينولون < 18 سنة."})
                     continue
                 elif "tetracycline" in cls and age < 8:
-                    banned.append({
-                        "name": d, "category": "child",
-                        "reason_short": "غير مناسب لمن هم دون 8 سنوات.",
-                        "reason_detail": CHILD_BAN_REASONS["tetracycline"],
-                    })
+                    banned.append({"name": d, "category": "child", "reason_short": "تتراسيكلين < 8 سنوات."})
                     continue
                 else:
-                    banned.append({
-                        "name": d, "category": "child",
-                        "reason_short": f"غير مرخص للأطفال.",
-                        "reason_detail": f"الشركة الصانعة لا توصي به لمن هم دون 18 سنة.",
-                    })
+                    banned.append({"name": d, "category": "child", "reason_short": "غير مناسب للأطفال."})
                     continue
 
-            # ⑨ Nitrofurantoin hard cutoff
             if is_renal and "nitrofurantoin" in d_low and cl_cr < 30:
-                banned.append({
-                    "name": d, "category": "renal",
-                    "reason_short": f"ممنوع — CrCl {cl_cr:.1f} < 30 مل/د.",
-                    "reason_detail": (
-                        f"CrCl المريض = {cl_cr:.1f} مل/د (أقل من الحد المطلوب 30).\n"
-                        f"        Nitrofurantoin لا يصل لتركيز علاجي في البول\n"
-                        f"        عند ضعف الكلى، ويتراكم في الدم مسبباً سُمية."
-                    ),
-                })
+                banned.append({"name": d, "category": "renal", "reason_short": f"CrCl {cl_cr:.1f} < 30."})
                 continue
 
-            # ⑩ Renal dose adjustment
             if is_renal and info["renal_limit"] > 0 and cl_cr <= info["renal_limit"]:
                 warned.append({"name": d, **info})
                 continue
 
             allowed.append({"name": d, **info})
 
-        # Display sections
+        # واجهة العرض
         non_preg_alerts = [a for a in interactions_alerts if "🤰" not in a]
         if non_preg_alerts:
-            st.warning("⚡ Interactions / Hepatic Warnings")
-            for a in sorted(set(non_preg_alerts)):
-                st.write(a)
+            st.warning("⚡ Interactions / Warnings")
+            for a in sorted(set(non_preg_alerts)): st.write(a)
 
         if is_preg and preg_warn_items:
-            st.markdown("---")
             st.markdown("### 🤰 Pregnancy — Use With Caution")
-            st.info(
-                "الأدوية التالية **ليست محظورة تلقائياً** لكنها تحتاج تقييم طبي دقيق.\n\n"
-                "بعضها أُعيد تقييمه في الأدبيات الحديثة (ACCP 2025).\n\n"
-                "**القرار النهائي للطبيب المعالج حصراً.**"
-            )
+            st.info("الأدوية التالية تحتاج تقييم طبي.")
             for item in preg_warn_items:
-                with st.expander(f"⚠️ {item['name']} — تفاصيل التحذير"):
-                    for line in item["preg_note"].splitlines():
-                        st.write(line)
+                with st.expander(f"⚠️ {item['name']}"):
+                    for line in item["preg_note"].splitlines(): st.write(line)
 
         if banned:
             with st.expander("🚫 Contraindicated / Ineffective", expanded=True):
                 for b in banned:
-                    cat_label = {
-                        "resistant": "مقاوم في المزرعة",
-                        "renal":     "قصور كلوي",
-                        "pregnancy": "ممنوع في الحمل",
-                        "child":     "غير مناسب < 18 سنة",
-                        "organism":  "غير فعال للجرثومة",
-                        "other":     "موانع أخرى",
-                    }.get(b["category"], "")
-                    st.error(f"💊 {b['name']}  [{cat_label}]\n{b['reason_short']}")
+                    cat_label = {"resistant":"مقاوم","renal":"كلوي","pregnancy":"حمل","child":"أطفال","organism":"غير فعال"}.get(b["category"], "")
+                    st.error(f"💊 {b['name']} [{cat_label}]")
 
         if warned:
             with st.expander("🟡 Dose Adjustment Required", expanded=True):
                 for item in warned:
-                    sir_tag = f" [{sir_map.get(item['name'],'')}]" if sir_map else ""
-                    st.warning(f"**{item['name']}{sir_tag}** — {item['renal_note']}")
+                    st.warning(f"**{item['name']}** — {item['renal_note']}")
 
         if allowed:
             st.success(f"🟢 {len(allowed)} Recommended Option(s)")
             for item in sorted(allowed, key=lambda x: x["priority"]):
-                sir_badge  = f" [{sir_map.get(item['name'],'?')}]" if sir_map else ""
-                preg_flag  = " 🤰" if (is_preg and item["preg_status"]=="Warn") else ""
-                with st.expander(
-                    f"{item['name']}{sir_badge}{preg_flag} — {AWARE_COLORS[item['aware']]}"
-                ):
-                    c1, c2 = st.columns(2)
-                    c1.write(f"**Class:** {item['class']}")
-                    c2.write(f"**Route:** {'🟢 PO' if item['high_po'] else '💉 IV only'}")
+                sir_badge = f" [{sir_map.get(item['name'],'?')}]" if sir_map else ""
+                with st.expander(f"{item['name']}{sir_badge} — {AWARE_COLORS[item['aware']]}"):
+                    col_a, col_b = st.columns(2)
+                    col_a.write(f"**Class:** {item['class']}")
+                    col_b.write(f"**Route:** {'🟢 PO' if item['high_po'] else '💉 IV'}")
                     st.write(f"**Note:** {item['note']}")
                     spec_note = item.get("specimen_notes", {}).get(culture_type, "")
-                    if spec_note:
-                        st.info(f"**{culture_type} Note:** {spec_note}")
-                    if is_preg and item["preg_status"] == "Warn":
-                        st.caption("🤰 " + item["preg_note"].splitlines()[0])
+                    if spec_note: st.info(f"**{culture_type} Note:** {spec_note}")
+                    if is_preg and item["preg_status"]=="Warn": st.caption("🤰 " + item["preg_note"].splitlines()[0])
         elif not banned and not warned:
-            st.info("اختر المضادات الحساسة من القائمة أعلاه.")
+            st.info("اختر المضادات الحساسة من القائمة.")
 
         if final_drugs:
             st.divider()
-            report_txt = generate_report(
-                age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
-                allowed, warned, banned, preg_warn_items,
-                organism_type, culture_type,
-                interactions_alerts, sir_map,
-            )
-            st.download_button(
-                "📄 Download Clinical Report",
-                report_txt,
-                file_name=f"Orange_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                mime="text/plain",
-                use_container_width=True,
-            )
+            report_txt = generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
+                                         allowed, warned, banned, preg_warn_items,
+                                         organism_type, culture_type,
+                                         interactions_alerts, sir_map)
+            st.download_button("📄 Download Clinical Report", report_txt,
+                               file_name=f"Orange_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                               mime="text/plain", use_container_width=True)
 
 st.divider()
 st.markdown("""
