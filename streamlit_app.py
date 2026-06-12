@@ -89,7 +89,6 @@ def check_subscription(email):
         st.info("📞 للتجديد: 01016872801 | ✉️ Hussein.ali77121@gmail.com")
         return False
 
-    # تحذير قرب الانتهاء
     if days_left <= 3:
         st.warning(f"⚠️ اشتراكك ينتهي خلال **{days_left} يوم فقط!** تواصل للتجديد.")
     elif days_left <= 7:
@@ -162,6 +161,41 @@ ABX_GUIDELINES = {
             "Pus":        "💉 فعال في الخراجات داخل البطن.",
         },
     },
+    # ─── جديد ────────────────────────────────────────────────────────────
+    "Cefoperazone + Sulbactam": {
+        "priority": 4, "class": "3rd Gen Cephalosporin + Beta-lactamase Inhibitor",
+        "note": (
+            "🛑 (مثل Sulperazone/Bakperazone) مزيج قوي ضد سالبات الجرام الصعبة "
+            "بما فيها Acinetobacter baumannii. "
+            "يُعتبر بديلاً مهماً لـ Meropenem في بعض بروتوكولات MDR."
+        ),
+        "renal_limit": 0,
+        "renal_note": "🟢 آمن كلوياً — يُطرح أساساً عبر الصفراء (biliary excretion).",
+        "hepatic_caution": True,
+        "aware": "Watch",
+        "high_po": False,
+        "preg_status": "Safe",
+        "preg_note": "",
+        "child_safe": True,
+        "interacts_with": ["Warfarin (مضادات التخثر)"],
+        "aliases": ["sulperazone","bakperazone","cefop-sulbactam","cefoperazone sulbactam"],
+        "organisms": [
+            "Acinetobacter baumannii",
+            "Pseudomonas aeruginosa",
+            "Klebsiella spp.",
+            "E. coli",
+            "Proteus mirabilis",
+            "Staphylococcus aureus",
+        ],
+        "specimen_notes": {
+            "Blood":      "🛑 bacteremia بـ MDR Acinetobacter أو Pseudomonas — بديل مهم للكاربابينيم.",
+            "Sputum":     "🛑 VAP/HAP بـ MDR Acinetobacter baumannii — بروتوكول مصري شائع.",
+            "Wound Swab": "🛑 العدوى الجراحية الشديدة ومضاعفات الحروق.",
+            "Pus":        "🛑 الخراجات والعدوى داخل البطن عند فشل الخطوط الأولى.",
+            "Urine":      "⚠️ يصل لتركيز كافٍ في البول — بديل عند تعذر الكاربابينيم.",
+        },
+    },
+    # ─────────────────────────────────────────────────────────────────────
     "Piperacillin + Tazobactam": {
         "priority": 4, "class": "Anti-pseudomonal Penicillin",
         "note": "🛑 (مثل Tazocin) مضاد احتياطي واسع الطيف جداً (IDSA AMR).",
@@ -255,12 +289,14 @@ ABX_GUIDELINES = {
         "interacts_with": [],
         "aliases": ["rocephin","cefaxone","triaxone"],
         "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis",
-                      "Staphylococcus aureus","Streptococcus spp.","H. influenzae"],
+                      "Staphylococcus aureus","Streptococcus spp.","H. influenzae",
+                      "Salmonella spp.","Shigella spp.","Neisseria gonorrhoeae"],
         "specimen_notes": {
             "Blood":      "💉 خيار ممتاز في bacteremia والـ sepsis.",
             "CSF":        "💉 خيار أول في meningitis البكتيري.",
             "Sputum":     "💉 CAP الشديد الذي يحتاج دخول مستشفى.",
             "Urine":      "⚠️ يُحفظ للـ pyelonephritis الشديد — مش للمسالك البسيطة.",
+            "Stool":      "💉 Typhoid fever / الحالات الشديدة من Salmonella و Shigella.",
         },
     },
     "Cefixime": {
@@ -273,10 +309,11 @@ ABX_GUIDELINES = {
         "interacts_with": [],
         "aliases": ["suprax","oroken"],
         "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis",
-                      "H. influenzae","Streptococcus spp."],
+                      "H. influenzae","Streptococcus spp.","Salmonella spp."],
         "specimen_notes": {
             "Urine":      "✅ خيار فموي قوي للمسالك والـ pyelonephritis الخفيف.",
             "Sputum":     "✅ مناسب لعدوى الجهاز التنفسي الخفيفة.",
+            "Stool":      "✅ Step-down بعد Ceftriaxone في Salmonella.",
         },
     },
     "Cefotaxime": {
@@ -366,12 +403,15 @@ ABX_GUIDELINES = {
         "interacts_with": ["Antacids (مضادات الحموضة)","Warfarin (مضادات التخثر)"],
         "aliases": ["ciprofar","cipro","ciproflox"],
         "organisms": ["E. coli","Klebsiella spp.","Pseudomonas aeruginosa",
-                      "Proteus mirabilis","Staphylococcus aureus"],
+                      "Proteus mirabilis","Staphylococcus aureus",
+                      "Salmonella spp.","Shigella spp.","Campylobacter jejuni",
+                      "Neisseria gonorrhoeae"],
         "specimen_notes": {
             "Urine":      "⚠️ فعال لكن يُحفظ للمسالك المعقدة (Pseudomonas/pyelonephritis).",
             "Blood":      "⚠️ bacteremia في الحالات المتوسطة.",
             "Sputum":     "⚠️ الفلوروكينولون الوحيد الفعال ضد Pseudomonas في الصدر.",
             "Wound Swab": "⚠️ عدوى الجروح المعقدة.",
+            "Stool":      "⚠️ Shigellosis والحالات الشديدة من Campylobacter.",
         },
     },
     "Levofloxacin": {
@@ -390,7 +430,8 @@ ABX_GUIDELINES = {
         "interacts_with": ["Antacids (مضادات الحموضة)"],
         "aliases": ["tavanic","levaquin","levoflox"],
         "organisms": ["E. coli","Klebsiella spp.","Pseudomonas aeruginosa",
-                      "Staphylococcus aureus","Streptococcus spp.","H. influenzae"],
+                      "Staphylococcus aureus","Streptococcus spp.","H. influenzae",
+                      "Streptococcus pneumoniae","Mycoplasma spp.","Legionella pneumophila"],
         "specimen_notes": {
             "Sputum": "⚠️ خيار قوي لـ CAP وعدوى الجهاز التنفسي (respiratory quinolone).",
             "Urine":  "⚠️ فعال لكن يُحفظ للحالات المعقدة.",
@@ -540,11 +581,14 @@ ABX_GUIDELINES = {
         "interacts_with": ["Antacids (مضادات الحموضة)"],
         "aliases": ["zithrokan","zithromax","azithro"],
         "organisms": ["Staphylococcus aureus","Streptococcus spp.",
-                      "H. influenzae","Chlamydia spp.","Mycoplasma spp."],
+                      "H. influenzae","Chlamydia spp.","Mycoplasma spp.",
+                      "Salmonella spp.","Shigella spp.","Campylobacter jejuni",
+                      "Streptococcus pneumoniae","Legionella pneumophila"],
         "specimen_notes": {
             "Sputum":     "✅ خيار ممتاز لـ CAP والـ atypicals (Mycoplasma/Chlamydia).",
             "Wound Swab": "✅ عدوى الجلد الخفيفة بالموجبات.",
             "Urine":      "⚠️ فعال فقط في Chlamydia urethritis — مش UTI عادي.",
+            "Stool":      "✅ الخيار الأول في Campylobacter وبعض حالات Shigella.",
         },
     },
     "Clarithromycin": {
@@ -563,10 +607,11 @@ ABX_GUIDELINES = {
         "interacts_with": [],
         "aliases": ["klacid","biaxin"],
         "organisms": ["Staphylococcus aureus","Streptococcus spp.",
-                      "H. pylori","H. influenzae","Mycoplasma spp."],
+                      "H. pylori","H. influenzae","Mycoplasma spp.",
+                      "Streptococcus pneumoniae","Legionella pneumophila"],
         "specimen_notes": {
             "Sputum": "✅ CAP والـ atypical pneumonia.",
-            "Stool":  "✅ H. pylori eradication therapy.",
+            "Stool":  "✅ H. pylori eradication therapy (جزء من Triple Therapy).",
         },
     },
     "Trimethoprim/Sulfamethoxazole": {
@@ -585,10 +630,11 @@ ABX_GUIDELINES = {
         "interacts_with": ["Warfarin (مضادات التخثر)"],
         "aliases": ["septra","sutrim","bactrim","co-trimoxazole","tmp-smx"],
         "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis",
-                      "Staphylococcus aureus","Streptococcus spp.","Acinetobacter baumannii"],
+                      "Staphylococcus aureus","Streptococcus spp.","Acinetobacter baumannii",
+                      "Stenotrophomonas maltophilia"],
         "specimen_notes": {
             "Urine":      "✅ فعال للمسالك البسيطة عند تأكيد الحساسية.",
-            "Sputum":     "✅ الجهاز التنفسي والـ PCP prophylaxis.",
+            "Sputum":     "✅ الجهاز التنفسي والـ PCP prophylaxis — خيار أول لـ Stenotrophomonas.",
             "Wound Swab": "✅ MRSA skin infections (SSTI).",
         },
     },
@@ -609,11 +655,11 @@ ABX_GUIDELINES = {
         "interacts_with": ["Warfarin (مضادات التخثر)"],
         "aliases": ["flagyl","metro","metrogyl"],
         "organisms": ["Anaerobes (لاهوائيات)","Trichomonas vaginalis",
-                      "H. pylori","C. difficile","Bacteroides spp."],
+                      "H. pylori","C. difficile","Bacteroides spp.","Giardia lamblia"],
         "specimen_notes": {
             "Pus":        "✅ الخراجات والعدوى المختلطة (anaerobic coverage).",
             "Wound Swab": "✅ العدوى الجراحية التي تشمل اللاهوائيات.",
-            "Stool":      "✅ الخيار الأول لـ C. difficile وبعض الطفيليات.",
+            "Stool":      "✅ الخيار الأول لـ C. difficile وبعض الطفيليات (Giardia).",
             "Blood":      "✅ sepsis البطن مع اشتباه anaerobic.",
         },
     },
@@ -660,9 +706,10 @@ ABX_GUIDELINES = {
         "aliases": ["vibramycin","doxy"],
         "organisms": ["Chlamydia spp.","Mycoplasma spp.",
                       "Staphylococcus aureus","H. influenzae","Rickettsia spp.",
-                      "Acinetobacter baumannii"],
+                      "Acinetobacter baumannii","Stenotrophomonas maltophilia",
+                      "Legionella pneumophila"],
         "specimen_notes": {
-            "Sputum":     "✅ atypical pneumonia (Mycoplasma/Chlamydia).",
+            "Sputum":     "✅ atypical pneumonia (Mycoplasma/Chlamydia/Legionella).",
             "Wound Swab": "✅ MRSA SSTI و Rickettsia.",
             "Blood":      "✅ Rickettsia bacteremia.",
         },
@@ -738,12 +785,13 @@ ABX_GUIDELINES = {
         "interacts_with": ["NSAIDs (مسكنات الألم)"],
         "aliases": ["vancocin","vanco"],
         "organisms": ["MRSA","Staphylococcus aureus","Enterococcus faecalis",
-                      "Streptococcus spp.","C. difficile"],
+                      "Streptococcus spp.","C. difficile","Streptococcus pneumoniae"],
         "specimen_notes": {
-            "Blood":  "🛑 MRSA bacteremia.",
-            "CSF":    "🛑 MRSA meningitis.",
-            "Sputum": "🛑 MRSA pneumonia في ICU.",
+            "Blood":      "🛑 MRSA bacteremia.",
+            "CSF":        "🛑 MRSA meningitis.",
+            "Sputum":     "🛑 MRSA pneumonia في ICU.",
             "Wound Swab": "🛑 MRSA wound infection.",
+            "Stool":      "🛑 C. difficile الشديد (Oral Vancomycin فقط).",
         },
     },
     "Linezolid": {
@@ -786,6 +834,137 @@ ABX_GUIDELINES = {
             "Sputum": "🔴 VAP بـ XDR Acinetobacter/Pseudomonas.",
         },
     },
+    # ─── مضافة جديدة ─────────────────────────────────────────────────────
+    "Fidaxomicin": {
+        "priority": 3, "class": "Macrocyclic Antibiotic",
+        "note": (
+            "🎯 (مثل Dificlir) خاص بـ C. difficile — معدل انتكاس أقل من Vancomycin. "
+            "يُستخدم في الحالات المتكررة أو الشديدة."
+        ),
+        "renal_limit": 0,
+        "renal_note": "🟢 آمن كلوياً — امتصاص فموي ضعيف جداً (تأثير محلي).",
+        "hepatic_caution": False,
+        "aware": "Watch",
+        "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Fidaxomicin:\n"
+            "  بيانات محدودة في الحمل — يُفضل Oral Vancomycin كبديل.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": False,
+        "interacts_with": [],
+        "aliases": ["dificlir","fidaxo"],
+        "organisms": ["C. difficile"],
+        "specimen_notes": {
+            "Stool": "🎯 الخيار المفضل للـ C. difficile المتكرر أو الشديد (IDSA/ESCMID 2021).",
+        },
+    },
+    "Rifaximin": {
+        "priority": 2, "class": "Rifamycin (Non-absorbable)",
+        "note": (
+            "🎯 (مثل Normix/Xifaxan) مضاد فموي غير ممتص — "
+            "خاص بالأمعاء. يُستخدم للوقاية من traveler's diarrhea وعلاج IBS-D."
+        ),
+        "renal_limit": 0,
+        "renal_note": "🟢 آمن كلوياً — امتصاص جهازي أقل من 0.4%.",
+        "hepatic_caution": False,
+        "aware": "Watch",
+        "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Rifaximin:\n"
+            "  بيانات محدودة في الحمل — يُفضل تجنبه.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": False,
+        "interacts_with": [],
+        "aliases": ["normix","xifaxan","rifaximin"],
+        "organisms": ["E. coli","Salmonella spp.","Shigella spp."],
+        "specimen_notes": {
+            "Stool": "🎯 Traveler's diarrhea — عدوى الأمعاء البسيطة والوقاية.",
+        },
+    },
+    "TMP/SMX (High-dose)": {
+        "priority": 2, "class": "Sulfonamide",
+        "note": (
+            "🎯 TMP/SMX بجرعة عالية — الخيار الأول لـ Stenotrophomonas maltophilia. "
+            "نفس الدواء (Sutrim/Bactrim) لكن بجرعة مختلفة."
+        ),
+        "renal_limit": 30,
+        "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": False,
+        "aware": "Watch",
+        "high_po": True,
+        "preg_status": "Banned",
+        "preg_note": (
+            "ممنوع في الحمل — TMP/SMX:\n"
+            "  يثبط حمض الفوليك — خطر Neural Tube Defects.\n"
+            "  يسبب kernicterus في الـ 3rd trimester."
+        ),
+        "child_safe": True,
+        "interacts_with": ["Warfarin (مضادات التخثر)"],
+        "aliases": ["tmp-smx high dose","bactrim ds","co-trimoxazole hd"],
+        "organisms": ["Stenotrophomonas maltophilia"],
+        "specimen_notes": {
+            "Sputum": "🎯 الخيار الأول لـ Stenotrophomonas — VAP/HAP.",
+            "Blood":  "🎯 Stenotrophomonas bacteremia.",
+        },
+    },
+    "Levofloxacin (High-dose)": {
+        "priority": 3, "class": "Fluoroquinolone",
+        "note": (
+            "⚠️ Levofloxacin بجرعة 750mg — بديل TMP/SMX "
+            "لـ Stenotrophomonas maltophilia عند وجود حساسية أو تعذر الاستخدام."
+        ),
+        "renal_limit": 50,
+        "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": True,
+        "aware": "Watch",
+        "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Levofloxacin:\n"
+            "  فلوروكينولون — يُستخدم بحذر شديد.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": False,
+        "interacts_with": ["Antacids (مضادات الحموضة)"],
+        "aliases": ["levaquin hd","levoflox 750"],
+        "organisms": ["Stenotrophomonas maltophilia"],
+        "specimen_notes": {
+            "Sputum": "⚠️ بديل TMP/SMX لـ Stenotrophomonas.",
+            "Blood":  "⚠️ Stenotrophomonas bacteremia عند تعذر TMP/SMX.",
+        },
+    },
+    "Ceftazidime-Avibactam": {
+        "priority": 6, "class": "5th Gen Cephalosporin + Beta-lactamase Inhibitor",
+        "note": (
+            "🔴 (مثل Avycaz) خيار متخصص لـ KPC وOXA-48 "
+            "وبعض NDM. ملاذ أخير لـ CRE وXDR Pseudomonas."
+        ),
+        "renal_limit": 50,
+        "renal_note": "⚖️ تعديل الجرعة حتمي — يُطرح كلياً.",
+        "hepatic_caution": False,
+        "aware": "Reserve",
+        "high_po": False,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Ceftazidime-Avibactam:\n"
+            "  بيانات غير كافية في الحمل البشري.\n"
+            "  يُستخدم فقط عند الضرورة القصوى.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": True,
+        "interacts_with": [],
+        "aliases": ["avycaz","caz-avi","ceftazidime avibactam"],
+        "organisms": ["Klebsiella spp.","Pseudomonas aeruginosa","E. coli"],
+        "specimen_notes": {
+            "Blood":  "🔴 CRE/KPC bacteremia — ملاذ أخير.",
+            "Sputum": "🔴 XDR Pseudomonas في ICU.",
+            "Urine":  "🔴 UTI بـ CRE عند فشل كل البدائل.",
+        },
+    },
 }
 
 # ==========================================
@@ -820,7 +999,7 @@ ORGANISM_PROFILE = {
             "Sputum":     "⚠️ E. coli في البلغم — نادر، يشير لـ aspiration أو HAP.",
             "Wound Swab": "🔬 شائع في عدوى الجروح الجراحية والحروق.",
             "Pus":        "🔬 شائع في خراجات البطن وعدوى البطن.",
-            "Stool":      "🔬 ETEC و EPEC — أسباب إسهال.",
+            "Stool":      "🔬 ETEC و EPEC — أسباب إسهال المسافرين.",
         },
         "note": "🔬 الأكثر شيوعاً في مزارع البول.",
     },
@@ -864,10 +1043,11 @@ ORGANISM_PROFILE = {
         ],
         "second_line": [
             "Cefepime",
+            "Cefoperazone + Sulbactam",
             "Meropenem",
             "Amikacin",
         ],
-        "third_line": ["Colistin"],
+        "third_line": ["Colistin","Ceftazidime-Avibactam"],
         "avoid": [
             "Nitrofurantoin",
             "Fosfomycin",
@@ -891,7 +1071,10 @@ ORGANISM_PROFILE = {
         "note": "🔬 جرثومة انتهازية — تحتاج مضادات anti-pseudomonal متخصصة.",
     },
     "Acinetobacter baumannii": {
-        "first_line": ["Ampicillin/Sulbactam"],
+        "first_line": [
+            "Ampicillin/Sulbactam",
+            "Cefoperazone + Sulbactam",
+        ],
         "second_line": ["Meropenem","Amikacin","Trimethoprim/Sulfamethoxazole","Doxycycline"],
         "third_line": ["Colistin"],
         "avoid": [
@@ -901,11 +1084,11 @@ ORGANISM_PROFILE = {
             "Nitrofurantoin", "Fosfomycin",
         ],
         "specimen_context": {
-            "Blood":  "🔴 Acinetobacter bacteremia — ICU — MDR غالباً.",
-            "Sputum": "🔴 VAP الأكثر شيوعاً في ICU — خطر جداً.",
+            "Blood":      "🔴 Acinetobacter bacteremia — ICU — MDR غالباً.",
+            "Sputum":     "🔴 VAP الأكثر شيوعاً في ICU — خطر جداً.",
             "Wound Swab": "🔴 عدوى الحروق والجروح الجراحية الكبيرة.",
         },
-        "note": "🔴 بكتيريا رعاية حرجة شديدة المقاومة (MDR). Ampicillin/Sulbactam بجرعات عالية هو الأساس (IDSA AMR Guidance).",
+        "note": "🔴 بكتيريا رعاية حرجة شديدة المقاومة (MDR). Ampicillin/Sulbactam أو Cefoperazone/Sulbactam بجرعات عالية هو الأساس (IDSA AMR Guidance).",
     },
     "Staphylococcus aureus": {
         "first_line": [
@@ -1013,12 +1196,13 @@ ORGANISM_PROFILE = {
             "جميع السيفالوسبورين مقاومة طبيعياً لـ Enterococcus."
         ),
         "specimen_context": {
-            "Urine":  "🔬 شائع في UTI خصوصاً الكاتيتر.",
-            "Blood":  "⚠️ Enterococcus bacteremia — خطر endocarditis.",
+            "Urine":      "🔬 شائع في UTI خصوصاً الكاتيتر.",
+            "Blood":      "⚠️ Enterococcus bacteremia — خطر endocarditis.",
             "Wound Swab": "⚠️ عدوى البطن والجروح الجراحية المختلطة.",
         },
         "note": "🔬 مقاوم طبيعياً للسيفالوسبورين وErtapenem — Amoxicillin هو الأساس.",
     },
+    # ─── بكتيريا الـ Stool ─────────────────────────────────────────────
     "Salmonella spp.": {
         "first_line": [
             "Ceftriaxone",
@@ -1068,7 +1252,7 @@ ORGANISM_PROFILE = {
             "Stool":  "🔬 Shigellosis — العلاج بالمضادات الحيوية يقلل الأعراض ويمنع انتشار المرض.",
             "Blood":  "🔬 نادراً ما يصل للدم إلا في الحالات الشديدة.",
         },
-        "note": "🔬 تعالج فقط الحالات الوخيمة أو أثناء الأوبئة؛ مقاومة عالية لـ TMP-SMX في بعض المناطق.",
+        "note": "🔬 تعالج فقط الحالات الوخيمة أو أثناء الأوبئة؛ مقاومة عالية لـ TMP/SMX في بعض المناطق.",
     },
     "Campylobacter jejuni": {
         "first_line": [
@@ -1092,8 +1276,294 @@ ORGANISM_PROFILE = {
         },
         "note": "🔬 معظم الحالات لا تحتاج مضادات حيوية؛ Azithromycin هو الخيار الأول عند الحاجة.",
     },
+    "H. pylori": {
+        "first_line": [
+            "Clarithromycin",
+            "Metronidazole",
+            "Amoxicillin + Clavulanic acid",
+        ],
+        "second_line": [
+            "Tinidazole",
+            "Levofloxacin",
+            "Tetracycline",
+        ],
+        "third_line": ["Rifaximin"],
+        "avoid": [
+            "Nitrofurantoin",
+            "Fosfomycin",
+            "Cephalosporins",
+        ],
+        "urine_note": "",
+        "specimen_context": {
+            "Stool":       "🔬 H. pylori Stool Antigen Test — يؤكد الإصابة والشفاء بعد العلاج.",
+            "Blood":       "⚠️ H. pylori لا يُعزل من الدم — الاختبار هنا serological.",
+        },
+        "note": "🔬 يحتاج Triple أو Quadruple therapy — لا يُعطى مضاد واحد أبداً.",
+    },
+    "C. difficile": {
+        "first_line": [
+            "Vancomycin",
+            "Fidaxomicin",
+        ],
+        "second_line": [
+            "Metronidazole",
+        ],
+        "third_line": [],
+        "avoid": [
+            "Cephalosporins",
+            "Fluoroquinolones",
+            "Clindamycin",
+            "Trimethoprim/Sulfamethoxazole",
+        ],
+        "urine_note": "",
+        "specimen_context": {
+            "Stool": "🔬 C. difficile — أهم سبب للإسهال المرتبط بالمضادات الحيوية. GDH+Toxin أو PCR.",
+        },
+        "note": "🔬 Oral Vancomycin أو Fidaxomicin هو الخيار الأول (IDSA 2021). Metronidazole بديل للحالات الخفيفة فقط.",
+    },
+    "Giardia lamblia": {
+        "first_line": [
+            "Metronidazole",
+            "Tinidazole",
+        ],
+        "second_line": [],
+        "third_line": [],
+        "avoid": [
+            "Cephalosporins",
+            "Fluoroquinolones",
+            "Aminoglycosides",
+        ],
+        "urine_note": "",
+        "specimen_context": {
+            "Stool": "🔬 Giardiasis — إسهال مزمن دهني + انتفاخ. يُشخص بـ Stool Antigen أو Microscopy.",
+        },
+        "note": "🔬 Metronidazole أو Tinidazole (جرعة واحدة) — الأكثر فاعلية والأرخص.",
+    },
+    # ─── بكتيريا جهاز تنفسي مهمة ──────────────────────────────────────
+    "Streptococcus pneumoniae": {
+        "first_line": [
+            "Amoxicillin + Clavulanic acid",
+            "Ceftriaxone",
+            "Levofloxacin",
+        ],
+        "second_line": [
+            "Azithromycin",
+            "Clarithromycin",
+            "Cefuroxime",
+        ],
+        "third_line": ["Vancomycin", "Linezolid"],
+        "avoid": [],
+        "urine_note": "",
+        "specimen_context": {
+            "Sputum": "🔬 السبب الأول لـ CAP — تحقق من مقاومة Penicillin.",
+            "Blood":  "🔬 Pneumococcal bacteremia — خطر حقيقي في المسنين والمناعة.",
+            "CSF":    "🔬 السبب الأول لـ bacterial meningitis في البالغين.",
+        },
+        "note": "🔬 السبب الأول لـ CAP والـ meningitis البالغين. تحقق من MIC للـ Penicillin.",
+    },
+    "H. influenzae": {
+        "first_line": [
+            "Amoxicillin + Clavulanic acid",
+            "Cefuroxime",
+            "Ceftriaxone",
+        ],
+        "second_line": [
+            "Azithromycin",
+            "Levofloxacin",
+            "Trimethoprim/Sulfamethoxazole",
+        ],
+        "third_line": [],
+        "avoid": ["Ampicillin (alone — beta-lactamase common)"],
+        "urine_note": "",
+        "specimen_context": {
+            "Sputum": "🔬 شائع في COPD exacerbation و CAP وعدوى الأذن الوسطى.",
+            "Blood":  "⚠️ H. influenzae bacteremia — نادر بعد التطعيم.",
+            "CSF":    "⚠️ H. influenzae meningitis — نادر جداً الآن (تطعيم Hib).",
+        },
+        "note": "🔬 شائع في التهاب القصبات والـ COPD. 30% ينتجون beta-lactamase — Amoxicillin/Clavulanate مفضل.",
+    },
+    "Legionella pneumophila": {
+        "first_line": [
+            "Levofloxacin",
+            "Azithromycin",
+        ],
+        "second_line": [
+            "Doxycycline",
+            "Clarithromycin",
+        ],
+        "third_line": [],
+        "avoid": [
+            "Beta-lactams (alone)",
+            "Aminoglycosides",
+            "Cephalosporins (alone)",
+        ],
+        "urine_note": "",
+        "specimen_context": {
+            "Sputum": "🔬 Legionella — CAP الشديد، خاصةً في الفنادق أو مكيفات الهواء.",
+            "Blood":  "⚠️ Bacteremia نادر — التشخيص بـ Urine Antigen أو PCR.",
+        },
+        "note": "🔬 Legionellosis — Levofloxacin هو الخيار الأول. لا يُعزل بالزراعة العادية — يحتاج وسط BCYE.",
+    },
+    "Mycoplasma spp.": {
+        "first_line": [
+            "Azithromycin",
+            "Doxycycline",
+        ],
+        "second_line": [
+            "Levofloxacin",
+            "Clarithromycin",
+        ],
+        "third_line": [],
+        "avoid": [
+            "Beta-lactams",
+            "Cephalosporins",
+            "Vancomycin",
+            "Aminoglycosides",
+        ],
+        "urine_note": "",
+        "specimen_context": {
+            "Sputum": "🔬 Atypical pneumonia — Walking pneumonia — خاصةً في الشباب.",
+        },
+        "note": "🔬 لا جدار خلوي — كل البيتا-لاكتام غير فعالة. يُشخص بـ PCR أو Serology.",
+    },
+    "Chlamydia spp.": {
+        "first_line": [
+            "Doxycycline",
+            "Azithromycin",
+        ],
+        "second_line": [
+            "Levofloxacin",
+        ],
+        "third_line": [],
+        "avoid": [
+            "Beta-lactams",
+            "Aminoglycosides",
+            "Cephalosporins",
+        ],
+        "urine_note": "Azithromycin: جرعة واحدة 1g لـ Chlamydia urethritis.",
+        "specimen_context": {
+            "Sputum": "🔬 C. pneumoniae — سبب لـ atypical CAP.",
+            "Urine":  "🔬 C. trachomatis — STI شائع، يُشخص بـ NAAT.",
+        },
+        "note": "🔬 لا جدار خلوي — البيتا-لاكتام غير فعالة. Doxycycline 7 أيام أو Azithromycin جرعة واحدة.",
+    },
+    # ─── بكتيريا MDR مهمة ──────────────────────────────────────────────
+    "Stenotrophomonas maltophilia": {
+        "first_line": [
+            "Trimethoprim/Sulfamethoxazole",
+            "TMP/SMX (High-dose)",
+        ],
+        "second_line": [
+            "Levofloxacin",
+            "Levofloxacin (High-dose)",
+            "Doxycycline",
+        ],
+        "third_line": ["Ceftazidime-Avibactam"],
+        "avoid": [
+            "Carbapenems",
+            "Ertapenem",
+            "Meropenem",
+            "Aminoglycosides",
+            "Ceftriaxone",
+            "Cefepime",
+        ],
+        "urine_note": "",
+        "specimen_context": {
+            "Sputum": "🔴 شائع في VAP/HAP في ICU — خاصةً بعد علاج طويل بالكاربابينيم.",
+            "Blood":  "🔴 Stenotrophomonas bacteremia — نادر لكن خطر في المناعة الضعيفة.",
+        },
+        "note": "🔴 مقاومة طبيعية للكاربابينيم! TMP/SMX هو الخيار الأول. كثيراً ما ينتقى بعد علاج Meropenem.",
+    },
+    "Neisseria gonorrhoeae": {
+        "first_line": [
+            "Ceftriaxone",
+        ],
+        "second_line": [
+            "Azithromycin",
+            "Ciprofloxacin",
+        ],
+        "third_line": [],
+        "avoid": [
+            "Penicillin (alone — high resistance)",
+            "Tetracyclines (alone)",
+        ],
+        "urine_note": "Ceftriaxone IM جرعة واحدة 500mg هو الخيار الأول (CDC/ECDC 2021).",
+        "specimen_context": {
+            "Urine":      "🔬 يُشخص بـ NAAT — Ceftriaxone IM جرعة واحدة.",
+            "Wound Swab": "🔬 عدوى المفاصل (septic arthritis) — نادر.",
+            "Blood":      "⚠️ Gonococcal bacteremia — نادر جداً.",
+        },
+        "note": "🔬 Ceftriaxone IM جرعة واحدة هو المعيار الذهبي. مقاومة عالية لكثير من المضادات.",
+    },
+    "Anaerobes (لاهوائيات)": {
+        "first_line": [
+            "Metronidazole",
+            "Amoxicillin + Clavulanic acid",
+        ],
+        "second_line": [
+            "Piperacillin + Tazobactam",
+            "Meropenem",
+            "Ampicillin/Sulbactam",
+        ],
+        "third_line": [],
+        "avoid": [
+            "Aminoglycosides",
+            "Fluoroquinolones (ضعيف للاهوائيات)",
+            "Nitrofurantoin",
+        ],
+        "urine_note": "",
+        "specimen_context": {
+            "Pus":        "🔬 الخراجات داخل البطن وتحت الحجاب — Metronidazole ضروري.",
+            "Wound Swab": "🔬 العدوى الجراحية بعد عمليات الأمعاء — Metronidazole دائماً.",
+            "Blood":      "🔬 Bacteremia اللاهوائيات — مصدره البطن غالباً.",
+        },
+        "note": "🔬 Metronidazole هو الخيار الأول لكل اللاهوائيات. يُضاف عادةً للتغطية المختلطة.",
+    },
 }
 
+# ─── خريطة العينات والبكتيريا المرتبطة بها ──────────────────────────
+SPECIMEN_ORGANISM_MAP = {
+    "Urine":      [
+        "E. coli","Klebsiella spp.","Proteus mirabilis",
+        "Enterococcus faecalis","Staphylococcus aureus","MRSA",
+        "Pseudomonas aeruginosa","Acinetobacter baumannii",
+        "Neisseria gonorrhoeae","Chlamydia spp.",
+    ],
+    "Blood":      [
+        "E. coli","Klebsiella spp.","Staphylococcus aureus","MRSA",
+        "Pseudomonas aeruginosa","Acinetobacter baumannii",
+        "Streptococcus pneumoniae","Enterococcus faecalis",
+        "Salmonella spp.","Proteus mirabilis","Anaerobes (لاهوائيات)",
+        "Stenotrophomonas maltophilia",
+    ],
+    "Sputum":     [
+        "Streptococcus pneumoniae","H. influenzae","Klebsiella spp.",
+        "Pseudomonas aeruginosa","Acinetobacter baumannii","MRSA",
+        "Staphylococcus aureus","E. coli","Legionella pneumophila",
+        "Mycoplasma spp.","Chlamydia spp.","Stenotrophomonas maltophilia",
+    ],
+    "Wound Swab": [
+        "Staphylococcus aureus","MRSA","E. coli","Klebsiella spp.",
+        "Pseudomonas aeruginosa","Proteus mirabilis","Acinetobacter baumannii",
+        "Enterococcus faecalis","Anaerobes (لاهوائيات)","Streptococcus spp.",
+    ],
+    "Pus":        [
+        "Staphylococcus aureus","MRSA","E. coli","Klebsiella spp.",
+        "Pseudomonas aeruginosa","Acinetobacter baumannii",
+        "Anaerobes (لاهوائيات)","Enterococcus faecalis","Proteus mirabilis",
+    ],
+    "Stool":      [
+        "Salmonella spp.","Shigella spp.","Campylobacter jejuni",
+        "H. pylori","C. difficile","Giardia lamblia","E. coli",
+    ],
+    "CSF":        [
+        "Streptococcus pneumoniae","H. influenzae","MRSA",
+        "Staphylococcus aureus","E. coli","Klebsiella spp.",
+        "Listeria monocytogenes",
+    ],
+}
+
+# قائمة كل البكتيريا (للـ OCR وللعرض العام)
 BACTERIA_TYPES = list(ORGANISM_PROFILE.keys())
 
 SPECIMEN_TYPES = ["Urine","Blood","Sputum","Wound Swab","Pus","Stool","CSF"]
@@ -1437,10 +1907,24 @@ if uploaded:
             index=SPECIMEN_TYPES.index(patient["Specimen"])
                   if patient["Specimen"] in SPECIMEN_TYPES else 0)
 
+        # ─── فلترة البكتيريا حسب نوع العينة ─────────────────────────────
+        filtered_organisms = SPECIMEN_ORGANISM_MAP.get(culture_type, BACTERIA_TYPES)
+        # نضمن أن البكتيريا المقترحة موجودة في ORGANISM_PROFILE فعلاً
+        filtered_organisms = [o for o in filtered_organisms if o in ORGANISM_PROFILE]
+
+        # إذا كانت البكتيريا المكتشفة بالـ OCR موجودة في القائمة استخدمها، وإلا خذ الأول
+        ocr_organism = patient["Organism"]
+        if ocr_organism in filtered_organisms:
+            default_org_idx = filtered_organisms.index(ocr_organism)
+        else:
+            default_org_idx = 0
+
         organism_type = st.selectbox(
-            "🦠 Organism", BACTERIA_TYPES,
-            index=BACTERIA_TYPES.index(patient["Organism"])
-                  if patient["Organism"] in BACTERIA_TYPES else 0)
+            "🦠 Organism",
+            filtered_organisms,
+            index=default_org_idx,
+            help=f"يعرض البكتيريا الأكثر شيوعاً في عينة {culture_type}",
+        )
 
         if organism_type in ORGANISM_PROFILE:
             op = ORGANISM_PROFILE[organism_type]
