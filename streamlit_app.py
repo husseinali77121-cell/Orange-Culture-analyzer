@@ -13,11 +13,112 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# ==========================================
+# 🔐 نظام الاشتراك — يجب المرور به أولاً
+# ==========================================
+import json
+from datetime import datetime
+
+try:
+    raw = st.secrets.get("subscribers_json") or st.secrets.get("subscribers", "{}")
+    SUBSCRIBERS = json.loads(raw) if isinstance(raw, str) else dict(raw)
+except Exception:
+    SUBSCRIBERS = {}
+
+def show_login_page():
+    st.markdown("""
+    <div style='text-align:center; padding: 3rem 0 1rem 0'>
+        <span style='font-size:3rem'>🍊</span>
+        <h2 style='margin:0.3rem 0 0.1rem 0'>Orange Culture Analyzer</h2>
+        <p style='color:gray; margin:0'>AI-Assisted Antibiotic Decision Support — Egyptian Market</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("#### 🔐 تسجيل الدخول")
+        email = st.text_input("📧 البريد الإلكتروني", placeholder="example@hospital.com",
+                              label_visibility="collapsed")
+        login_btn = st.button("دخول", use_container_width=True, type="primary")
+
+        if login_btn:
+            return email.strip().lower()
+
+        st.markdown("---")
+        st.markdown("""
+        <div style='text-align:center; font-size:0.85rem; color:gray'>
+        للحصول على نسخة تجريبية أو اشتراك:<br>
+        📞 01016872801 &nbsp;|&nbsp; ✉️ Hussein.ali77121@gmail.com<br><br>
+        🔹 تجريبي مجاني: <b>15 يوم</b><br>
+        🔹 شهري: <b>200 جنيه</b><br>
+        🔹 سنوي: <b>2000 جنيه</b> <span style='color:green'>(توفير 400 ج)</span>
+        </div>
+        """, unsafe_allow_html=True)
+    return None
+
+def check_subscription(email):
+    if not email or "@" not in email:
+        st.warning("⚠️ أدخل بريداً إلكترونياً صحيحاً")
+        return False
+
+    if email not in SUBSCRIBERS:
+        st.error("❌ هذا البريد غير مسجل في النظام")
+        st.info(
+            "**للحصول على نسخة تجريبية مجانية (15 يوم) أو اشتراك:**\n\n"
+            "📞 01016872801\n\n"
+            "✉️ Hussein.ali77121@gmail.com\n\n"
+            "---\n"
+            "🔹 تجريبي: **مجاناً - 15 يوم**  \n"
+            "🔹 شهري: **200 جنيه**  \n"
+            "🔹 سنوي: **2000 جنيه** *(توفير 400 ج)*"
+        )
+        return False
+
+    expiry_str = SUBSCRIBERS[email]
+    try:
+        expiry_date = datetime.strptime(expiry_str, "%Y-%m-%d").date()
+    except ValueError:
+        st.error("خطأ في بيانات الاشتراك، تواصل مع الدعم")
+        return False
+
+    today = datetime.now().date()
+    days_left = (expiry_date - today).days
+
+    if days_left < 0:
+        st.error(f"⏳ انتهى اشتراكك منذ {abs(days_left)} يوم")
+        st.info("📞 للتجديد: 01016872801 | ✉️ Hussein.ali77121@gmail.com")
+        return False
+
+    # تحذير قرب الانتهاء
+    if days_left <= 3:
+        st.warning(f"⚠️ اشتراكك ينتهي خلال **{days_left} يوم فقط!** تواصل للتجديد.")
+    elif days_left <= 7:
+        st.info(f"ℹ️ متبقي **{days_left} أيام** على انتهاء اشتراكك.")
+    else:
+        st.success(f"✅ أهلاً بك! الاشتراك ساري — متبقي {days_left} يوماً")
+
+    return True
+
+# ── تدفق تسجيل الدخول ───────────────────────────────────────────────
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    email_input = show_login_page()
+    if email_input:
+        if check_subscription(email_input):
+            st.session_state.authenticated = True
+            st.rerun()
+    st.stop()
+
+# ══════════════════════════════════════════════════════════════════════
+# ✅ ما بعد تسجيل الدخول — يبدأ التطبيق الأساسي هنا
+# ══════════════════════════════════════════════════════════════════════
+
 import numpy as np
 import cv2
 import pytesseract
 import re
-from datetime import datetime
 from difflib import SequenceMatcher
 
 # ==========================================
@@ -918,7 +1019,6 @@ ORGANISM_PROFILE = {
         },
         "note": "🔬 مقاوم طبيعياً للسيفالوسبورين وErtapenem — Amoxicillin هو الأساس.",
     },
-    # NEW: Stool Pathogens
     "Salmonella spp.": {
         "first_line": [
             "Ceftriaxone",
@@ -1410,7 +1510,6 @@ if uploaded:
             info  = ABX_GUIDELINES[d]
             d_low = d.lower()
 
-            # ① Resistant in culture
             if sir_map.get(d) == "R":
                 banned.append({
                     "name": d, "category": "resistant",
@@ -1423,17 +1522,14 @@ if uploaded:
                 })
                 continue
 
-            # ② Drug interactions
             for med in current_meds:
                 if med in info["interacts_with"]:
                     interactions_alerts.append(f"⚡ تعارض: {d} مع {med}")
 
-            # ③ Hepatic
             if is_hepatic and info["hepatic_caution"]:
                 interactions_alerts.append(
                     f"🏥 تحذير كبدي: {d} — يحتاج متابعة وظائف الكبد.")
 
-            # ④ Organism-specific avoid
             d_class = info.get("class","").lower()
             organism_avoided = False
             for av in organism_avoid:
@@ -1459,7 +1555,6 @@ if uploaded:
                 })
                 continue
 
-            # ⑤ MRSA beta-lactam rule
             if organism_type == "MRSA":
                 bl_classes = ["Penicillin","Cephalosporin"]
                 if any(c in info["class"] for c in bl_classes):
@@ -1474,7 +1569,6 @@ if uploaded:
                     })
                     continue
 
-            # ⑥ Pregnancy BANNED
             if is_preg and info["preg_status"] == "Banned":
                 banned.append({
                     "name": d, "category": "pregnancy",
@@ -1483,11 +1577,9 @@ if uploaded:
                 })
                 continue
 
-            # ⑦ Pregnancy WARN
             if is_preg and info["preg_status"] == "Warn":
                 preg_warn_items.append({"name": d, **info})
 
-            # ⑧ Child rules
             cls = info["class"].lower()
             if age < 18 and not info.get("child_safe", True):
                 if "fluoroquinolone" in cls:
@@ -1512,7 +1604,6 @@ if uploaded:
                     })
                     continue
 
-            # ⑨ Nitrofurantoin hard cutoff
             if is_renal and "nitrofurantoin" in d_low and cl_cr < 30:
                 banned.append({
                     "name": d, "category": "renal",
@@ -1525,14 +1616,12 @@ if uploaded:
                 })
                 continue
 
-            # ⑩ Renal dose adjustment
             if is_renal and info["renal_limit"] > 0 and cl_cr <= info["renal_limit"]:
                 warned.append({"name": d, **info})
                 continue
 
             allowed.append({"name": d, **info})
 
-        # Display sections
         non_preg_alerts = [a for a in interactions_alerts if "🤰" not in a]
         if non_preg_alerts:
             st.warning("⚡ Interactions / Hepatic Warnings")
