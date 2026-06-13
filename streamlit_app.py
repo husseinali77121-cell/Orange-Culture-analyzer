@@ -3,7 +3,7 @@
 # Unauthorized copying or distribution is prohibited.
 import streamlit as st
 
-st.set_page_config(page_title="Orange Culture Analyzer",
+st.set_page_config(page_title="Orange Culture Tool",
                    layout="wide", page_icon="🛡️")
 
 st.markdown("""
@@ -31,7 +31,7 @@ def show_login_page():
     st.markdown("""
     <div style='text-align:center; padding: 3rem 0 1rem 0'>
         <span style='font-size:3rem'>🍊</span>
-        <h2 style='margin:0.3rem 0 0.1rem 0'>Orange Culture Analyzer</h2>
+        <h2 style='margin:0.3rem 0 0.1rem 0'>Orange Culture Tool</h2>
         <p style='color:gray; margin:0'>AI-Assisted Antibiotic Decision Support — Egyptian Market</p>
     </div>
     """, unsafe_allow_html=True)
@@ -1449,7 +1449,7 @@ def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
 # ==========================================
 # 🖥️ Streamlit UI
 # ==========================================
-st.title("🛡️ Orange Culture Analyzer")
+st.title("🛡️ Orange Culture Tool")
 st.caption("AI-Assisted Antibiotic Decision Support — Egyptian Market Edition")
 
 uploaded = st.file_uploader("📷 Upload Culture Report Image", type=["jpg","png","jpeg"])
