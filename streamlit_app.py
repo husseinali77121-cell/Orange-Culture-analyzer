@@ -20,6 +20,7 @@ st.markdown("""
 # ==========================================
 import json
 from datetime import datetime
+import time  # for session timeout
 
 try:
     raw = st.secrets.get("subscribers_json") or st.secrets.get("subscribers", "{}")
@@ -27,7 +28,13 @@ try:
 except Exception:
     SUBSCRIBERS = {}
 
+# Session timeout in seconds (30 minutes)
+SESSION_TIMEOUT = 30 * 60
+
 def show_login_page():
+    # Check if we came from a session timeout
+    if st.session_state.get("logout_reason"):
+        st.warning(st.session_state.pop("logout_reason"))
     st.markdown("""
     <div style='text-align:center; padding: 3rem 0 1rem 0'>
         <span style='font-size:3rem'>🍊</span>
@@ -77,6 +84,10 @@ def check_subscription(email):
         return False
     today = datetime.now().date()
     days_left = (expiry_date - today).days
+    # Store email and days in session for later banner use
+    st.session_state.email = email
+    st.session_state.days_left = days_left
+
     if days_left < 0:
         st.error(f"⏳ انتهى اشتراكك منذ {abs(days_left)} يوم")
         st.info("📞 للتجديد: 01016872801 | ✉️ Hussein.ali77121@gmail.com")
@@ -101,6 +112,30 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ══════════════════════════════════════════════════════════════════════
+# ✅ Session timeout check & subscription banner (top of main app)
+# ══════════════════════════════════════════════════════════════════════
+
+# Check inactivity timeout
+if "last_activity" in st.session_state:
+    elapsed = time.time() - st.session_state.last_activity
+    if elapsed > SESSION_TIMEOUT:
+        # Logout due to inactivity
+        st.session_state.clear()
+        st.session_state.logout_reason = "انتهت صلاحية الجلسة بسبب عدم النشاط. الرجاء تسجيل الدخول مرة أخرى."
+        st.rerun()
+# Update last activity timestamp
+st.session_state.last_activity = time.time()
+
+# Display subscription status banner
+days = st.session_state.get("days_left", None)
+email = st.session_state.get("email", "")
+if days is not None:
+    if days <= 3:
+        st.warning(f"⚠️ اشتراك **{email}** سينتهي خلال **{days} يوم(أيام)** — يُرجى التجديد قريباً.")
+    else:
+        st.info(f"✅ اشتراك **{email}** سارٍ — متبقي **{days}** يوماً.")
+
+# ══════════════════════════════════════════════════════════════════════
 # ✅ التطبيق الأساسي
 # ══════════════════════════════════════════════════════════════════════
 import numpy as np
@@ -112,21 +147,7 @@ from difflib import SequenceMatcher
 # ==========================================
 # 📋 Antibiotics Database – Egyptian Market
 # ==========================================
-# ── Route (Oral / IV) — المصادر والأساس العلمي ──────────────────
-# high_po = True  → Oral أو Oral+IV:
-#   الدواء يصل تركيزاً علاجياً كافياً بالفم.
-#   مصدر bioavailability: BNF 2025 | FDA Prescribing Information.
-#   أمثلة: Ciprofloxacin (70-80%) | Levofloxacin (99%) | Doxy (93%)
-#           Metronidazole (>90%) | TMP/SMX (100%) | Linezolid (100%)
-# high_po = False → IV/IM فقط:
-#   Bioavailability فموي = صفر أو < 5% — لا تأثير جهازي بالفم.
-#   أمثلة: Beta-lactams IV (Ceftriaxone/Meropenem/Pip-Tazo)
-#           Aminoglycosides | Vancomycin IV | Colistin
-# ملاحظة: هذا وصف pharmacokinetic — ليس توصية علاجية.
-# التوصيات العلاجية مصدرها: EUCAST 2026 | CLSI M100 2026
-#   | IDSA AMR 2025 | WHO AWaRe 2025 | Egypt National Guidelines
-# ─────────────────────────────────────────────────────────────────
-
+# (Database content remains unchanged)
 ABX_GUIDELINES = {
     # ── Beta-lactam / Penicillins ──────────────────────────────────────
     "Amoxicillin + Clavulanic acid": {
