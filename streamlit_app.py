@@ -1,3 +1,6 @@
+# © 2025 Dr. Hussein Ali — Orange Lab, 6 October City, Egypt
+# Orange Culture Tool — All Rights Reserved
+# Unauthorized copying or distribution is prohibited.
 import streamlit as st
 
 st.set_page_config(page_title="Orange Culture Analyzer",
