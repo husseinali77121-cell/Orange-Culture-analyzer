@@ -1566,6 +1566,19 @@ if uploaded:
         interactions_alerts = []
         organism_avoid      = ORGANISM_PROFILE.get(organism_type,{}).get("avoid",[])
 
+        # ============================================================
+        # CORRECTED ORGANISM AVOID LOGIC — CLASS-BASED MAPPING
+        # ============================================================
+        ORGANISM_AVOID_CLASS_MAP = {
+            "cephalosporins (كل الجيل)": ["cephalosporin"],
+            "cephalosporins": ["cephalosporin"],
+            "tetracyclines": ["tetracycline"],
+            "aminoglycosides": ["aminoglycoside"],
+            "carbapenems": ["carbapenem"],
+            "beta-lactams (alone)": ["penicillin","cephalosporin","carbapenem"],
+            "beta-lactams": ["penicillin","cephalosporin","carbapenem"],
+        }
+
         for d in final_drugs:
             info  = ABX_GUIDELINES[d]
             d_low = d.lower()
@@ -1589,19 +1602,20 @@ if uploaded:
             if is_hepatic and info["hepatic_caution"]:
                 interactions_alerts.append(f"🏥 تحذير كبدي: {d} — يحتاج متابعة.")
 
-            # ── مقاومة طبيعية للجرثومة ────────────────────────────────
+            # ── مقاومة طبيعية للجرثومة (الإصلاح الجديد) ─────────────
             d_class = info.get("class","").lower()
             organism_avoided = False
             for av in organism_avoid:
-                av_low = av.lower()
+                av_low = av.lower().strip()
+                # 1) تطابق مباشر بين اسم المضاد الحيوي أو اسم avoid
                 if av_low in d_low or d_low in av_low:
-                    organism_avoided = True; break
-                if av_low in d_class or any(
-                    av_low in cls.lower()
-                    for cls in ["cephalosporin","penicillin","macrolide","tetracycline"]
-                    if av_low in cls
-                ):
-                    organism_avoided = True; break
+                    organism_avoided = True
+                    break
+                # 2) استخدام خريطة الأصناف للتحقق من الفئة الدوائية
+                mapped = ORGANISM_AVOID_CLASS_MAP.get(av_low)
+                if mapped and any(m in d_class for m in mapped):
+                    organism_avoided = True
+                    break
 
             if organism_avoided:
                 banned.append({
