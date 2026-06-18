@@ -1,87 +1,11 @@
+# © 2025 Dr. Hussein Ali — Orange Lab, 6 October City, Egypt
+# Orange Culture Tool — All Rights Reserved
+# Unauthorized copying or distribution is prohibited.
 import streamlit as st
-import sqlite3
-import os
-import urllib.parse
-from datetime import date, datetime, timedelta
-import pandas as pd
-import re as re_module
 
-# ══════════════════════════════════════════════════════════════════════════════
-# إعدادات الصفحة
-# ══════════════════════════════════════════════════════════════════════════════
-st.set_page_config(
-    page_title="Orange Lab Home Visit",
-    page_icon="🟠",
-    layout="centered",
-    initial_sidebar_state="collapsed",
-)
+st.set_page_config(page_title="Orange Culture Tool",
+                   layout="wide", page_icon="🛡️")
 
-# ══════════════════════════════════════════════════════════════════════════════
-# نظام تسجيل الدخول
-# ══════════════════════════════════════════════════════════════════════════════
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-if "user_email" not in st.session_state:
-    st.session_state.user_email = None
-if "user_type" not in st.session_state:
-    st.session_state.user_type = None
-
-ALLOWED_EMAILS = st.secrets.get("allowed_emails", [])
-ADMIN_EMAIL    = "Hussein.ali77121@gmail.com"
-DIAMOND_EMAIL  = "Orangelab511@gmail.com"
-
-if not st.session_state.authenticated:
-    st.title("🔒 تسجيل الدخول")
-    email = st.text_input("📧 أدخل بريدك الإلكتروني للدخول")
-
-    if st.button("دخول"):
-        email_clean = email.strip()
-        if email_clean not in ALLOWED_EMAILS:
-            st.error("هذا البريد غير مصرح له بالدخول. راجع الأدمن.")
-        else:
-            if email_clean.lower() == ADMIN_EMAIL.lower():
-                st.session_state.login_email = email_clean
-                st.session_state.need_password = True
-                st.rerun()
-            else:
-                st.session_state.authenticated = True
-                st.session_state.user_email = email_clean
-                st.session_state.user_type = "diamond" if email_clean.lower() == DIAMOND_EMAIL.lower() else "other"
-                st.rerun()
-
-    if st.session_state.get("need_password"):
-        st.markdown("---")
-        st.markdown(f"البريد: **{st.session_state.login_email}**")
-        password = st.text_input("🔑 كلمة المرور", type="password")
-        if st.button("تأكيد كلمة المرور"):
-            correct_password = st.secrets.get("admin_password", "123456")
-            if password == correct_password:
-                st.success("صلِّ على رسول الله ﷺ - أهلاً بالأدمن")
-                st.session_state.authenticated = True
-                st.session_state.user_email = st.session_state.login_email
-                st.session_state.user_type = "admin"
-                st.session_state.need_password = False
-                st.rerun()
-            else:
-                st.error("كلمة مرور خاطئة")
-        if st.button("رجوع"):
-            st.session_state.need_password = False
-            st.rerun()
-
-    st.markdown("---")
-    st.markdown("""
-    <div style="text-align:center; margin-top:40px; color:#333; font-size:13px; line-height:1.8;">
-      <div style="color:#FF6B00; font-weight:800; font-size:15px; margin-bottom:6px;">📞 للتواصل Contact</div>
-      <div><b>Dr / Hussein Ali</b></div>
-      <div style="direction: ltr; unicode-bidi: embed;">📱 T: 01016872801</div>
-      <div style="direction: ltr; unicode-bidi: embed;">📧 Email: hussein.ali77121@gmail.com</div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.stop()
-
-# ══════════════════════════════════════════════════════════════════════════════
-# إخفاء عناصر Streamlit
-# ══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
     <style>
     .stActionButton {display: none !important;}
@@ -91,1306 +15,1759 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ══════════════════════════════════════════════════════════════════════════════
-# قاعدة البيانات
-# ══════════════════════════════════════════════════════════════════════════════
-DB_FILE      = "visits.db"
-BACKUP_EXCEL = "visits_export.xlsx"
+# ==========================================
+# 🔐 نظام الاشتراك
+# ==========================================
+import json
+from datetime import datetime
+import time  # for session timeout
 
-@st.cache_resource
-def get_connection():
-    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL;")
-    return conn
-
-def init_db():
-    conn = get_connection()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS visits (
-            id TEXT PRIMARY KEY,
-            created_at TEXT,
-            name TEXT NOT NULL,
-            age INTEGER,
-            age_unit TEXT DEFAULT 'سنة',
-            phone TEXT NOT NULL,
-            visit_date TEXT NOT NULL,
-            visit_time TEXT,
-            doctor_name TEXT,
-            branch TEXT DEFAULT 'La Cite',
-            address TEXT NOT NULL,
-            location_link TEXT,
-            selected_labs_text TEXT,
-            notes TEXT,
-            labs_price_before REAL DEFAULT 0,
-            labs_price_after REAL DEFAULT 0,
-            transport_fee REAL DEFAULT 0,
-            total_price REAL DEFAULT 0,
-            status TEXT DEFAULT 'مجدولة'
-        )
-    """)
-    # إضافة أعمدة جديدة بأمان بدون مسح البيانات القديمة
-    safe_cols = [
-        ("age_unit", "TEXT DEFAULT 'سنة'"),
-        ("status",   "TEXT DEFAULT 'مجدولة'"),
-    ]
-    for col, definition in safe_cols:
-        try:
-            conn.execute(f"ALTER TABLE visits ADD COLUMN {col} {definition}")
-        except sqlite3.OperationalError:
-            pass
-    conn.commit()
-
-init_db()
-
-# ══════════════════════════════════════════════════════════════════════════════
-# ثوابت الحالة
-# ══════════════════════════════════════════════════════════════════════════════
-STATUS_OPTIONS = ["مجدولة", "في الطريق", "تمت", "ملغية"]
-STATUS_COLORS  = {
-    "مجدولة":    "#3498DB",
-    "في الطريق": "#F39C12",
-    "تمت":       "#27AE60",
-    "ملغية":     "#E74C3C",
-}
-STATUS_ICONS = {
-    "مجدولة":    "📅",
-    "في الطريق": "🚗",
-    "تمت":       "✅",
-    "ملغية":     "❌",
-}
-
-MONTHS_AR = ["يناير","فبراير","مارس","أبريل","مايو","يونيو",
-             "يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]
-
-# ══════════════════════════════════════════════════════════════════════════════
-# دوال CRUD
-# ══════════════════════════════════════════════════════════════════════════════
-def fetch_visits(filters=None):
-    conn = get_connection()
-    query = "SELECT * FROM visits"
-    params = []
-    conditions = []
-    if filters:
-        if filters.get("search"):
-            s = f"%{filters['search']}%"
-            conditions.append("(name LIKE ? OR phone LIKE ?)")
-            params.extend([s, s])
-        if filters.get("branch"):
-            conditions.append("branch = ?")
-            params.append(filters["branch"])
-        if filters.get("doctor"):
-            conditions.append("doctor_name = ?")
-            params.append(filters["doctor"])
-        if filters.get("month") and filters.get("year"):
-            y, m = filters["year"], filters["month"]
-            conditions.append("strftime('%Y', visit_date) = ? AND strftime('%m', visit_date) = ?")
-            params.extend([str(y), f"{m:02d}"])
-        if filters.get("date_exact"):
-            conditions.append("visit_date = ?")
-            params.append(filters["date_exact"])
-        if filters.get("status"):
-            conditions.append("status = ?")
-            params.append(filters["status"])
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
-    query += " ORDER BY visit_date ASC, visit_time ASC"
-    rows = conn.execute(query, params).fetchall()
-    return [dict(r) for r in rows]
-
-def fetch_visit_by_id(visit_id):
-    conn = get_connection()
-    row = conn.execute("SELECT * FROM visits WHERE id = ?", (visit_id,)).fetchone()
-    return dict(row) if row else None
-
-def fetch_client_history(phone, exclude_id=None):
-    conn = get_connection()
-    if exclude_id:
-        rows = conn.execute(
-            "SELECT * FROM visits WHERE phone = ? AND id != ? ORDER BY visit_date DESC",
-            (phone, exclude_id)
-        ).fetchall()
-    else:
-        rows = conn.execute(
-            "SELECT * FROM visits WHERE phone = ? ORDER BY visit_date DESC", (phone,)
-        ).fetchall()
-    return [dict(r) for r in rows]
-
-def insert_visit(record):
-    conn = get_connection()
-    conn.execute("""
-        INSERT INTO visits (
-            id, created_at, name, age, age_unit, phone, visit_date, visit_time,
-            doctor_name, branch, address, location_link,
-            selected_labs_text, notes, labs_price_before,
-            labs_price_after, transport_fee, total_price, status
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (
-        record["id"], record["created_at"], record["name"], record["age"],
-        record.get("age_unit", "سنة"), record["phone"],
-        record["visit_date"], record["visit_time"], record["doctor_name"],
-        record.get("branch", "La Cite"), record["address"], record["location_link"],
-        record["selected_labs_text"], record["notes"],
-        record["labs_price_before"], record["labs_price_after"],
-        record["transport_fee"], record["total_price"],
-        record.get("status", "مجدولة")
-    ))
-    conn.commit()
-
-def update_visit(record):
-    conn = get_connection()
-    conn.execute("""
-        UPDATE visits SET
-            name=?, age=?, age_unit=?, phone=?, visit_date=?, visit_time=?,
-            doctor_name=?, branch=?, address=?, location_link=?,
-            selected_labs_text=?, notes=?, labs_price_before=?,
-            labs_price_after=?, transport_fee=?, total_price=?, status=?
-        WHERE id=?
-    """, (
-        record["name"], record["age"], record.get("age_unit", "سنة"),
-        record["phone"], record["visit_date"], record["visit_time"],
-        record["doctor_name"], record.get("branch", "La Cite"),
-        record["address"], record["location_link"], record["selected_labs_text"],
-        record["notes"], record["labs_price_before"], record["labs_price_after"],
-        record["transport_fee"], record["total_price"],
-        record.get("status", "مجدولة"), record["id"]
-    ))
-    conn.commit()
-
-def update_status_only(visit_id, new_status):
-    conn = get_connection()
-    conn.execute("UPDATE visits SET status=? WHERE id=?", (new_status, visit_id))
-    conn.commit()
-
-def delete_visit(visit_id):
-    conn = get_connection()
-    conn.execute("DELETE FROM visits WHERE id=?", (visit_id,))
-    conn.commit()
-
-# ══════════════════════════════════════════════════════════════════════════════
-# تصدير / استيراد
-# ══════════════════════════════════════════════════════════════════════════════
-def export_to_excel():
-    visits = fetch_visits()
-    df = pd.DataFrame(visits)
-    cols = ["id","created_at","name","age","age_unit","phone","visit_date","visit_time",
-            "doctor_name","branch","address","location_link","selected_labs_text","notes",
-            "labs_price_before","labs_price_after","transport_fee","total_price","status"]
-    existing = [c for c in cols if c in df.columns]
-    df = df[existing]
-    df.to_excel(BACKUP_EXCEL, index=False, engine="openpyxl")
-    return df, BACKUP_EXCEL
-
-def import_from_excel(uploaded_file):
-    df = pd.read_excel(uploaded_file, engine="openpyxl")
-    required_cols = {"id", "name", "phone", "visit_date", "address"}
-    if not required_cols.issubset(df.columns):
-        st.error("ملف Excel غير صالح: ينقصه أعمدة أساسية")
-        return 0
-    count = 0
-    for _, row in df.iterrows():
-        record = row.to_dict()
-        record.setdefault("created_at", datetime.now().isoformat())
-        record.setdefault("visit_time", "")
-        record.setdefault("doctor_name", "")
-        record.setdefault("branch", "La Cite")
-        record.setdefault("location_link", "")
-        record.setdefault("selected_labs_text", "")
-        record.setdefault("notes", "")
-        record.setdefault("labs_price_before", 0)
-        record.setdefault("labs_price_after", 0)
-        record.setdefault("transport_fee", 0)
-        record.setdefault("total_price", 0)
-        record.setdefault("age_unit", "سنة")
-        record.setdefault("status", "مجدولة")
-        if "age" not in record or pd.isna(record["age"]):
-            record["age"] = 0
-        if fetch_visit_by_id(record["id"]):
-            update_visit(record)
-        else:
-            insert_visit(record)
-        count += 1
-    return count
-
-# ══════════════════════════════════════════════════════════════════════════════
-# CSS
-# ══════════════════════════════════════════════════════════════════════════════
-def inject_css():
-    css = """
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-      html, body, [class*="css"] { font-family: 'Cairo', sans-serif !important; direction: rtl; }
-      .main { background: #fff8f0; }
-      .block-container { padding-top: 0.5rem !important; max-width: 680px; }
-      .ohv-header {
-        background: linear-gradient(90deg, #FF6B00, #FF9A3C);
-        border-radius: 16px; padding: 16px 22px;
-        display: flex; align-items: center; justify-content: space-between;
-        margin-bottom: 18px; box-shadow: 0 4px 20px rgba(255,107,0,0.3);
-      }
-      .ohv-header h1 { color:#fff; margin:0; font-size:20px; font-weight:800; }
-      .ohv-header span { color:rgba(255,255,255,0.85); font-size:12px; }
-      .stat-grid { display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
-      .stat-box { flex:1; min-width:80px; background:#fff; border-radius:14px; padding:12px;
-                  text-align:center; border:1px solid #ffe8d1; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
-      .stat-num { font-size:24px; font-weight:800; color:#FF6B00; }
-      .stat-label { font-size:10px; color:#aaa; margin-top:2px; }
-      .visit-card { background:#fff; border-radius:14px; padding:14px; margin-bottom:10px;
-                    border:1px solid #ffe8d1; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
-      .visit-name { font-size:15px; font-weight:700; color:#222; margin-top:6px; }
-      .visit-meta { font-size:12px; color:#888; margin-top:4px; }
-      .visit-badge { background:#fff3e6; color:#FF6B00; border-radius:8px;
-                     padding:3px 10px; font-size:12px; font-weight:700; float:left; }
-      .status-badge { display:inline-block; border-radius:20px; padding:3px 12px;
-                      font-size:11px; font-weight:700; color:#fff; margin-right:4px; }
-      .price-box { background: linear-gradient(135deg, #FF6B00, #FF9A3C);
-                   border-radius:16px; padding:16px 20px; color:#fff; margin-bottom:14px; }
-      .price-row { display:flex; justify-content:space-between; font-size:14px; margin-bottom:7px; }
-      .price-total { display:flex; justify-content:space-between; font-size:19px; font-weight:800;
-                     border-top:2px solid rgba(255,255,255,0.3); padding-top:9px; margin-top:5px; }
-      .wa-btn { display:block; padding:11px 16px; border-radius:12px; color:#fff !important;
-                font-weight:700; font-size:13px; text-decoration:none; text-align:center;
-                font-family:'Cairo',sans-serif; margin-bottom:8px; }
-      .wa-client { background:#25D366; }
-      .wa-share  { background:#128C7E; }
-      .wa-group  { background:#075E54; }
-      .wa-remind { background:#FF6B00; }
-      .detail-row { display:flex; justify-content:space-between; padding:8px 0;
-                    border-bottom:1px solid #f5f5f5; font-size:13px; }
-      .detail-label { color:#888; }
-      .detail-value { font-weight:600; color:#222; max-width:58%; text-align:left; }
-      .repeat-banner { background:#fff8f0; border:2px dashed #FF9A3C; border-radius:14px;
-                       padding:12px; text-align:center; margin-top:12px;
-                       color:#FF6B00; font-weight:700; font-size:14px; }
-      .section-title { font-size:14px; font-weight:700; color:#FF6B00;
-                       border-right:4px solid #FF6B00; padding-right:10px; margin-bottom:10px; }
-      .history-card { background:#f9f9f9; border-radius:10px; padding:10px 14px;
-                      margin-bottom:8px; border-right:4px solid #FF9A3C; font-size:13px; }
-      .today-header { background:linear-gradient(90deg,#27AE60,#2ECC71); border-radius:14px;
-                      padding:12px 18px; color:#fff; font-weight:800; font-size:15px;
-                      margin-bottom:14px; text-align:center; }
-      div[data-testid="stButton"] button {
-        font-family:'Cairo',sans-serif !important; font-weight:700 !important; border-radius:12px !important; }
-      div[data-testid="stTextInput"] label, div[data-testid="stNumberInput"] label,
-      div[data-testid="stDateInput"] label, div[data-testid="stTextArea"] label,
-      div[data-testid="stMultiSelect"] label, div[data-testid="stSelectbox"] label {
-        font-family:'Cairo',sans-serif !important; font-weight:600 !important; color:#555 !important; }
-      div[data-testid="stTextInput"] input,
-      div[data-testid="stNumberInput"] input,
-      div[data-testid="stTextArea"] textarea,
-      div[data-testid="stDateInput"] input {
-        background-color: #FFF3E8 !important; border: 1.5px solid #FFBB80 !important;
-        border-radius: 8px !important; color: #222 !important; }
-      div[data-testid="stTextInput"] input:focus,
-      div[data-testid="stNumberInput"] input:focus,
-      div[data-testid="stTextArea"] textarea:focus,
-      div[data-testid="stDateInput"] input:focus {
-        background-color: #FFE8CC !important; border: 2px solid #FF6B00 !important;
-        box-shadow: 0 0 0 3px rgba(255,107,0,0.15) !important; outline: none !important; }
-      div[data-testid="stSelectbox"] > div > div {
-        background-color: #FFF3E8 !important; border: 1.5px solid #FFBB80 !important;
-        border-radius: 8px !important; }
-      #MainMenu { visibility: hidden; }
-      footer { visibility: hidden; }
-      header { visibility: hidden; }
-      @media print {
-        body * { visibility: hidden; }
-        #printable-report, #printable-report * { visibility: visible; }
-        #printable-report { position: absolute; left: 0; top: 0; width: 100%; }
-        .no-print { display: none; }
-      }
-    </style>
-    """
-    st.components.v1.html(css, height=0)
-
-inject_css()
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Quick Panels
-# ══════════════════════════════════════════════════════════════════════════════
-QUICK_PANELS = [
-    {"name": "🩸 CBC",         "tests": ["CBC"]},
-    {"name": "🍬 Diabetes",    "tests": ["HbA1C","Urea","Creatinine (Serum)","Uric Acid","ALT (SGPT)","AST (SGOT)","Urine Examination"]},
-    {"name": "❤️ Cardiac",    "tests": ["Cholesterol","HDL","LDL","Triglycerides","ALT (SGPT)","AST (SGOT)","Uric Acid"]},
-    {"name": "🦋 Thyroid",     "tests": ["TSH","FT3","FT4"]},
-    {"name": "🔋 Fatigue",     "tests": ["CBC","Ferritin","Vitamin D3(25 Hydroxy Cholecal.)","TSH"]},
-    {"name": "🧪 Kidney",      "tests": ["Urea","Creatinine (Serum)","Uric Acid","Urine Examination"]},
-    {"name": "🫀 Liver",       "tests": ["ALT (SGPT)","AST (SGOT)","Albumin (ALB)","Bilirubin Total","Alkaline Phosphatase (ALP)"]},
-    {"name": "🌟 General",     "tests": ["CBC","Cholesterol","HDL","LDL","Triglycerides","HbA1C","TSH",
-                                          "ALT (SGPT)","AST (SGOT)","Urea","Creatinine (Serum)","Urine Examination"]},
-]
-
-# ══════════════════════════════════════════════════════════════════════════════
-# قائمة الأسعار
-# ══════════════════════════════════════════════════════════════════════════════
 try:
-    from labs_price_list import LABS_DB
-    ALL_LABS = [{"name": t["name"], "price": t["price"], "category": cat}
-                for cat, tests in LABS_DB.items() for t in tests]
-    LABS_PRICE_LOOKUP = {t["name"]: t["price"] for t in ALL_LABS}
-except Exception as e:
-    st.error(f"خطأ في استيراد labs_price_list: {e}")
-    ALL_LABS = []
-    LABS_PRICE_LOOKUP = {}
+    raw = st.secrets.get("subscribers_json") or st.secrets.get("subscribers", "{}")
+    SUBSCRIBERS = json.loads(raw) if isinstance(raw, str) else dict(raw)
+except Exception:
+    SUBSCRIBERS = {}
 
-# ══════════════════════════════════════════════════════════════════════════════
-# دوال مساعدة
-# ══════════════════════════════════════════════════════════════════════════════
-def format_date_ar(d):
-    if not d:
-        return ""
-    if isinstance(d, str):
-        try:
-            d = datetime.strptime(d, "%Y-%m-%d").date()
-        except:
-            return d
-    return f"{d.day} {MONTHS_AR[d.month-1]} {d.year}"
+# Session timeout in seconds (30 minutes)
+SESSION_TIMEOUT = 30 * 60
 
-def make_whatsapp_msg(v, target="internal"):
-    lpb   = v.get("labs_price_before", 0)
-    lpa   = v.get("labs_price_after", 0)
-    tf    = v.get("transport_fee", 0)
-    total = v.get("total_price", 0)
-    vdate = format_date_ar(v.get("visit_date", ""))
-    vtime = v.get("visit_time", "")
-    dt_str= vdate + (f" — {vtime}" if vtime else "")
-    doc   = v.get("doctor_name", "غير محدد")
-    addr  = v.get("address", "")
-    loc   = v.get("location_link", "")
-    br    = v.get("branch", "")
-    cname = v.get("name", "")
-    age   = v.get("age", "")
-    au    = v.get("age_unit", "سنة")
-    age_s = f"🎂 *العمر:* {age} {au}\n" if age else ""
-    lt    = v.get("selected_labs_text", "")
-    if lt.strip():
-        labs_lines = "\n".join(f"🧪 {l.strip()}" for l in lt.splitlines() if l.strip()) + "\n"
-    else:
-        labs_lines = "🚫 لا توجد تحاليل\n"
-    loc_line = f"📍 *الموقع:* {loc}\n" if loc else ""
-    br_line  = f"🏥 *الفرع:* {br}\n"   if br  else ""
-    status   = v.get("status", "مجدولة")
-
-    if target == "client":
-        return (
-            f"🟠 *Orange Lab Home Visit*\n"
-            f"🏠 أهلاً بك {cname}\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"👨‍⚕️ *الدكتور القائم بالزيارة:* {doc}\n"
-            f"📅 *موعد الزيارة:* {dt_str}\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"📍 *عنوان الزيارة:*\n{addr}\n"
-            f"{loc_line}{br_line}"
-            f"━━━━━━━━━━━━━━\n"
-            f"🧪 *التحاليل المطلوبة:*\n{labs_lines}"
-            f"━━━━━━━━━━━━━━\n"
-            f"💰 *السعر قبل الخصم:* {lpb} جنيه\n"
-            f"💰 *السعر بعد الخصم:* {lpa} جنيه\n"
-            f"🚗 *بدل الانتقال:* {tf} جنيه\n"
-            f"💵 *الإجمالي المطلوب:* {total} جنيه\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"✏️ *برجاء تأكيد حجزك بالرد برقم:*\n"
-            f"  1 - تأكيد الزيارة\n"
-            f"  2 - تأجيل الزيارة\n"
-            f"  3 - إلغاء الزيارة\n\n"
-            f"شكراً لثقتكم 🧡 *معمل أورانج لاب*"
-        )
-    elif target == "remind":
-        return (
-            f"🔔 *تذكير بموعد زيارتك*\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"أهلاً {cname} 🌟\n"
-            f"نذكّرك بموعد زيارة معمل أورانج لاب\n"
-            f"📅 *الموعد:* {dt_str}\n"
-            f"👨‍⚕️ *الدكتور:* {doc}\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"⚠️ *تعليمات مهمة قبل التحليل:*\n"
-            f"🔸 صيام 8-12 ساعة إن وجد تحليل سكر أو دهون\n"
-            f"🔸 إحضار نتائج سابقة إن وجدت\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"شكراً لثقتكم 🧡 *معمل أورانج لاب*"
-        )
-    elif target == "group":
-        return (
-            f"🟠 *زيارة منزلية*\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"👨‍⚕️ *الدكتور القائم بالزيارة:* {doc}\n"
-            f"📅 *الموعد:* {dt_str}"
-        )
-    else:  # internal
-        notes_line = f"📝 *ملاحظات:* {v.get('notes','')}\n" if v.get("notes") else ""
-        return (
-            f"🟠 *Orange Lab Home Visit*\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"👤 *الاسم:* {v['name']}\n"
-            f"{age_s}"
-            f"📞 *التليفون:* {v.get('phone','')}\n"
-            f"📅 *الموعد:* {dt_str}\n"
-            f"👨‍⚕️ *دكتور الزيارة:* {doc}\n"
-            f"🏥 *الفرع:* {br}\n"
-            f"🔖 *الحالة:* {STATUS_ICONS.get(status,'')} {status}\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"📍 *العنوان:* {addr}\n"
-            f"{loc_line}"
-            f"━━━━━━━━━━━━━━\n"
-            f"🧪 *التحاليل المطلوبة:*\n{labs_lines}"
-            f"━━━━━━━━━━━━━━\n"
-            f"💰 *السعر قبل الخصم:* {lpb} جنيه\n"
-            f"💰 *السعر بعد الخصم:* {lpa} جنيه\n"
-            f"🚗 *بدل الانتقال:* {tf} جنيه\n"
-            f"💵 *الإجمالي:* {total} جنيه\n"
-            f"━━━━━━━━━━━━━━\n"
-            f"{notes_line}"
-        )
-
-def whatsapp_link(msg, phone=None):
-    encoded = urllib.parse.quote(msg, encoding="utf-8")
-    if phone:
-        p = phone.strip().replace(" ","").replace("-","").replace("+","")
-        if p.startswith("0"):
-            p = "20" + p[1:]
-        elif not p.startswith("20"):
-            p = "20" + p
-        return f"https://wa.me/{p}?text={encoded}"
-    return f"https://wa.me/?text={encoded}"
-
-def generate_visit_print_html(v):
-    lt = v.get("selected_labs_text","")
-    labs_rows = "".join(
-        f"<tr><td style='padding:6px 10px;border-bottom:1px solid #eee;'>🔹 {l.strip()}</td></tr>"
-        for l in lt.splitlines() if l.strip()
-    ) if lt.strip() else "<tr><td>لا توجد تحاليل</td></tr>"
-    status      = v.get("status","مجدولة")
-    s_color     = STATUS_COLORS.get(status,"#888")
-    s_icon      = STATUS_ICONS.get(status,"")
-    loc_html    = f'<p style="font-size:12px;color:#FF6B00;">🗺️ {v.get("location_link","")}</p>' if v.get("location_link") else ""
-    notes_html  = f'<div class="section"><div class="section-title">📌 ملاحظات</div><p style="font-size:13px;">{v.get("notes","")}</p></div>' if v.get("notes") else ""
-    return f"""<!DOCTYPE html><html dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
-  <style>
-    body{{font-family:'Cairo',sans-serif;margin:30px;color:#222;background:#fff;}}
-    .header{{background:linear-gradient(90deg,#FF6B00,#FF9A3C);color:#fff;border-radius:12px;
-             padding:16px 22px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}}
-    .header h2{{margin:0;font-size:20px;}}
-    .header span{{font-size:13px;opacity:.85;}}
-    .section{{margin-bottom:18px;}}
-    .section-title{{color:#FF6B00;font-weight:800;font-size:14px;border-right:4px solid #FF6B00;
-                    padding-right:10px;margin-bottom:10px;}}
-    .row{{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f0f0;font-size:13px;}}
-    .label{{color:#888;}} .value{{font-weight:700;}}
-    .status-badge{{display:inline-block;background:{s_color};color:#fff;border-radius:20px;
-                   padding:3px 14px;font-size:12px;font-weight:700;}}
-    .price-box{{background:linear-gradient(135deg,#FF6B00,#FF9A3C);border-radius:12px;
-                padding:14px 18px;color:#fff;margin-top:16px;}}
-    .price-row{{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;}}
-    .price-total{{display:flex;justify-content:space-between;font-size:17px;font-weight:800;
-                  border-top:2px solid rgba(255,255,255,.3);padding-top:8px;margin-top:4px;}}
-    table{{width:100%;border-collapse:collapse;font-size:13px;}}
-    .footer{{text-align:center;margin-top:30px;color:#aaa;font-size:11px;
-             border-top:1px solid #eee;padding-top:12px;}}
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h2>🟠 Orange Lab Home Visit</h2>
-    <span>📅 {format_date_ar(v.get('visit_date',''))}</span>
-  </div>
-  <div class="section">
-    <div class="section-title">👤 بيانات العميل</div>
-    <div class="row"><span class="label">الاسم</span><span class="value">{v['name']}</span></div>
-    <div class="row"><span class="label">السن</span><span class="value">{v.get('age','')} {v.get('age_unit','سنة')}</span></div>
-    <div class="row"><span class="label">التليفون</span><span class="value">{v.get('phone','')}</span></div>
-    <div class="row"><span class="label">الموعد</span><span class="value">{format_date_ar(v.get('visit_date',''))} — {v.get('visit_time','')}</span></div>
-    <div class="row"><span class="label">الدكتور</span><span class="value">{v.get('doctor_name','')}</span></div>
-    <div class="row"><span class="label">الفرع</span><span class="value">{v.get('branch','')}</span></div>
-    <div class="row"><span class="label">الحالة</span><span class="value"><span class="status-badge">{s_icon} {status}</span></span></div>
-  </div>
-  <div class="section">
-    <div class="section-title">📍 العنوان</div>
-    <p style="margin:6px 0;font-size:13px;">{v.get('address','')}</p>
-    {loc_html}
-  </div>
-  <div class="section">
-    <div class="section-title">🧪 التحاليل المطلوبة</div>
-    <table><tbody>{labs_rows}</tbody></table>
-  </div>
-  {notes_html}
-  <div class="price-box">
-    <div class="price-row"><span>⭐ السعر قبل الخصم</span><span>{v.get('labs_price_before',0)} جنيه</span></div>
-    <div class="price-row"><span>⭐ السعر بعد الخصم</span><span>{v.get('labs_price_after',0)} جنيه</span></div>
-    <div class="price-row"><span>🚗 بدل الانتقال</span><span>{v.get('transport_fee',0)} جنيه</span></div>
-    <div class="price-total"><span>💵 الإجمالي</span><span>{v.get('total_price',0)} جنيه</span></div>
-  </div>
-  <div class="footer">Orange Lab Home Visit — Developed by Dr / Hussein Ali 2026</div>
-</body></html>"""
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Session State
-# ══════════════════════════════════════════════════════════════════════════════
-for k, dv in [("page","home"),("prefill",{}),("selected_id",None),("search_q","")]:
-    if k not in st.session_state:
-        st.session_state[k] = dv
-
-def go(page, prefill=None, visit_id=None):
-    if page == "new" and (prefill is None or not prefill.get("_edit")):
-        st.session_state.pop("added_labs_new_visit", None)
-    st.session_state.page = page
-    if prefill  is not None: st.session_state.prefill    = prefill
-    if visit_id is not None: st.session_state.selected_id = visit_id
-    st.rerun()
-
-# ══════════════════════════════════════════════════════════════════════════════
-# الشريط العلوي
-# ══════════════════════════════════════════════════════════════════════════════
-st.markdown(f'''
-<div class="ohv-header">
-  <h1>🟠 Orange Lab Home Visit</h1>
-  <span>📅 {format_date_ar(date.today())}</span>
-</div>
-''', unsafe_allow_html=True)
-
-if st.session_state.user_type == "admin":
-    c1,c2,c3,c4,c5,c6 = st.columns([2,2,2,2,2,1])
-    with c5:
-        if st.button("📊 Dashboard", use_container_width=True): go("dashboard")
-else:
-    c1,c2,c3,c4,c6 = st.columns([2,2,2,2,1])
-
-with c1:
-    if st.button("🏠 الرئيسية",    use_container_width=True): go("home")
-with c2:
-    if st.button("➕ زيارة جديدة", use_container_width=True): go("new", prefill={})
-with c3:
-    if st.button("📅 اليوم",       use_container_width=True): go("today")
-with c4:
-    if st.button("📈 التقارير",    use_container_width=True): go("reports")
-with c6:
-    if st.button("🚪", help="تسجيل الخروج", use_container_width=True):
-        st.session_state.authenticated = False
-        st.rerun()
-
-st.markdown("---")
-
-# ══════════════════════════════════════════════════════════════════════════════
-# visit card helper
-# ══════════════════════════════════════════════════════════════════════════════
-def visit_card_html(v):
-    total      = v.get("total_price", 0)
-    vdate      = format_date_ar(v.get("visit_date",""))
-    vtime      = v.get("visit_time","")
-    addr       = (v.get("address","") or "")
-    addr_short = addr[:38] + ("..." if len(addr)>38 else "")
-    lc         = len(v.get("selected_labs_text","").splitlines()) if v.get("selected_labs_text") else 0
-    doc_show   = f" | 👨‍⚕️ {v.get('doctor_name','')}"  if v.get("doctor_name") else ""
-    br_show    = f" | 🏥 {v.get('branch','')}"         if v.get("branch")      else ""
-    age        = v.get("age","")
-    au         = v.get("age_unit","سنة")
-    age_disp   = f"🎂 {age} {au}" if age else ""
-    status     = v.get("status","مجدولة")
-    sc         = STATUS_COLORS.get(status,"#888")
-    si         = STATUS_ICONS.get(status,"")
-    return f'''
-    <div class="visit-card">
-      <span class="visit-badge">{total:,} جنيه</span>
-      <span class="status-badge" style="background:{sc}">{si} {status}</span>
-      <div class="visit-name">👤 {v["name"]}</div>
-      <div class="visit-meta">📞 {v.get("phone","")} &nbsp;|&nbsp; 📅 {vdate} {vtime} &nbsp; {age_disp}</div>
-      <div class="visit-meta">📍 {addr_short}</div>
-      <div class="visit-meta" style="margin-top:5px">🧪 {lc} تحليل{doc_show}{br_show}</div>
-    </div>'''
-
-# ══════════════════════════════════════════════════════════════════════════════
-# صفحة الرئيسية
-# ══════════════════════════════════════════════════════════════════════════════
-if st.session_state.page == "home":
-    if st.session_state.user_type not in ["admin","diamond"]:
-        st.info("ليس لديك صلاحية عرض بيانات الزيارات.")
-        st.stop()
-
-    conn        = get_connection()
-    all_doctors = [r[0] for r in conn.execute("SELECT DISTINCT doctor_name FROM visits WHERE doctor_name != ''").fetchall()]
-    all_branches= [r[0] for r in conn.execute("SELECT DISTINCT branch FROM visits").fetchall()]
-    for lst in [all_branches, all_doctors]:
-        if "الكل" not in lst: lst.insert(0, "الكل")
-
-    st.markdown("### تصفية الزيارات")
-    cf1,cf2,cf3,cf4 = st.columns(4)
-    with cf1:
-        if st.session_state.user_type == "diamond":
-            selected_branch = "Diamond"
-            st.selectbox("الفرع", ["Diamond"], disabled=True)
-        else:
-            selected_branch = st.selectbox("الفرع", all_branches, index=0)
-    with cf2:
-        selected_doctor = st.selectbox("الدكتور", all_doctors, index=0)
-    with cf3:
-        status_opts     = ["الكل"] + STATUS_OPTIONS
-        selected_status = st.selectbox("الحالة", status_opts, index=0)
-    with cf4:
-        search_query = st.text_input("🔍 بحث", value=st.session_state.search_q, placeholder="اسم أو تليفون")
-        st.session_state.search_q = search_query
-
-    filters = {}
-    if selected_branch != "الكل": filters["branch"] = selected_branch
-    if selected_doctor != "الكل": filters["doctor"] = selected_doctor
-    if selected_status != "الكل": filters["status"] = selected_status
-    if search_query:               filters["search"] = search_query
-
-    visits  = fetch_visits(filters)
-    today_s = date.today().isoformat()
-    all_vs  = fetch_visits({"branch":"Diamond"} if st.session_state.user_type=="diamond" else {})
-    t_today = sum(1 for v in all_vs if v.get("visit_date")==today_s)
-    t_rev   = sum(v.get("total_price",0) for v in all_vs if v.get("status")!="ملغية")
-    t_done  = sum(1 for v in all_vs if v.get("status")=="تمت")
-
-    st.markdown(f'''
-    <div class="stat-grid">
-      <div class="stat-box"><div class="stat-num">{len(all_vs)}</div><div class="stat-label">إجمالي الزيارات</div></div>
-      <div class="stat-box"><div class="stat-num">{t_today}</div><div class="stat-label">زيارات اليوم</div></div>
-      <div class="stat-box"><div class="stat-num" style="color:#27AE60">{t_done}</div><div class="stat-label">تمت ✅</div></div>
-      <div class="stat-box"><div class="stat-num" style="font-size:16px">{t_rev:,.0f}</div><div class="stat-label">الإيراد (جنيه)</div></div>
-    </div>''', unsafe_allow_html=True)
-
-    if st.session_state.user_type == "admin":
-        col_exp,col_imp = st.columns(2)
-        with col_exp:
-            if st.button("📤 تصدير إلى Excel", use_container_width=True):
-                df, path = export_to_excel()
-                with open(path,"rb") as f:
-                    st.download_button("📥 تحميل الملف", data=f,
-                        file_name="visits_export.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        with col_imp:
-            uf = st.file_uploader("📥 استيراد من Excel", type=["xlsx"], key="import_excel")
-            if uf:
-                count = import_from_excel(uf)
-                st.success(f"تم استيراد {count} زيارة!"); st.rerun()
-
-    st.markdown("---")
-    if not visits:
-        st.info("لا توجد زيارات تطابق التصفية.")
-    else:
-        for v in visits:
-            st.markdown(visit_card_html(v), unsafe_allow_html=True)
-            if st.button(f"📂 فتح {v['name']}", key=f"o_{v['id']}", use_container_width=True):
-                go("detail", visit_id=v["id"])
-
+def show_login_page():
+    # Check if we came from a session timeout
+    if st.session_state.get("logout_reason"):
+        st.warning(st.session_state.pop("logout_reason"))
     st.markdown("""
-    <div style="text-align:center;margin-top:50px;padding-top:20px;border-top:2px solid #FF6B00;
-                color:#333;font-size:14px;font-weight:600;">
-      Developed by <b>Dr / Hussein Ali</b> 2026 For <span style="color:#FF6B00;">Orange Lab 🍊</span>
-    </div>""", unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════════════════════════
-# صفحة زيارات اليوم
-# ══════════════════════════════════════════════════════════════════════════════
-elif st.session_state.page == "today":
-    if st.session_state.user_type not in ["admin","diamond"]:
-        st.error("غير مصرح."); st.stop()
-
-    f = {"date_exact": date.today().isoformat()}
-    if st.session_state.user_type == "diamond":
-        f["branch"] = "Diamond"
-    today_visits = fetch_visits(f)
-
-    st.markdown(
-        f'<div class="today-header">📅 زيارات اليوم — {format_date_ar(date.today())} ({len(today_visits)} زيارة)</div>',
-        unsafe_allow_html=True)
-
-    done_t    = sum(1 for v in today_visits if v.get("status")=="تمت")
-    pending_t = sum(1 for v in today_visits if v.get("status") in ["مجدولة","في الطريق"])
-    rev_t     = sum(v.get("total_price",0) for v in today_visits if v.get("status")!="ملغية")
-
-    st.markdown(f'''
-    <div class="stat-grid">
-      <div class="stat-box"><div class="stat-num">{len(today_visits)}</div><div class="stat-label">إجمالي اليوم</div></div>
-      <div class="stat-box"><div class="stat-num" style="color:#27AE60">{done_t}</div><div class="stat-label">تمت ✅</div></div>
-      <div class="stat-box"><div class="stat-num" style="color:#F39C12">{pending_t}</div><div class="stat-label">متبقية 🕐</div></div>
-      <div class="stat-box"><div class="stat-num" style="font-size:15px">{rev_t:,.0f}</div><div class="stat-label">إيراد اليوم</div></div>
-    </div>''', unsafe_allow_html=True)
-
-    if not today_visits:
-        st.info("لا توجد زيارات مجدولة اليوم.")
-    else:
-        for v in today_visits:
-            st.markdown(visit_card_html(v), unsafe_allow_html=True)
-            tc1,tc2 = st.columns([3,1])
-            with tc1:
-                if st.button(f"📂 فتح {v['name']}", key=f"td_{v['id']}", use_container_width=True):
-                    go("detail", visit_id=v["id"])
-            with tc2:
-                cur_idx  = STATUS_OPTIONS.index(v.get("status","مجدولة")) if v.get("status") in STATUS_OPTIONS else 0
-                new_stat = st.selectbox("", STATUS_OPTIONS, index=cur_idx,
-                                        key=f"st_{v['id']}", label_visibility="collapsed")
-                if new_stat != v.get("status","مجدولة"):
-                    update_status_only(v["id"], new_stat); st.rerun()
-
-# ══════════════════════════════════════════════════════════════════════════════
-# صفحة زيارة جديدة / تعديل
-# ══════════════════════════════════════════════════════════════════════════════
-elif st.session_state.page == "new":
-    pf      = st.session_state.prefill or {}
-    is_edit = pf.get("_edit", False)
-    st.markdown(f"### {'✏️ تعديل الزيارة' if is_edit else '➕ زيارة جديدة'}")
-
-    st.markdown('<div class="section-title">👤 البيانات الشخصية</div>', unsafe_allow_html=True)
-    name  = st.text_input("الاسم الكامل *", value=pf.get("name",""))
-    nc1,nc2 = st.columns(2)
-    with nc1:
-        age = st.number_input("العمر *", 0, 120, int(pf.get("age",0) or 0))
-    with nc2:
-        au_opts  = ["سنة","شهر"]
-        cur_au   = pf.get("age_unit","سنة")
-        if cur_au not in au_opts: cur_au = "سنة"
-        age_unit = st.radio("الوحدة", au_opts, index=au_opts.index(cur_au), horizontal=True)
-    phone       = st.text_input("رقم التليفون *", value=pf.get("phone",""), placeholder="01xxxxxxxxx")
-    doctor_name = st.text_input("👨‍⚕️ الدكتور القائم بالزيارة", value=pf.get("doctor_name",""))
-    branch      = st.selectbox("🏥 الفرع", ["La Cite","Diamond"],
-                               index=0 if pf.get("branch","La Cite")=="La Cite" else 1)
-    cur_status  = pf.get("status","مجدولة")
-    if cur_status not in STATUS_OPTIONS: cur_status = "مجدولة"
-    status = st.selectbox("🔖 حالة الزيارة", STATUS_OPTIONS, index=STATUS_OPTIONS.index(cur_status))
-
-    dc1,dc2 = st.columns(2)
-    with dc1:
-        default_date = date.today()
-        if pf.get("visit_date"):
-            try: default_date = datetime.strptime(pf["visit_date"],"%Y-%m-%d").date()
-            except: pass
-        visit_date = st.date_input("📅 تاريخ الزيارة *", value=default_date)
-    with dc2:
-        st.markdown("🕐 وقت الزيارة")
-        tc1,tc2,tc3 = st.columns([2,2,3])
-        old_t = pf.get("visit_time","")
-        ph,pm,pa = 12,0,"PM"
-        if old_t:
-            m = re_module.match(r'(\d{1,2}):(\d{2})\s*(AM|PM)', old_t, re_module.IGNORECASE)
-            if m: ph,pm,pa = int(m.group(1)),int(m.group(2)),m.group(3).upper()
-        with tc1: hour   = st.selectbox("ساعة", list(range(1,13)), index=ph-1 if 1<=ph<=12 else 11, key="hr_sel")
-        with tc2: minute = st.selectbox("دقيقة", [0,15,30,45], index=[0,15,30,45].index(pm) if pm in [0,15,30,45] else 0, key="mn_sel")
-        with tc3: ampm   = st.radio("", ["AM","PM"], index=0 if pa=="AM" else 1, horizontal=True, key="ap_sel")
-    visit_time = f"{hour}:{minute:02d} {ampm}"
-    st.markdown("---")
-
-    st.markdown('<div class="section-title">📍 العنوان</div>', unsafe_allow_html=True)
-    address       = st.text_area("العنوان بالتفصيل *", value=pf.get("address",""),
-                                  placeholder="المحافظة - المدينة - الشارع - رقم المبنى - الدور - الشقة...", height=90)
-    location_link = st.text_input("🗺️ رابط الموقع (Google Maps)", value=pf.get("location_link",""))
-    st.markdown("---")
-
-    vid_key     = pf.get("id","new_visit")
-    labs_ss_key = f"added_labs_{vid_key}"
-    if labs_ss_key not in st.session_state:
-        if pf.get("selected_labs_text",""):
-            st.session_state[labs_ss_key] = [l.strip() for l in pf["selected_labs_text"].splitlines() if l.strip()]
-        else:
-            st.session_state[labs_ss_key] = []
-
-    st.markdown('<div class="section-title">⚡ Quick Panels</div>', unsafe_allow_html=True)
-    st.caption("اضغط على panel لإضافة تحاليله فوراً — التحاليل المكررة لن تُضاف")
-    pcols = st.columns(4)
-    for i,panel in enumerate(QUICK_PANELS):
-        with pcols[i%4]:
-            if st.button(panel["name"], key=f"pnl_{vid_key}_{i}", use_container_width=True):
-                existing = [e.split(" — ")[0].strip() for e in st.session_state[labs_ss_key]]
-                for tn in panel["tests"]:
-                    if tn not in existing:
-                        st.session_state[labs_ss_key].append(tn)
-                st.rerun()
-
-    with st.expander("👁️ شاهد محتوى الـ Panels"):
-        for panel in QUICK_PANELS:
-            st.markdown(f'<div style="font-size:12px;margin-bottom:6px"><b style="color:#FF6B00">{panel["name"]}</b> — {" • ".join(panel["tests"])}</div>', unsafe_allow_html=True)
-
-    st.markdown("---")
-    if ALL_LABS:
-        st.markdown('<div class="section-title">📋 إضافة تحليل من قائمة الأسعار</div>', unsafe_allow_html=True)
-        lab_options = [f"{lab['name']} — {lab['price']} جنيه" for lab in ALL_LABS]
-        sel_lab     = st.selectbox("اختر التحليل", lab_options, key=f"lps_{vid_key}")
-        if st.button("➕ أضف من القائمة", key=f"alp_{vid_key}", use_container_width=True):
-            if sel_lab not in st.session_state[labs_ss_key]:
-                st.session_state[labs_ss_key].append(sel_lab)
-            st.rerun()
-    else:
-        st.warning("قائمة الأسعار غير متاحة حالياً")
-
-    st.markdown("---")
-    st.markdown('<div class="section-title">🧪 التحاليل المضافة</div>', unsafe_allow_html=True)
-    if st.session_state[labs_ss_key]:
-        auto_total = sum(int(m.group(1)) for e in st.session_state[labs_ss_key]
-                         for m in [re_module.search(r'(\d+)\s*جنيه', e)] if m)
-        st.markdown(f'<div style="font-size:12px;color:#FF6B00;font-weight:700;margin-bottom:8px">'
-                    f'✅ {len(st.session_state[labs_ss_key])} تحليل'
-                    f'{"  —  إجمالي: "+f"{auto_total:,} جنيه" if auto_total else ""}</div>',
-                    unsafe_allow_html=True)
-        to_remove = None
-        for i,entry in enumerate(st.session_state[labs_ss_key]):
-            ca,cb = st.columns([10,1])
-            with ca:
-                st.markdown(f'<div style="font-size:13px;padding:4px 0;border-bottom:1px solid #f5f5f5;color:#333">🔹 {entry}</div>',
-                            unsafe_allow_html=True)
-            with cb:
-                if st.button("✕", key=f"del_{vid_key}_{i}", help="احذف"): to_remove = i
-        if to_remove is not None:
-            st.session_state[labs_ss_key].pop(to_remove); st.rerun()
-        if st.button("🗑️ مسح الكل", key=f"clr_{vid_key}"):
-            st.session_state[labs_ss_key] = []; st.rerun()
-    else:
-        st.markdown('<div style="color:#aaa;font-size:13px;padding:8px 0">لا توجد تحاليل — اختر panel أو أضف يدوياً</div>',
-                    unsafe_allow_html=True)
-
-    cm1,cm2 = st.columns([8,2])
-    with cm1:
-        manual_entry = st.text_input("أضف تحليل يدوياً", placeholder="CBC — 400 جنيه", key=f"man_{vid_key}")
-    with cm2:
-        st.markdown('<div style="margin-top:28px"></div>', unsafe_allow_html=True)
-        if st.button("➕ أضف", key=f"manb_{vid_key}", use_container_width=True):
-            if manual_entry.strip():
-                st.session_state[labs_ss_key].append(manual_entry.strip()); st.rerun()
-
-    selected_labs_text = "\n".join(st.session_state[labs_ss_key])
-    selected_labs      = st.session_state[labs_ss_key][:]
-    st.markdown("---")
-
-    st.markdown('<div class="section-title">📌 ملاحظات</div>', unsafe_allow_html=True)
-    notes = st.text_area("ملاحظات خاصة", value=pf.get("notes",""), height=75)
-    st.markdown("---")
-
-    st.markdown('<div class="section-title">💰 الأسعار</div>', unsafe_allow_html=True)
-    auto_labs_total = sum(int(m.group(1)) for e in selected_labs
-                          for m in [re_module.search(r'(\d+)\s*جنيه', e)] if m)
-    pp1,pp2,pp3 = st.columns(3)
-    with pp1:
-        labs_price_before = st.number_input("⭐ السعر قبل الخصم", min_value=0, step=10,
-                                             value=auto_labs_total if auto_labs_total>0 else int(pf.get("labs_price_before",0) or 0))
-    with pp2:
-        labs_price_after  = st.number_input("⭐ السعر بعد الخصم", min_value=0, step=10,
-                                             value=int(pf.get("labs_price_after",0) or 0))
-    with pp3:
-        transport_fee     = st.number_input("⭐ بدل الانتقال", min_value=0, step=10,
-                                             value=int(pf.get("transport_fee",100) or 100))
-    total_price = labs_price_after + transport_fee
-    st.markdown(f'''
-    <div class="price-box">
-      <div class="price-row"><span>⭐ السعر قبل الخصم</span><span>{labs_price_before} جنيه</span></div>
-      <div class="price-row"><span>⭐ السعر بعد الخصم</span><span>{labs_price_after} جنيه</span></div>
-      <div class="price-row"><span>⭐ بدل الانتقال</span><span>{transport_fee} جنيه</span></div>
-      <div class="price-total"><span>⭐ الإجمالي</span><span>{total_price} جنيه</span></div>
-    </div>''', unsafe_allow_html=True)
-
-    if st.button("💾 حفظ الزيارة" if not is_edit else "💾 حفظ التعديلات", use_container_width=True):
-        if not name or not phone or not address:
-            st.error("⚠️ من فضلك املأ الاسم والتليفون والعنوان")
-        else:
-            record = {
-                "id": pf.get("id", str(int(datetime.now().timestamp()*1000))),
-                "created_at": pf.get("created_at", datetime.now().isoformat()),
-                "name": name, "age": age, "age_unit": age_unit,
-                "phone": phone, "visit_date": visit_date.isoformat(),
-                "visit_time": visit_time, "doctor_name": doctor_name,
-                "branch": branch, "address": address, "location_link": location_link,
-                "selected_labs_text": selected_labs_text, "notes": notes,
-                "labs_price_before": labs_price_before, "labs_price_after": labs_price_after,
-                "transport_fee": transport_fee, "total_price": total_price,
-                "status": status,
-            }
-            if is_edit:
-                update_visit(record); st.success("✅ تم تحديث الزيارة!")
-            else:
-                insert_visit(record); st.success("✅ تم حفظ الزيارة!")
-            go("detail", visit_id=record["id"])
-
-    if is_edit:
-        if st.button("← رجوع بدون حفظ", use_container_width=True):
-            go("detail", visit_id=pf.get("id"))
-
-# ══════════════════════════════════════════════════════════════════════════════
-# صفحة التفاصيل
-# ══════════════════════════════════════════════════════════════════════════════
-elif st.session_state.page == "detail":
-    vid = st.session_state.selected_id
-    v   = fetch_visit_by_id(vid) if vid else None
-    if not v:
-        st.error("لم يتم العثور على الزيارة"); go("home")
-    else:
-        lpb      = v.get("labs_price_before",0)
-        lpa      = v.get("labs_price_after",0)
-        tf       = v.get("transport_fee",0)
-        tp       = v.get("total_price",0)
-        vtime    = v.get("visit_time","")
-        dt_disp  = format_date_ar(v.get("visit_date","")) + (f" — {vtime}" if vtime else "")
-        age      = v.get("age","")
-        au       = v.get("age_unit","سنة")
-        age_str  = f"🎂 {age} {au}" if age else "🎂 غير محدد"
-        status   = v.get("status","مجدولة")
-        sc       = STATUS_COLORS.get(status,"#888")
-        si       = STATUS_ICONS.get(status,"")
-
-        st.markdown('<div class="section-title">👤 البيانات الشخصية</div>', unsafe_allow_html=True)
-        st.markdown(f'''
-        <div class="detail-row"><span class="detail-label">👤 الاسم</span><span class="detail-value">{v["name"]}</span></div>
-        <div class="detail-row"><span class="detail-label">🎂 السن</span><span class="detail-value">{age_str}</span></div>
-        <div class="detail-row"><span class="detail-label">📞 التليفون</span><span class="detail-value">{v.get("phone","")}</span></div>
-        <div class="detail-row"><span class="detail-label">📅 الموعد</span><span class="detail-value">{dt_disp}</span></div>
-        <div class="detail-row"><span class="detail-label">👨‍⚕️ الدكتور</span><span class="detail-value">{v.get("doctor_name","")}</span></div>
-        <div class="detail-row"><span class="detail-label">🏥 الفرع</span><span class="detail-value">{v.get("branch","")}</span></div>
-        <div class="detail-row"><span class="detail-label">🔖 الحالة</span>
-          <span class="detail-value"><span class="status-badge" style="background:{sc}">{si} {status}</span></span></div>
-        ''', unsafe_allow_html=True)
-
-        # تغيير الحالة السريع
-        st.markdown("**⚡ تغيير الحالة السريع:**")
-        qs_cols = st.columns(4)
-        for col, sn in zip(qs_cols, STATUS_OPTIONS):
-            with col:
-                prefix = "✓ " if sn == status else ""
-                if st.button(f"{prefix}{STATUS_ICONS[sn]} {sn}", key=f"qs_{v['id']}_{sn}", use_container_width=True):
-                    update_status_only(v["id"], sn); st.rerun()
+    <div style='text-align:center; padding: 3rem 0 1rem 0'>
+        <span style='font-size:3rem'>🍊</span>
+        <h2 style='margin:0.3rem 0 0.1rem 0'>Orange Culture Tool</h2>
+        <p style='color:gray; margin:0'>AI-Assisted Antibiotic Decision Support — Egyptian Market</p>
+    </div>
+    """, unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("#### 🔐 تسجيل الدخول")
+        email = st.text_input("📧 البريد الإلكتروني", placeholder="example@hospital.com",
+                              label_visibility="collapsed")
+        login_btn = st.button("دخول", use_container_width=True, type="primary")
+        if login_btn:
+            return email.strip().lower()
         st.markdown("---")
+        st.markdown("""
+        <div style='text-align:center; font-size:0.85rem; color:gray'>
+        للحصول على نسخة تجريبية أو اشتراك:<br>
+        📞 01016872801 &nbsp;|&nbsp; ✉️ Hussein.ali77121@gmail.com<br><br>
+        🔹 تجريبي مجاني: <b>15 يوم</b><br>
+        🔹 شهري: <b>200 جنيه</b><br>
+        🔹 سنوي: <b>2000 جنيه</b> <span style='color:green'>(توفير 400 ج)</span>
+        </div>
+        """, unsafe_allow_html=True)
+    return None
 
-        st.markdown('<div class="section-title">📍 العنوان</div>', unsafe_allow_html=True)
-        st.write(v.get("address",""))
-        if v.get("location_link"):
-            st.markdown(f'<a href="{v["location_link"]}" target="_blank" style="color:#FF6B00;font-weight:700;">🗺️ فتح الموقع على الخريطة</a>',
-                        unsafe_allow_html=True)
-        st.markdown("---")
-
-        lt = v.get("selected_labs_text","")
-        if lt.strip():
-            st.markdown('<div class="section-title">🧪 التحاليل المطلوبة</div>', unsafe_allow_html=True)
-            lines_html = "".join(f'<div class="detail-row"><span class="detail-label">🔹 {l.strip()}</span></div>'
-                                 for l in lt.splitlines() if l.strip())
-            st.markdown(f'<div style="background:#fffaf6;border-radius:12px;padding:8px 14px;border:1px solid #ffe8d1">{lines_html}</div>',
-                        unsafe_allow_html=True)
-            st.markdown("---")
-
-        st.markdown(f'''
-        <div class="price-box">
-          <div class="price-row"><span>⭐ السعر قبل الخصم</span><span>{lpb} جنيه</span></div>
-          <div class="price-row"><span>⭐ السعر بعد الخصم</span><span>{lpa} جنيه</span></div>
-          <div class="price-row"><span>⭐ بدل الانتقال</span><span>{tf} جنيه</span></div>
-          <div class="price-total"><span>⭐ الإجمالي</span><span>{tp} جنيه</span></div>
-        </div>''', unsafe_allow_html=True)
-
-        if v.get("notes"):
-            st.markdown('<div class="section-title">📌 ملاحظات</div>', unsafe_allow_html=True)
-            st.write(v["notes"]); st.markdown("---")
-
-        # تاريخ العميل
-        history = fetch_client_history(v.get("phone",""), exclude_id=v["id"])
-        if history:
-            with st.expander(f"📋 تاريخ العميل — {len(history)} زيارة سابقة"):
-                for hv in history:
-                    hs  = hv.get("status","مجدولة")
-                    hsc = STATUS_COLORS.get(hs,"#888")
-                    hsi = STATUS_ICONS.get(hs,"")
-                    st.markdown(f'''
-                    <div class="history-card">
-                      <span class="status-badge" style="background:{hsc};font-size:10px">{hsi} {hs}</span>
-                      <b>{format_date_ar(hv.get("visit_date",""))}</b> — {hv.get("visit_time","")}
-                      <br>👨‍⚕️ {hv.get("doctor_name","")} &nbsp;|&nbsp; 💵 {hv.get("total_price",0):,} جنيه
-                      <br>🧪 {len(hv.get("selected_labs_text","").splitlines()) if hv.get("selected_labs_text") else 0} تحليل
-                    </div>''', unsafe_allow_html=True)
-                    if st.button(f"📂 {format_date_ar(hv.get('visit_date',''))}", key=f"hv_{hv['id']}", use_container_width=True):
-                        go("detail", visit_id=hv["id"])
-            st.markdown("---")
-
-        # واتساب
-        st.markdown('<div class="section-title">📱 إرسال على واتساب</div>', unsafe_allow_html=True)
-        wc1,wc2,wc3,wc4 = st.columns(4)
-        with wc1:
-            st.markdown(f'<a href="{whatsapp_link(make_whatsapp_msg(v,"client"),v.get("phone"))}" target="_blank" class="wa-btn wa-client">📱 للعميل</a>',
-                        unsafe_allow_html=True)
-        with wc2:
-            st.markdown(f'<a href="{whatsapp_link(make_whatsapp_msg(v,"remind"),v.get("phone"))}" target="_blank" class="wa-btn wa-remind">🔔 تذكير</a>',
-                        unsafe_allow_html=True)
-        with wc3:
-            st.markdown(f'<a href="{whatsapp_link(make_whatsapp_msg(v,"group"))}" target="_blank" class="wa-btn wa-group">👥 جروب</a>',
-                        unsafe_allow_html=True)
-        with wc4:
-            st.markdown(f'<a href="{whatsapp_link(make_whatsapp_msg(v,"internal"))}" target="_blank" class="wa-btn wa-share">📋 ملخص</a>',
-                        unsafe_allow_html=True)
-        st.markdown("---")
-
-        # طباعة
-        st.markdown('<div class="section-title">🖨️ طباعة / تحميل</div>', unsafe_allow_html=True)
-        print_html = generate_visit_print_html(v)
-        st.download_button(
-            label="⬇️ تحميل ورقة الزيارة (HTML للطباعة)",
-            data=print_html.encode("utf-8"),
-            file_name=f"زيارة_{v['name']}_{v.get('visit_date','')}.html",
-            mime="text/html",
-            use_container_width=True,
+def check_subscription(email):
+    if not email or "@" not in email:
+        st.warning("⚠️ أدخل بريداً إلكترونياً صحيحاً")
+        return False
+    if email not in SUBSCRIBERS:
+        st.error("❌ هذا البريد غير مسجل في النظام")
+        st.info(
+            "**للحصول على نسخة تجريبية مجانية (15 يوم) أو اشتراك:**\n\n"
+            "📞 01016872801\n\n✉️ Hussein.ali77121@gmail.com\n\n---\n"
+            "🔹 تجريبي: **مجاناً - 15 يوم**  \n"
+            "🔹 شهري: **200 جنيه**  \n"
+            "🔹 سنوي: **2000 جنيه** *(توفير 400 ج)*"
         )
-        st.markdown("---")
+        return False
+    expiry_str = SUBSCRIBERS[email]
+    try:
+        expiry_date = datetime.strptime(expiry_str, "%Y-%m-%d").date()
+    except ValueError:
+        st.error("خطأ في بيانات الاشتراك، تواصل مع الدعم")
+        return False
+    today = datetime.now().date()
+    days_left = (expiry_date - today).days
+    # Store email and days in session for later banner use
+    st.session_state.email = email
+    st.session_state.days_left = days_left
 
-        ec1,ec2 = st.columns(2)
-        with ec1:
-            if st.button("✏️ تعديل", use_container_width=True):
-                go("new", prefill={**v, "_edit":True})
-        with ec2:
-            if st.button("🗑️ حذف", use_container_width=True):
-                st.session_state["confirm_delete"] = True
-
-        if st.session_state.get("confirm_delete"):
-            st.warning("⚠️ هل أنت متأكد من الحذف؟")
-            dc1,dc2 = st.columns(2)
-            with dc1:
-                if st.button("✅ نعم، احذف", use_container_width=True):
-                    delete_visit(vid); st.session_state["confirm_delete"]=False; go("home")
-            with dc2:
-                if st.button("❌ إلغاء", use_container_width=True):
-                    st.session_state["confirm_delete"]=False; st.rerun()
-
-        st.markdown(f'<div class="repeat-banner">🔄 هتروح لـ {v["name"]} مرة تانية؟</div>', unsafe_allow_html=True)
-        if st.button(f"➕ زيارة جديدة لـ {v['name']}", use_container_width=True):
-            go("new", prefill={
-                "name":v["name"],"age":v.get("age",""),"age_unit":v.get("age_unit","سنة"),
-                "phone":v.get("phone",""),"address":v.get("address",""),
-                "location_link":v.get("location_link",""),"doctor_name":v.get("doctor_name",""),
-                "branch":v.get("branch","La Cite"),"selected_labs":[],"selected_labs_text":"",
-                "visit_time":"","notes":"","labs_price_before":0,"labs_price_after":0,"transport_fee":100,
-            })
-        if st.button("← رجوع للقائمة", use_container_width=True):
-            go("home")
-
-# ══════════════════════════════════════════════════════════════════════════════
-# صفحة التقارير
-# ══════════════════════════════════════════════════════════════════════════════
-elif st.session_state.page == "reports":
-    if st.session_state.user_type not in ["admin","diamond"]:
-        st.error("غير مصرح."); st.stop()
-
-    st.markdown("### 📈 تقارير الزيارات")
-    ry,rm,rb = st.columns(3)
-    with ry: year  = st.selectbox("السنة", list(range(2023,2031)), index=3)
-    with rm: month = st.selectbox("الشهر", list(range(1,13)),
-                                   format_func=lambda m: MONTHS_AR[m-1],
-                                   index=date.today().month-1)
-    with rb:
-        if st.session_state.user_type=="diamond":
-            branch_filter="Diamond"; st.selectbox("الفرع",["Diamond"],disabled=True)
-        else:
-            branch_filter = st.selectbox("الفرع",["الكل","La Cite","Diamond"])
-
-    filters = {"year":year,"month":month}
-    if branch_filter!="الكل": filters["branch"]=branch_filter
-    visits = fetch_visits(filters)
-
-    if not visits:
-        st.info("لا توجد زيارات في هذا الشهر / الفرع.")
+    if days_left < 0:
+        st.error(f"⏳ انتهى اشتراكك منذ {abs(days_left)} يوم")
+        st.info("📞 للتجديد: 01016872801 | ✉️ Hussein.ali77121@gmail.com")
+        return False
+    if days_left <= 3:
+        st.warning(f"⚠️ اشتراكك ينتهي خلال **{days_left} يوم فقط!** تواصل للتجديد.")
+    elif days_left <= 7:
+        st.info(f"ℹ️ متبقي **{days_left} أيام** على انتهاء اشتراكك.")
     else:
-        t_rev  = sum(v.get("total_price",0) for v in visits if v.get("status")!="ملغية")
-        t_done = sum(1 for v in visits if v.get("status")=="تمت")
-        t_canc = sum(1 for v in visits if v.get("status")=="ملغية")
+        st.success(f"✅ أهلاً بك! الاشتراك ساري — متبقي {days_left} يوماً")
+    return True
 
-        st.markdown(f'''
-        <div class="stat-grid">
-          <div class="stat-box"><div class="stat-num">{len(visits)}</div><div class="stat-label">إجمالي الزيارات</div></div>
-          <div class="stat-box"><div class="stat-num" style="color:#27AE60">{t_done}</div><div class="stat-label">تمت ✅</div></div>
-          <div class="stat-box"><div class="stat-num" style="color:#E74C3C">{t_canc}</div><div class="stat-label">ملغية ❌</div></div>
-          <div class="stat-box"><div class="stat-num" style="font-size:15px">{t_rev:,.0f}</div><div class="stat-label">الإيراد (جنيه)</div></div>
-        </div>''', unsafe_allow_html=True)
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
-        # الإيراد اليومي
-        st.markdown("#### 📊 الإيراد اليومي")
-        daily = {}
-        for v in visits:
-            if v.get("status")=="ملغية": continue
-            d = v.get("visit_date","")
-            daily[d] = daily.get(d,0) + v.get("total_price",0)
-        if daily:
-            df_daily = pd.DataFrame(sorted(daily.items()), columns=["التاريخ","الإيراد"])
-            st.bar_chart(df_daily.set_index("التاريخ"))
+if not st.session_state.authenticated:
+    email_input = show_login_page()
+    if email_input:
+        if check_subscription(email_input):
+            st.session_state.authenticated = True
+            st.rerun()
+    st.stop()
 
-        # توزيع الأطباء
-        st.markdown("#### 👨‍⚕️ توزيع الزيارات على الأطباء")
-        doc_counts = {}
-        for v in visits:
-            doc = v.get("doctor_name","غير محدد") or "غير محدد"
-            doc_counts[doc] = doc_counts.get(doc,0)+1
-        if doc_counts:
-            df_dc = pd.DataFrame(doc_counts.items(), columns=["الدكتور","عدد الزيارات"])
-            st.bar_chart(df_dc.set_index("الدكتور"))
+# ══════════════════════════════════════════════════════════════════════
+# ✅ Session timeout check & subscription banner (top of main app)
+# ══════════════════════════════════════════════════════════════════════
 
-        # جدول ملخص
-        st.markdown("#### 📋 ملخص تفصيلي")
-        summary = {}
-        for v in visits:
-            doc = v.get("doctor_name","غير محدد") or "غير محدد"
-            if doc not in summary:
-                summary[doc] = {"count":0,"before":0,"after":0,"transport":0,"total":0,"done":0,"cancelled":0}
-            summary[doc]["count"]    += 1
-            summary[doc]["before"]   += v.get("labs_price_before",0)
-            summary[doc]["after"]    += v.get("labs_price_after",0)
-            summary[doc]["transport"]+= v.get("transport_fee",0)
-            if v.get("status")!="ملغية": summary[doc]["total"] += v.get("total_price",0)
-            if v.get("status")=="تمت":   summary[doc]["done"]  += 1
-            if v.get("status")=="ملغية": summary[doc]["cancelled"] += 1
+# Check inactivity timeout
+if "last_activity" in st.session_state:
+    elapsed = time.time() - st.session_state.last_activity
+    if elapsed > SESSION_TIMEOUT:
+        # Logout due to inactivity
+        st.session_state.clear()
+        st.session_state.logout_reason = "انتهت صلاحية الجلسة بسبب عدم النشاط. الرجاء تسجيل الدخول مرة أخرى."
+        st.rerun()
+# Update last activity timestamp
+st.session_state.last_activity = time.time()
 
-        df = pd.DataFrame(summary).T
-        df["الدكتور"] = df.index
-        df = df[["الدكتور","count","done","cancelled","before","after","transport","total"]]
-        df.columns = ["الدكتور","الزيارات","تمت","ملغية","قبل الخصم","بعد الخصم","الانتقال","الإجمالي"]
-        df = df.sort_values("الزيارات",ascending=False)
-        tc=df["الزيارات"].sum(); tb=df["قبل الخصم"].sum()
-        ta=df["بعد الخصم"].sum(); ttr=df["الانتقال"].sum(); tt=df["الإجمالي"].sum()
+# Display subscription status banner
+days = st.session_state.get("days_left", None)
+email = st.session_state.get("email", "")
+if days is not None:
+    if days <= 3:
+        st.warning(f"⚠️ اشتراك **{email}** سينتهي خلال **{days} يوم(أيام)** — يُرجى التجديد قريباً.")
+    else:
+        st.info(f"✅ اشتراك **{email}** سارٍ — متبقي **{days}** يوماً.")
 
-        st.markdown(f"**إجمالي:** {tc} زيارة &nbsp;|&nbsp; **الإيراد الكلي:** {tt:,.0f} جنيه")
-        st.dataframe(df.style.format({
-            "قبل الخصم":"{:,.0f} ج","بعد الخصم":"{:,.0f} ج",
-            "الانتقال":"{:,.0f} ج","الإجمالي":"{:,.0f} ج"
-        }), use_container_width=True)
+# ══════════════════════════════════════════════════════════════════════
+# ✅ التطبيق الأساسي
+# ══════════════════════════════════════════════════════════════════════
+import numpy as np
+import cv2
+import pytesseract
+import re
+from difflib import SequenceMatcher
 
-        # تقرير HTML
-        month_name   = MONTHS_AR[month-1]
-        branch_title = f" - فرع {branch_filter}" if branch_filter!="الكل" else ""
-        report_title = f"تقرير زيارات {month_name} {year}{branch_title}"
-        rows_html = ""
-        for _,row in df.iterrows():
-            rows_html += f"""<tr>
-              <td>{row['الدكتور']}</td><td>{row['الزيارات']}</td>
-              <td style="color:#27AE60;font-weight:700">{row['تمت']}</td>
-              <td style="color:#E74C3C">{row['ملغية']}</td>
-              <td>{row['قبل الخصم']:,.0f} ج</td><td>{row['بعد الخصم']:,.0f} ج</td>
-              <td>{row['الانتقال']:,.0f} ج</td><td><b>{row['الإجمالي']:,.0f} ج</b></td>
-            </tr>"""
-        printable_html = f"""
-        <div id="printable-report" style="direction:rtl;font-family:'Cairo',sans-serif;padding:20px;background:white;color:black;">
-            <h1 style="color:#FF6B00;text-align:center;">Orange Lab — تقرير الزيارات المنزلية</h1>
-            <h2 style="text-align:center;">{report_title}</h2>
-            <table border="1" cellpadding="8" cellspacing="0" style="width:100%;border-collapse:collapse;margin-top:20px;">
-                <thead><tr style="background:#FF6B00;color:white;">
-                  <th>الدكتور</th><th>الزيارات</th><th>تمت</th><th>ملغية</th>
-                  <th>قبل الخصم</th><th>بعد الخصم</th><th>الانتقال</th><th>الإجمالي</th>
-                </tr></thead>
-                <tbody>{rows_html}
-                <tr style="background:#f5f5f5;font-weight:bold;">
-                  <td>الإجمالي الكلي</td><td>{tc}</td>
-                  <td style="color:#27AE60">{df['تمت'].sum()}</td>
-                  <td style="color:#E74C3C">{df['ملغية'].sum()}</td>
-                  <td>{tb:,.0f} ج</td><td>{ta:,.0f} ج</td><td>{ttr:,.0f} ج</td><td>{tt:,.0f} ج</td>
-                </tr></tbody>
-            </table>
-            <p style="text-align:center;margin-top:30px;">تم إنشاؤه بواسطة Orange Lab Home Visit</p>
-        </div>"""
-        st.components.v1.html(printable_html, height=500, scrolling=True)
-        csv = df.to_csv(index=False).encode("utf-8-sig")
-        st.download_button("📥 تحميل CSV", data=csv,
-                           file_name=f"تقرير_زيارات_{month_name}_{year}.csv", mime="text/csv")
+# ==========================================
+# 📋 Antibiotics Database – Egyptian Market
+# ==========================================
+# (Database content remains unchanged)
+ABX_GUIDELINES = {
+    # ── Beta-lactam / Penicillins ──────────────────────────────────────
+    "Amoxicillin + Clavulanic acid": {
+        "priority": 1, "class": "Beta-lactamase Inhibitor Combination",
+        "note": "✅ خيار قياسي للعدوى البسيطة والمتوسطة (مثل Augmentin/Curam). Bioavailability فموي ~90%.",
+        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب عند CrCl < 30.",
+        "hepatic_caution": False, "aware": "Access", "high_po": True,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["augmentin","curam","amoxiclav","co-amoxiclav"],
+        "organisms": ["E. coli","Klebsiella spp.","Staphylococcus aureus",
+                      "Proteus mirabilis","Streptococcus pneumoniae","H. influenzae"],
+        "specimen_notes": {
+            "Blood":      "✅ فعال في bacteremia الموجبات والسالبات البسيطة.",
+            "Sputum":     "✅ خيار أول لـ CAP وexacerbation COPD.",
+            "Wound Swab": "✅ فعال للعدوى الجلدية المختلطة.",
+            "Pus":        "✅ جيد للخراجات والعدوى المختلطة.",
+            "Urine":      "✅ خيار أول للمسالك غير المعقدة.",
+        },
+    },
+    "Ampicillin/Sulbactam": {
+        "priority": 2, "class": "Penicillin + Beta-lactamase Inhibitor (IV)",
+        "note": "💉 IV فقط. فعال للموجبات والسالبات. أساس علاج Acinetobacter بجرعات عالية (IDSA AMR 2025).",
+        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["unictam","sigmaclav","unasyn"],
+        "organisms": ["E. coli","Klebsiella spp.","Staphylococcus aureus",
+                      "Proteus mirabilis","Enterococcus faecalis","Acinetobacter baumannii"],
+        "specimen_notes": {
+            "Blood":      "💉 فعال في bacteremia المختلطة.",
+            "Sputum":     "💉 HAP/VAP خصوصاً Acinetobacter بجرعات عالية.",
+            "Wound Swab": "💉 العدوى الجراحية والمختلطة.",
+            "Pus":        "💉 الخراجات داخل البطن.",
+        },
+    },
+    "Piperacillin + Tazobactam": {
+        "priority": 4, "class": "Anti-pseudomonal Penicillin + Inhibitor (IV)",
+        "note": "🛑 (مثل Tazocin) IV فقط. واسع الطيف جداً — يُحفظ للحالات الشديدة (IDSA AMR 2025).",
+        "renal_limit": 20, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["tazocin","pip-tazo","piptaz"],
+        "organisms": ["Pseudomonas aeruginosa","E. coli","Klebsiella spp.",
+                      "Enterococcus faecalis","Proteus mirabilis","Acinetobacter baumannii"],
+        "specimen_notes": {
+            "Blood":      "🛑 sepsis شديد مع اشتباه Pseudomonas.",
+            "Sputum":     "🛑 VAP/HAP مع اشتباه Pseudomonas.",
+            "Wound Swab": "🛑 العدوى الجراحية الشديدة.",
+            "Pus":        "🛑 الخراجات داخل البطن الشديدة.",
+        },
+    },
+    # ── Cephalosporins ─────────────────────────────────────────────────
+    "Cephalexin": {
+        "priority": 1, "class": "1st Gen Cephalosporin (Oral)",
+        "note": "✅ (مثل Ceporex) Oral. Bioavailability ~90%. آمن للالتهابات البسيطة والجلد.",
+        "renal_limit": 40, "renal_note": "⚖️ مباعدة الجرعات مطلوب.",
+        "hepatic_caution": False, "aware": "Access", "high_po": True,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["ceporex","keflex"],
+        "organisms": ["Staphylococcus aureus","Streptococcus pneumoniae","E. coli","Proteus mirabilis"],
+        "specimen_notes": {
+            "Wound Swab": "✅ خيار ممتاز للعدوى الجلدية البسيطة (cellulitis/impetigo).",
+            "Urine":      "✅ مناسب للمسالك البسيطة.",
+        },
+    },
+    "Cefadroxil": {
+        "priority": 1, "class": "1st Gen Cephalosporin (Oral)",
+        "note": "✅ (مثل Duricef) Oral. Bioavailability ~90%. فعال لالتهابات الحلق والجلد.",
+        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": False, "aware": "Access", "high_po": True,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["duricef"],
+        "organisms": ["Staphylococcus aureus","Streptococcus pneumoniae"],
+        "specimen_notes": {
+            "Wound Swab": "✅ جيد للعدوى الجلدية والأنسجة الرخوة.",
+            "Sputum":     "✅ التهاب الحلق البكتيري (Strep pharyngitis).",
+        },
+    },
+    "Cefaclor": {
+        "priority": 2, "class": "2nd Gen Cephalosporin (Oral)",
+        "note": "✅ (مثل Ceclor) Oral. Bioavailability ~95%. فعال للأذن الوسطى والمسالك.",
+        "renal_limit": 10, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": True,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True,
+        "interacts_with": ["Antacids (مضادات الحموضة)"],
+        "aliases": ["ceclor"],
+        "organisms": ["E. coli","H. influenzae","Staphylococcus aureus",
+                      "Streptococcus pneumoniae","Klebsiella spp."],
+        "specimen_notes": {
+            "Sputum": "✅ التهابات الجهاز التنفسي العلوي والأذن الوسطى.",
+            "Urine":  "✅ مناسب للمسالك البولية البسيطة.",
+        },
+    },
+    "Cefuroxime": {
+        "priority": 2, "class": "2nd Gen Cephalosporin (Oral)",
+        "note": "✅ (مثل Zinnat) Oral. Bioavailability ~52%. واسع المدى للجهاز التنفسي والمسالك.",
+        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": True,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True,
+        "interacts_with": ["Antacids (مضادات الحموضة)"],
+        "aliases": ["zinnat","ceftin"],
+        "organisms": ["E. coli","Klebsiella spp.","H. influenzae",
+                      "Staphylococcus aureus","Streptococcus pneumoniae","Proteus mirabilis"],
+        "specimen_notes": {
+            "Sputum":     "✅ CAP وعدوى الجهاز التنفسي.",
+            "Wound Swab": "✅ عدوى الأنسجة الرخوة المتوسطة.",
+            "Urine":      "✅ مناسب للمسالك.",
+            "Blood":      "⚠️ لا يُفضل في bacteremia الشديدة — استبدل بـ Zinacef IV.",
+        },
+    },
+    "Cefuroxime sodium": {
+        "priority": 2, "class": "2nd Gen Cephalosporin (IV)",
+        "note": "💉 (مثل Zinacef) IV فقط — نفس Cefuroxime لكن للحالات التي تحتاج حقن.",
+        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["zinacef","cefuroxime iv","cefuroxime sodium"],
+        "organisms": ["E. coli","Klebsiella spp.","H. influenzae",
+                      "Staphylococcus aureus","Streptococcus pneumoniae","Proteus mirabilis"],
+        "specimen_notes": {
+            "Blood":      "💉 bacteremia المتوسطة الشدة.",
+            "Sputum":     "💉 CAP الذي يحتاج دخول مستشفى.",
+            "Wound Swab": "💉 العدوى الجراحية المتوسطة.",
+            "Urine":      "💉 pyelonephritis يحتاج IV.",
+        },
+    },
+    "Ceftriaxone": {
+        "priority": 3, "class": "3rd Gen Cephalosporin (IV/IM)",
+        "note": "⚠️ (مثل Rocephin) IV/IM فقط — bioavailability فموي = صفر. لا يُستخدم في الحالات البسيطة.",
+        "renal_limit": 0, "renal_note": "🟢 آمن كلوياً — يُطرح كبدياً أساساً.",
+        "hepatic_caution": True, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["rocephin","cefaxone","triaxone"],
+        "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis","Staphylococcus aureus",
+                      "Streptococcus pneumoniae","H. influenzae",
+                      "Salmonella spp.","Shigella spp."],
+        "specimen_notes": {
+            "Blood":      "💉 خيار ممتاز في bacteremia والـ sepsis.",
+            "CSF":        "💉 خيار أول في meningitis البكتيري.",
+            "Sputum":     "💉 CAP الشديد الذي يحتاج دخول مستشفى.",
+            "Urine":      "⚠️ يُحفظ للـ pyelonephritis الشديد فقط.",
+            "Stool":      "💉 Typhoid fever والحالات الشديدة من Salmonella/Shigella.",
+        },
+    },
+    "Cefixime": {
+        "priority": 2, "class": "3rd Gen Cephalosporin (Oral)",
+        "note": "✅ (مثل Suprax) Oral. Bioavailability ~40-50%. خيار فموي قوي للمسالك.",
+        "renal_limit": 20, "renal_note": "⚖️ خفض الجرعة مطلوب.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": True,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["suprax","oroken"],
+        "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis",
+                      "H. influenzae","Streptococcus pneumoniae","Salmonella spp."],
+        "specimen_notes": {
+            "Urine":  "✅ خيار فموي قوي للمسالك والـ pyelonephritis الخفيف.",
+            "Sputum": "✅ عدوى الجهاز التنفسي الخفيفة.",
+            "Stool":  "✅ Step-down بعد Ceftriaxone في Salmonella.",
+        },
+    },
+    "Cefotaxime": {
+        "priority": 3, "class": "3rd Gen Cephalosporin (IV)",
+        "note": "💉 (مثل Cefotax) IV فقط — bioavailability فموي = صفر. يستخدم في العدوى الشديدة.",
+        "renal_limit": 20, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["cefotax","claforan"],
+        "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis",
+                      "Streptococcus pneumoniae","H. influenzae"],
+        "specimen_notes": {
+            "Blood":  "💉 bacteremia والـ sepsis.",
+            "CSF":    "💉 meningitis — بديل Ceftriaxone.",
+            "Sputum": "💉 CAP الشديد.",
+        },
+    },
+    "Ceftazidime": {
+        "priority": 4, "class": "3rd Gen Cephalosporin Anti-pseudomonal (IV)",
+        "note": "🛑 (مثل Fortum) IV فقط — متخصص في Pseudomonas. Bioavailability فموي = صفر.",
+        "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة ضروري جداً.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["fortum","ceptaz"],
+        "organisms": ["Pseudomonas aeruginosa","E. coli","Klebsiella spp.","Proteus mirabilis"],
+        "specimen_notes": {
+            "Blood":  "🛑 Pseudomonas bacteremia.",
+            "Sputum": "🛑 VAP/HAP مع Pseudomonas.",
+            "Urine":  "🛑 UTI معقد مع Pseudomonas.",
+        },
+    },
+    "Cefoperazone": {
+        "priority": 4, "class": "3rd Gen Cephalosporin (IV)",
+        "note": "💉 (مثل Cefobid) IV فقط — يُطرح صفراوياً. آمن في القصور الكلوي.",
+        "renal_limit": 0, "renal_note": "🟢 آمن كلوياً — يُطرح عبر الصفراء بالكامل.",
+        "hepatic_caution": True, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True,
+        "interacts_with": ["Warfarin (مضادات التخثر)"],
+        "aliases": ["cefobid"],
+        "organisms": ["Pseudomonas aeruginosa","E. coli","Klebsiella spp.",
+                      "Proteus mirabilis","Staphylococcus aureus"],
+        "specimen_notes": {
+            "Blood": "💉 bacteremia في مرضى القصور الكلوي (يُطرح كبدياً).",
+            "Pus":   "💉 عدوى البطن والمرارة.",
+        },
+    },
+    "Cefoperazone + Sulbactam": {
+        "priority": 4, "class": "3rd Gen Cephalosporin + Beta-lactamase Inhibitor (IV)",
+        "note": (
+            "🛑 (مثل Sulperazone/Bakperazone) IV فقط. مزيج قوي ضد MDR gram-negatives "
+            "بما فيها Acinetobacter baumannii. بديل مهم لـ Meropenem في بروتوكولات MDR المصرية."
+        ),
+        "renal_limit": 0, "renal_note": "🟢 آمن كلوياً — يُطرح صفراوياً أساساً.",
+        "hepatic_caution": True, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True,
+        "interacts_with": ["Warfarin (مضادات التخثر)"],
+        "aliases": ["sulperazone","bakperazone","cefop-sulbactam","cefoperazone sulbactam"],
+        "organisms": ["Acinetobacter baumannii","Pseudomonas aeruginosa","Klebsiella spp.",
+                      "E. coli","Proteus mirabilis","Staphylococcus aureus"],
+        "specimen_notes": {
+            "Blood":      "🛑 MDR Acinetobacter/Pseudomonas bacteremia.",
+            "Sputum":     "🛑 VAP/HAP بـ MDR Acinetobacter — بروتوكول ICU مصري شائع.",
+            "Wound Swab": "🛑 العدوى الجراحية الشديدة ومضاعفات الحروق.",
+            "Pus":        "🛑 الخراجات والعدوى داخل البطن عند فشل الخطوط الأولى.",
+            "Urine":      "⚠️ بديل عند تعذر الكاربابينيم في MDR UTI.",
+        },
+    },
+    "Cefepime": {
+        "priority": 5, "class": "4th Gen Cephalosporin (IV)",
+        "note": "🛑 (مثل Maxipime) IV فقط — للحالات الحرجة. Bioavailability فموي = صفر.",
+        "renal_limit": 50, "renal_note": "⚠️ تعديل جرعة دقيق لتجنب السمية العصبية.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["maxipime"],
+        "organisms": ["Pseudomonas aeruginosa","E. coli","Klebsiella spp.",
+                      "Proteus mirabilis","Staphylococcus aureus",
+                      "Enterococcus faecalis","Acinetobacter baumannii"],
+        "specimen_notes": {
+            "Blood":  "🛑 sepsis شديد مع اشتباه Pseudomonas.",
+            "Sputum": "🛑 VAP/HAP الحرجة.",
+            "CSF":    "🛑 meningitis المعقد في ICU.",
+        },
+    },
+    # ── Fluoroquinolones ───────────────────────────────────────────────
+    "Ciprofloxacin": {
+        "priority": 2, "class": "Fluoroquinolone",
+        "note": (
+            "⚠️ (مثل Ciprofar) Oral وIV. Bioavailability فموي ~70-80%. "
+            "يُفضل ادخاره للمسالك المعقدة."
+        ),
+        "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": True, "aware": "Watch", "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Ciprofloxacin:\n"
+            "  الموقف التقليدي: تجنب (FDA Category C).\n"
+            "  الأدلة الحديثة (ACCP Journal 2025): الخطر الحقيقي\n"
+            "  أقل مما كان متصوراً.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": False,
+        "interacts_with": ["Antacids (مضادات الحموضة)","Warfarin (مضادات التخثر)"],
+        "aliases": ["ciprofar","cipro","ciproflox"],
+        "organisms": ["E. coli","Klebsiella spp.","Pseudomonas aeruginosa",
+                      "Proteus mirabilis","Staphylococcus aureus",
+                      "Salmonella spp.","Shigella spp.","Campylobacter jejuni"],
+        "specimen_notes": {
+            "Urine":      "⚠️ فعال لكن يُحفظ للمسالك المعقدة.",
+            "Blood":      "⚠️ bacteremia في الحالات المتوسطة.",
+            "Sputum":     "⚠️ الفلوروكينولون الوحيد الفعال ضد Pseudomonas في الصدر.",
+            "Wound Swab": "⚠️ عدوى الجروح المعقدة.",
+            "Stool":      "⚠️ Shigellosis والحالات الشديدة من Campylobacter.",
+        },
+    },
+    "Levofloxacin": {
+        "priority": 2, "class": "Fluoroquinolone",
+        "note": (
+            "⚠️ (مثل Tavanic) Oral وIV. Bioavailability فموي ~99%. "
+            "أفضل respiratory quinolone متاح."
+        ),
+        "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": True, "aware": "Watch", "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Levofloxacin:\n"
+            "  فلوروكينولون — يُستخدم بحذر شديد.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": False,
+        "interacts_with": ["Antacids (مضادات الحموضة)"],
+        "aliases": ["tavanic","levaquin","levoflox"],
+        "organisms": ["E. coli","Klebsiella spp.","Pseudomonas aeruginosa",
+                      "Staphylococcus aureus","Streptococcus pneumoniae","H. influenzae",
+                      "Mycoplasma spp.","Legionella pneumophila"],
+        "specimen_notes": {
+            "Sputum": "⚠️ خيار قوي لـ CAP (respiratory quinolone) — Mycoplasma وLegionella.",
+            "Urine":  "⚠️ فعال لكن يُحفظ للحالات المعقدة.",
+            "Blood":  "⚠️ bacteremia في الحالات المتوسطة.",
+        },
+    },
+    "Ofloxacin": {
+        "priority": 2, "class": "Fluoroquinolone",
+        "note": "⚠️ (مثل Tarivid) Oral وIV. Bioavailability فموي ~98%.",
+        "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": True, "aware": "Watch", "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Ofloxacin:\n"
+            "  فلوروكينولون — يُستخدم بحذر شديد.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": False,
+        "interacts_with": ["Antacids (مضادات الحموضة)"],
+        "aliases": ["tarivid","oflox"],
+        "organisms": ["E. coli","Klebsiella spp.","Staphylococcus aureus","Proteus mirabilis"],
+        "specimen_notes": {
+            "Urine":  "⚠️ مناسب للمسالك المتوسطة.",
+            "Sputum": "⚠️ عدوى الجهاز التنفسي.",
+        },
+    },
+    "Norfloxacin": {
+        "priority": 2, "class": "Fluoroquinolone",
+        "note": (
+            "⚠️ (مثل Noroxin) Oral فقط — متخصص في المسالك البولية. "
+            "Bioavailability ~35% لكن يتركز في البول."
+        ),
+        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب عند CrCl < 30.",
+        "hepatic_caution": True, "aware": "Watch", "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Norfloxacin:\n"
+            "  فلوروكينولون — يُستخدم بحذر شديد.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": False,
+        "interacts_with": ["Antacids (مضادات الحموضة)"],
+        "aliases": ["noroxin","norflox"],
+        "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis",
+                      "Staphylococcus aureus","Enterococcus faecalis"],
+        "specimen_notes": {
+            "Urine": "⚠️ مخصص للمسالك البولية فقط — لا تركيز علاجي خارج البول.",
+        },
+    },
+    # ── Urinary Antiseptics ────────────────────────────────────────────
+    "Nitrofurantoin": {
+        "priority": 1, "class": "Urinary Antiseptic (Oral)",
+        "note": (
+            "🎯 (مثل Macrofuran) Oral فقط — الخيار الأول للمسالك البسيطة. "
+            "Bioavailability ~90% لكن يتركز في البول فقط."
+        ),
+        "renal_limit": 30, "renal_note": "🚫 ممنوع إذا CrCl < 30 مل/د.",
+        "hepatic_caution": False, "aware": "Access", "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Nitrofurantoin:\n"
+            "  آمن في الـ 1st و 2nd trimester.\n"
+            "  ممنوع في الـ 3rd trimester (خطر hemolytic anemia للجنين).\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": True,
+        "interacts_with": ["Antacids (مضادات الحموضة)"],
+        "aliases": ["macrofuran","macrobid","nitrofur"],
+        "organisms": ["E. coli","Staphylococcus aureus","Enterococcus faecalis","Klebsiella spp."],
+        "specimen_notes": {
+            "Urine": "🎯 مخصص للمسالك البولية البسيطة فقط — لا يُستخدم خارج البول أبداً.",
+        },
+    },
+    "Fosfomycin": {
+        "priority": 1, "class": "Phosphonic Acid (Oral)",
+        "note": (
+            "🎯 (مثل Monuril) Oral — جرعة واحدة للمسالك. "
+            "Bioavailability ~34-58% لكن تركيزه في البول عالٍ جداً."
+        ),
+        "renal_limit": 10, "renal_note": "⚠️ حذر في القصور الشديد.",
+        "hepatic_caution": False, "aware": "Access", "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Fosfomycin:\n"
+            "  بيانات محدودة — يُعتبر آمناً نسبياً بجرعة واحدة عند الضرورة.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": False, "interacts_with": [],
+        "aliases": ["monuril","fosfocin"],
+        "organisms": ["E. coli","Enterococcus faecalis","Staphylococcus aureus","Klebsiella spp."],
+        "specimen_notes": {
+            "Urine": "🎯 جرعة واحدة للـ uncomplicated UTI — مثالي.",
+        },
+    },
+    # ── Aminoglycosides ────────────────────────────────────────────────
+    "Gentamicin": {
+        "priority": 4, "class": "Aminoglycoside (IV/IM)",
+        "note": "💉 (مثل Garamycin) IV/IM فقط — لا bioavailability فموي. سام للكلى والأذن.",
+        "renal_limit": 60, "renal_note": "⚖️ مراقبة وظائف الكلى ضرورية.",
+        "hepatic_caution": False, "aware": "Access", "high_po": False,
+        "preg_status": "Banned",
+        "preg_note": (
+            "ممنوع في الحمل — Gentamicin:\n"
+            "  سُمية للأذن الجنينية (ototoxicity) — FDA Category D.\n"
+            "  يعبر المشيمة — خطر فقدان السمع الدائم للجنين."
+        ),
+        "child_safe": True,
+        "interacts_with": ["NSAIDs (مسكنات الألم)"],
+        "aliases": ["garamycin","genta"],
+        "organisms": ["E. coli","Klebsiella spp.","Pseudomonas aeruginosa",
+                      "Proteus mirabilis","Staphylococcus aureus"],
+        "specimen_notes": {
+            "Blood":      "💉 synergy مع beta-lactam في bacteremia الشديدة.",
+            "Wound Swab": "💉 العدوى الجراحية الشديدة.",
+            "Urine":      "💉 pyelonephritis المعقد عند عدم توفر بدائل.",
+        },
+    },
+    "Amikacin": {
+        "priority": 4, "class": "Aminoglycoside (IV/IM)",
+        "note": "💉 (مثل Amikin) IV/IM فقط — لا bioavailability فموي. فعال ضد السالبات المقاومة.",
+        "renal_limit": 60, "renal_note": "⚖️ مراقبة وظائف الكلى.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Banned",
+        "preg_note": (
+            "ممنوع في الحمل — Amikacin:\n"
+            "  سُمية للأذن الجنينية (ototoxicity) — FDA Category D.\n"
+            "  يعبر المشيمة — خطر فقدان السمع الدائم للجنين."
+        ),
+        "child_safe": True,
+        "interacts_with": ["NSAIDs (مسكنات الألم)"],
+        "aliases": ["amikin","amikacin"],
+        "organisms": ["E. coli","Klebsiella spp.","Pseudomonas aeruginosa",
+                      "Proteus mirabilis","Staphylococcus aureus","Acinetobacter baumannii"],
+        "specimen_notes": {
+            "Blood":  "💉 MDR gram-negatives bacteremia.",
+            "Sputum": "💉 HAP/VAP مع MDR organisms.",
+            "Urine":  "💉 UTI المعقد مع MDR organisms.",
+        },
+    },
+    # ── Macrolides ─────────────────────────────────────────────────────
+    "Azithromycin": {
+        "priority": 2, "class": "Macrolide (Oral/IV)",
+        "note": (
+            "✅ (مثل Zithrokan) Oral وIV. Bioavailability فموي ~37% "
+            "لكن تركيزه النسيجي عالٍ جداً — فعال للجهاز التنفسي."
+        ),
+        "renal_limit": 0, "renal_note": "🟢 آمن كلوياً.",
+        "hepatic_caution": True, "aware": "Watch", "high_po": True,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True,
+        "interacts_with": ["Antacids (مضادات الحموضة)"],
+        "aliases": ["zithrokan","zithromax","azithro"],
+        "organisms": ["Staphylococcus aureus","Streptococcus pneumoniae","H. influenzae",
+                      "Mycoplasma spp.","Salmonella spp.","Shigella spp.",
+                      "Campylobacter jejuni","Legionella pneumophila"],
+        "specimen_notes": {
+            "Sputum":     "✅ خيار ممتاز لـ CAP والـ atypicals (Mycoplasma/Legionella).",
+            "Wound Swab": "✅ عدوى الجلد الخفيفة.",
+            "Stool":      "✅ الخيار الأول في Campylobacter وبعض حالات Shigella.",
+        },
+    },
+    "Clarithromycin": {
+        "priority": 2, "class": "Macrolide (Oral/IV)",
+        "note": "✅ (مثل Klacid) Oral وIV. Bioavailability فموي ~55%. فعال للصدر.",
+        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": True, "aware": "Watch", "high_po": True,
+        "preg_status": "Banned",
+        "preg_note": (
+            "ممنوع في الحمل — Clarithromycin:\n"
+            "  ارتبط بتشوهات خلقية في الدراسات الحيوانية والبشرية.\n"
+            "  البديل الآمن: Azithromycin."
+        ),
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["klacid","biaxin"],
+        "organisms": ["Staphylococcus aureus","Streptococcus pneumoniae",
+                      "H. influenzae","Mycoplasma spp.","Legionella pneumophila"],
+        "specimen_notes": {
+            "Sputum": "✅ CAP والـ atypical pneumonia.",
+        },
+    },
+    # ── Sulfonamides ───────────────────────────────────────────────────
+    "Trimethoprim/Sulfamethoxazole": {
+        "priority": 2, "class": "Sulfonamide (Oral/IV)",
+        "note": (
+            "✅ (مثل Sutrim/Bactrim) Oral وIV. Bioavailability فموي ~100%. "
+            "ممتاز للمسالك والجهاز التنفسي."
+        ),
+        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": False, "aware": "Access", "high_po": True,
+        "preg_status": "Banned",
+        "preg_note": (
+            "ممنوع في الحمل — TMP/SMX:\n"
+            "  يثبط حمض الفوليك — خطر Neural Tube Defects في الـ 1st trimester.\n"
+            "  يسبب kernicterus للجنين في الـ 3rd trimester."
+        ),
+        "child_safe": True,
+        "interacts_with": ["Warfarin (مضادات التخثر)"],
+        "aliases": ["septra","sutrim","bactrim","co-trimoxazole","tmp-smx"],
+        "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis","Staphylococcus aureus",
+                      "Stenotrophomonas maltophilia","Shigella spp.","Salmonella spp."],
+        "specimen_notes": {
+            "Urine":      "✅ فعال للمسالك البسيطة عند تأكيد الحساسية.",
+            "Sputum":     "✅ الجهاز التنفسي — خيار أول لـ Stenotrophomonas.",
+            "Wound Swab": "✅ MRSA skin infections (SSTI).",
+        },
+    },
+    # ── Nitroimidazoles ────────────────────────────────────────────────
+    "Metronidazole": {
+        "priority": 1, "class": "Nitroimidazole (Oral/IV)",
+        "note": (
+            "✅ (مثل Flagyl) Oral وIV. Bioavailability فموي ~100%. "
+            "الخيار الأول للأنيروبيك."
+        ),
+        "renal_limit": 0, "renal_note": "🟢 آمن كلوياً.",
+        "hepatic_caution": True, "aware": "Access", "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Metronidazole:\n"
+            "  تجنب في الـ 1st trimester (مخاوف تاريخية).\n"
+            "  مقبول في الـ 2nd و 3rd trimester بإشراف طبي.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": True,
+        "interacts_with": ["Warfarin (مضادات التخثر)"],
+        "aliases": ["flagyl","metro","metrogyl"],
+        "organisms": ["Anaerobes (لاهوائيات)"],
+        "specimen_notes": {
+            "Pus":        "✅ الخراجات والعدوى المختلطة (anaerobic coverage).",
+            "Wound Swab": "✅ العدوى الجراحية التي تشمل اللاهوائيات.",
+            "Stool":      "✅ بعض الطفيليات والعدوى اللاهوائية.",
+            "Blood":      "✅ sepsis البطن مع اشتباه anaerobic.",
+        },
+    },
+    "Tinidazole": {
+        "priority": 2, "class": "Nitroimidazole (Oral)",
+        "note": "✅ (مثل Fasigyn) Oral فقط. Bioavailability ~100%. بديل Metronidazole.",
+        "renal_limit": 0, "renal_note": "🟢 آمن كلوياً.",
+        "hepatic_caution": True, "aware": "Access", "high_po": True,
+        "preg_status": "Banned",
+        "preg_note": (
+            "ممنوع في الحمل — Tinidazole:\n"
+            "  ممنوع في الـ 1st trimester.\n"
+            "  يُفضل تجنبه طوال الحمل — استبدل بـ Metronidazole."
+        ),
+        "child_safe": False,
+        "interacts_with": ["Warfarin (مضادات التخثر)"],
+        "aliases": ["fasigyn","tini"],
+        "organisms": ["Anaerobes (لاهوائيات)"],
+        "specimen_notes": {
+            "Wound Swab": "✅ عدوى اللاهوائيات الخفيفة.",
+        },
+    },
+    # ── Tetracyclines ──────────────────────────────────────────────────
+    "Doxycycline": {
+        "priority": 2, "class": "Tetracycline (Oral/IV)",
+        "note": (
+            "✅ (مثل Vibramycin) Oral وIV. Bioavailability فموي ~93%. "
+            "فعال للكلاميديا والمايكوبلازما."
+        ),
+        "renal_limit": 0, "renal_note": "🟢 آمن كلوياً نسبياً.",
+        "hepatic_caution": True, "aware": "Watch", "high_po": True,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Doxycycline:\n"
+            "  الموقف التقليدي: ممنوع (FDA Category D).\n"
+            "  الأدلة الحديثة (ACCP 2025): خطر أقل في الاستخدام القصير.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": False,
+        "interacts_with": ["Antacids (مضادات الحموضة)"],
+        "aliases": ["vibramycin","doxy"],
+        "organisms": ["Mycoplasma spp.","Staphylococcus aureus","H. influenzae",
+                      "Rickettsia spp.","Acinetobacter baumannii",
+                      "Stenotrophomonas maltophilia","Legionella pneumophila"],
+        "specimen_notes": {
+            "Sputum":     "✅ atypical pneumonia (Mycoplasma/Legionella).",
+            "Wound Swab": "✅ MRSA SSTI و Rickettsia.",
+            "Blood":      "✅ Rickettsia bacteremia.",
+        },
+    },
+    # ── Carbapenems ────────────────────────────────────────────────────
+    "Imipenem/Cilastatin": {
+        "priority": 5, "class": "Carbapenem (IV)",
+        "note": (
+            "🛑 (مثل Tienam) IV فقط — bioavailability فموي = صفر. "
+            "أوسع كاربابينيم طيفاً — يغطي Pseudomonas والموجبات والسالبات واللاهوائيات. "
+            "⚠️ خطر نوبات صرع عند الجرعات العالية أو القصور الكلوي. "
+            "Cilastatin يمنع تكسره كلوياً."
+        ),
+        "renal_limit": 50,
+        "renal_note": (
+            "⚠️ تعديل جرعة حتمي — يتراكم في القصور الكلوي "
+            "ويزيد خطر نوبات الصرع بشكل مباشر."
+        ),
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Imipenem/Cilastatin:\n"
+            "  بيانات محدودة في الحمل البشري.\n"
+            "  يُستخدم عند الضرورة القصوى فقط.\n"
+            "  يُفضل Meropenem عند الحاجة لكاربابينيم في الحمل.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": True,
+        "interacts_with": ["Valproic acid (مضادات الصرع)"],
+        "aliases": ["tienam","primaxin","imipenem","imipenem cilastatin"],
+        "organisms": ["Pseudomonas aeruginosa","Klebsiella spp.","E. coli",
+                      "Acinetobacter baumannii","Enterococcus faecalis",
+                      "Staphylococcus aureus","Proteus mirabilis",
+                      "Anaerobes (لاهوائيات)"],
+        "specimen_notes": {
+            "Blood":  "🛑 sepsis شديد — MDR organisms — يغطي طيفاً أوسع من Meropenem.",
+            "Sputum": "🛑 VAP/HAP بـ MDR organisms — بديل Meropenem.",
+            "Urine":  "🛑 UTI المعقد بـ CRE عند تعذر خيارات أخرى.",
+            "Pus":    "🛑 عدوى البطن الشديدة المختلطة — يغطي اللاهوائيات أيضاً.",
+            "CSF":    "⚠️ لا يُفضل في meningitis — خطر نوبات صرع. استخدم Meropenem.",
+        },
+    },
+    "Ertapenem": {
+        "priority": 5, "class": "Carbapenem non-anti-pseudomonal (IV/IM)",
+        "note": (
+            "🛑 (مثل Invanz) IV/IM — جرعة يومية واحدة. "
+            "لا يغطي Pseudomonas ولا Acinetobacter. Bioavailability فموي = صفر."
+        ),
+        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب عند CrCl < 30.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["invanz","ertapenem"],
+        "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis",
+                      "Staphylococcus aureus","Enterococcus faecalis",
+                      "Anaerobes (لاهوائيات)"],
+        "specimen_notes": {
+            "Blood": "🛑 ESBL bacteremia — يفضل على Meropenem للحفاظ على الكاربابينيم.",
+            "Urine": "🛑 ESBL-producing UTI المعقد فقط.",
+            "Pus":   "🛑 عدوى البطن المعقدة بـ ESBL.",
+        },
+    },
+    "Meropenem": {
+        "priority": 5, "class": "Carbapenem (IV)",
+        "note": (
+            "🛑 (مثل Meronem) IV فقط — الملاذ الأخير للمقاومة. "
+            "Bioavailability فموي = صفر. أقل خطراً للصرع من Imipenem."
+        ),
+        "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Safe", "preg_note": "",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["meronem","merrem"],
+        "organisms": ["Pseudomonas aeruginosa","Klebsiella spp.","E. coli",
+                      "Enterococcus faecalis","Staphylococcus aureus","MRSA",
+                      "Acinetobacter baumannii"],
+        "specimen_notes": {
+            "Blood":  "🛑 sepsis شديد — MDR organisms — ICU.",
+            "CSF":    "🛑 meningitis المعقد — MDR — أفضل من Imipenem للـ CNS.",
+            "Sputum": "🛑 VAP/HAP بـ MDR organisms.",
+            "Urine":  "🛑 UTI المعقد جداً بـ CRE.",
+        },
+    },
+    # ── Glycopeptides / Oxazolidinones ─────────────────────────────────
+    "Vancomycin": {
+        "priority": 5, "class": "Glycopeptide (IV)",
+        "note": (
+            "🛑 IV فقط — خاص بـ MRSA والحالات الحرجة. "
+            "Bioavailability فموي < 5% جهازياً — IV فقط للعدوى الجهازية. "
+            "مراقبة الـ Trough أو AUC/MIC حتمية."
+        ),
+        "renal_limit": 50, "renal_note": "⚖️ مراقبة مستوى الدواء في الدم.",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Warn",
+        "preg_note": (
+            "تحذير حمل — Vancomycin:\n"
+            "  يُستخدم عند الضرورة القصوى (MRSA في الحمل).\n"
+            "  مراقبة وظائف الكلى والسمع للأم والجنين.\n"
+            "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
+        ),
+        "child_safe": True,
+        "interacts_with": ["NSAIDs (مسكنات الألم)"],
+        "aliases": ["vancocin","vanco"],
+        "organisms": ["MRSA","Staphylococcus aureus","Enterococcus faecalis",
+                      "Streptococcus pneumoniae"],
+        "specimen_notes": {
+            "Blood":      "🛑 MRSA bacteremia.",
+            "CSF":        "🛑 MRSA meningitis.",
+            "Sputum":     "🛑 MRSA pneumonia في ICU.",
+            "Wound Swab": "🛑 MRSA wound infection.",
+        },
+    },
+    "Linezolid": {
+        "priority": 5, "class": "Oxazolidinone (Oral/IV)",
+        "note": (
+            "🛑 (مثل Averozolid) Oral وIV. Bioavailability فموي ~100%. "
+            "للموجبات المقاومة (MRSA/VRE) فقط."
+        ),
+        "renal_limit": 0, "renal_note": "🟢 آمن كلوياً.",
+        "hepatic_caution": False, "aware": "Reserve", "high_po": True,
+        "preg_status": "Banned",
+        "preg_note": (
+            "ممنوع في الحمل — Linezolid:\n"
+            "  أثبت سُمية جنينية في الحيوانات.\n"
+            "  يُستخدم فقط عند انعدام البدائل."
+        ),
+        "child_safe": True,
+        "interacts_with": ["SSRI (أدوية الاكتئاب)"],
+        "aliases": ["averozolid","zyvox"],
+        "organisms": ["MRSA","Staphylococcus aureus","Enterococcus faecalis",
+                      "VRE","Streptococcus pneumoniae"],
+        "specimen_notes": {
+            "Blood":      "🛑 VRE/MRSA bacteremia.",
+            "Sputum":     "🛑 MRSA pneumonia — تركيز رئوي ممتاز.",
+            "Wound Swab": "🛑 MRSA/VRE wound infection.",
+            "CSF":        "🛑 اختراق ممتاز للـ CNS.",
+        },
+    },
+    # ── Polymyxins ─────────────────────────────────────────────────────
+    "Colistin": {
+        "priority": 6, "class": "Polymyxin (IV)",
+        "note": (
+            "🔴 IV فقط — الملاذ الأخير للـ MDR gram-negatives. "
+            "Bioavailability فموي = صفر."
+        ),
+        "renal_limit": 80, "renal_note": "⚖️ سام جداً للكلى — مراقبة حتمية.",
+        "hepatic_caution": False, "aware": "Reserve", "high_po": False,
+        "preg_status": "Warn",
+        "preg_note": "يُستخدم فقط لإنقاذ الحياة عند غياب البدائل.",
+        "child_safe": True,
+        "interacts_with": ["NSAIDs (مسكنات الألم)"],
+        "aliases": ["colistin","polymyxin e"],
+        "organisms": ["Pseudomonas aeruginosa","Acinetobacter baumannii","Klebsiella spp."],
+        "specimen_notes": {
+            "Blood":  "🔴 MDR/XDR bacteremia — ملاذ أخير.",
+            "Sputum": "🔴 VAP بـ XDR Acinetobacter/Pseudomonas.",
+        },
+    },
+}
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Dashboard (أدمن فقط)
-# ══════════════════════════════════════════════════════════════════════════════
-elif st.session_state.page == "dashboard":
-    if st.session_state.user_type != "admin":
-        st.error("هذه الصفحة للأدمن فقط."); st.stop()
+# ==========================================
+# 🦠 Organism Profiles
+# ==========================================
+ORGANISM_PROFILE = {
+    "E. coli": {
+        "first_line": ["Nitrofurantoin","Fosfomycin",
+                       "Trimethoprim/Sulfamethoxazole","Amoxicillin + Clavulanic acid"],
+        "second_line": ["Cefuroxime","Cefuroxime sodium","Cefixime",
+                        "Norfloxacin","Ciprofloxacin"],
+        "third_line":  ["Ertapenem","Meropenem"],
+        "avoid": [],
+        "urine_note": (
+            "Norfloxacin: مخصص للمسالك فقط — لا تركيز علاجي خارج البول.\n"
+            "Ertapenem: يُحفظ للـ ESBL-producing E. coli فقط."
+        ),
+        "specimen_context": {
+            "Blood":      "🔬 الأكثر شيوعاً في bacteremia الجهاز البولي والبطن.",
+            "Sputum":     "⚠️ E. coli في البلغم — نادر، يشير لـ aspiration أو HAP.",
+            "Wound Swab": "🔬 شائع في عدوى الجروح الجراحية والحروق.",
+            "Pus":        "🔬 شائع في خراجات البطن.",
+            "Stool":      "🔬 ETEC/EPEC — إسهال المسافرين.",
+        },
+        "note": "🔬 الأكثر شيوعاً في مزارع البول.",
+    },
+    "Klebsiella spp.": {
+        "first_line": ["Amoxicillin + Clavulanic acid","Cefuroxime","Cefixime"],
+        "second_line": ["Cefuroxime sodium","Norfloxacin","Ciprofloxacin",
+                        "Piperacillin + Tazobactam","Ceftriaxone"],
+        "third_line":  ["Ertapenem","Meropenem"],
+        "avoid": ["Ampicillin"],
+        "urine_note": (
+            "Ertapenem: الخيار الأول لـ ESBL-producing Klebsiella (IDSA 2023).\n"
+            "Norfloxacin: للمسالك فقط."
+        ),
+        "specimen_context": {
+            "Blood":      "🔬 Klebsiella bacteremia — خطر خصوصاً في الكبد.",
+            "Sputum":     "🔬 HAP وعدوى الجهاز التنفسي في المستشفى.",
+            "Wound Swab": "🔬 عدوى الجروح الجراحية.",
+            "Pus":        "🔬 خراجات الكبد والبطن.",
+            "Urine":      "🔬 الثاني الأكثر شيوعاً في مزارع البول.",
+        },
+        "note": "🔬 تحقق من ESBL — مقاومة طبيعية لبعض البيتا-لاكتام.",
+    },
+    "Pseudomonas aeruginosa": {
+        "first_line": ["Piperacillin + Tazobactam","Ceftazidime","Ciprofloxacin"],
+        "second_line": ["Cefepime","Cefoperazone + Sulbactam",
+                        "Meropenem","Imipenem/Cilastatin","Amikacin"],
+        "third_line":  ["Colistin"],
+        "avoid": ["Nitrofurantoin","Fosfomycin","Trimethoprim/Sulfamethoxazole",
+                  "Cephalexin","Cefadroxil","Cefaclor","Norfloxacin",
+                  "Cefuroxime sodium","Ertapenem"],
+        "urine_note": (
+            "Ertapenem: ممنوع لـ Pseudomonas — لا نشاط (EUCAST).\n"
+            "Ciprofloxacin هو الفلوروكينولون الوحيد الفعال ضد Pseudomonas."
+        ),
+        "specimen_context": {
+            "Blood":      "🔴 Pseudomonas bacteremia — mortality عالية — ICU.",
+            "Sputum":     "🔴 VAP/HAP الأكثر خطورة — anti-pseudomonal إلزامي.",
+            "Wound Swab": "🔴 شائع في حروق والجروح المزمنة.",
+            "Urine":      "🔴 UTI المعقد — كاتيتر أو مضادات سابقة.",
+        },
+        "note": "🔬 جرثومة انتهازية — تحتاج anti-pseudomonal متخصص.",
+    },
+    "Acinetobacter baumannii": {
+        "first_line": ["Ampicillin/Sulbactam","Cefoperazone + Sulbactam"],
+        "second_line": ["Meropenem","Imipenem/Cilastatin","Amikacin",
+                        "Trimethoprim/Sulfamethoxazole","Doxycycline"],
+        "third_line":  ["Colistin"],
+        "avoid": ["Ertapenem","Cephalexin","Cefuroxime","Ceftriaxone",
+                  "Azithromycin","Clarithromycin","Nitrofurantoin","Fosfomycin"],
+        "specimen_context": {
+            "Blood":      "🔴 Acinetobacter bacteremia — ICU — MDR غالباً.",
+            "Sputum":     "🔴 VAP الأكثر شيوعاً في ICU — خطر جداً.",
+            "Wound Swab": "🔴 عدوى الحروق والجروح الكبيرة.",
+        },
+        "note": (
+            "🔴 MDR — Ampicillin/Sulbactam أو Cefoperazone/Sulbactam "
+            "بجرعات عالية هو الأساس (IDSA AMR 2025)."
+        ),
+    },
+    "Staphylococcus aureus": {
+        "first_line": ["Cephalexin","Cefadroxil","Amoxicillin + Clavulanic acid"],
+        "second_line": ["Cefuroxime sodium","Azithromycin","Doxycycline"],
+        "third_line":  [],
+        "avoid": [],
+        "urine_note": (
+            "تحقق من MRSA — إذا MRSA: Vancomycin أو Linezolid فقط.\n"
+            "S. aureus في البول → تحقق من Blood culture (hematogenous seeding)."
+        ),
+        "specimen_context": {
+            "Blood":      "🔬 تحقق من MRSA فوراً — خطر endocarditis.",
+            "Sputum":     "🔬 pneumonia بعد الإنفلونزا أو في ICU.",
+            "Wound Swab": "🔬 الأكثر شيوعاً في عدوى الجروح.",
+            "Pus":        "🔬 خراجات الجلد والأنسجة الرخوة.",
+            "Urine":      "⚠️ S. aureus في البول — احتمال hematogenous seeding.",
+        },
+        "note": "🔬 تحقق من MRSA — قد يحتاج Vancomycin.",
+    },
+    "MRSA": {
+        "first_line": ["Vancomycin","Linezolid"],
+        "second_line": ["Trimethoprim/Sulfamethoxazole","Doxycycline"],
+        "third_line":  [],
+        "avoid": ["Cephalexin","Cefadroxil","Cefaclor","Cefuroxime","Cefuroxime sodium",
+                  "Ceftriaxone","Amoxicillin + Clavulanic acid","Ampicillin/Sulbactam",
+                  "Piperacillin + Tazobactam","Ertapenem"],
+        "urine_note": "جميع البيتا-لاكتام لا تعمل على MRSA (mecA gene — PBP2a resistance).",
+        "specimen_context": {
+            "Blood":      "🔴 MRSA bacteremia — ابدأ Vancomycin فوراً.",
+            "Sputum":     "🔴 MRSA pneumonia — خطر في ICU.",
+            "Wound Swab": "🔴 MRSA SSTI — شائع في المجتمع (CA-MRSA).",
+            "Pus":        "🔴 MRSA abscess — drainage + Vancomycin.",
+            "CSF":        "🔴 MRSA meningitis — نادر لكن خطر.",
+        },
+        "note": "🔴 مقاوم لجميع البيتا-لاكتام — Vancomycin أو Linezolid فقط.",
+    },
+    "Proteus mirabilis": {
+        "first_line": ["Amoxicillin + Clavulanic acid","Cefuroxime","Cefixime"],
+        "second_line": ["Cefuroxime sodium","Norfloxacin","Ciprofloxacin",
+                        "Trimethoprim/Sulfamethoxazole"],
+        "third_line":  ["Ertapenem"],
+        "avoid": ["Nitrofurantoin","Tetracyclines","Colistin"],
+        "urine_note": (
+            "Nitrofurantoin: مقاوم طبيعياً لـ Proteus (intrinsic) — EUCAST.\n"
+            "Norfloxacin: فعال في UTI فقط."
+        ),
+        "specimen_context": {
+            "Urine":      "🔬 شائع في UTI — يرفع الـ pH (urease).",
+            "Wound Swab": "🔬 عدوى الجروح المزمنة والقدم السكري.",
+            "Blood":      "⚠️ Proteus bacteremia — مصدره البولي غالباً.",
+        },
+        "note": "🔬 مقاوم طبيعياً لـ Nitrofurantoin — لا تستخدمه أبداً.",
+    },
+    "Enterococcus faecalis": {
+        "first_line": ["Amoxicillin + Clavulanic acid","Fosfomycin","Nitrofurantoin"],
+        "second_line": ["Ampicillin/Sulbactam","Vancomycin","Linezolid"],
+        "third_line":  [],
+        "avoid": ["Cephalosporins (كل الجيل)","Trimethoprim/Sulfamethoxazole",
+                  "Cefuroxime sodium","Ertapenem","Norfloxacin"],
+        "urine_note": (
+            "Ertapenem وCefuroxime sodium: لا نشاط ضد Enterococcus (EUCAST).\n"
+            "جميع السيفالوسبورين مقاومة طبيعياً لـ Enterococcus."
+        ),
+        "specimen_context": {
+            "Urine":      "🔬 شائع في UTI خصوصاً الكاتيتر.",
+            "Blood":      "⚠️ Enterococcus bacteremia — خطر endocarditis.",
+            "Wound Swab": "⚠️ عدوى البطن والجروح الجراحية.",
+        },
+        "note": "🔬 مقاوم طبيعياً للسيفالوسبورين — Amoxicillin هو الأساس.",
+    },
+    "Salmonella spp.": {
+        "first_line": ["Ceftriaxone","Azithromycin","Ciprofloxacin"],
+        "second_line": ["Trimethoprim/Sulfamethoxazole","Cefixime"],
+        "third_line":  [],
+        "avoid": ["Nitrofurantoin","Fosfomycin","Cephalexin","Cefadroxil",
+                  "Cefaclor","Cefuroxime","Metronidazole","Doxycycline"],
+        "urine_note": "",
+        "specimen_context": {
+            "Stool": "🔬 Salmonella gastroenteritis — العلاج للحالات الشديدة فقط.",
+            "Blood": "🔬 Typhoid fever — Ceftriaxone أو Azithromycin.",
+        },
+        "note": "🔬 العلاج مخصص للحالات الشديدة أو الحمى التيفودية فقط.",
+    },
+    "Shigella spp.": {
+        "first_line": ["Azithromycin","Ciprofloxacin","Ceftriaxone"],
+        "second_line": ["Trimethoprim/Sulfamethoxazole"],
+        "third_line":  [],
+        "avoid": ["Nitrofurantoin","Fosfomycin","Amoxicillin + Clavulanic acid",
+                  "Metronidazole"],
+        "urine_note": "",
+        "specimen_context": {
+            "Stool": "🔬 Shigellosis — العلاج يقلل الأعراض ويمنع الانتشار.",
+            "Blood": "🔬 نادراً ما يصل للدم إلا في الحالات الشديدة.",
+        },
+        "note": "🔬 تعالج الحالات الوخيمة — مقاومة عالية لـ TMP/SMX في مصر.",
+    },
+    "Campylobacter jejuni": {
+        "first_line": ["Azithromycin"],
+        "second_line": ["Ciprofloxacin"],
+        "third_line":  [],
+        "avoid": ["Trimethoprim/Sulfamethoxazole","Nitrofurantoin","Fosfomycin"],
+        "urine_note": "",
+        "specimen_context": {
+            "Stool": "🔬 أشهر أسباب الإسهال البكتيري — غالباً محدود ذاتياً.",
+            "Blood": "🔬 Bacteremia نادر في نقص المناعة.",
+        },
+        "note": "🔬 معظم الحالات لا تحتاج مضادات — Azithromycin عند الحاجة.",
+    },
+    "Streptococcus pneumoniae": {
+        "first_line": ["Amoxicillin + Clavulanic acid","Ceftriaxone","Levofloxacin"],
+        "second_line": ["Azithromycin","Clarithromycin","Cefuroxime"],
+        "third_line":  ["Vancomycin","Linezolid"],
+        "avoid": [],
+        "urine_note": "",
+        "specimen_context": {
+            "Sputum": "🔬 السبب الأول لـ CAP — تحقق من مقاومة Penicillin.",
+            "Blood":  "🔬 Pneumococcal bacteremia — خطر في المسنين.",
+            "CSF":    "🔬 السبب الأول لـ bacterial meningitis في البالغين.",
+        },
+        "note": "🔬 السبب الأول لـ CAP والـ meningitis. تحقق من MIC للـ Penicillin.",
+    },
+    "H. influenzae": {
+        "first_line": ["Amoxicillin + Clavulanic acid","Cefuroxime","Ceftriaxone"],
+        "second_line": ["Azithromycin","Levofloxacin","Trimethoprim/Sulfamethoxazole"],
+        "third_line":  [],
+        "avoid": ["Ampicillin (alone)"],
+        "urine_note": "",
+        "specimen_context": {
+            "Sputum": "🔬 شائع في COPD exacerbation و CAP.",
+            "Blood":  "⚠️ H. influenzae bacteremia — نادر بعد التطعيم.",
+            "CSF":    "⚠️ H. influenzae meningitis — نادر جداً الآن.",
+        },
+        "note": "🔬 30% ينتجون beta-lactamase — Amoxicillin/Clavulanate مفضل.",
+    },
+    "Legionella pneumophila": {
+        "first_line": ["Levofloxacin","Azithromycin"],
+        "second_line": ["Doxycycline","Clarithromycin"],
+        "third_line":  [],
+        "avoid": ["Beta-lactams (alone)","Aminoglycosides","Cephalosporins (alone)"],
+        "urine_note": "",
+        "specimen_context": {
+            "Sputum": "🔬 Legionella — CAP الشديد، خاصةً في الفنادق أو مكيفات الهواء.",
+            "Blood":  "⚠️ Bacteremia نادر — التشخيص بـ Urine Antigen أو PCR.",
+        },
+        "note": "🔬 Levofloxacin هو الخيار الأول. لا يُعزل بالزراعة العادية — يحتاج وسط BCYE.",
+    },
+    "Mycoplasma spp.": {
+        "first_line": ["Azithromycin","Doxycycline"],
+        "second_line": ["Levofloxacin","Clarithromycin"],
+        "third_line":  [],
+        "avoid": ["Beta-lactams","Cephalosporins","Vancomycin","Aminoglycosides"],
+        "urine_note": "",
+        "specimen_context": {
+            "Sputum": "🔬 Atypical pneumonia — Walking pneumonia — خاصةً في الشباب.",
+        },
+        "note": "🔬 لا جدار خلوي — كل البيتا-لاكتام غير فعالة. يُشخص بـ PCR أو Serology.",
+    },
+    "Anaerobes (لاهوائيات)": {
+        "first_line": ["Metronidazole","Amoxicillin + Clavulanic acid"],
+        "second_line": ["Piperacillin + Tazobactam","Meropenem",
+                        "Imipenem/Cilastatin","Ampicillin/Sulbactam"],
+        "third_line":  [],
+        "avoid": ["Aminoglycosides","Nitrofurantoin"],
+        "urine_note": "",
+        "specimen_context": {
+            "Pus":        "🔬 الخراجات داخل البطن — Metronidazole ضروري.",
+            "Wound Swab": "🔬 العدوى الجراحية بعد عمليات الأمعاء.",
+            "Blood":      "🔬 Bacteremia اللاهوائيات — مصدره البطن غالباً.",
+        },
+        "note": "🔬 Metronidazole هو الخيار الأول لكل اللاهوائيات.",
+    },
+    "Stenotrophomonas maltophilia": {
+        "first_line": ["Trimethoprim/Sulfamethoxazole"],
+        "second_line": ["Levofloxacin","Doxycycline"],
+        "third_line":  [],
+        "avoid": ["Carbapenems","Ertapenem","Meropenem","Imipenem/Cilastatin",
+                  "Aminoglycosides","Ceftriaxone","Cefepime"],
+        "urine_note": "",
+        "specimen_context": {
+            "Sputum": "🔴 شائع في VAP/HAP في ICU — خاصةً بعد علاج طويل بالكاربابينيم.",
+            "Blood":  "🔴 Stenotrophomonas bacteremia — نادر لكن خطر في المناعة الضعيفة.",
+        },
+        "note": "🔴 مقاومة طبيعية للكاربابينيم! TMP/SMX هو الخيار الأول. ينتقى بعد Meropenem.",
+    },
+}
 
-    st.markdown("## 📊 Dashboard — نظرة عامة")
-    all_vs   = fetch_visits()
-    today_s  = date.today().isoformat()
-    week_ago = (date.today() - timedelta(days=6)).isoformat()
+# ─── خريطة العينات → البكتيريا المرتبطة ─────────────────────────────
+SPECIMEN_ORGANISM_MAP = {
+    "Urine": [
+        "E. coli","Klebsiella spp.","Proteus mirabilis",
+        "Enterococcus faecalis","Staphylococcus aureus","MRSA",
+        "Pseudomonas aeruginosa","Acinetobacter baumannii",
+    ],
+    "Blood": [
+        "E. coli","Klebsiella spp.","Staphylococcus aureus","MRSA",
+        "Pseudomonas aeruginosa","Acinetobacter baumannii",
+        "Streptococcus pneumoniae","Enterococcus faecalis",
+        "Salmonella spp.","Proteus mirabilis",
+        "Anaerobes (لاهوائيات)","Stenotrophomonas maltophilia",
+    ],
+    "Sputum": [
+        "Streptococcus pneumoniae","H. influenzae","Klebsiella spp.",
+        "Pseudomonas aeruginosa","Acinetobacter baumannii","MRSA",
+        "Staphylococcus aureus","E. coli","Legionella pneumophila",
+        "Mycoplasma spp.","Stenotrophomonas maltophilia",
+    ],
+    "Wound Swab": [
+        "Staphylococcus aureus","MRSA","E. coli","Klebsiella spp.",
+        "Pseudomonas aeruginosa","Proteus mirabilis","Acinetobacter baumannii",
+        "Enterococcus faecalis","Anaerobes (لاهوائيات)",
+    ],
+    "Pus": [
+        "Staphylococcus aureus","MRSA","E. coli","Klebsiella spp.",
+        "Pseudomonas aeruginosa","Acinetobacter baumannii",
+        "Anaerobes (لاهوائيات)","Enterococcus faecalis","Proteus mirabilis",
+    ],
+    "Stool": [
+        "Salmonella spp.","Shigella spp.","Campylobacter jejuni","E. coli",
+    ],
+    "CSF": [
+        "Streptococcus pneumoniae","H. influenzae","MRSA",
+        "Staphylococcus aureus","E. coli","Klebsiella spp.",
+    ],
+}
 
-    total_all = len(all_vs)
-    rev_all   = sum(v.get("total_price",0) for v in all_vs if v.get("status")!="ملغية")
-    done_all  = sum(1 for v in all_vs if v.get("status")=="تمت")
-    today_cnt = sum(1 for v in all_vs if v.get("visit_date")==today_s)
-    week_vs   = [v for v in all_vs if v.get("visit_date","")>=week_ago]
-    week_rev  = sum(v.get("total_price",0) for v in week_vs if v.get("status")!="ملغية")
+BACTERIA_TYPES  = list(ORGANISM_PROFILE.keys())
+SPECIMEN_TYPES  = ["Urine","Blood","Sputum","Wound Swab","Pus","Stool","CSF"]
+COMMON_MEDS     = ["Antacids (مضادات الحموضة)","Warfarin (مضادات التخثر)",
+                   "NSAIDs (مسكنات الألم)","SSRI (أدوية الاكتئاب)",
+                   "Valproic acid (مضادات الصرع)"]
+AWARE_COLORS    = {"Access":"🟢 Access","Watch":"🟡 Watch","Reserve":"🔴 Reserve"}
 
-    st.markdown(f'''
-    <div class="stat-grid">
-      <div class="stat-box"><div class="stat-num">{total_all}</div><div class="stat-label">إجمالي كل الزيارات</div></div>
-      <div class="stat-box"><div class="stat-num" style="color:#27AE60">{done_all}</div><div class="stat-label">تمت بنجاح ✅</div></div>
-      <div class="stat-box"><div class="stat-num">{today_cnt}</div><div class="stat-label">زيارات اليوم</div></div>
-      <div class="stat-box"><div class="stat-num" style="font-size:14px">{rev_all:,.0f}</div><div class="stat-label">إجمالي الإيراد</div></div>
-      <div class="stat-box"><div class="stat-num" style="font-size:14px">{week_rev:,.0f}</div><div class="stat-label">إيراد آخر 7 أيام</div></div>
-    </div>''', unsafe_allow_html=True)
+# ==========================================
+# 🔍 OCR + Fuzzy Matching
+# ==========================================
+def fuzzy_match(word, target):
+    w, t = word.lower(), target.lower()
+    if t in w or w in t: return 100
+    return SequenceMatcher(None, w, t).ratio() * 100
 
-    st.markdown("---")
+def extract_all_data(uploaded_file):
+    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+    img        = cv2.imdecode(file_bytes, 1)
+    gray       = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, thresh  = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    full_text  = pytesseract.image_to_string(thresh, config='--psm 6')
+    text_lower = full_text.lower()
 
-    # الإيراد الشهري آخر 6 شهور
-    st.markdown("#### 📅 الإيراد الشهري — آخر 6 شهور")
-    monthly = {}
-    for v in all_vs:
-        if v.get("status")=="ملغية": continue
-        try:
-            d  = datetime.strptime(v.get("visit_date",""), "%Y-%m-%d")
-            mk = f"{MONTHS_AR[d.month-1]} {d.year}"
-            if mk not in monthly: monthly[mk] = {"rev":0,"count":0,"year":d.year,"month":d.month}
-            monthly[mk]["rev"]   += v.get("total_price",0)
-            monthly[mk]["count"] += 1
-        except: pass
-    if monthly:
-        sorted_m = sorted(monthly.keys(), key=lambda k: (monthly[k]["year"], monthly[k]["month"]))[-6:]
-        df_m = pd.DataFrame([(m, monthly[m]["rev"]) for m in sorted_m], columns=["الشهر","الإيراد"])
-        st.bar_chart(df_m.set_index("الشهر"))
+    age_match    = re.search(r"(\d+)\s*[Yy]ears?", full_text)
+    detected_age = age_match.group(1) if age_match else "25"
+    detected_sex = "Female" if "female" in text_lower else "Male"
 
-    st.markdown("---")
+    detected_specimen = "Urine"
+    for s in SPECIMEN_TYPES:
+        if s.lower() in text_lower:
+            detected_specimen = s; break
 
-    # مقارنة الفروع
-    st.markdown("#### 🏥 مقارنة الفروع")
-    branch_data = {}
-    for v in all_vs:
-        br = v.get("branch","غير محدد") or "غير محدد"
-        if br not in branch_data: branch_data[br] = {"count":0,"rev":0,"done":0}
-        branch_data[br]["count"] += 1
-        if v.get("status")!="ملغية": branch_data[br]["rev"]  += v.get("total_price",0)
-        if v.get("status")=="تمت":   branch_data[br]["done"] += 1
-    if branch_data:
-        df_br = pd.DataFrame([
-            {"الفرع":b,"الزيارات":d["count"],"تمت":d["done"],"الإيراد":d["rev"]}
-            for b,d in branch_data.items()
-        ])
-        st.dataframe(df_br.style.format({"الإيراد":"{:,.0f} ج"}), use_container_width=True)
-        st.bar_chart(df_br.set_index("الفرع")["الإيراد"])
+    detected_organism = "E. coli"
+    organism_counts = {}
+    for b in BACTERIA_TYPES:
+        c = text_lower.count(b.lower())
+        if c > 0: organism_counts[b] = c
+    if organism_counts:
+        detected_organism = max(organism_counts, key=organism_counts.get)
 
-    st.markdown("---")
+    sir_map = {}
+    for line in full_text.splitlines():
+        ll = line.lower().strip()
+        result = None
+        if   re.search(r'\b(s|sensitive|sens)\b', ll):     result = "S"
+        elif re.search(r'\b(r|resistant|resist)\b', ll):    result = "R"
+        elif re.search(r'\b(i|intermediate|inter)\b', ll):  result = "I"
+        if result:
+            for abx_name, info in ABX_GUIDELINES.items():
+                for name in [abx_name] + info["aliases"]:
+                    if fuzzy_match(name, ll) >= 75:
+                        sir_map[abx_name] = result; break
 
-    # أكثر التحاليل طلباً
-    st.markdown("#### 🧪 أكثر التحاليل طلباً (Top 10)")
-    labs_counter = {}
-    for v in all_vs:
-        txt = v.get("selected_labs_text","")
-        if not txt: continue
-        for line in txt.splitlines():
-            lab = line.strip().split(" — ")[0].strip()
-            if lab: labs_counter[lab] = labs_counter.get(lab,0)+1
-    if labs_counter:
-        top10 = sorted(labs_counter.items(), key=lambda x: x[1], reverse=True)[:10]
-        df_l  = pd.DataFrame(top10, columns=["التحليل","عدد الطلبات"])
-        st.bar_chart(df_l.set_index("التحليل"))
+    start = text_lower.find("highly")
+    if start == -1: start = text_lower.find("sensitive")
+    end   = text_lower.find("resistant")
+    area  = full_text[start:end] if (start != -1 and end != -1) else full_text
+    words = area.lower().split()
 
-    st.markdown("---")
+    detected_drugs = []
+    for abx_name, info in ABX_GUIDELINES.items():
+        matched = False
+        for name in [abx_name] + info["aliases"]:
+            for w in words:
+                if any(fuzzy_match(w, nw) >= 82 for nw in name.lower().split()):
+                    matched = True; break
+            if matched: break
+        if matched: detected_drugs.append(abx_name)
 
-    # توزيع الحالات
-    st.markdown("#### 🔖 توزيع حالات الزيارات")
-    status_counts = {}
-    for v in all_vs:
-        s = v.get("status","مجدولة")
-        status_counts[s] = status_counts.get(s,0)+1
-    if status_counts:
-        df_s = pd.DataFrame(status_counts.items(), columns=["الحالة","العدد"])
-        col_s1, col_s2 = st.columns(2)
-        with col_s1: st.dataframe(df_s, use_container_width=True)
-        with col_s2: st.bar_chart(df_s.set_index("الحالة"))
+    return (
+        {"Age": detected_age, "Sex": detected_sex,
+         "Specimen": detected_specimen, "Organism": detected_organism},
+        list(set(detected_drugs)),
+        sir_map,
+    )
 
-    st.markdown("---")
+# ==========================================
+# 📄 Report Generator
+# ==========================================
+RENAL_BAN_REASONS = {
+    "nitrofurantoin": (
+        "Nitrofurantoin يحتاج وظيفة كلى سليمة ليتركز في البول.\n"
+        "  عند CrCl < 30 مل/د:\n"
+        "  - لا يصل لتركيز علاجي في البول → لا يقتل الجرثومة.\n"
+        "  - يتراكم في الدم → خطر سُمية رئوية وعصبية.\n"
+        "  السبب: الدواء يُطرح كلياً عبر الترشيح الكبيبي."
+    ),
+}
 
-    # أكثر الأطباء نشاطاً
-    st.markdown("#### 👨‍⚕️ أكثر الأطباء نشاطاً")
-    doc_stats = {}
-    for v in all_vs:
-        doc = v.get("doctor_name","غير محدد") or "غير محدد"
-        if doc not in doc_stats: doc_stats[doc] = {"count":0,"rev":0}
-        doc_stats[doc]["count"] += 1
-        if v.get("status")!="ملغية": doc_stats[doc]["rev"] += v.get("total_price",0)
-    if doc_stats:
-        df_d = pd.DataFrame([
-            {"الدكتور":d,"الزيارات":s["count"],"الإيراد":s["rev"]}
-            for d,s in doc_stats.items()
-        ]).sort_values("الزيارات",ascending=False)
-        st.dataframe(df_d.style.format({"الإيراد":"{:,.0f} ج"}), use_container_width=True)
-        st.bar_chart(df_d.set_index("الدكتور")["الزيارات"])
+CHILD_BAN_REASONS = {
+    "fluoroquinolone": (
+        "الفلوروكينولونات تؤثر على غضاريف النمو في الأطفال < 18 سنة.\n"
+        "  أثبتت الدراسات الحيوانية تلف مفصلي دائم.\n"
+        "  تُستخدم فقط عند انعدام البدائل."
+    ),
+    "tetracycline": (
+        "Doxycycline والتتراسيكلينات تترسب في العظام والأسنان النامية.\n"
+        "  تلوين دائم للأسنان وتثبيط نمو العظام.\n"
+        "  ممنوعة < 8 سنوات بشكل مطلق (AAP)."
+    ),
+}
+
+def generate_report(age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
+                    allowed, warned, banned, preg_warn_items,
+                    organism, specimen, interactions, sir_map):
+    now  = datetime.now().strftime("%Y-%m-%d %H:%M")
+    SEP  = "=" * 50
+    SEP2 = "-" * 50
+    r    = []
+
+    r.append(SEP)
+    r.append("   ORANGE LAB — CLINICAL DECISION REPORT")
+    r.append(SEP)
+    r.append(f"  Date      : {now}")
+    r.append(SEP)
+    r.append("\nPATIENT DETAILS:")
+    r.append(f"  Age     : {age} years")
+    r.append(f"  Gender  : {sex}")
+    r.append(f"  Weight  : {weight} kg")
+    renal_str = (f"IMPAIRED  |  CrCl = {cl_cr:.1f} ml/min  "
+                 f"({'Mild' if cl_cr>=60 else 'Moderate' if cl_cr>=30 else 'Severe'})")
+    r.append(f"  Renal   : {renal_str if is_renal else 'Normal'}")
+    r.append(f"  Hepatic : {'IMPAIRED' if is_hepatic else 'Normal'}")
+    if sex == "Female":
+        r.append(f"  Pregnancy: {'PREGNANT' if is_preg else 'Not pregnant'}")
+
+    r.append(f"\nCULTURE:")
+    r.append(f"  Specimen : {specimen}")
+    r.append(f"  Organism : {organism}")
+    if organism in ORGANISM_PROFILE:
+        op = ORGANISM_PROFILE[organism]
+        r.append(f"  Note     : {op['note']}")
+        spec_ctx = op.get("specimen_context", {}).get(specimen, "")
+        if spec_ctx: r.append(f"  Specimen Context: {spec_ctx}")
+        r.append(f"  First-line (guidelines): {', '.join(op['first_line'])}")
+        if op["avoid"]: r.append(f"  Avoid (intrinsic resistance): {', '.join(op['avoid'])}")
+
+    if sir_map:
+        r.append(f"\nSENSITIVITY RESULTS:")
+        r.append(f"  {'Antibiotic':<35} Result")
+        r.append(f"  {'-'*35} ------")
+        for drug, res in sir_map.items():
+            icon = "Sensitive (S)" if res=="S" else ("Resistant (R)" if res=="R" else "Intermediate (I)")
+            r.append(f"  {drug:<35} {icon}")
+
+    non_preg = [i for i in interactions if "🤰" not in i]
+    if non_preg:
+        r.append(f"\nDRUG INTERACTIONS / WARNINGS:")
+        for i in sorted(set(non_preg)):
+            r.append(f"  ! {i}")
+
+    r.append(f"\n{SEP}")
+    r.append("  RECOMMENDED ANTIBIOTICS")
+    r.append(SEP)
+    if allowed:
+        for item in sorted(allowed, key=lambda x: x["priority"]):
+            sir_tag  = f"  [Culture: {sir_map.get(item['name'],'?')}]" if sir_map else ""
+            preg_tag = "  [Pregnancy: Use with caution]" if (is_preg and item["preg_status"]=="Warn") else ""
+            r.append(f"\n  {item['name']}{sir_tag}{preg_tag}")
+            r.append(f"  {SEP2}")
+            r.append(f"  WHO AWaRe : {item['aware']}")
+            r.append(f"  Class     : {item['class']}")
+            r.append(f"  Route     : {'Oral (PO) / IV' if item['high_po'] else 'IV/IM only'}")
+            spec_note = item.get("specimen_notes", {}).get(specimen, "")
+            if spec_note:
+                r.append(f"  Note      : {item['note']}  |  [{specimen}]: {spec_note}")
+            else:
+                r.append(f"  Note      : {item['note']}")
+            if is_renal: r.append(f"  Renal     : {item['renal_note']}")
+            if is_preg and item["preg_status"] == "Warn":
+                r.append(f"  Pregnancy : {item['preg_note'].splitlines()[0]}")
+    else:
+        r.append("  No recommended options after applying all restrictions.")
+
+    if warned:
+        r.append(f"\n{SEP}")
+        r.append("  DOSE ADJUSTMENT REQUIRED")
+        r.append(SEP)
+        r.append(f"\n  Patient CrCl = {cl_cr:.1f} ml/min\n")
+        for item in warned:
+            sir_tag = f"  [Culture: {sir_map.get(item['name'],'')}]" if sir_map else ""
+            r.append(f"  {item['name']}{sir_tag}")
+            r.append(f"  {SEP2}")
+            r.append(f"  WHO AWaRe : {item['aware']}")
+            r.append(f"  Renal note: {item['renal_note']}")
+            r.append(f"  Limit CrCl: <= {item['renal_limit']} ml/min")
+            r.append("")
+
+    if is_preg and preg_warn_items:
+        r.append(f"\n{SEP}")
+        r.append("  PREGNANCY — USE WITH CAUTION")
+        r.append(SEP)
+        for item in preg_warn_items:
+            r.append(f"  {item['name']}")
+            r.append(f"  {SEP2}")
+            for line in item["preg_note"].splitlines():
+                r.append(f"  {line}")
+            r.append("")
+
+    if banned:
+        r.append(f"\n{SEP}")
+        r.append("  CONTRAINDICATED / INEFFECTIVE")
+        r.append(SEP)
+        cat_resist   = [b for b in banned if b["category"] == "resistant"]
+        cat_renal    = [b for b in banned if b["category"] == "renal"]
+        cat_preg     = [b for b in banned if b["category"] == "pregnancy"]
+        cat_child    = [b for b in banned if b["category"] == "child"]
+        cat_organism = [b for b in banned if b["category"] == "organism"]
+        cat_other    = [b for b in banned if b["category"] == "other"]
+
+        if cat_resist:
+            r.append(f"\n  [A] RESISTANT IN CULTURE:")
+            for b in cat_resist:
+                r.append(f"    x {b['name']}  — {b['reason_detail']}\n")
+
+        if cat_renal:
+            r.append(f"\n  [B] CONTRAINDICATED — RENAL IMPAIRMENT (CrCl={cl_cr:.1f}):")
+            for b in cat_renal:
+                r.append(f"    x {b['name']}  — {b['reason_short']}")
+                detail_key = b["name"].lower().replace(" ","")
+                for k, v in RENAL_BAN_REASONS.items():
+                    if k in detail_key:
+                        for ln in v.splitlines(): r.append(f"        {ln}")
+                        break
+                else:
+                    r.append(f"        {b['reason_detail']}")
+                r.append("")
+
+        if cat_preg:
+            r.append(f"\n  [C] CONTRAINDICATED — PREGNANCY:")
+            for b in cat_preg:
+                r.append(f"    x {b['name']}  — {b['reason_short']}")
+                for ln in b["reason_detail"].splitlines(): r.append(f"        {ln}")
+                r.append("")
+
+        if cat_child:
+            r.append(f"\n  [D] NOT SUITABLE — PATIENT < 18 YEARS (Age={age}):")
+            for b in cat_child:
+                r.append(f"    x {b['name']}  — {b['reason_short']}")
+                cls = ABX_GUIDELINES.get(b["name"],{}).get("class","").lower()
+                if "fluoroquinolone" in cls:
+                    for ln in CHILD_BAN_REASONS["fluoroquinolone"].splitlines():
+                        r.append(f"        {ln}")
+                elif "tetracycline" in cls:
+                    for ln in CHILD_BAN_REASONS["tetracycline"].splitlines():
+                        r.append(f"        {ln}")
+                else:
+                    r.append(f"        {b['reason_detail']}")
+                r.append("")
+
+        if cat_organism:
+            r.append(f"\n  [E] INEFFECTIVE FOR {organism} (intrinsic resistance):")
+            for b in cat_organism:
+                r.append(f"    x {b['name']}  — {b['reason_detail']}\n")
+
+        if cat_other:
+            r.append(f"\n  [F] OTHER CONTRAINDICATIONS:")
+            for b in cat_other:
+                r.append(f"    x {b['name']}  — {b['reason_detail']}\n")
+
+    r.append(SEP)
+    r.append("  DISCLAIMER:")
+    r.append("  هذا التقرير مساعد للقرار الطبي وليس بديلاً عنه.")
+    r.append("  القرار النهائي في الوصف يعود للطبيب المعالج.")
+    r.append(SEP)
+    r.append("  Guidelines : EUCAST 2026 | CLSI M100 2026 | IDSA AMR 2025 | Egypt National")
+    r.append("  Route info : BNF 2025 | FDA Labels | WHO AWaRe 2025")
+    r.append("  WHO AWaRe  : 🟢 Access = First choice | 🟡 Watch = Caution | 🔴 Reserve = Last resort")
+    r.append(SEP)
+    r.append("  Developed by: Dr. Hussein Ali | Orange Lab")
+    r.append(SEP)
+    return "\n".join(r)
+
+# ==========================================
+# 🖥️ Streamlit UI
+# ==========================================
+st.title("🛡️ Orange Culture Tool")
+st.caption("AI-Assisted Antibiotic Decision Support — Egyptian Market Edition")
+
+uploaded = st.file_uploader("📷 Upload Culture Report Image", type=["jpg","png","jpeg"])
+
+if uploaded:
+    cache_key = uploaded.name
+    if "ocr_data" not in st.session_state or \
+       st.session_state.get("last_file") != cache_key:
+        with st.spinner("🔍 Analyzing report image..."):
+            p, drugs, sir = extract_all_data(uploaded)
+            st.session_state.ocr_data  = (p, drugs, sir)
+            st.session_state.last_file = cache_key
+
+    patient, drugs_from_ocr, sir_map = st.session_state.ocr_data
+
+    col1, col2 = st.columns([1, 1.6])
+
+    with col1:
+        st.subheader("👤 Patient & Culture")
+
+        culture_type = st.selectbox(
+            "🧫 Specimen", SPECIMEN_TYPES,
+            index=SPECIMEN_TYPES.index(patient["Specimen"])
+                  if patient["Specimen"] in SPECIMEN_TYPES else 0)
+
+        # ─── فلترة البكتيريا حسب العينة ─────────────────────────────
+        filtered_organisms = [o for o in SPECIMEN_ORGANISM_MAP.get(culture_type, BACTERIA_TYPES)
+                               if o in ORGANISM_PROFILE]
+        ocr_org = patient["Organism"]
+        default_idx = filtered_organisms.index(ocr_org) if ocr_org in filtered_organisms else 0
+
+        organism_type = st.selectbox(
+            "🦠 Organism", filtered_organisms, index=default_idx,
+            help=f"بكتيريا شائعة في عينة {culture_type}")
+
+        if organism_type in ORGANISM_PROFILE:
+            op = ORGANISM_PROFILE[organism_type]
+            with st.expander("📌 Organism Guidance", expanded=True):
+                st.info(op["note"])
+                spec_ctx = op.get("specimen_context", {}).get(culture_type, "")
+                if spec_ctx: st.warning(f"**{culture_type} Context:** {spec_ctx}")
+                st.write("**First-line:**", ", ".join(op["first_line"]))
+                st.write("**Second-line:**", ", ".join(op["second_line"]))
+                if op.get("third_line"):
+                    st.write("**Third-line:**", ", ".join(op["third_line"]))
+                if op["avoid"]:
+                    st.error("**Avoid:** " + ", ".join(op["avoid"]))
+                if culture_type == "Urine" and op.get("urine_note"):
+                    st.info(f"📌 Urine notes:\n{op['urine_note']}")
+
+        st.divider()
+        age    = st.number_input("Age (years)", value=int(patient["Age"]),
+                                 min_value=0, max_value=120)
+        sex    = st.selectbox("Gender", ["Female","Male"],
+                              index=0 if patient["Sex"]=="Female" else 1)
+        weight = st.number_input("Weight (kg)", min_value=5, max_value=300, value=70)
+
+        st.divider()
+        is_renal = st.checkbox("🚩 Renal Impairment")
+        cl_cr    = 100.0
+        if is_renal:
+            s_cr  = st.number_input("Serum Creatinine (mg/dL)",
+                                    min_value=0.1, max_value=20.0, value=1.0, step=0.1)
+            cl_cr = ((140 - age) * weight) / (72 * s_cr)
+            if sex == "Female": cl_cr *= 0.85
+            st.metric("CrCl (Cockcroft-Gault)", f"{cl_cr:.1f} ml/min",
+                      delta="Mild" if cl_cr>=60 else ("Moderate" if cl_cr>=30 else "Severe"),
+                      delta_color="normal" if cl_cr>=60 else ("off" if cl_cr>=30 else "inverse"))
+
+        is_hepatic = st.checkbox("🚩 Hepatic Impairment")
+
+        is_preg = False
+        if sex == "Female" and 12 <= age <= 55:
+            is_preg = st.checkbox("🤰 Patient is Pregnant")
+
+        current_meds = st.multiselect("💊 Current Medications", COMMON_MEDS)
+
+    with col2:
+        st.subheader("💊 Antibiotic Analysis")
+
+        if sir_map:
+            st.info("📊 S/I/R detected: " +
+                    " | ".join(f"{k}: **{v}**" for k,v in sir_map.items()))
+
+        final_drugs = st.multiselect(
+            "✅ Confirm/Edit Sensitive Antibiotics:",
+            options=sorted(ABX_GUIDELINES.keys()),
+            default=[d for d in drugs_from_ocr if d in ABX_GUIDELINES],
+        )
+
+        allowed, warned, banned = [], [], []
+        preg_warn_items     = []
+        interactions_alerts = []
+        organism_avoid      = ORGANISM_PROFILE.get(organism_type,{}).get("avoid",[])
+
+        # ============================================================
+        # CORRECTED ORGANISM AVOID LOGIC — CLASS-BASED MAPPING
+        # ============================================================
+        ORGANISM_AVOID_CLASS_MAP = {
+            "cephalosporins (كل الجيل)": ["cephalosporin"],
+            "cephalosporins": ["cephalosporin"],
+            "tetracyclines": ["tetracycline"],
+            "aminoglycosides": ["aminoglycoside"],
+            "carbapenems": ["carbapenem"],
+            "beta-lactams (alone)": ["penicillin","cephalosporin","carbapenem"],
+            "beta-lactams": ["penicillin","cephalosporin","carbapenem"],
+        }
+
+        for d in final_drugs:
+            info  = ABX_GUIDELINES[d]
+            d_low = d.lower()
+
+            # ── مقاوم في المزرعة ───────────────────────────────────────
+            if sir_map.get(d) == "R":
+                banned.append({
+                    "name": d, "category": "resistant",
+                    "reason_short": "مقاوم (R) في نتيجة المزرعة.",
+                    "reason_detail": (
+                        f"المزرعة أثبتت أن {d} لا يثبط نمو الجرثومة.\n"
+                        f"        MIC أعلى من الحد العلاجي — فشل علاجي مؤكد."
+                    ),
+                })
+                continue
+
+            # ── تعارض أدوية / تحذير كبدي ─────────────────────────────
+            for med in current_meds:
+                if med in info["interacts_with"]:
+                    interactions_alerts.append(f"⚡ تعارض: {d} مع {med}")
+            if is_hepatic and info["hepatic_caution"]:
+                interactions_alerts.append(f"🏥 تحذير كبدي: {d} — يحتاج متابعة.")
+
+            # ── مقاومة طبيعية للجرثومة (الإصلاح الجديد) ─────────────
+            d_class = info.get("class","").lower()
+            organism_avoided = False
+            for av in organism_avoid:
+                av_low = av.lower().strip()
+                # 1) تطابق مباشر بين اسم المضاد الحيوي أو اسم avoid
+                if av_low in d_low or d_low in av_low:
+                    organism_avoided = True
+                    break
+                # 2) استخدام خريطة الأصناف للتحقق من الفئة الدوائية
+                mapped = ORGANISM_AVOID_CLASS_MAP.get(av_low)
+                if mapped and any(m in d_class for m in mapped):
+                    organism_avoided = True
+                    break
+
+            if organism_avoided:
+                banned.append({
+                    "name": d, "category": "organism",
+                    "reason_short": f"غير فعال لـ {organism_type} طبيعياً.",
+                    "reason_detail": (
+                        f"{d} — مقاومة طبيعية (intrinsic) لـ {organism_type}.\n"
+                        f"        الاستخدام سيؤدي لفشل علاجي."
+                    ),
+                })
+                continue
+
+            # ── MRSA ────────────────────────────────────────────────────
+            if organism_type == "MRSA":
+                bl_classes = ["Penicillin","Cephalosporin"]
+                if any(c in info["class"] for c in bl_classes):
+                    banned.append({
+                        "name": d, "category": "organism",
+                        "reason_short": "بيتا-لاكتام — لا يعمل على MRSA.",
+                        "reason_detail": (
+                            "MRSA يحمل جين mecA — بروتين PBP2a.\n"
+                            "        لا يرتبط بأي بيتا-لاكتام → جميعها غير فعالة."
+                        ),
+                    })
+                    continue
+
+            # ── ممنوع في الحمل ─────────────────────────────────────────
+            if is_preg and info["preg_status"] == "Banned":
+                banned.append({
+                    "name": d, "category": "pregnancy",
+                    "reason_short": info["preg_note"].splitlines()[0],
+                    "reason_detail": info["preg_note"],
+                })
+                continue
+
+            if is_preg and info["preg_status"] == "Warn":
+                preg_warn_items.append({"name": d, **info})
+
+            # ── الأطفال ────────────────────────────────────────────────
+            cls = info["class"].lower()
+            if age < 18 and not info.get("child_safe", True):
+                if "fluoroquinolone" in cls:
+                    banned.append({
+                        "name": d, "category": "child",
+                        "reason_short": "غير مناسب < 18 سنة.",
+                        "reason_detail": CHILD_BAN_REASONS["fluoroquinolone"],
+                    }); continue
+                elif "tetracycline" in cls and age < 8:
+                    banned.append({
+                        "name": d, "category": "child",
+                        "reason_short": "غير مناسب < 8 سنوات.",
+                        "reason_detail": CHILD_BAN_REASONS["tetracycline"],
+                    }); continue
+                else:
+                    banned.append({
+                        "name": d, "category": "child",
+                        "reason_short": "غير مرخص للأطفال.",
+                        "reason_detail": "الشركة الصانعة لا توصي به < 18 سنة.",
+                    }); continue
+
+            # ── قصور كلوي حاد — Nitrofurantoin ────────────────────────
+            if is_renal and "nitrofurantoin" in d_low and cl_cr < 30:
+                banned.append({
+                    "name": d, "category": "renal",
+                    "reason_short": f"ممنوع — CrCl {cl_cr:.1f} < 30 مل/د.",
+                    "reason_detail": (
+                        f"CrCl = {cl_cr:.1f} مل/د — أقل من الحد المطلوب (30).\n"
+                        f"        لا يتركز في البول ويتراكم في الدم مسبباً سُمية."
+                    ),
+                }); continue
+
+            # ── تعديل جرعة ────────────────────────────────────────────
+            if is_renal and info["renal_limit"] > 0 and cl_cr <= info["renal_limit"]:
+                warned.append({"name": d, **info}); continue
+
+            allowed.append({"name": d, **info})
+
+        # ── عرض النتائج ────────────────────────────────────────────────
+        non_preg_alerts = [a for a in interactions_alerts if "🤰" not in a]
+        if non_preg_alerts:
+            st.warning("⚡ Interactions / Hepatic Warnings")
+            for a in sorted(set(non_preg_alerts)): st.write(a)
+
+        if is_preg and preg_warn_items:
+            st.markdown("---")
+            st.markdown("### 🤰 Pregnancy — Use With Caution")
+            st.info(
+                "الأدوية التالية **ليست محظورة تلقائياً** لكنها تحتاج تقييم طبي دقيق.\n\n"
+                "**القرار النهائي للطبيب المعالج حصراً.**"
+            )
+            for item in preg_warn_items:
+                with st.expander(f"⚠️ {item['name']} — تفاصيل التحذير"):
+                    for line in item["preg_note"].splitlines(): st.write(line)
+
+        if banned:
+            with st.expander("🚫 Contraindicated / Ineffective", expanded=True):
+                for b in banned:
+                    cat_label = {
+                        "resistant": "مقاوم في المزرعة",
+                        "renal":     "قصور كلوي",
+                        "pregnancy": "ممنوع في الحمل",
+                        "child":     "غير مناسب للعمر",
+                        "organism":  "غير فعال للجرثومة",
+                        "other":     "موانع أخرى",
+                    }.get(b["category"], "")
+                    st.error(f"💊 {b['name']}  [{cat_label}]\n{b['reason_short']}")
+
+        if warned:
+            with st.expander("🟡 Dose Adjustment Required", expanded=True):
+                for item in warned:
+                    sir_tag = f" [{sir_map.get(item['name'],'')}]" if sir_map else ""
+                    st.warning(f"**{item['name']}{sir_tag}** — {item['renal_note']}")
+
+        if allowed:
+            st.success(f"🟢 {len(allowed)} Recommended Option(s)")
+            for item in sorted(allowed, key=lambda x: x["priority"]):
+                sir_badge = f" [{sir_map.get(item['name'],'?')}]" if sir_map else ""
+                preg_flag = " 🤰" if (is_preg and item["preg_status"]=="Warn") else ""
+                with st.expander(
+                    f"{item['name']}{sir_badge}{preg_flag} — {AWARE_COLORS[item['aware']]}"
+                ):
+                    c1, c2 = st.columns(2)
+                    c1.write(f"**Class:** {item['class']}")
+                    c2.write(f"**Route:** {'🟢 Oral/IV' if item['high_po'] else '💉 IV/IM only'}")
+                    st.write(f"**Note:** {item['note']}")
+                    spec_note = item.get("specimen_notes", {}).get(culture_type, "")
+                    if spec_note: st.info(f"**{culture_type} Note:** {spec_note}")
+                    if is_preg and item["preg_status"] == "Warn":
+                        st.caption("🤰 " + item["preg_note"].splitlines()[0])
+        elif not banned and not warned:
+            st.info("اختر المضادات الحساسة من القائمة أعلاه.")
+
+        if final_drugs:
+            st.divider()
+            report_txt = generate_report(
+                age, sex, weight, cl_cr, is_renal, is_preg, is_hepatic,
+                allowed, warned, banned, preg_warn_items,
+                organism_type, culture_type,
+                interactions_alerts, sir_map,
+            )
+            st.download_button(
+                "📄 Download Clinical Report",
+                report_txt,
+                file_name=f"Orange_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                mime="text/plain",
+                use_container_width=True,
+            )
+
+st.divider()
+st.markdown("""
+<div style="text-align:center;color:gray;font-size:0.85rem;">
+  <strong>Developed by: Dr. Hussein Ali | Orange Lab</strong><br>
+  EUCAST 2026 | CLSI M100 2026 | IDSA AMR 2025 | BNF 2025 | Egypt National Guidelines
+</div>
+""", unsafe_allow_html=True)
