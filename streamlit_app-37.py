@@ -1,3 +1,6 @@
+# ============================
+# FILE: streamlit_app-37.py
+# ============================
 # © 2025 Dr / Hussein Ali — Orange Lab, 6 October City, Egypt
 # Microbiology CDSS — All Rights Reserved
 # Unauthorized copying or distribution is prohibited.
@@ -264,6 +267,7 @@ def init_session_state() -> None:
         # ─── Cached Computations (prevent regeneration on every widget) ────
         "_img_bytes":              None,
         "_img_hash":               "",
+        "_img_error":              False,
         "_rpt_text":               "",
         "_rpt_hash":               "",
         "_pdf_bytes":              None,
@@ -384,6 +388,7 @@ def clean_patient_name(name: str) -> str:
     if len(name) < 3:
         return ""
     return name.title() if re.search(r"[A-Za-z]", name) else name
+
 def get_subscription_days_left(email: str) -> Optional[int]:
     email = (email or "").strip().lower()
     if email not in SUBSCRIBERS:
@@ -658,6 +663,7 @@ def detect_pus_cells(text: str) -> str:
         if m:
             return m.group(1).strip()
     return ""
+
 def detect_rbcs(text: str) -> str:
     """استخرج قيمة RBCs من نص OCR."""
     import re
@@ -919,10 +925,10 @@ def analyze_antibiotics(
             warned.append({"name": drug, **_w})
             continue
 
-        # ══════════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════════
         # ABSOLUTE CONTRAINDICATIONS — checked BEFORE pregnancy caution
         # (child age + renal threshold are hard bans; pregnancy is discretionary)
-        # ══════════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════════
         if age < 18 and not info.get("child_safe", True):
             if "fluoroquinolone" in cls:
                 banned.append(build_banned_item(
@@ -956,11 +962,11 @@ def analyze_antibiotics(
             warned.append({"name": drug, **info, "warning_reason": "renal_adjustment"})
             continue
 
-        # ══════════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════════
         # PREGNANCY SAFETY BLOCK
         # Updated per: ACOG 2023, BNF 2025, EMA 2025, ENTIS 2024,
         #              IDSA AMR 2025, WHO AWaRe 2023, BMJ Teratology 2023
-        # ══════════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════════
         if is_preg:
 
             # ── 1. Tetracyclines: ALWAYS BANNED (class-based override) ────────
@@ -3124,6 +3130,7 @@ def _esc(text: str) -> str:
             .replace("<", "&lt;")
             .replace(">", "&gt;")
             .replace('"', "&quot;"))
+
 def generate_pdf_html_report(
     patient_name: str, age: int, sex: str, weight: float,
     cl_cr: float, is_renal: bool, is_preg: bool, is_hepatic: bool,
@@ -3385,7 +3392,6 @@ def generate_pdf_html_report(
             result = re.sub(r'\s+', ' ', result).strip()
         return result
 
-
     # ── AWaRe helpers ────────────────────────────────────────────────────
     AWARE_CLR  = {"Access": "#1e8449", "Watch": "#b7770d", "Reserve": "#922b21"}
     AWARE_PILL = {"Access": "background:#1e8449;color:#fff",
@@ -3396,9 +3402,11 @@ def generate_pdf_html_report(
                   "Reserve":"background:#fdf2f2;border:0.8pt solid #922b21"}
     TIER_LBL   = {"Access": "First-line", "Watch": "Alternative", "Reserve": "Reserve / MDR"}
 
-    ranked   = sorted(allowed,
-                      key=lambda d: ({"Access":0,"Watch":1,"Reserve":2}.get(d.get("aware"),3),
-                                     d.get("priority",99)))
+    # Sort allowed by AWaRe then priority
+    ranked = sorted(allowed,
+                    key=lambda d: ({"Access":0,"Watch":1,"Reserve":2}.get(d.get("aware"),3),
+                                   d.get("priority",99)))
+
     mdr_class = mdr_result.get("level","") if mdr_result else ""
     ph_labels = [p.get("phenotype","") for p in phenotypes]
     esbl_prob = esbl_result.get("probability","low")
@@ -3505,12 +3513,41 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:2mm 0; }
              f"<style>{CSS}</style></head><body>")
 
     # ════════════════════════════════════════════════════════════════
-    # SINGLE PAGE: Clinical Decision Support
-    # (Page 1 Patient/Culture/AST removed — CDS only)
+    # PAGE 1: Clinical Advisory + Avoid + Warnings + Patho/Duration
     # ════════════════════════════════════════════════════════════════
     H.append(hdr_html("CLINICAL ADVISORY"))
 
-    # ── AVOID — each drug with its specific reason ────────────────────────
+    # ── RECOMMENDED THERAPY (NEW SECTION) ──────────────────────────────
+    if ranked:
+        H.append('<div class="sec-ttl" style="margin-top:1mm;color:#1e8449;border-bottom-color:#1e8449">'
+                 f'{_T["recommended"]}</div>')
+        # Group by AWaRe
+        tier_order = [("Access", "🟢 Access — First-line"),
+                      ("Watch", "🟡 Watch — Alternative"),
+                      ("Reserve", "🔴 Reserve — Last resort")]
+        for tier, label in tier_order:
+            tier_drugs = [d for d in ranked if d.get("aware") == tier]
+            if not tier_drugs:
+                continue
+            H.append(f'<div class="tier-sep" style="border-color:{AWARE_CLR.get(tier,"#333")}">{label}</div>')
+            for d in tier_drugs[:6]:  # show up to 6 per tier
+                name = d.get("name", "")
+                aware = d.get("aware", "")
+                sir = sir_map.get(name, "—")
+                route = "💊 Oral" if d.get("high_po") else "💉 IV"
+                # Color based on AWaRe
+                bg = AWARE_CARD.get(aware, "#f8f9fa")
+                H.append(
+                    f'<div class="ranked-row" style="{bg}">'
+                    f'<span><b>{_esc(name)}</b> <span style="color:{AWARE_CLR.get(aware,"#333")}">[{sir}]</span></span>'
+                    f'<span style="font-size:7pt;color:#666">{route}</span>'
+                    f'</div>'
+                )
+        # Commercial names if requested
+        if show_commercial_names:
+            H.append('<div style="font-size:6.5pt;color:#888;margin-top:1mm">📦 Commercial names available in full TXT report.</div>')
+
+    # ── AVOID section (as before) ────────────────────────────────────────
     if banned:
         def _ban_reason(bd):
             cat = bd.get("category", "")
@@ -3567,7 +3604,7 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:2mm 0; }
             f'{"".join(_avoid_rows)}</div>'
         )
 
-    # ── DOSE ADJUSTMENT / USE WITH CAUTION — full detailed section ──────
+    # ── DOSE ADJUSTMENT / USE WITH CAUTION ──────────────────────────────
     if warned:
         H.append('<div class="sec-ttl" style="margin-top:2mm;color:#b7770d;border-bottom-color:#b7770d">'
                  f'{_T["dose_adj"]}</div>')
@@ -3654,7 +3691,7 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:2mm 0; }
         H.append('<div class="alert al-info" style="font-size:7.5pt">Select severity level to see treatment duration</div>')
     H.append('</div>')
 
-    # ── Pathogenicity (now right column, expanded) ────────────────────────
+    # ── Pathogenicity (now right column) ────────────────────────────────────
     H.append('<div class="g2r">')
     if patho_assessment:
         sc     = patho_assessment.get("score",0)
@@ -4193,9 +4230,9 @@ def generate_decision_tree_image(
     fl_items = first_line[:4] or ["—"]
 
     r2_data = [
-        ("",                   spec_items,  SPEC_BD,  SPEC_BG,  ""),
-        ("MICROSCOPIC EXAM",   micro_items, MICRO_BD, MICRO_BG, "🔬"),
-        ("FIRST-LINE OPTIONS", fl_items,    FL_BD,    FL_BG,    "📋"),
+    ("",                   spec_items,  SPEC_BD,  SPEC_BG,  ""),
+    ("MICROSCOPIC EXAM",   micro_items, MICRO_BD, MICRO_BG, "🔬"),
+    ("CLINICAL STRATEGY",  fl_items,    FL_BD,    FL_BG,    "📋"),
     ]
     for i, (title, items, bd, bg, icon) in enumerate(r2_data):
         bx1 = P + i*(r2w+G)
@@ -4296,177 +4333,6 @@ def generate_decision_tree_image(
     buf = io.BytesIO()
     img.save(buf, "PNG", dpi=(200, 200), optimize=False)
     return buf.getvalue()
-
-    if rbcs:
-        L.append(f"RBCs     : {rbcs} /HPF")
-
-    if organism in ORGANISM_PROFILE:
-        op = ORGANISM_PROFILE[organism]
-        if op.get("note"):
-            L.append(f"Note       : {op['note']}")
-        spec_ctx = (op.get("specimen_context") or {}).get(specimen, "")
-        if spec_ctx:
-            L.append(f"Context    : {spec_ctx}")
-        if op.get("first_line"):
-            L.append(f"First-line : {', '.join(op['first_line'])}")
-        if op.get("avoid"):
-            L.append(f"Avoid      : {', '.join(op['avoid'])}")
-
-    if sir_map:
-        L += ["\nSENSITIVITY RESULTS", sep2]
-        for drug, result in sorted(sir_map.items()):
-            label = {"S": "Sensitive", "R": "Resistant", "I": "Intermediate"}.get(result, result)
-            L.append(f"{drug:<40} {label}")
-
-    if interactions:
-        L += ["\nINTERACTIONS / WARNINGS", sep2]
-        for item in sorted(set(interactions)):
-            L.append(f"- {item}")
-
-    # MDR/XDR/PDR + ESBL في التقرير
-    if sir_map:
-        mdr_r = classify_mdr(organism, sir_map)
-        if mdr_r["level"]:
-            info = MDR_INFO[mdr_r["level"]]
-            L += [f"\n{info['icon']} RESISTANCE CLASSIFICATION: {info['label']}", sep2,
-                  info["detail"],
-                  f"Resistant ({mdr_r['resistant_count']}/{mdr_r['total_tested']}): "
-                  + ", ".join(mdr_r['resistant_categories']),
-                  f"Action: {info['action']}", ""]
-        esbl_r = predict_esbl(organism, sir_map)
-        prob   = esbl_r.get("probability")
-        if prob == "carbapenemase":
-            L += [f"\n🚨 {esbl_r.get('mechanism','POSSIBLE CARBAPENEMASE PRODUCER').upper()}", sep2,
-                  esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
-        elif prob == "ampc":
-            L += ["\n⚠️  POSSIBLE AmpC β-LACTAMASE PRODUCER", sep2,
-                  esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
-        elif prob == "high":
-            L += ["\n⚠️  HIGH PROBABILITY ESBL PRODUCER", sep2,
-                  esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
-        elif prob == "moderate":
-            L += ["\n🔶 ESBL CONFIRMATION RECOMMENDED", sep2,
-                  esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
-
-    L += ["\nRECOMMENDED ANTIBIOTICS", sep]
-    if allowed:
-        for item in allowed:
-            sir_tag  = f" [Culture: {sir_map[item['name']]}]" if sir_map and item['name'] in sir_map else ""
-            preg_tag = " [Pregnancy: caution]" if (is_preg and item.get("preg_status") == "Warn") else ""
-            L += [f"\n{item['name']}{sir_tag}{preg_tag}", sep2,
-                  f"WHO AWaRe : {item.get('aware','-')}",
-                  f"Class     : {item.get('class','-')}",
-                  f"Route     : {'Oral/PO-friendly' if item.get('high_po') else 'IV/IM only'}"]
-            spec_note = (item.get("specimen_notes") or {}).get(specimen, "")
-            if spec_note:
-                L += [f"Note      : {item.get('note','')}", f"{specimen}   : {spec_note}"]
-            else:
-                L.append(f"Note      : {item.get('note','')}")
-            if is_renal:
-                L.append(f"Renal     : {item.get('renal_note','-')}")
-            if is_preg and item.get("preg_status") == "Warn":
-                pn = (item.get("preg_note") or "").splitlines()
-                if pn:
-                    L.append(f"Pregnancy : {pn[0]}")
-            if show_commercial_names:
-                _brands = get_commercial_name(item["name"])
-                if _brands:
-                    L.append(f"Brands    : {_brands}")
-    else:
-        L.append("No recommended options after applying all restrictions.")
-
-    if warned:
-        L += ["\nDOSE ADJUSTMENT / USE WITH CAUTION", sep]
-        if is_renal:
-            L.append(f"Patient CrCl = {cl_cr:.1f} ml/min\n")
-        for item in warned:
-            sir_tag = f" [Culture: {sir_map[item['name']]}]" if sir_map and item['name'] in sir_map else ""
-            L += [f"{item['name']}{sir_tag}", sep2, f"WHO AWaRe : {item.get('aware','-')}"]
-            if item.get("warning_reason") == "intermediate_culture":
-                L.append("Reason    : Intermediate (I) on culture result")
-            else:
-                L += [f"Renal note: {item.get('renal_note','-')}",
-                      f"Limit CrCl: <= {item.get('renal_limit','-')} ml/min"]
-            if show_commercial_names:
-                _brands = get_commercial_name(item["name"])
-                if _brands:
-                    L.append(f"Brands    : {_brands}")
-            L.append("")
-
-    if is_preg and preg_warn_items:
-        L += ["\nPREGNANCY — USE WITH CAUTION", sep]
-        for item in preg_warn_items:
-            L += [item['name'], sep2]
-            L.extend((item.get("preg_note") or "").splitlines())
-            L.append("")
-
-    if banned:
-        L += ["\nCONTRAINDICATED / INEFFECTIVE", sep]
-        grouped: Dict[str, list] = {
-            "resistant": [], "renal": [], "pregnancy": [],
-            "child": [], "organism": [], "other": [],
-        }
-        for item in banned:
-            grouped.setdefault(item["category"], []).append(item)
-        labels = [
-            ("resistant", "[A] RESISTANT IN CULTURE"),
-            ("renal",     "[B] CONTRAINDICATED — RENAL IMPAIRMENT"),
-            ("pregnancy", "[C] CONTRAINDICATED — PREGNANCY"),
-            ("child",     "[D] NOT SUITABLE FOR AGE"),
-            ("organism",  f"[E] INEFFECTIVE FOR {organism}"),
-            ("other",     "[F] OTHER CONTRAINDICATIONS"),
-        ]
-        for cat, heading in labels:
-            if grouped.get(cat):
-                L += [f"\n{heading}", sep2]
-                for b in grouped[cat]:
-                    L.append(f"- {b['name']} — {b['reason_short']}")
-                    if cat == "renal":
-                        dk       = b["name"].lower().replace(" ", "")
-                        rendered = False
-                        for k, v in RENAL_BAN_REASONS.items():
-                            if k in dk:
-                                L.extend([f"  {ln}" for ln in v.splitlines()])
-                                rendered = True
-                                break
-                        if not rendered:
-                            L.extend([f"  {ln}" for ln in (b.get("reason_detail") or "").splitlines()])
-                    else:
-                        L.extend([f"  {ln}" for ln in (b.get("reason_detail") or "").splitlines()])
-                    L.append("")
-
-    # ── Pathogenicity Assessment ──────────────────────────────────────
-    if patho_assessment:
-        sc    = patho_assessment.get("score", 0)
-        verd  = patho_assessment.get("verdict", "")
-        interp = patho_assessment.get("interpretation", "")
-        recs  = patho_assessment.get("recommendations", [])
-        flags = patho_assessment.get("special_flags", [])
-        L += ["", "PATHOGENICITY ASSESSMENT", sep2,
-              f"Score    : {sc}% — {verd}"]
-        if "ABU_DETECTED" in flags:
-            L.append("FLAG     : Asymptomatic Bacteriuria (ABU) Detected")
-        if "MW_REJECT" in flags:
-            L.append("FLAG     : Murray-Washington — Specimen REJECTED")
-        elif "MW_ADEQUATE" in flags:
-            L.append("FLAG     : Murray-Washington — Adequate Sputum Quality")
-        if "SIRS_HIGH" in flags:
-            L.append("FLAG     : SIRS >=3 criteria — Sepsis Probable")
-        if interp:
-            L.append(f"Interp   : {interp}")
-        if recs:
-            L.append("Recs     :")
-            for r in recs:
-                L.append(f"  • {r}")
-
-    L += ["\nDISCLAIMER", sep,
-          "هذا التقرير أداة مساعدة للقرار الطبي وليس بديلاً عن التقييم السريري.",
-          "القرار النهائي للوصف العلاجي يعود للطبيب المعالج.", sep,
-          "Guidelines: EUCAST 2026 | CLSI M100 2026 | IDSA AMR 2025 | Egypt National",
-          "Route info: BNF 2025 | FDA Labels | WHO AWaRe 2025",
-          "WHO AWaRe : Access | Watch | Reserve", sep,
-          f"Developed by Dr / Hussein Ali | {lab_name}{(' | ' + lab_city) if lab_city else ''}", sep]
-    return "\n".join(L)
 
 
 def generate_report(
@@ -4779,6 +4645,13 @@ if uploaded:
                   st.session_state.last_file_hash != file_hash)
 
     if is_new:
+        # Clean up old session keys when loading a new image
+        old_hash = st.session_state.get("last_file_hash", "")
+        if old_hash and old_hash != file_hash:
+            keys_to_delete = [k for k in st.session_state if old_hash[:8] in str(k)]
+            for key in keys_to_delete:
+                del st.session_state[key]
+
         with st.spinner("🔍 جاري تحليل صورة التقرير..."):
             try:
                 payload = extract_all_data_cached(file_bytes)
@@ -4973,7 +4846,7 @@ if uploaded:
             )
             st.session_state.microbiologist = _micro_name
 
-        # ── Pathogenicity Assessment Module v2 ───────────────────────────────
+        # ── Pathogenicity Assessment Module v2 (only for Urine) ────────────────
         # Clear stale patho_result when specimen changes
         if st.session_state.get("last_patho_specimen","") != culture_type:
             st.session_state.patho_result = None
@@ -4985,250 +4858,321 @@ if uploaded:
             st.session_state.patho_wound_type = ""
 
         st.divider()
-        with st.expander("🧫 Pathogenicity Assessment", expanded=False):
-            st.caption("هل العينة تمثل عدوى حقيقية أم تلوث؟ — يدعم Urine · Sputum · Blood · Wound · CSF")
+        # Modified: only show Pathogenicity Assessment for urine; else show Resistance Profile
+        if "urine" in culture_type.lower():
+            with st.expander("🧫 Pathogenicity Assessment", expanded=False):
+                st.caption("هل العينة تمثل عدوى حقيقية أم تلوث؟ — يدعم Urine · Sputum · Blood · Wound · CSF")
 
-            pa_col1, pa_col2 = st.columns(2)
-            with pa_col1:
-                patho_purity = st.selectbox(
-                    "نقاء المزرعة",
-                    ["Pure growth", "Mixed growth"],
-                    index=0 if st.session_state.patho_culture_purity == "Pure growth" else 1,
-                    key="patho_purity_sel"
-                )
-                st.session_state.patho_culture_purity = patho_purity
-
-                patho_gram = st.selectbox(
-                    "Gram Stain",
-                    ["مش متعملة",
-                     "WBCs + Gram Positive Cocci",
-                     "WBCs + Gram Negative Rods",
-                     "Organisms بدون WBCs",
-                     "طبيعية (No organisms seen)"],
-                    key="patho_gram_sel"
-                )
-                st.session_state.patho_gram_stain = patho_gram
-
-            with pa_col2:
-                # Urinalysis only for Urine
-                if "urine" in culture_type.lower():
-                    patho_urinalysis = st.selectbox(
-                        "نتيجة Urinalysis",
-                        ["مش معروف / مش مذكور", "Urinalysis طبيعي",
-                         "Pyuria (WBCs > 5/HPF)", "Nitrites Positive", "Hematuria"],
-                        key="patho_ua_sel"
+                pa_col1, pa_col2 = st.columns(2)
+                with pa_col1:
+                    patho_purity = st.selectbox(
+                        "نقاء المزرعة",
+                        ["Pure growth", "Mixed growth"],
+                        index=0 if st.session_state.patho_culture_purity == "Pure growth" else 1,
+                        key="patho_purity_sel"
                     )
-                    st.session_state.patho_urinalysis = patho_urinalysis
+                    st.session_state.patho_culture_purity = patho_purity
+
+                    patho_gram = st.selectbox(
+                        "Gram Stain",
+                        ["مش متعملة",
+                         "WBCs + Gram Positive Cocci",
+                         "WBCs + Gram Negative Rods",
+                         "Organisms بدون WBCs",
+                         "طبيعية (No organisms seen)"],
+                        key="patho_gram_sel"
+                    )
+                    st.session_state.patho_gram_stain = patho_gram
+
+                with pa_col2:
+                    # Urinalysis only for Urine
+                    if "urine" in culture_type.lower():
+                        patho_urinalysis = st.selectbox(
+                            "نتيجة Urinalysis",
+                            ["مش معروف / مش مذكور", "Urinalysis طبيعي",
+                             "Pyuria (WBCs > 5/HPF)", "Nitrites Positive", "Hematuria"],
+                            key="patho_ua_sel"
+                        )
+                        st.session_state.patho_urinalysis = patho_urinalysis
+                    else:
+                        patho_urinalysis = "مش معروف / مش مذكور"
+                        st.caption("🔬 Urinalysis — خاص بمزارع البول فقط")
+
+                # ── Specimen-specific fields ──────────────────────────────────────
+                spec_lower_ui = culture_type.lower()
+
+                # Urine symptoms
+                if "urine" in spec_lower_ui:
+                    patho_symptoms = st.multiselect(
+                        "الأعراض الكلينيكية",
+                        ["Dysuria / Frequency / Urgency", "Fever (> 38°C)",
+                         "Flank pain / Loin pain", "Nocturnal enuresis",
+                         "Abdominal pain", "Nausea / Vomiting", "Asymptomatic"],
+                        default=st.session_state.patho_symptoms,
+                        key="patho_symp_urine"
+                    )
+
+                # Sputum — Murray-Washington fields
+                elif "sputum" in spec_lower_ui or "respiratory" in spec_lower_ui:
+                    st.markdown("**Murray-Washington Criteria**")
+                    mw_c1, mw_c2 = st.columns(2)
+                    with mw_c1:
+                        patho_sputum_pus = st.text_input(
+                            "WBC/LPF (Pus cells per low-power field)",
+                            value=st.session_state.patho_sputum_pus,
+                            placeholder="مثال: 30",
+                            key="patho_mw_pus"
+                        )
+                        st.session_state.patho_sputum_pus = patho_sputum_pus
+                    with mw_c2:
+                        patho_sputum_epi = st.text_input(
+                            "Epithelial cells/LPF",
+                            value=st.session_state.patho_sputum_epi,
+                            placeholder="مثال: 5",
+                            key="patho_mw_epi"
+                        )
+                        st.session_state.patho_sputum_epi = patho_sputum_epi
+                    st.caption("✅ Adequate: WBC ≥25 & Epi <10 | ❌ Reject: Epi ≥25")
+                    patho_symptoms = st.multiselect(
+                        "الأعراض التنفسية",
+                        ["Productive cough / Purulent sputum", "Fever (> 38°C)",
+                         "Dyspnea", "Pleuritic chest pain", "Asymptomatic"],
+                        default=st.session_state.patho_symptoms,
+                        key="patho_symp_sputum"
+                    )
+
+                # Blood — SIRS criteria
+                elif "blood" in spec_lower_ui:
+                    st.markdown("**SIRS Criteria** (اختر كل المعايير الموجودة)")
+                    patho_sirs = st.multiselect(
+                        "SIRS Criteria",
+                        ["Fever > 38°C or Temp < 36°C",
+                         "HR > 90 bpm",
+                         "RR > 20 or PaCO₂ < 32",
+                         "WBC > 12,000 or < 4,000 or >10% bands"],
+                        default=st.session_state.patho_sirs,
+                        key="patho_sirs_sel"
+                    )
+                    st.session_state.patho_sirs = patho_sirs
+                    patho_blood_source = st.selectbox(
+                        "Bottles / Source",
+                        ["غير محدد", "Single bottle positive",
+                         "Multiple bottles positive", "Source identified (CVC/wound)"],
+                        key="patho_blood_src"
+                    )
+                    st.session_state.patho_blood_source = patho_blood_source
+                    patho_symptoms = st.session_state.patho_symptoms
+
+                # Wound / Swab
+                elif any(w in spec_lower_ui for w in ["wound", "pus", "swab", "abscess"]):
+                    patho_wound_type = st.selectbox(
+                        "نوع الجرح",
+                        ["غير محدد", "Surgical / Post-op wound",
+                         "Chronic / Diabetic wound", "Traumatic wound",
+                         "Superficial wound", "Deep tissue / Abscess"],
+                        key="patho_wound_type_sel"
+                    )
+                    st.session_state.patho_wound_type = patho_wound_type
+                    patho_symptoms = st.multiselect(
+                        "علامات العدوى",
+                        ["Erythema / Warmth / Swelling", "Purulent discharge",
+                         "Fever (> 38°C)", "Pain / Tenderness", "Asymptomatic"],
+                        default=st.session_state.patho_symptoms,
+                        key="patho_symp_wound"
+                    )
+                elif any(k in culture_type.lower() for k in ["stool","fecal","rectal","gi"]):
+                    patho_symptoms = st.multiselect(
+                        "الأعراض الجهاز الهضمي",
+                        ["Fever (> 38°C)", "Bloody diarrhea", "Watery diarrhea",
+                         "Vomiting", "Abdominal cramps", "Asymptomatic"],
+                        default=st.session_state.patho_symptoms,
+                        key="patho_symp_stool"
+                    )
                 else:
-                    patho_urinalysis = "مش معروف / مش مذكور"
-                    st.caption("🔬 Urinalysis — خاص بمزارع البول فقط")
-
-            # ── Specimen-specific fields ──────────────────────────────────────
-            spec_lower_ui = culture_type.lower()
-
-            # Urine symptoms
-            if "urine" in spec_lower_ui:
-                patho_symptoms = st.multiselect(
-                    "الأعراض الكلينيكية",
-                    ["Dysuria / Frequency / Urgency", "Fever (> 38°C)",
-                     "Flank pain / Loin pain", "Nocturnal enuresis",
-                     "Abdominal pain", "Nausea / Vomiting", "Asymptomatic"],
-                    default=st.session_state.patho_symptoms,
-                    key="patho_symp_urine"
-                )
-
-            # Sputum — Murray-Washington fields
-            elif "sputum" in spec_lower_ui or "respiratory" in spec_lower_ui:
-                st.markdown("**Murray-Washington Criteria**")
-                mw_c1, mw_c2 = st.columns(2)
-                with mw_c1:
-                    patho_sputum_pus = st.text_input(
-                        "WBC/LPF (Pus cells per low-power field)",
-                        value=st.session_state.patho_sputum_pus,
-                        placeholder="مثال: 30",
-                        key="patho_mw_pus"
+                    patho_symptoms = st.multiselect(
+                        "الأعراض الكلينيكية",
+                        ["Fever (> 38°C)", "Localized pain", "Asymptomatic"],
+                        default=st.session_state.patho_symptoms,
+                        key="patho_symp_other"
                     )
-                    st.session_state.patho_sputum_pus = patho_sputum_pus
-                with mw_c2:
-                    patho_sputum_epi = st.text_input(
-                        "Epithelial cells/LPF",
-                        value=st.session_state.patho_sputum_epi,
-                        placeholder="مثال: 5",
-                        key="patho_mw_epi"
+
+                st.session_state.patho_symptoms = patho_symptoms
+
+                # Host factors (universal)
+                patho_host = st.multiselect(
+                    "عوامل المضيف",
+                    ["Immunosuppressants / Steroids",
+                     "Urinary catheter", "Central line / PICC",
+                     "تاريخ UTIs متكررة", "Recurrent infections",
+                     "Diabetes",
+                     "Renal abnormality / Vesicoureteral reflux",
+                     "Pregnant", "Pre-surgical"],
+                    default=st.session_state.patho_host_factors,
+                    key="patho_host_sel"
+                )
+                st.session_state.patho_host_factors = patho_host
+
+                if st.button("🔬 احسب Pathogenicity Score", use_container_width=True, key="patho_calc_btn"):
+                    # Build kwargs based on specimen
+                    patho_kwargs = dict(
+                        specimen=culture_type,
+                        organism=organism_type,
+                        colony_count_text=colony_count,
+                        culture_purity=patho_purity,
+                        symptoms=patho_symptoms,
+                        pus_cells_text=pus_cells_text,
+                        urinalysis_result=patho_urinalysis,
+                        gram_stain=patho_gram,
+                        age=age,
+                        sex=sex,
+                        host_factors=patho_host,
                     )
-                    st.session_state.patho_sputum_epi = patho_sputum_epi
-                st.caption("✅ Adequate: WBC ≥25 & Epi <10 | ❌ Reject: Epi ≥25")
-                patho_symptoms = st.multiselect(
-                    "الأعراض التنفسية",
-                    ["Productive cough / Purulent sputum", "Fever (> 38°C)",
-                     "Dyspnea", "Pleuritic chest pain", "Asymptomatic"],
-                    default=st.session_state.patho_symptoms,
-                    key="patho_symp_sputum"
-                )
+                    if "sputum" in spec_lower_ui or "respiratory" in spec_lower_ui:
+                        patho_kwargs["sputum_pus_cells"]  = st.session_state.patho_sputum_pus
+                        patho_kwargs["sputum_epithelial"] = st.session_state.patho_sputum_epi
+                    if "blood" in spec_lower_ui:
+                        patho_kwargs["sirs_criteria"]  = st.session_state.patho_sirs
+                        patho_kwargs["blood_source"]   = st.session_state.patho_blood_source
+                    if any(w in spec_lower_ui for w in ["wound","pus","swab","abscess"]):
+                        patho_kwargs["wound_type"] = st.session_state.patho_wound_type
 
-            # Blood — SIRS criteria
-            elif "blood" in spec_lower_ui:
-                st.markdown("**SIRS Criteria** (اختر كل المعايير الموجودة)")
-                patho_sirs = st.multiselect(
-                    "SIRS Criteria",
-                    ["Fever > 38°C or Temp < 36°C",
-                     "HR > 90 bpm",
-                     "RR > 20 or PaCO₂ < 32",
-                     "WBC > 12,000 or < 4,000 or >10% bands"],
-                    default=st.session_state.patho_sirs,
-                    key="patho_sirs_sel"
-                )
-                st.session_state.patho_sirs = patho_sirs
-                patho_blood_source = st.selectbox(
-                    "Bottles / Source",
-                    ["غير محدد", "Single bottle positive",
-                     "Multiple bottles positive", "Source identified (CVC/wound)"],
-                    key="patho_blood_src"
-                )
-                st.session_state.patho_blood_source = patho_blood_source
-                patho_symptoms = st.session_state.patho_symptoms
+                    patho_result = assess_pathogenicity(**patho_kwargs)
+                    st.session_state.patho_result = patho_result
 
-            # Wound / Swab
-            elif any(w in spec_lower_ui for w in ["wound", "pus", "swab", "abscess"]):
-                patho_wound_type = st.selectbox(
-                    "نوع الجرح",
-                    ["غير محدد", "Surgical / Post-op wound",
-                     "Chronic / Diabetic wound", "Traumatic wound",
-                     "Superficial wound", "Deep tissue / Abscess"],
-                    key="patho_wound_type_sel"
-                )
-                st.session_state.patho_wound_type = patho_wound_type
-                patho_symptoms = st.multiselect(
-                    "علامات العدوى",
-                    ["Erythema / Warmth / Swelling", "Purulent discharge",
-                     "Fever (> 38°C)", "Pain / Tenderness", "Asymptomatic"],
-                    default=st.session_state.patho_symptoms,
-                    key="patho_symp_wound"
-                )
-            elif any(k in culture_type.lower() for k in ["stool","fecal","rectal","gi"]):
-                patho_symptoms = st.multiselect(
-                    "الأعراض الجهاز الهضمي",
-                    ["Fever (> 38°C)", "Bloody diarrhea", "Watery diarrhea",
-                     "Vomiting", "Abdominal cramps", "Asymptomatic"],
-                    default=st.session_state.patho_symptoms,
-                    key="patho_symp_stool"
-                )
-            else:
-                patho_symptoms = st.multiselect(
-                    "الأعراض الكلينيكية",
-                    ["Fever (> 38°C)", "Localized pain", "Asymptomatic"],
-                    default=st.session_state.patho_symptoms,
-                    key="patho_symp_other"
-                )
+                # ── Display Result (persists after button) ────────────────────
+                patho_result = st.session_state.get("patho_result")
+                if patho_result:
+                    sc    = patho_result["score"]
+                    color = patho_result["color"]
+                    flags = patho_result.get("special_flags", [])
 
-            st.session_state.patho_symptoms = patho_symptoms
+                    st.markdown(f"### Pathogenicity Score: **{sc}%**")
+                    st.progress(sc / 100)
 
-            # Host factors (universal)
-            patho_host = st.multiselect(
-                "عوامل المضيف",
-                ["Immunosuppressants / Steroids",
-                 "Urinary catheter", "Central line / PICC",
-                 "تاريخ UTIs متكررة", "Recurrent infections",
-                 "Diabetes",
-                 "Renal abnormality / Vesicoureteral reflux",
-                 "Pregnant", "Pre-surgical"],
-                default=st.session_state.patho_host_factors,
-                key="patho_host_sel"
-            )
-            st.session_state.patho_host_factors = patho_host
+                    if color == "error":
+                        st.error(patho_result["verdict"])
+                    elif color == "warning":
+                        st.warning(patho_result["verdict"])
+                    else:
+                        st.success(patho_result["verdict"])
 
-            if st.button("🔬 احسب Pathogenicity Score", use_container_width=True, key="patho_calc_btn"):
-                # Build kwargs based on specimen
-                patho_kwargs = dict(
-                    specimen=culture_type,
-                    organism=organism_type,
-                    colony_count_text=colony_count,
-                    culture_purity=patho_purity,
-                    symptoms=patho_symptoms,
-                    pus_cells_text=pus_cells_text,
-                    urinalysis_result=patho_urinalysis,
-                    gram_stain=patho_gram,
-                    age=age,
-                    sex=sex,
-                    host_factors=patho_host,
-                )
-                if "sputum" in spec_lower_ui or "respiratory" in spec_lower_ui:
-                    patho_kwargs["sputum_pus_cells"]  = st.session_state.patho_sputum_pus
-                    patho_kwargs["sputum_epithelial"] = st.session_state.patho_sputum_epi
-                if "blood" in spec_lower_ui:
-                    patho_kwargs["sirs_criteria"]  = st.session_state.patho_sirs
-                    patho_kwargs["blood_source"]   = st.session_state.patho_blood_source
-                if any(w in spec_lower_ui for w in ["wound","pus","swab","abscess"]):
-                    patho_kwargs["wound_type"] = st.session_state.patho_wound_type
+                    # ABU badge
+                    if patho_result.get("abu_detected"):
+                        st.info("🔵 **Asymptomatic Bacteriuria (ABU) Detected** — راجع IDSA 2019")
 
-                patho_result = assess_pathogenicity(**patho_kwargs)
-                st.session_state.patho_result = patho_result
+                    # Murray-Washington badge
+                    if "MW_REJECT" in flags:
+                        st.error("🧫 **Murray-Washington: Specimen REJECTED** — إعادة أخذ العينة ضرورية")
+                    elif "MW_ADEQUATE" in flags:
+                        st.success("🧫 **Murray-Washington: Adequate Sputum** ✅")
+                    elif "MW_MIXED" in flags:
+                        st.warning("🧫 **Murray-Washington: Mixed Quality** — تحليل بتحفظ")
 
-            # ── Display Result (persists after button) ────────────────────
-            patho_result = st.session_state.get("patho_result")
-            if patho_result:
-                sc    = patho_result["score"]
-                color = patho_result["color"]
-                flags = patho_result.get("special_flags", [])
+                    # SIRS badge
+                    if "SIRS_HIGH" in flags:
+                        st.error("🩸 **SIRS ≥3 criteria** — Sepsis Probable")
+                    elif "SIRS_MET" in flags:
+                        st.warning("🩸 **SIRS 2 criteria** — Bacteremia Possible")
 
-                st.markdown(f"### Pathogenicity Score: **{sc}%**")
-                st.progress(sc / 100)
+                    # Pediatric badge
+                    if "PEDIATRIC_UTI" in flags:
+                        st.info("👶 **Pediatric threshold applied** (Age < 2 yrs — any growth significant)")
 
-                if color == "error":
-                    st.error(patho_result["verdict"])
-                elif color == "warning":
-                    st.warning(patho_result["verdict"])
+                    st.info(patho_result["interpretation"])
+
+                    col_pos, col_neg = st.columns(2)
+                    with col_pos:
+                        if patho_result["factors_pos"]:
+                            st.markdown("**✅ Supporting Factors**")
+                            for f in patho_result["factors_pos"]:
+                                st.write(f)
+                    with col_neg:
+                        if patho_result["factors_neg"]:
+                            st.markdown("**⚠️ Against Infection**")
+                            for f in patho_result["factors_neg"]:
+                                st.write(f)
+
+                    st.markdown("**📋 التوصيات:**")
+                    for rec in patho_result["recommendations"]:
+                        st.write(f"• {rec}")
+        else:
+            # For non-urine specimens: show Resistance Profile (ESBL, MDR, Phenotypes)
+            with st.expander("🧬 Resistance Profile", expanded=False):
+                st.caption("معلومات المقاومة الميكروبية (MDR/ESBL/Phenotypes)")
+
+                # MDR/XDR/PDR
+                if mdr_result and mdr_result.get("level"):
+                    info = MDR_INFO[mdr_result["level"]]
+                    _rc  = mdr_result.get("resistant_count", 0)
+                    _rt  = mdr_result.get("total_tested", 0)
+                    _cats = ", ".join(mdr_result.get("resistant_categories", []))
+                    _gram = mdr_result.get("gram", "")
+                    _msg = (f"{info['icon']} **{info['label']}**  \n"
+                            f"{info['detail']}  \n"
+                            f"Resistant categories ({_rc}/{_rt}, Gram-{_gram}): {_cats}  \n"
+                            f"🔹 {info['action']}")
+                    if mdr_result["level"] == "MDR":
+                        st.warning(_msg)
+                    else:
+                        st.error(_msg)
+                    # Reliability warnings
+                    for _w in mdr_result.get("warnings", []):
+                        st.caption(_w)
                 else:
-                    st.success(patho_result["verdict"])
+                    st.info("No MDR/XDR/PDR classification detected.")
 
-                # ABU badge
-                if patho_result.get("abu_detected"):
-                    st.info("🔵 **Asymptomatic Bacteriuria (ABU) Detected** — راجع IDSA 2019")
+                # ESBL Predictor
+                prob = esbl_result.get("probability") if esbl_result else None
+                _conf = esbl_result.get("confidence", 0) if esbl_result else 0
+                _mech = esbl_result.get("mechanism", "") if esbl_result else ""
+                if prob == "carbapenemase":
+                    _em = (f"[!!] {_mech or 'Possible Carbapenemase (KPC/MBL/OXA)'} "
+                           f"(confidence {_conf}%)\n"
+                           + esbl_result.get("detail", "") + "  \n🔹 " + esbl_result.get("action", ""))
+                    st.error(_em)
+                elif prob == "ampc":
+                    _em = (f"[!] Possible AmpC β-Lactamase (confidence {_conf}%)\n"
+                           + esbl_result.get("detail", "") + "  \n🔹 " + esbl_result.get("action", ""))
+                    st.error(_em)
+                elif prob == "high":
+                    _em = (f"[!] High Probability ESBL Producer (confidence {_conf}%)\n"
+                           + esbl_result.get("detail", "") + "  \n🔹 " + esbl_result.get("action", ""))
+                    st.error(_em)
+                elif prob == "moderate":
+                    _em = (f"[~] ESBL Confirmation Recommended (confidence {_conf}%)\n"
+                           + esbl_result.get("detail", "") + "  \n🔹 " + esbl_result.get("action", ""))
+                    st.warning(_em)
+                elif prob == "low":
+                    st.success("Low probability of ESBL/AmpC/carbapenemase production.")
+                else:
+                    st.info("No ESBL/AmpC/carbapenemase prediction available (insufficient data).")
 
-                # Murray-Washington badge
-                if "MW_REJECT" in flags:
-                    st.error("🧫 **Murray-Washington: Specimen REJECTED** — إعادة أخذ العينة ضرورية")
-                elif "MW_ADEQUATE" in flags:
-                    st.success("🧫 **Murray-Washington: Adequate Sputum** ✅")
-                elif "MW_MIXED" in flags:
-                    st.warning("🧫 **Murray-Washington: Mixed Quality** — تحليل بتحفظ")
-
-                # SIRS badge
-                if "SIRS_HIGH" in flags:
-                    st.error("🩸 **SIRS ≥3 criteria** — Sepsis Probable")
-                elif "SIRS_MET" in flags:
-                    st.warning("🩸 **SIRS 2 criteria** — Bacteremia Possible")
-
-                # Pediatric badge
-                if "PEDIATRIC_UTI" in flags:
-                    st.info("👶 **Pediatric threshold applied** (Age < 2 yrs — any growth significant)")
-
-                st.info(patho_result["interpretation"])
-
-                col_pos, col_neg = st.columns(2)
-                with col_pos:
-                    if patho_result["factors_pos"]:
-                        st.markdown("**✅ Supporting Factors**")
-                        for f in patho_result["factors_pos"]:
-                            st.write(f)
-                with col_neg:
-                    if patho_result["factors_neg"]:
-                        st.markdown("**⚠️ Against Infection**")
-                        for f in patho_result["factors_neg"]:
-                            st.write(f)
-
-                st.markdown("**📋 التوصيات:**")
-                for rec in patho_result["recommendations"]:
-                    st.write(f"• {rec}")
+                # Phenotypes
+                phenotypes_local = phenotypes if phenotypes else []
+                if phenotypes_local:
+                    st.markdown("**🦠 Detected Phenotypes:**")
+                    for ph in phenotypes_local:
+                        isolation_tag = "  🚨 **عزل فوري مطلوب**" if ph.get("isolation") else ""
+                        msg = (f"{ph['icon']} **{ph['label']}**{isolation_tag}  \n"
+                               f"{ph['detail']}  \n"
+                               f"🔹 {ph['action']}")
+                        if ph.get("isolation"):
+                            st.error(msg)
+                        else:
+                            st.warning(msg)
+                        if ph.get("matched_markers"):
+                            st.caption(f"Evidence: {', '.join(ph['matched_markers'])}")
+                else:
+                    st.caption("No resistance phenotypes detected.")
 
 
     # ─── العمود الأيمن ────────────────────────────────────────────────────────
     with col2:
         st.subheader("💊 Antibiotic Analysis")
 
-        # ══════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════
         # AST Input Panel — OCR + Manual Entry موحّد
-        # ══════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════
         ocr_sir_map = payload["sir_map"]
         sir_options = ["S", "I", "R"]
 
@@ -5482,8 +5426,7 @@ if uploaded:
         # ── Smart Antibiotic Ranking ──────────────────────────────────────
         if allowed:
             ranked = rank_sensitive_antibiotics(
-                allowed, culture_type, organism_type, sir_map,
-                phenotypes if 'phenotypes' in dir() else []
+                allowed, culture_type, organism_type, sir_map, phenotypes
             )
             with st.expander("🏆 Smart Antibiotic Ranking", expanded=False):
                 st.caption("مرتب حسب: نتيجة المزرعة + WHO AWaRe + طريق الإعطاء + ملاءمة العينة")
@@ -5665,9 +5608,8 @@ if uploaded:
             notes.append("Treatment guided by severity and local resistance patterns.")
             notes.append("De-escalate based on culture & sensitivity.")
 
-            # Ensure syndrome_info is always defined for engines
-            _syndrome_info_safe = syndrome_info if 'syndrome_info' in dir() and syndrome_info else None
-            syndrome_info = _syndrome_info_safe  # noqa
+            # Use syndrome_info directly
+            # syndrome_info is already defined
 
             # ════════════════════════════════════════════════════════════
             # CLINICAL ENGINES UI — v4.0
@@ -6037,7 +5979,8 @@ if uploaded:
                 ).hexdigest()[:16]
 
                 if (st.session_state.get("_img_hash") != _img_input_hash
-                        or not st.session_state.get("_img_bytes")):
+                        or not st.session_state.get("_img_bytes")
+                        or st.session_state.get("_img_error")):
                     try:
                         _new_img = generate_decision_tree_image(
                             patient_name=patient_name.strip() or "غير محدد",
@@ -6058,15 +6001,17 @@ if uploaded:
                             lab_city=st.session_state.get("lab_city", ""),
                             mdr_result=mdr_result,
                             esbl_result=esbl_result,
-                            phenotypes=phenotypes if "phenotypes" in dir() else [],
+                            phenotypes=phenotypes,
                             referring_physician=st.session_state.get("referring_physician",""),
                             culture_condition=st.session_state.get("culture_condition","Aerobic"),
                             microbiologist=st.session_state.get("microbiologist",""),
                         )
                         st.session_state._img_bytes = _new_img
                         st.session_state._img_hash  = _img_input_hash
+                        st.session_state._img_error = False
                     except Exception as _img_err:
                         st.error(f"خطأ في توليد الصورة: {_img_err}")
+                        st.session_state._img_error = True
 
                 img_bytes = st.session_state.get("_img_bytes")
                 if img_bytes:
