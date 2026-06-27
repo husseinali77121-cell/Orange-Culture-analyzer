@@ -3654,7 +3654,7 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:2mm 0; }
                 _rn = _esc(_wd.get("renal_note","") or _wd.get("note",""))
                 if _rn:
                     H.append(
-                        f'<div style="font-size:7.5pt;color:#555;margin-top:0.5mm">{_rn}</div>'
+                        f'<div style="font-size:7.5pt;color:#555;margin-top:0.3mm">{_rn}</div>'
                     )
             H.append('</div>')
 
@@ -5097,9 +5097,13 @@ if uploaded:
                         st.write(f"• {rec}")
         else:
             # For non-urine specimens: show Resistance Profile (ESBL, MDR, Phenotypes)
+            # Compute resistance details here since col2 hasn't run yet
+            mdr_result = classify_mdr(organism_type, sir_map)
+            esbl_result = predict_esbl(organism_type, sir_map)
+            phenotypes = detect_resistance_phenotypes(organism_type, sir_map)
+
             with st.expander("🧬 Resistance Profile", expanded=False):
                 st.caption("معلومات المقاومة الميكروبية (MDR/ESBL/Phenotypes)")
-
                 # MDR/XDR/PDR
                 if mdr_result and mdr_result.get("level"):
                     info = MDR_INFO[mdr_result["level"]]
@@ -5148,10 +5152,9 @@ if uploaded:
                     st.info("No ESBL/AmpC/carbapenemase prediction available (insufficient data).")
 
                 # Phenotypes
-                phenotypes_local = phenotypes if phenotypes else []
-                if phenotypes_local:
+                if phenotypes:
                     st.markdown("**🦠 Detected Phenotypes:**")
-                    for ph in phenotypes_local:
+                    for ph in phenotypes:
                         isolation_tag = "  🚨 **عزل فوري مطلوب**" if ph.get("isolation") else ""
                         msg = (f"{ph['icon']} **{ph['label']}**{isolation_tag}  \n"
                                f"{ph['detail']}  \n"
