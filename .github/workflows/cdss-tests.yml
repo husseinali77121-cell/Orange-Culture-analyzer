@@ -61,12 +61,19 @@ jobs:
       - name: "Guard 2 — table sync + OCR drug scanner"
         run: python test_intrinsic_sync.py
 
-      - name: "Guard 3 — comprehensive behaviour across all cultures"
+      # 639 cases: every clinically valid organism x specimen pair against 15
+      # AST archetypes, checked for 13 invariants and diffed against a golden
+      # snapshot. A snapshot change fails the build ON PURPOSE -- it means the
+      # engine's clinical answer moved and a human has to sign off on it.
+      - name: "Guard 3 — clinical scenario matrix (639 cases)"
+        run: python test_scenarios.py
+
+      - name: "Guard 4 — comprehensive behaviour across all cultures"
         run: python test_comprehensive.py
         env:
           N_FUZZ: "20000"   # heavier fuzzing in CI; bump anytime
 
       # Byte-compile everything so a syntax error in a file no suite imports
       # (modules/, ui/, data/) still turns the run red.
-      - name: "Guard 4 — every .py file compiles"
+      - name: "Guard 5 — every .py file compiles"
         run: python -m compileall -q . && echo "all modules compile"
