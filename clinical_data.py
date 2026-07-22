@@ -87,12 +87,18 @@ INTRINSIC_RESISTANCE = {
                          "Gentamicin", "Tobramycin", "Oxacillin", "Penicillin"],
 
     # Serratia: chromosomal AmpC + intrinsic polymyxin/nitrofurantoin
-    "serratia marcescens": ["Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
+    # EUCAST v3.3 Table 2 fn.5 -- "S. marcescens is intrinsically resistant to
+    # tetracycline and doxycycline but not to minocycline or tigecycline."
+    # Tigecycline was previously listed here (wrongly banning an active agent for
+    # MDR Serratia) while tetracycline and doxycycline were absent entirely.
+    "serratia marcescens": ["Tetracycline", "Doxycycline",
+                            "Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
                             "Ampicillin/Sulbactam", "Ampicillin + Sulbactam",
                             "Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin",
                             "Cefuroxime", "Cefuroxime sodium", "Cefaclor", "Cefoxitin",
-                            "Colistin", "Polymyxin B", "Nitrofurantoin", "Tigecycline", "Oxacillin", "Penicillin"],
-    "serratia spp.":       ["Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
+                            "Colistin", "Polymyxin B", "Nitrofurantoin", "Oxacillin", "Penicillin"],
+    "serratia spp.":       ["Tetracycline", "Doxycycline",
+                            "Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
                             "Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin",
                           "Cefuroxime", "Cefuroxime sodium",
                             "Cefoxitin", "Colistin", "Polymyxin B", "Nitrofurantoin", "Oxacillin", "Penicillin"],
@@ -167,7 +173,7 @@ INTRINSIC_RESISTANCE = {
         "Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
         "Ampicillin/Sulbactam", "Ampicillin + Sulbactam",
         "Piperacillin", "Piperacillin + Tazobactam",
-        "Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin", "Cefuroxime", "Cefuroxime sodium",
+        "Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin", "Cefuroxime", "Cefoxitin", "Cefuroxime sodium",
         "Cefaclor", "Cefotaxime", "Ceftriaxone", "Ceftazidime", "Cefepime",
         "Cefoperazone", "Aztreonam",
         "Ciprofloxacin", "Norfloxacin", "Ofloxacin",

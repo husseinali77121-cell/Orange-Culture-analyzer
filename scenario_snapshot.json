@@ -1269,6 +1269,421 @@
   ],
   "warned": []
  },
+ "Blood|Enterobacter cloacae|ampc": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Blood|Enterobacter cloacae|carbapenemase": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Gentamicin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Blood|Enterobacter cloacae|esbl": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Blood|Enterobacter cloacae|intrinsic_violation": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_enterobacter_citrobacter_ampc:Amoxicillin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Blood|Enterobacter cloacae|mdr": {
+  "allowed": [
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Blood|Enterobacter cloacae|oxa48_like": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Gentamicin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 62,
+  "mdr": null,
+  "mdr_cats": [
+   "Carbapenems",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC004",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Blood|Enterobacter cloacae|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Polymyxins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Blood|Enterobacter cloacae|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Enterobacter cloacae|urine_agent_offsite": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Blood|Enterobacter cloacae|wild_type": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Blood|Enterobacter cloacae|xdr": {
+  "allowed": [
+   "Colistin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "XDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
  "Blood|Enterobacterales (unspeciated)|ampc": {
   "allowed": [
    "Amikacin",
@@ -1939,6 +2354,225 @@
    "SPEC-URN:Fosfomycin",
    "SPEC-URN:Nitrofurantoin"
   ],
+  "warned": []
+ },
+ "Blood|Enterococcus faecium|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Blood|Enterococcus faecium|mdr": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ciprofloxacin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Enterococcus faecium|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Fluoroquinolones",
+   "Glycopeptides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "VRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Enterococcus faecium|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Enterococcus faecium|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Blood|Enterococcus faecium|vre": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "banned": [
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Glycopeptides"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "VRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Enterococcus faecium|wild_type": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Enterococcus faecium|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Fluoroquinolones",
+   "Glycopeptides",
+   "Macrolides",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "VRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [],
   "warned": []
  },
  "Blood|Klebsiella spp.|ampc": {
@@ -3856,6 +4490,362 @@
   "preg_warn": [],
   "qc_ids": [
    "nobp_azithromycin_enterobacterales:Azithromycin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Blood|Serratia marcescens|ampc": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Blood|Serratia marcescens|carbapenemase": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Blood|Serratia marcescens|esbl": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Blood|Serratia marcescens|intrinsic_violation": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_serratia:Amoxicillin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Blood|Serratia marcescens|mdr": {
+  "allowed": [
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Blood|Serratia marcescens|oxa48_like": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 62,
+  "mdr": null,
+  "mdr_cats": [
+   "Carbapenems",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC004",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Blood|Serratia marcescens|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Blood|Serratia marcescens|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Serratia marcescens|wild_type": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Blood|Serratia marcescens|xdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": []
@@ -6673,6 +7663,220 @@
    "SPEC-URN:Norfloxacin",
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
+  "warned": []
+ },
+ "CSF|Listeria monocytogenes|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Aztreonam"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "wrongspectrum_gram-positive:Aztreonam"
+  ],
+  "warned": []
+ },
+ "CSF|Listeria monocytogenes|mdr": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "CSF|Listeria monocytogenes|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "CSF|Listeria monocytogenes|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "CSF|Listeria monocytogenes|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "CSF|Listeria monocytogenes|wild_type": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "CSF|Listeria monocytogenes|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
   "warned": []
  },
  "CSF|MRSA|mdr": {
@@ -12287,6 +13491,413 @@
   ],
   "warned": []
  },
+ "Sputum|Enterobacter aerogenes|ampc": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Sputum|Enterobacter aerogenes|carbapenemase": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Gentamicin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Sputum|Enterobacter aerogenes|esbl": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Sputum|Enterobacter aerogenes|intrinsic_violation": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_enterobacter_citrobacter_ampc:Amoxicillin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Sputum|Enterobacter aerogenes|mdr": {
+  "allowed": [
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Sputum|Enterobacter aerogenes|oxa48_like": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Gentamicin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 62,
+  "mdr": null,
+  "mdr_cats": [
+   "Carbapenems",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC004",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Sputum|Enterobacter aerogenes|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Polymyxins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Sputum|Enterobacter aerogenes|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Sputum|Enterobacter aerogenes|urine_agent_offsite": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Sputum|Enterobacter aerogenes|wild_type": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Sputum|Enterobacter aerogenes|xdr": {
+  "allowed": [
+   "Colistin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "XDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
  "Sputum|Enterobacterales (unspeciated)|ampc": {
   "allowed": [
    "Amikacin",
@@ -13101,6 +14712,459 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Sputum|Klebsiella pneumoniae|ampc": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "high",
+  "esbl_conf": 88,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC006",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Sputum|Klebsiella pneumoniae|carbapenemase": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Gentamicin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Sputum|Klebsiella pneumoniae|esbl": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "high",
+  "esbl_conf": 88,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Sputum|Klebsiella pneumoniae|intrinsic_violation": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_klebsiella_ampicillin:Amoxicillin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Sputum|Klebsiella pneumoniae|mdr": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amikacin",
+   "Ampicillin/Sulbactam",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "high",
+  "esbl_conf": 88,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC006",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Sputum|Klebsiella pneumoniae|oxa48_like": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Gentamicin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 62,
+  "mdr": null,
+  "mdr_cats": [
+   "Carbapenems",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC004",
+   "QC006",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Sputum|Klebsiella pneumoniae|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Penicillins+BLI",
+   "Polymyxins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Sputum|Klebsiella pneumoniae|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Sputum|Klebsiella pneumoniae|urine_agent_offsite": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Sputum|Klebsiella pneumoniae|wild_type": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Sputum|Klebsiella pneumoniae|xdr": {
+  "allowed": [
+   "Colistin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "XDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -17867,6 +19931,876 @@
   ],
   "warned": []
  },
+ "Urine|Citrobacter freundii|ampc": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime"
+  ]
+ },
+ "Urine|Citrobacter freundii|carbapenemase": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Citrobacter freundii|esbl": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Piperacillin + Tazobactam"
+  ]
+ },
+ "Urine|Citrobacter freundii|intrinsic_violation": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_enterobacter_citrobacter_ampc:Amoxicillin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Citrobacter freundii|mdr": {
+  "allowed": [
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Norfloxacin"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Piperacillin + Tazobactam"
+  ]
+ },
+ "Urine|Citrobacter freundii|oxa48_like": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 62,
+  "mdr": null,
+  "mdr_cats": [
+   "Carbapenems",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC004",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Citrobacter freundii|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins",
+   "Nitrofurans",
+   "Polymyxins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Citrobacter freundii|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Citrobacter freundii|wild_type": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Citrobacter freundii|xdr": {
+  "allowed": [
+   "Colistin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "XDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins",
+   "Nitrofurans",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Citrobacter koseri|ampc": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "high",
+  "esbl_conf": 88,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime"
+  ]
+ },
+ "Urine|Citrobacter koseri|carbapenemase": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Citrobacter koseri|esbl": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime"
+  ],
+  "dtr": null,
+  "esbl": "high",
+  "esbl_conf": 88,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Piperacillin + Tazobactam"
+  ]
+ },
+ "Urine|Citrobacter koseri|intrinsic_violation": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_citrobacter_koseri_klebsiella_oxytoca_classA:Amoxicillin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Citrobacter koseri|mdr": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Norfloxacin"
+  ],
+  "dtr": null,
+  "esbl": "high",
+  "esbl_conf": 88,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": [
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Piperacillin + Tazobactam"
+  ]
+ },
+ "Urine|Citrobacter koseri|oxa48_like": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 62,
+  "mdr": null,
+  "mdr_cats": [
+   "Carbapenems",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC004",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Citrobacter koseri|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins",
+   "Nitrofurans",
+   "Penicillins+BLI",
+   "Polymyxins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Citrobacter koseri|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Citrobacter koseri|wild_type": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Citrobacter koseri|xdr": {
+  "allowed": [
+   "Colistin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "XDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins",
+   "Nitrofurans",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
  "Urine|E. coli|ampc": {
   "allowed": [
    "Amikacin",
@@ -18962,6 +21896,905 @@
   "qc_ids": [],
   "warned": []
  },
+ "Urine|Escherichia coli|ampc": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "high",
+  "esbl_conf": 88,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC006",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime"
+  ]
+ },
+ "Urine|Escherichia coli|carbapenemase": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Urine|Escherichia coli|esbl": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime"
+  ],
+  "dtr": null,
+  "esbl": "high",
+  "esbl_conf": 88,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime",
+   "Piperacillin + Tazobactam"
+  ]
+ },
+ "Urine|Escherichia coli|intrinsic_violation": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Oxacillin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_entero_gram_pos_agents:Oxacillin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Urine|Escherichia coli|mdr": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Norfloxacin"
+  ],
+  "dtr": null,
+  "esbl": "high",
+  "esbl_conf": 88,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC006",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Piperacillin + Tazobactam"
+  ]
+ },
+ "Urine|Escherichia coli|oxa48_like": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 62,
+  "mdr": null,
+  "mdr_cats": [
+   "Carbapenems",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC004",
+   "QC006",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Urine|Escherichia coli|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins",
+   "Nitrofurans",
+   "Penicillins+BLI",
+   "Polymyxins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Urine|Escherichia coli|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Escherichia coli|wild_type": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Urine|Escherichia coli|xdr": {
+  "allowed": [
+   "Colistin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "XDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins",
+   "Nitrofurans",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "CRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Urine|Klebsiella oxytoca|ampc": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "high",
+  "esbl_conf": 88,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC006",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime"
+  ]
+ },
+ "Urine|Klebsiella oxytoca|carbapenemase": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Klebsiella oxytoca|esbl": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime"
+  ],
+  "dtr": null,
+  "esbl": "high",
+  "esbl_conf": 88,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Piperacillin + Tazobactam"
+  ]
+ },
+ "Urine|Klebsiella oxytoca|intrinsic_violation": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_citrobacter_koseri_klebsiella_oxytoca_classA:Amoxicillin",
+   "intr_klebsiella_ampicillin:Amoxicillin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Klebsiella oxytoca|mdr": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Norfloxacin"
+  ],
+  "dtr": null,
+  "esbl": "high",
+  "esbl_conf": 88,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC006",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": [
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Piperacillin + Tazobactam"
+  ]
+ },
+ "Urine|Klebsiella oxytoca|oxa48_like": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 62,
+  "mdr": null,
+  "mdr_cats": [
+   "Carbapenems",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC004",
+   "QC006",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Klebsiella oxytoca|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins",
+   "Nitrofurans",
+   "Penicillins+BLI",
+   "Polymyxins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Klebsiella oxytoca|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Klebsiella oxytoca|wild_type": {
+  "allowed": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Urine|Klebsiella oxytoca|xdr": {
+  "allowed": [
+   "Colistin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Cefuroxime",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "XDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins",
+   "Nitrofurans",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
  "Urine|Klebsiella spp.|ampc": {
   "allowed": [
    "Amikacin",
@@ -19670,6 +23503,382 @@
   "qc_ids": [],
   "warned": []
  },
+ "Urine|Morganella morganii|ampc": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime"
+  ]
+ },
+ "Urine|Morganella morganii|carbapenemase": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": []
+ },
+ "Urine|Morganella morganii|esbl": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Piperacillin + Tazobactam"
+  ]
+ },
+ "Urine|Morganella morganii|intrinsic_violation": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_morganella_providencia_proteus_vulgaris:Amoxicillin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": []
+ },
+ "Urine|Morganella morganii|mdr": {
+  "allowed": [
+   "Ertapenem",
+   "Fosfomycin",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Norfloxacin"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Piperacillin + Tazobactam"
+  ]
+ },
+ "Urine|Morganella morganii|oxa48_like": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 62,
+  "mdr": null,
+  "mdr_cats": [
+   "Carbapenems",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": []
+ },
+ "Urine|Morganella morganii|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": []
+ },
+ "Urine|Morganella morganii|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Morganella morganii|wild_type": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": []
+ },
+ "Urine|Morganella morganii|xdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Fosfomycin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": []
+ },
  "Urine|Proteus mirabilis|ampc": {
   "allowed": [
    "Amikacin",
@@ -20101,6 +24310,373 @@
   "phenotypes": [
    "CRE"
   ],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": []
+ },
+ "Urine|Providencia spp.|ampc": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Fosfomycin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime"
+  ]
+ },
+ "Urine|Providencia spp.|carbapenemase": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": []
+ },
+ "Urine|Providencia spp.|esbl": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Fosfomycin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Piperacillin + Tazobactam"
+  ]
+ },
+ "Urine|Providencia spp.|intrinsic_violation": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Fosfomycin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_morganella_providencia_proteus_vulgaris:Amoxicillin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": []
+ },
+ "Urine|Providencia spp.|mdr": {
+  "allowed": [
+   "Ertapenem",
+   "Fosfomycin",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Levofloxacin",
+   "Norfloxacin"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Piperacillin + Tazobactam"
+  ]
+ },
+ "Urine|Providencia spp.|oxa48_like": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 62,
+  "mdr": null,
+  "mdr_cats": [
+   "Carbapenems",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": []
+ },
+ "Urine|Providencia spp.|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Fosfomycin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": []
+ },
+ "Urine|Providencia spp.|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": null,
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Providencia spp.|wild_type": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Fosfomycin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_fosfomycin_oral_non_ecoli:Fosfomycin"
+  ],
+  "warned": []
+ },
+ "Urine|Providencia spp.|xdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Fosfomycin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Norfloxacin",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -20768,6 +25344,210 @@
   "phenotypes": [
    "MRSA"
   ],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Streptococcus agalactiae|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Urine|Streptococcus agalactiae|mdr": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Levofloxacin",
+   "Norfloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Streptococcus agalactiae|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Nitrofurans",
+   "Oxazolidinones",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Streptococcus agalactiae|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Streptococcus agalactiae|wild_type": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Streptococcus agalactiae|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Nitrofurans",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [],
   "warned": []
@@ -22910,6 +27690,436 @@
   ],
   "warned": []
  },
+ "Wound Swab|Hafnia alvei|ampc": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Ampicillin/Sulbactam",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Wound Swab|Hafnia alvei|carbapenemase": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Gentamicin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Hafnia alvei|esbl": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Ampicillin/Sulbactam",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
+   "Penicillins+BLI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Wound Swab|Hafnia alvei|intrinsic_violation": {
+  "allowed": [
+   "Amikacin",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_enterobacter_citrobacter_ampc:Amoxicillin|Ampicillin/Sulbactam",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Hafnia alvei|mdr": {
+  "allowed": [
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amikacin",
+   "Ampicillin/Sulbactam",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "ampc",
+  "esbl_conf": 75,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": [
+   "Cefepime"
+  ]
+ },
+ "Wound Swab|Hafnia alvei|oxa48_like": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Gentamicin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 62,
+  "mdr": null,
+  "mdr_cats": [
+   "Carbapenems",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Hafnia alvei|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Penicillins+BLI",
+   "Polymyxins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Hafnia alvei|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Hafnia alvei|urine_agent_offsite": {
+  "allowed": [
+   "Amikacin",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin",
+   "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Hafnia alvei|wild_type": {
+  "allowed": [
+   "Amikacin",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Colistin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": "low",
+  "esbl_conf": 10,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Hafnia alvei|xdr": {
+  "allowed": [
+   "Colistin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Doxycycline",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
+  "mdr": "XDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
  "Wound Swab|Klebsiella spp.|ampc": {
   "allowed": [
    "Amikacin",
@@ -24078,6 +29288,354 @@
   ],
   "warned": []
  },
+ "Wound Swab|Proteus vulgaris|ampc": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC006",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Proteus vulgaris|carbapenemase": {
+  "allowed": [
+   "Amikacin",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Proteus vulgaris|esbl": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Proteus vulgaris|intrinsic_violation": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amoxicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_morganella_providencia_proteus_vulgaris:Amoxicillin",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Proteus vulgaris|mdr": {
+  "allowed": [
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Ertapenem",
+   "Imipenem/Cilastatin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Amikacin",
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC006",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Proteus vulgaris|oxa48_like": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [
+   "Cefotaxime",
+   "Ceftriaxone",
+   "Ertapenem"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Carbapenems",
+   "Extended-Sp Cephalosporins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "QC004",
+   "QC006",
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Proteus vulgaris|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Proteus vulgaris|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Proteus vulgaris|wild_type": {
+  "allowed": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Proteus vulgaris|xdr": {
+  "allowed": [],
+  "banned": [
+   "Amikacin",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Cefotaxime",
+   "Ceftazidime",
+   "Ceftriaxone",
+   "Ciprofloxacin",
+   "Ertapenem",
+   "Gentamicin",
+   "Imipenem/Cilastatin",
+   "Levofloxacin",
+   "Meropenem",
+   "Piperacillin + Tazobactam",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Antipseudomonal Penics",
+   "Carbapenems",
+   "Cephalosporins-3rd-AP",
+   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
+   "Fluoroquinolones",
+   "Folate PI"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
  "Wound Swab|Pseudomonas aeruginosa|ampc": {
   "allowed": [
    "Amikacin",
@@ -24733,6 +30291,226 @@
   "phenotypes": [
    "MRSA"
   ],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes|mdr": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes|wild_type": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins+BLI",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [],
   "warned": []

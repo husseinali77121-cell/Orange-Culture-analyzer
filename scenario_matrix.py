@@ -271,11 +271,42 @@ ARCHETYPES: List[Tuple[str, object]] = [
 ]
 
 
+# ── Organisms the UI map does not reach ──────────────────────────────────────
+#  SPECIMEN_ORGANISM_MAP lists only the 19 organisms the picker offers, but
+#  clinical_data.INTRINSIC_RESISTANCE carries 34 keys. Serratia, Enterobacter,
+#  Citrobacter, Morganella, Providencia, P. vulgaris, Listeria, S. pyogenes,
+#  S. agalactiae and E. faecium therefore had rules that NO scenario exercised —
+#  a Serratia tetracycline correction could be made and the snapshot would not
+#  move. Every table key that the map cannot reach is run here against the
+#  specimen it is most often isolated from, so no rule is left untested.
+UNMAPPED_ORGANISMS: List[Tuple[str, str]] = [
+    ("Escherichia coli",              "Urine"),
+    ("Klebsiella pneumoniae",         "Sputum"),
+    ("Klebsiella oxytoca",            "Urine"),
+    ("Proteus vulgaris",              "Wound Swab"),
+    ("Morganella morganii",           "Urine"),
+    ("Providencia spp.",              "Urine"),
+    ("Serratia marcescens",           "Blood"),
+    ("Enterobacter cloacae",          "Blood"),
+    ("Enterobacter aerogenes",        "Sputum"),
+    ("Hafnia alvei",                  "Wound Swab"),
+    ("Citrobacter freundii",          "Urine"),
+    ("Citrobacter koseri",            "Urine"),
+    ("Enterococcus faecium",          "Blood"),
+    ("Streptococcus pyogenes",        "Wound Swab"),
+    ("Streptococcus agalactiae",      "Urine"),
+    ("Listeria monocytogenes",        "CSF"),
+]
+
+
 def build_matrix() -> List[Dict]:
     """Every (specimen, organism, archetype) case, in a stable order."""
     cases: List[Dict] = []
-    for specimen in sorted(SPECIMEN_ORGANISM_MAP):
-        for organism in SPECIMEN_ORGANISM_MAP[specimen]:
+    pairs = [(sp, og) for sp in sorted(SPECIMEN_ORGANISM_MAP)
+             for og in SPECIMEN_ORGANISM_MAP[sp]]
+    pairs += [(sp, og) for og, sp in UNMAPPED_ORGANISMS]
+    for specimen, organism in pairs:
+        if True:
             panel = base_panel(organism, specimen)
             if not panel:
                 continue

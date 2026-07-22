@@ -87,7 +87,7 @@ ORGANISM_PROFILE = {
         },
         "note": (
             "🔴 MDR — Ampicillin/Sulbactam أو Cefoperazone/Sulbactam "
-            "بجرعات عالية هو الأساس (IDSA AMR 2025)."
+            "بجرعات عالية هو الأساس (IDSA AMR Guidance v4.0 (2024))."
         ),
     },
     "Staphylococcus aureus": {

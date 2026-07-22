@@ -96,6 +96,34 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
         "reference": "EUCAST Intrinsic Resistance v3.3, Table 2 · CLSI M100 App. B",
     },
     {
+        # Found by the expanded scenario matrix (INV-9): clinical_data lists
+        # ampicillin/amoxicillin/ticarcillin as intrinsic for C. koseri, but the
+        # only Citrobacter rule here was the AmpC one, which matches
+        # "citrobacter freundii" — so C. koseri had no rule at all.
+        #
+        # The two species are NOT the same problem. C. koseri (and K. oxytoca)
+        # carry a chromosomal CLASS A beta-lactamase, so aminopenicillins fail
+        # but the inhibitor combinations still work. C. freundii carries an
+        # inducible AmpC, which clavulanate and sulbactam do not inhibit. Giving
+        # C. koseri its own rule keeps amoxicillin-clavulanate reportable for it,
+        # which the AmpC rule would have wrongly suppressed.
+        "id": "intr_citrobacter_koseri_klebsiella_oxytoca_classA",
+        "organisms": ["citrobacter koseri", "citrobacter diversus",
+                      "klebsiella oxytoca"],
+        "drugs": ["ampicillin", "amoxicillin", "ticarcillin", "carbenicillin"],
+        "exclude": ["clav", "sulbactam", "tazobactam", "avibactam"],
+        "reason_ar": ("C. koseri و K. oxytoca يحملان بيتا-لاكتاماز كروموسومي من "
+                      "الفئة A — مقاومة جوهرية للأمينوبنسلينات. توليفات المثبِّط "
+                      "(Amox-clav · Pip-Tazo) تظل فعّالة لأن المثبِّط يعمل على "
+                      "الفئة A، بعكس AmpC في C. freundii."),
+        "reason_en": ("C. koseri and K. oxytoca carry a chromosomal CLASS A "
+                      "beta-lactamase — intrinsic aminopenicillin resistance. "
+                      "Inhibitor combinations (amox-clav, pip-tazo) remain active "
+                      "because the inhibitor works on class A, unlike the AmpC of "
+                      "C. freundii."),
+        "reference": "EUCAST Intrinsic Resistance v3.3, Table 2",
+    },
+    {
         "id": "intr_klebsiella_ampicillin",
         "organisms": ["klebsiella"],
         "drugs": ["ampicillin", "amoxicillin", "ticarcillin", "carbenicillin"],
@@ -118,7 +146,8 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
         "exclude": [],
         "reason_ar": "Proteus mirabilis مقاوم جوهرياً للتتراسيكلينات · colistin · nitrofurantoin.",
         "reason_en": ("Proteus mirabilis is intrinsically resistant to tetracyclines, "
-                      "colistin and nitrofurantoin."),
+                      "colistin, nitrofurantoin, tetracycline and doxycycline "
+                      "(minocycline and tigecycline remain active)."),
         "reference": "EUCAST Intrinsic Resistance v3.3, Table 2",
     },
     {
@@ -150,8 +179,12 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
         "drugs": ["ampicillin", "amoxicillin", "cephalexin", "cefadroxil",
                   "cephradine", "cefaclor", "cefazolin", "cephalothin",
                   "cefuroxime", "cefoxitin", "colistin", "polymyxin",
-                  "nitrofurantoin"],
-        "exclude": ["tazobactam", "avibactam"],
+                  "nitrofurantoin",
+                  # EUCAST v3.3 Table 2 fn.5 -- tetracycline and doxycycline ARE
+                  # intrinsic for S. marcescens; minocycline and tigecycline are
+                  # NOT, and are excluded below so they stay reportable.
+                  "tetracycline", "doxycycline"],
+        "exclude": ["tazobactam", "avibactam", "minocycline", "tigecycline"],
         "reason_ar": ("Serratia marcescens: AmpC كروموسومي — مقاومة جوهرية "
                       "للأمينوبنسلينات وسيفالوسبورين ١/٢ والسيفاميسين، "
                       "و colistin و nitrofurantoin."),
@@ -219,6 +252,30 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
                       "sulbactam itself has intrinsic activity against "
                       "Acinetobacter.)"),
         "reference": "EUCAST Intrinsic Resistance v3.3, Table 3",
+    },
+    {
+        "id": "intr_nonfermenter_narrow_spectrum",
+        "organisms": ["pseudomonas", "acinetobacter", "stenotrophomonas",
+                      "burkholderia"],
+        "drugs": ["benzylpenicillin", "cephalexin", "cefadroxil", "cephradine",
+                  "cephalothin", "cefazolin", "cefaclor", "cefuroxime",
+                  "cefoxitin", "vancomycin", "teicoplanin", "dalbavancin",
+                  "fusidic", "erythromycin", "clarithromycin", "azithromycin",
+                  "clindamycin", "rifampicin", "rifampin", "linezolid"],
+        "exclude": [],
+        "reason_ar": ("اللا-مُخمِّرات (Pseudomonas · Acinetobacter · "
+                      "Stenotrophomonas · Burkholderia) مقاومة جوهرياً للبنسلين G "
+                      "وسيفالوسبورينات الجيل الأول والثاني والجلايكوببتيدات "
+                      "والماكروليدات واللينكوزاميدات والريفامبيسين "
+                      "والأوكسازوليدينونات. نتيجة S هنا خطأ معملي."),
+        "reason_en": ("Non-fermentative Gram-negatives (Pseudomonas, "
+                      "Acinetobacter, Stenotrophomonas, Burkholderia) are "
+                      "intrinsically resistant to benzylpenicillin, 1st- and "
+                      "2nd-generation cephalosporins, glycopeptides, "
+                      "lipoglycopeptides, fusidic acid, macrolides, lincosamides, "
+                      "rifampicin and oxazolidinones. A Susceptible result here is "
+                      "a laboratory error."),
+        "reference": "EUCAST Intrinsic Resistance v3.3, Table 3 (header)",
     },
     {
         "id": "intr_stenotrophomonas",
@@ -350,9 +407,11 @@ NO_BREAKPOINT_RULES: List[Dict[str, Any]] = [
         "id": "nobp_nonfermenter_narrow_spectrum",
         "organisms": ["acinetobacter", "stenotrophomonas", "burkholderia"],
         "not_organisms": [],
-        "drugs": ["cephalexin", "cefadroxil", "cephradine", "cephalothin",
-                  "cefazolin", "cefaclor", "cefuroxime", "cefoxitin",
-                  "cefixime", "cefpodoxime", "nitrofurantoin", "norfloxacin"],
+        # The narrow-spectrum cephalosporins moved OUT of this rule and into
+        # intr_nonfermenter_narrow_spectrum: EUCAST v3.3 Table 3 states outright
+        # that non-fermenters are intrinsically resistant to 1st/2nd-generation
+        # cephalosporins -- a stronger claim than "no breakpoints published".
+        "drugs": ["cefixime", "cefpodoxime", "nitrofurantoin", "norfloxacin"],
         "exclude": [],
         "reason_ar": ("لا توجد breakpoints في EUCAST ولا CLSI لهذه المضادات ضد "
                       "اللا-مُخمِّرات (Acinetobacter · Stenotrophomonas · "

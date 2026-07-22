@@ -34,7 +34,7 @@ ABX_GUIDELINES = {
     },
     "Ampicillin/Sulbactam": {
         "priority": 2, "class": "Penicillin + Beta-lactamase Inhibitor (IV)",
-        "note": "💉 IV فقط. فعال للموجبات والسالبات. أساس علاج Acinetobacter بجرعات عالية (IDSA AMR 2025).",
+        "note": "💉 IV فقط. فعال للموجبات والسالبات. أساس علاج Acinetobacter بجرعات عالية (IDSA AMR Guidance v4.0 (2024)).",
         "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
@@ -57,7 +57,7 @@ ABX_GUIDELINES = {
     },
     "Piperacillin + Tazobactam": {
         "priority": 4, "class": "Anti-pseudomonal Penicillin + Inhibitor (IV)",
-        "note": "🛑 (مثل Tazocin) IV فقط. واسع الطيف جداً — يُحفظ للحالات الشديدة (IDSA AMR 2025).",
+        "note": "🛑 (مثل Tazocin) IV فقط. واسع الطيف جداً — يُحفظ للحالات الشديدة (IDSA AMR Guidance v4.0 (2024)).",
         "renal_limit": 20, "renal_note": "CrCl 20-40: 3.375g q6h. CrCl <20: 2.25g q6h. HD: 2.25g q8h + dose بعد dialysis. BNF 2025.",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
@@ -1154,7 +1154,7 @@ _EXTRA_ENTRIES_3 = {
         "note": (
             "💊 (مثل Dalacin C) Oral وIV. Bioavailability فموي ~87%. "
             "🔴 D-TEST CRITICAL: إذا Erythromycin=R + Clindamycin=S → "
-            "يجب D-test لاستبعاد MLSB inducible resistance (CLSI M100 2026). "
+            "يجب D-test لاستبعاد MLSB inducible resistance (CLSI M100 Ed36). "
             "لا تُستخدم Clindamycin إلا بعد تأكيد D-test سالب. "
             "✅ تغطية ممتازة لـ MSSA وStrep والأنيروبيك."
         ),

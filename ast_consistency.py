@@ -146,7 +146,7 @@ EQUIVALENCE_RULES: List[Dict[str, Any]] = [
                    "وقراءة الـ zone قبل الإبلاغ."),
         "fix_en": ("Repeat both combinations from the same inoculum; verify disk "
                    "potency and zone reading before reporting."),
-        "reference": "EUCAST Expert Rules v3.3 · Breakpoint Tables v16.0 — Enterobacterales",
+        "reference": "EUCAST Expert Rules v3.1 (2016) · Breakpoint Tables v16.0 — Enterobacterales",
     },
 ]
 
@@ -167,7 +167,7 @@ HIERARCHY_RULES: List[Dict[str, Any]] = [
                       "inhibitor cannot reduce activity."),
         "fix_ar": "أعِد اختبار القرصين. غالباً خطأ قراءة أو قرص تالف.",
         "fix_en": "Repeat both disks. Usually a reading error or a degraded disk.",
-        "reference": "EUCAST Expert Rules v3.3 — beta-lactam hierarchy",
+        "reference": "EUCAST Expert Rules v3.1 (2016) — beta-lactam hierarchy",
     },
     {
         "id": "hier_pip_vs_tzp",
@@ -181,7 +181,7 @@ HIERARCHY_RULES: List[Dict[str, Any]] = [
                       "activity."),
         "fix_ar": "أعِد اختبار القرصين.",
         "fix_en": "Repeat both disks.",
-        "reference": "EUCAST Expert Rules v3.3 — beta-lactam hierarchy",
+        "reference": "EUCAST Expert Rules v3.1 (2016) — beta-lactam hierarchy",
     },
     {
         "id": "hier_mem_vs_etp",
@@ -320,7 +320,7 @@ def format_issue(issue: Dict[str, Any], lang: str = "ar") -> Dict[str, str]:
 # cause becomes a second, invisible source of truth.
 QC_RULE_OVERRIDES: Dict[str, Dict[str, str]] = {
     # QC006 told the user to "avoid ALL cephalosporins even if S in the AST" and
-    # attributed that to EUCAST 2026. EUCAST says the opposite in the v16.0
+    # attributed that to EUCAST Breakpoint Tables v16.0. EUCAST says the opposite in the v16.0
     # tables: the Enterobacterales cephalosporin breakpoints detect the
     # clinically important mechanisms, isolates that produce a beta-lactamase but
     # test susceptible are REPORTED AS TESTED, and the presence or absence of an
