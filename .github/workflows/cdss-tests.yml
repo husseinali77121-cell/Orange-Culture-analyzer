@@ -6,8 +6,9 @@
 #
 # WHAT IT DOES:
 #   On every push, GitHub spins up a clean machine, checks out your repo, and
-#   runs BOTH test suites. Green check = safe. Red X = a regression was caught
-#   BEFORE it reached Streamlit Cloud. You do nothing but commit from your phone.
+#   runs ALL THREE test suites. Green check = safe. Red X = a regression was
+#   caught BEFORE it reached Streamlit Cloud. You do nothing but commit from
+#   your phone.
 #
 # IF YOUR .py FILES ARE IN A SUBFOLDER (not the repo root), set `working-directory`
 # on each "run" step to that folder, e.g.  working-directory: ./app
@@ -23,11 +24,15 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      # checkout@v5 / setup-python@v6 run on Node.js 24. The older v4 / v5 pair
+      # targets Node.js 20, which GitHub deprecated in Sept 2025 and now force-
+      # runs on Node 24 with a warning annotation on every single run. Bumping
+      # removes the warning and stops the day the forced shim is withdrawn.
       - name: Check out the code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -35,10 +40,33 @@ jobs:
       # own modules. (If you later add a real dependency, add a step:
       #   - run: pip install -r requirements.txt )
 
+      # A missing clinical_data.py is the exact failure that shipped: the import
+      # in ast_qa_engine.py fell through to an empty table and the intrinsic
+      # check died silently. Fail loudly and early instead of three suites later.
+      - name: "Guard 0 — the canonical table is actually present"
+        run: |
+          test -f clinical_data.py || {
+            echo "::error::clinical_data.py is missing. streamlit_app.py and \
+          ast_qa_engine.py both import INTRINSIC_RESISTANCE from it; without it \
+          the Avoid list and the QA engine both degrade silently."
+            exit 1
+          }
+          python -c "from clinical_data import INTRINSIC_RESISTANCE as I; \
+          assert len(I) >= 30, f'table has only {len(I)} organism keys'; \
+          print(f'clinical_data.py OK — {len(I)} organism keys')"
+
       - name: "Guard 1 — drift & invariants (fast, < 1s)"
         run: python test_intrinsic_invariant.py
 
-      - name: "Guard 2 — comprehensive behaviour across all cultures"
+      - name: "Guard 2 — table sync + OCR drug scanner"
+        run: python test_intrinsic_sync.py
+
+      - name: "Guard 3 — comprehensive behaviour across all cultures"
         run: python test_comprehensive.py
         env:
           N_FUZZ: "20000"   # heavier fuzzing in CI; bump anytime
+
+      # Byte-compile everything so a syntax error in a file no suite imports
+      # (modules/, ui/, data/) still turns the run red.
+      - name: "Guard 4 — every .py file compiles"
+        run: python -m compileall -q . && echo "all modules compile"
