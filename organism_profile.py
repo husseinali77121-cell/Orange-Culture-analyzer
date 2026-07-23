@@ -278,7 +278,7 @@ ORGANISM_PROFILE = {
     },
     "Stenotrophomonas maltophilia": {
         "first_line": ["Trimethoprim/Sulfamethoxazole"],
-        "second_line": ["Levofloxacin","Doxycycline"],
+        "second_line": ["Minocycline", "Levofloxacin","Doxycycline"],
         "third_line":  [],
         "avoid": ["Carbapenems","Ertapenem","Meropenem","Imipenem/Cilastatin",
                   "Aminoglycosides","Ceftriaxone","Cefepime"],

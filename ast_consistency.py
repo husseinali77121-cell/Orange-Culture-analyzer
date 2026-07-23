@@ -137,7 +137,9 @@ EQUIVALENCE_RULES: List[Dict[str, Any]] = [
                       "الأمينوبنسلين مع مثبّط بيتا-لاكتاماز من نفس الفئة (A)، "
                       "ويتصرّفان بشكل شبه متطابق ضد الـ Enterobacterales. أن يكون "
                       "أحدهما S والآخر R على نفس العزلة خطأ معملي لا نمط مقاومة."),
-        "reason_en": ("Amoxicillin-clavulanate and ampicillin-sulbactam are the same "
+        "reason_en": (
+            "VERIFY (not a hard error): sulbactam and clavulanate differ in potency and carry different breakpoints and dosing, so a split result is unusual rather than impossible. "
+            "Amoxicillin-clavulanate and ampicillin-sulbactam are the same "
                       "aminopenicillin plus an equivalent class-A beta-lactamase "
                       "inhibitor; against Enterobacterales they behave "
                       "near-identically. One S and one R on the same isolate is a "

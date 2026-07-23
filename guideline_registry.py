@@ -70,8 +70,9 @@ SOURCES: Dict[str, Dict[str, str]] = {
     },
     "EUCAST_BP": {
         "title": "EUCAST Clinical Breakpoint Tables",
-        "version": "v16.0",
-        "dated": "2026-01-01",
+        "version": "v16.1",
+        "dated": "2026",   # v16.0 valid from 2026-01-01; v16.1 adds anaerobe species
+        "note": "Re-validate agent tables against v16.1 before the next release.",
         "url": "https://www.eucast.org/clinical_breakpoints",
     },
     "EUCAST_DETECT": {
@@ -198,19 +199,30 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "amoxicillin, AMOXICILLIN-CLAVULANATE, aztreonam, ertapenem, "
                      "trimethoprim, chloramphenicol and fosfomycin. "
                      "Ampicillin-SULBACTAM is the exception — sulbactam has intrinsic "
-                     "anti-Acinetobacter activity of its own.",
+                     "anti-Acinetobacter activity of its own. ALSO (Table 2 fn.2): "
+                     "intrinsically resistant to TETRACYCLINE and DOXYCYCLINE but "
+                     "NOT to minocycline and tigecycline.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 3",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
         "countersigned_by": "",
-        "note": "This row exists because the code previously EXCLUDED 'clav' from "
-                "the rule, exempting amox-clav from a restriction EUCAST applies "
-                "to it. Clavulanate has no useful activity against Acinetobacter; "
-                "sulbactam does. See test_intrinsic_sync.py section [2].",
+        "note": "Two separate defects fixed here. (1) The code EXCLUDED 'clav', "
+                "exempting amox-clav from a restriction EUCAST applies to it -- "
+                "clavulanate has no useful activity against Acinetobacter, "
+                "sulbactam does. (2) Doxycycline was ABSENT from the table and was "
+                "being offered as an active option, contradicting fn.2 verbatim: "
+                "'Acinetobacter is intrinsically resistant to tetracycline and "
+                "doxycycline but not to minocycline and tigecycline.' Minocycline "
+                "was not in the formulary at all and has been added, since it is "
+                "the tetracycline that actually works here.",
     },
     "intr_stenotrophomonas": {
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
         "assertion": "S. maltophilia: L1 metallo-beta-lactamase -> all carbapenems, "
                      "plus intrinsic aminoglycoside and most beta-lactam resistance. "
-                     "TMP-SMX is the established agent.",
+                     "TMP-SMX is the established agent. Table 2 fn.7 is NARROWER "
+                     "than fn.2/fn.5: intrinsically resistant to TETRACYCLINE only "
+                     "-- doxycycline, minocycline and tigecycline stay active.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 3",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
         "countersigned_by": "",
@@ -230,7 +242,9 @@ RULES: Dict[str, Dict[str, Any]] = {
         "assertion": "Enterococci are intrinsically resistant to ALL cephalosporins, "
                      "clindamycin, fusidic acid and aztreonam.",
         "source": "EUCAST_EXPERT", "locus": "Table 4",
-        "verified": "pending",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": "CLSI M100 Enterococcus WARNING verbatim: 'For Enterococcus spp., aminoglycosides (except for high-level resistance testing), cephalosporins, clindamycin, and trimethoprim-sulfamethoxazole may appear active in vitro, but are not effective clinically and should not be reported as susceptible.' EUCAST v3.3 Table 4 rows 4.7-4.9 carry R in the cephalosporin and clindamycin columns; aztreonam comes from the Table 4 header for all Gram-positives.",
     },
     "intr_strep_enterococcus_aminoglycosides": {
         "assertion": "Enterococci and streptococci have intrinsic LOW-LEVEL "
@@ -254,14 +268,18 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "clinically responsive — they take up exogenous folate and "
                      "bypass the blocked pathway. Do not report.",
         "source": "EUCAST_EXPERT", "locus": "Table 4 / CLSI M100 Appendix B",
-        "verified": "pending",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": "Same CLSI Enterococcus WARNING names trimethoprim-sulfamethoxazole explicitly and says do not report as susceptible. Confirms both the phenomenon and the 'do not report' instruction.",
     },
     "intr_listeria_cephalosporins": {
         "assertion": "L. monocytogenes is intrinsically resistant to all "
                      "cephalosporins — a known cause of meningitis treatment failure. "
                      "Ampicillin is the agent.",
         "source": "EUCAST_EXPERT", "locus": "Table 4",
-        "verified": "pending",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": "CAVEAT: the clinical fact is not in doubt -- cephalosporins fail against Listeria and this drives the 'add ampicillin' rule in empiric meningitis therapy. However EUCAST v3.3 Table 4 row 4.11 shows only two R marks for L. monocytogenes and the column alignment could NOT be resolved from the flattened PDF text, so the exact cell mapping is unconfirmed. Verify against the PDF before countersigning.",
     },
 
     "intr_nonfermenter_narrow_spectrum": {
@@ -299,7 +317,9 @@ RULES: Dict[str, Dict[str, Any]] = {
         "assertion": "Azithromycin breakpoints exist only for Salmonella Typhi/Paratyphi "
                      "and Shigella. Non-typhoidal Salmonella has none.",
         "source": "EUCAST_BP", "locus": "Enterobacterales — azithromycin note",
-        "verified": "pending",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": "CLSI M100 azithromycin footnote p verbatim: 'For reporting against Salmonella enterica ser. Typhi and Shigella spp. only.' Confirms non-typhoidal Salmonella has no azithromycin reporting criterion.",
     },
     "nobp_cefoperazone": {
         "assertion": "Cefoperazone alone or with sulbactam has no EUCAST breakpoints; "
@@ -320,14 +340,27 @@ RULES: Dict[str, Dict[str, Any]] = {
         "assertion": "Oral fosfomycin breakpoints are restricted to E. coli in both "
                      "EUCAST and CLSI.",
         "source": "EUCAST_BP", "locus": "Enterobacterales",
-        "verified": "pending",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": "EUCAST guidance on fosfomycin i.v. breakpoints (May 2024) verbatim: 'The currently revised breakpoint of fosfomycin applies only to E. coli in infections originating from the urinary tract.' Breakpoint tables add: 'Zone diameter breakpoints apply to E. coli only.'",
+    },
+    "nobp_imipenem_proteae": {
+        "assertion": "Imipenem has intrinsically LOW activity against Proteus spp., "
+                     "Morganella morganii and Providencia spp.; do not rely on a "
+                     "Susceptible imipenem result -- meropenem is preferred.",
+        "source": "EUCAST_BP", "locus": "Enterobacterales note 2",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": "NEW RULE added this round; the engine had no equivalent.",
     },
     "nobp_tigecycline_proteae": {
         "assertion": "Tigecycline has no breakpoint for the Proteae "
                      "(Proteus / Providencia / Morganella), which are intrinsically "
                      "less susceptible via efflux.",
         "source": "EUCAST_BP", "locus": "Enterobacterales — tigecycline note",
-        "verified": "pending",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": 'EUCAST v16.0 Enterobacterales note 3/A verbatim: activity is INSUFFICIENT in Serratia spp., Proteus spp., Morganella morganii and Providencia spp. SERRATIA was missing from the rule and has been added. Breakpoint is validated for E. coli and C. koseri only.',
     },
 
     # ── Ineffective in vivo ──────────────────────────────────────────────────
@@ -336,7 +369,9 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "susceptible against Salmonella/Shigella but are clinically "
                      "ineffective for invasive infection — do not report S.",
         "source": "CLSI_M100", "locus": "Table 2A organism-specific notes",
-        "verified": "pending",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": "CLSI M100 WARNING verbatim: 'For Salmonella and Shigella spp., aminoglycosides, first- and second-generation cephalosporins, and cephamycins may appear active in vitro but are not effective clinically and should not be reported as susceptible.' Carried into Ed36 (2026).",
     },
 
     # ── Internal consistency (ast_consistency) ───────────────────────────────
@@ -345,39 +380,51 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "Enterobacterales and are hydrolysed near-identically by common "
                      "ESBLs; one S and one R on the same isolate is a laboratory error.",
         "source": "EUCAST_BP", "locus": "Enterobacterales; CLSI M100 Table 2A",
-        "verified": "pending",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": 'Cefotaxime and ceftriaxone share Enterobacterales breakpoints in both EUCAST and CLSI. Treated as a VERIFY flag rather than a hard error, since rare enzyme-specific discordance exists.',
     },
     "equiv_amc_sam": {
         "assertion": "Amoxicillin-clavulanate and ampicillin-sulbactam behave "
                      "near-identically against Enterobacterales; a split result is a "
                      "laboratory error, not a resistance pattern.",
         "source": "EUCAST_EXPERT", "locus": "beta-lactam interpretive rules",
-        "verified": "pending",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": 'DOWNGRADED to a verify-flag this round. Sulbactam and clavulanate differ in potency and carry different breakpoints and dosing, so a split result is unusual rather than impossible.',
     },
     "hier_amp_vs_amc": {
         "assertion": "Ampicillin S with amoxicillin-clavulanate R is impossible — "
                      "adding a beta-lactamase inhibitor cannot reduce activity.",
         "source": "EUCAST_EXPERT", "locus": "beta-lactam hierarchy",
-        "verified": "pending",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": 'Adding a beta-lactamase inhibitor cannot reduce activity, so the pattern indicates a testing error. Kept as a verify-flag.',
     },
     "hier_pip_vs_tzp": {
         "assertion": "Piperacillin S with piperacillin-tazobactam R is impossible, "
                      "for the same reason.",
         "source": "EUCAST_EXPERT", "locus": "beta-lactam hierarchy",
-        "verified": "pending",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": 'Same logic as hier_amp_vs_amc. Rare tazobactam inoculum effects are described, so verify rather than declare impossible.',
     },
     "hier_mem_vs_etp": {
         "assertion": "Meropenem R with ertapenem S is the wrong way round; ertapenem "
                      "is the most labile carbapenem, so the usual pattern is the "
                      "reverse (ertapenem-R with meropenem-S = OXA-48 or porin loss).",
         "source": "EUCAST_EXPERT", "locus": "carbapenem interpretive rules",
-        "verified": "pending",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": 'Ertapenem is the most labile carbapenem; the ertapenem-R/meropenem-S direction is the recognised OXA-48 or porin-loss signature. The reverse warrants a repeat.',
     },
     "hier_tet_vs_doxy": {
         "assertion": "Tetracycline S predicts doxycycline/minocycline S; the reverse "
                      "combination is a reading error.",
         "source": "EUCAST_EXPERT", "locus": "tetracycline interpretive rules",
-        "verified": "pending",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": "CLSI M100 footnote q VERBATIM: 'Organisms that are susceptible to tetracycline are also considered susceptible to doxycycline and minocycline. However, some organisms that are intermediate or resistant to tetracycline may be susceptible to doxycycline, minocycline, or both.' The code already flags ONLY the safe direction (tet-S + doxy-R) and states the reverse is allowed, so it matches the footnote exactly and does NOT suppress an active minocycline.",
     },
 
     # ── Inline rules in streamlit_app.py ─────────────────────────────────────
@@ -418,14 +465,18 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "the GI tract); a result on a systemic isolate is not clinically "
                      "actionable.",
         "source": "EUCAST_BP", "locus": "agent site-of-infection notes",
-        "verified": "pending",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": "EUCAST breakpoint tables label these agents '(uncomplicated UTI only)' in the Enterobacterales table headers (nitrofurantoin, trimethoprim, oral fosfomycin), which carries the site restriction. The pharmacology claim itself is textbook but was not read from a primary PK document.",
     },
     "REP-GPO-GN": {
         "assertion": "Glycopeptides, oxazolidinones and daptomycin have no activity "
                      "and no breakpoint against Gram-negative bacteria and must never "
                      "be tested or reported for them.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 2/3",
-        "verified": "pending",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": "EUCAST Table 1 header verbatim: 'Enterobacterales are also intrinsically resistant to benzylpenicillin, glycopeptides, fusidic acid, macrolides, lincosamides, streptogramins, rifampicin, daptomycin and linezolid.' Table 3 header carries the same for non-fermenters.",
     },
 }
 

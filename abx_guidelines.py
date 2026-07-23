@@ -626,6 +626,34 @@ ABX_GUIDELINES = {
             "Blood":      "✅ Rickettsia bacteremia.",
         },
     },
+    "Minocycline": {
+        "priority": 2, "class": "Tetracycline (Oral/IV)",
+        "note": (
+            "✅ التتراسيكلين الوحيد الفعّال ضد Acinetobacter و Serratia — "
+            "EUCAST تنص صراحةً أن مقاومتهما الجوهرية للتتراسيكلين والدوكسيسيكلين "
+            "لا تمتد للمينوسيكلين. خيار معتمد في IDSA v4.0 لـ "
+            "Stenotrophomonas و CRAB (يُفضّل مع دواء ثانٍ في العدوى الشديدة)."
+        ),
+        "renal_limit": 0, "renal_note": "🟢 آمن كلوياً نسبياً (إخراج كبدي أساساً).",
+        "hepatic_caution": True, "aware": "Watch", "high_po": True,
+        "preg_status": "Banned",
+        "preg_note": (
+            "⛔ ممنوع في الحمل — Minocycline (Tetracycline class):\n"
+            "  يترسّب في عظام وأسنان الجنين → تصبغ دائم وتثبيط نمو العظام.\n"
+            "  محظور خاصة بعد الأسبوع 15 (2nd و3rd trimester).\n"
+            "  البديل: Amoxicillin-Clavulanate أو Cephalosporin أو Azithromycin."
+        ),
+        "child_safe": False,
+        "child_note": "ممنوع <8 سنوات (teeth/bone). >8 سنوات عند الضرورة فقط.",
+        "interacts_with": ["Antacids (مضادات الحموضة)"],
+        "aliases": ["minocin", "mino", "minocyclin"],
+        "organisms": ["Acinetobacter baumannii", "Stenotrophomonas maltophilia",
+                      "Serratia marcescens", "Staphylococcus aureus"],
+        "specimen_notes": {
+            "Sputum":     "✅ خيار في CRAB و S. maltophilia (مع دواء ثانٍ).",
+            "Wound Swab": "✅ MRSA SSTI و Acinetobacter.",
+        },
+    },
     # ── Carbapenems ────────────────────────────────────────────────────
     "Imipenem/Cilastatin": {
         "priority": 5, "class": "Carbapenem (IV)",

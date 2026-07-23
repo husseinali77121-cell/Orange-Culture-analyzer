@@ -99,7 +99,36 @@ check("amp-sulbactam is NOT intrinsic in clinical_data", "Ampicillin/Sulbactam" 
 check("amp-sulbactam is NOT intrinsic in ast_reportability", "Ampicillin/Sulbactam" not in acine_rp)
 check("cefoperazone-sulbactam is NOT intrinsic (active option)",
       "Cefoperazone + Sulbactam" not in acine and "Cefoperazone + Sulbactam" not in acine_rp)
-check("doxycycline is NOT intrinsic (can be active)", "Doxycycline" not in acine)
+# EUCAST v3.3 Table 2 fn.2: "Acinetobacter is intrinsically resistant to
+# tetracycline and doxycycline but not to minocycline and tigecycline."
+# An earlier version of this file asserted the OPPOSITE for doxycycline, which
+# would have locked in an engine that offered an intrinsically inactive agent.
+check("tetracycline IS intrinsic for Acinetobacter", "Tetracycline" in acine)
+check("doxycycline IS intrinsic for Acinetobacter", "Doxycycline" in acine)
+check("minocycline is NOT intrinsic for Acinetobacter (it is the active one)",
+      "Minocycline" not in acine)
+check("tetracycline IS intrinsic in ast_reportability too",
+      "Tetracycline" in acine_rp)
+check("doxycycline IS intrinsic in ast_reportability too",
+      "Doxycycline" in acine_rp)
+check("minocycline stays reportable in ast_reportability",
+      "Minocycline" not in acine_rp)
+
+# EUCAST v3.3 Table 2 fn.7 is NARROWER for S. maltophilia: tetracycline only.
+_steno = canon_for("Stenotrophomonas maltophilia")
+_steno_rp = rp_for("Stenotrophomonas maltophilia")
+check("tetracycline IS intrinsic for S. maltophilia", "Tetracycline" in _steno)
+check("doxycycline is NOT intrinsic for S. maltophilia (active agent)",
+      "Doxycycline" not in _steno)
+check("doxycycline stays reportable for S. maltophilia in ast_reportability",
+      "Doxycycline" not in _steno_rp)
+
+# Serratia: same footnote shape as Acinetobacter (fn.5).
+_serr = canon_for("Serratia marcescens")
+check("tetracycline+doxycycline intrinsic for Serratia",
+      {"Tetracycline", "Doxycycline"} <= _serr)
+check("minocycline/tigecycline NOT intrinsic for Serratia",
+      not ({"Minocycline", "Tigecycline"} & _serr))
 
 print("\n[3] no intrinsic rule ever contradicts the other table")
 for org in ORGANISMS:

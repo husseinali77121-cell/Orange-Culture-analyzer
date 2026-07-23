@@ -230,8 +230,14 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
     {
         "id": "intr_acinetobacter",
         "organisms": ["acinetobacter"],
+        # EUCAST v3.3 Table 2 fn.2 -- "Acinetobacter is intrinsically resistant to
+        # tetracycline and doxycycline but not to minocycline and tigecycline."
+        # Minocycline/tigecycline are excluded below so they stay reportable; they
+        # are the tetracyclines that actually work here and IDSA v4.0 lists
+        # minocycline among CRAB options.
         "drugs": ["ampicillin", "amoxicillin", "aztreonam", "ertapenem",
-                  "trimethoprim", "fosfomycin", "chloramphenicol"],
+                  "trimethoprim", "fosfomycin", "chloramphenicol",
+                  "tetracycline", "doxycycline"],
         # BUG FIXED: "clav" used to sit in this exclude list, which exempted
         # amoxicillin-clavulanate from the rule. That is backwards. Clavulanate
         # has NO useful activity against Acinetobacter, so amox-clav IS
@@ -241,7 +247,8 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
         # module contradict clinical_data.INTRINSIC_RESISTANCE, which correctly
         # bans amox-clav: the recommendation panel refused the drug while the QC
         # panel stayed silent about a Susceptible result for it.
-        "exclude": ["sulbactam", "sulfamethoxazole", "sulphamethoxazol"],
+        "exclude": ["sulbactam", "sulfamethoxazole", "sulphamethoxazol",
+                    "minocycline", "tigecycline"],
         "reason_ar": ("Acinetobacter مقاوم جوهرياً — بما في ذلك "
                       "Amoxicillin/Clavulanate (الـ clavulanate بلا فاعلية هنا). "
                       "(ملاحظة: Ampicillin/Sulbactam استثناء — الـ sulbactam نفسه "
@@ -282,8 +289,13 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
         "organisms": ["stenotrophomonas"],
         "drugs": ["imipenem", "meropenem", "ertapenem", "gentamicin", "amikacin",
                   "tobramycin", "ampicillin", "amoxicillin", "cefotaxime",
-                  "ceftriaxone", "aztreonam", "piperacillin"],
-        "exclude": [],
+                  "ceftriaxone", "aztreonam", "piperacillin",
+                  # EUCAST v3.3 Table 2 fn.7 -- S. maltophilia is
+                  # intrinsically resistant to TETRACYCLINE ONLY. Unlike
+                  # Acinetobacter and Serratia, doxycycline IS active here
+                  # and must stay reportable, so it is excluded below.
+                  "tetracycline"],
+        "exclude": ["doxycycline", "minocycline", "tigecycline"],
         "reason_ar": ("S. maltophilia مقاوم جوهرياً لمعظم البيتا-لاكتام "
                       "(بما فيها الكاربابينيمات — L1 metallo-β-lactamase) "
                       "والأمينوجلايكوسيدات. الخيار المعتمد: Trimethoprim/Sulfamethoxazole."),
@@ -490,8 +502,30 @@ NO_BREAKPOINT_RULES: List[Dict[str, Any]] = [
         "reference": "EUCAST Breakpoint Tables v16.0 · CLSI M100 Ed36",
     },
     {
-        "id": "nobp_tigecycline_proteae",
+        "id": "nobp_imipenem_proteae",
         "organisms": ["proteus", "morganella", "providencia"],
+        "not_organisms": [],
+        "drugs": ["imipenem"],
+        "exclude": ["relebactam"],
+        "reason_ar": ("EUCAST v16.0 (ملاحظة Enterobacterales رقم 2): نشاط "
+                      "الإيميبينيم ضد Proteus و Morganella و Providencia منخفض "
+                      "جوهرياً — MICs أعلى من باقي الـ Enterobacterales حتى بدون "
+                      "أي آلية مقاومة مكتسبة. لا تعتمد على نتيجة S هنا؛ "
+                      "الميروبينيم هو الكاربابينيم المفضّل لهذه الأنواع."),
+        "reason_en": ("EUCAST v16.0 Enterobacterales note 2: imipenem has "
+                      "intrinsically LOW activity against Proteus spp., "
+                      "Morganella morganii and Providencia spp. -- MICs run higher "
+                      "than for other Enterobacterales even with no acquired "
+                      "mechanism. Do not rely on a Susceptible imipenem result "
+                      "here; meropenem is the preferred carbapenem."),
+        "reference": "EUCAST Breakpoint Tables v16.0 -- Enterobacterales note 2",
+    },
+    {
+        # EUCAST v16.0 note 3/A verbatim: "the activity of tigecycline varies from
+        # INSUFFICIENT in Serratia spp., Proteus spp., Morganella morganii and
+        # Providencia spp. to variable in other species." Serratia was missing.
+        "id": "nobp_tigecycline_proteae",
+        "organisms": ["proteus", "morganella", "providencia", "serratia"],
         "not_organisms": [],
         "drugs": ["tigecycline"],
         "exclude": [],

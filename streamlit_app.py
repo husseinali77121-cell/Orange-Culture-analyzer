@@ -3441,7 +3441,13 @@ def _pass_non_entero_gram_pos(org_lower: str, sir_map: Dict[str, str]) -> List[D
 AST_QC_RULES = [
     {
         "id": "QC003",
+        # Excluded: the Morganellaceae (Proteus / Providencia / Morganella) and
+        # Serratia are INTRINSICALLY colistin-resistant, so "Colistin R" is the
+        # expected result for them and flagging it as atypical sent the lab
+        # chasing a correct identification. EUCAST v3.3 Table 1.
         "organisms": [],
+        "not_organisms": ["proteus", "providencia", "morganella", "serratia",
+                          "hafnia", "edwardsiella", "burkholderia"],
         "condition": lambda s: (
             any(s.get(d) == "S" for d in ["Imipenem/Cilastatin", "Meropenem"]) and
             s.get("Colistin") == "R" and
@@ -3559,6 +3565,13 @@ def run_ast_qc(organism: str, sir_map: Dict[str, str], specimen: str = "") -> Li
         if rule["organisms"]:
             if not any(o.lower() in org_lower or org_lower in o.lower()
                        for o in rule["organisms"]):
+                continue
+        # Negative gating. Without this the "not_organisms" key on a rule would be
+        # silently inert -- the rule would still fire on the very species it names
+        # as exclusions. ast_reportability already supports this; AST_QC_RULES did
+        # not, so the two rule engines disagreed on how a rule is scoped.
+        if rule.get("not_organisms"):
+            if any(o.lower() in org_lower for o in rule["not_organisms"]):
                 continue
         try:
             if rule["condition"](sir_map):

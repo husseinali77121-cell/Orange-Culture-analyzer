@@ -157,7 +157,12 @@ INTRINSIC_RESISTANCE = {
 
     # Acinetobacter baumannii — NOTE: Ampicillin/Sulbactam is ACTIVE (excluded);
     # tetracyclines (doxy/minocycline) can be active (excluded).
-    "acinetobacter baumannii": [
+    # EUCAST v3.3 Table 2 fn.2 -- "Acinetobacter is intrinsically resistant to
+    # tetracycline and doxycycline but not to minocycline and tigecycline."
+    # Doxycycline was previously ABSENT here and was being offered as an
+    # active option for Acinetobacter, which EUCAST says it is not.
+    "acinetobacter baumannii": ["Tetracycline", "Doxycycline",
+                                
         "Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
         "Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin", "Cefaclor",
         "Cefuroxime", "Cefuroxime sodium", "Cefoxitin",
@@ -167,7 +172,12 @@ INTRINSIC_RESISTANCE = {
 
     # Stenotrophomonas maltophilia — L1 MBL (all carbapenems) + aminoglycosides.
     # Active (excluded): TMP-SMX, Levofloxacin, Minocycline, Tigecycline.
-    "stenotrophomonas maltophilia": [
+    # EUCAST v3.3 Table 2 fn.7 -- "Stenotrophomonas maltophilia is intrinsically
+    # resistant to tetracycline but NOT to doxycycline, minocycline and
+    # tigecycline." Deliberately NARROWER than the Acinetobacter/Serratia
+    # footnotes: doxycycline stays reportable and is a real option here.
+    "stenotrophomonas maltophilia": ["Tetracycline",
+                                     
         "Imipenem/Cilastatin", "Meropenem", "Ertapenem",
         "Gentamicin", "Amikacin", "Tobramycin",
         "Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
