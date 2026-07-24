@@ -181,6 +181,28 @@ def run_case(case: dict) -> dict:
         if i.get("severity") not in ("error", "warning", "info"):
             fail(cid, "INV-13 QC-severity-renderable", f"{i.get('severity')!r}")
 
+    # INV-14  every warning carries a reason the display layer can actually show.
+    #  A warning_reason with no branch in the render code silently falls through to
+    #  renal_note. That is not merely blank: on a suspected-carbapenemase warning
+    #  for ceftriaxone it printed "renally safe, hepatically cleared" -- a
+    #  reassuring, unrelated sentence attached to a resistance alert.
+    _RENDERABLE = {"esbl_bli_uti_only", "possible_carbapenemase",
+                   "intermediate_culture", "renal_adjustment"}
+    for _w in warned:
+        _wr = _w.get("warning_reason")
+        if _wr and _wr not in _RENDERABLE:
+            fail(cid, "INV-14 warning-is-renderable",
+                 f"warning_reason={_wr!r} has no display branch")
+        if _wr in ("esbl_bli_uti_only", "possible_carbapenemase") and not (
+                _w.get("esbl_note") or _w.get("esbl_note_en")):
+            fail(cid, "INV-14 warning-is-renderable",
+                 f"{_wr} carries no esbl_note to display")
+
+    # INV-15  every ban carries the reason_detail the report renders.
+    for _b in banned:
+        if not _b.get("reason_short"):
+            fail(cid, "INV-15 ban-has-reason", f"{_b.get('name')} has no reason_short")
+
     # ── SNAPSHOT RECORD ──────────────────────────────────────────────────────
     return {
         "allowed":  sorted(a),
@@ -228,7 +250,7 @@ def main() -> int:
             if not VERBOSE and len(items) > 3:
                 print(f"         ... and {len(items) - 3} more (--verbose)")
     else:
-        print(f"  INVARIANTS: all 13 hold across {checked} scenarios")
+        print(f"  INVARIANTS: all 15 hold across {checked} scenarios")
 
     # ── snapshot ─────────────────────────────────────────────────────────────
     payload = json.dumps(current, ensure_ascii=False, sort_keys=True, indent=1)

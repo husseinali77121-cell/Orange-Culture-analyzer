@@ -46,11 +46,13 @@ MRSA_MARKERS = ["Oxacillin", "Cefoxitin"]
 # actually puts on the plate for an Enterobacterales / non-fermenter isolate.
 GN_PANEL = [
     "Amoxicillin + Clavulanic acid", "Ampicillin/Sulbactam",
-    "Piperacillin + Tazobactam", "Cefuroxime", "Ceftriaxone", "Cefotaxime",
+    "Piperacillin + Tazobactam", "Cefuroxime", "Cefoxitin",
+    "Ceftriaxone", "Cefotaxime",
     "Ceftazidime", "Cefepime", "Cefoperazone + Sulbactam",
     "Imipenem/Cilastatin", "Meropenem", "Ertapenem",
     "Gentamicin", "Amikacin", "Ciprofloxacin", "Levofloxacin",
-    "Trimethoprim/Sulfamethoxazole", "Doxycycline", "Colistin",
+    "Trimethoprim/Sulfamethoxazole", "Doxycycline", "Minocycline",
+    "Tetracycline", "Colistin",
 ]
 GP_PANEL = [
     "Penicillin", "Oxacillin", "Amoxicillin + Clavulanic acid", "Cefoxitin",

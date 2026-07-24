@@ -228,6 +228,28 @@ RULES: Dict[str, Dict[str, Any]] = {
         "countersigned_by": "",
         "note": 'EUCAST Expert Rules names S. maltophilia resistant to carbapenems as a worked example of intrinsic resistance.',
     },
+    "intr_mrsa_betalactams": {
+        "assertion": "MRSA carries mecA/mecC encoding low-affinity PBP2a, so ALL "
+                     "conventional beta-lactams are inactive; only ceftaroline and "
+                     "ceftobiprole retain activity.",
+        "source": "EUCAST_EXPERT", "locus": "staphylococci; CLSI M100 Ed36 Table 2C",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": "Added after an audit found the UI label 'MRSA' shared no substring "
+                "with the table key 'staphylococcus aureus', so MRSA received NO "
+                "intrinsic filtering at all -- aztreonam and colistin were offered "
+                "for it while S. aureus correctly refused them.",
+    },
+    "intr_mycoplasma_cellwall_agents": {
+        "assertion": "Mycoplasma and Ureaplasma have no peptidoglycan cell wall, so "
+                     "beta-lactams, glycopeptides and fosfomycin are intrinsically "
+                     "inactive.",
+        "source": "EUCAST_INTRINSIC", "locus": "organisms without a cell wall",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
+        "countersigned_by": "",
+        "note": "Textbook microbiology; the table had no Mycoplasma key so the "
+                "engine could have recommended ampicillin for atypical pneumonia.",
+    },
     "intr_staph_gram_neg_agents": {
         "assertion": "Staphylococci are intrinsically resistant to aztreonam, "
                      "colistin/polymyxin, nalidixic acid and temocillin.",

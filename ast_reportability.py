@@ -306,6 +306,55 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
         "reference": "EUCAST Intrinsic Resistance v3.3, Table 3",
     },
     {
+        # clinical_data now bans all beta-lactams for MRSA, but this module had no
+        # matching rule, so a "Ceftriaxone S" on an MRSA passed QC in silence while
+        # the recommendation panel refused it. Same two-engine split as the
+        # Acinetobacter and Enterococcus cases.
+        "id": "intr_mrsa_betalactams",
+        "organisms": ["mrsa", "methicillin-resistant staph", "methicillin resistant staph"],
+        "not_organisms": [],
+        "drugs": ["penicillin", "oxacillin", "ampicillin", "amoxicillin",
+                  "piperacillin", "cephalexin", "cefadroxil", "cephradine",
+                  "cefazolin", "cefaclor", "cefuroxime", "cefoxitin",
+                  "ceftriaxone", "cefotaxime", "ceftazidime", "cefixime",
+                  "cefepime", "cefoperazone", "imipenem", "meropenem",
+                  "ertapenem", "aztreonam"],
+        # The anti-MRSA cephalosporins retain activity and must stay reportable.
+        "exclude": ["ceftaroline", "ceftobiprole"],
+        "reason_ar": ("MRSA يحمل mecA/mecC المنتج لـ PBP2a منخفض الألفة — كل "
+                      "البيتا-لاكتام غير فعّال (عدا Ceftaroline/Ceftobiprole). "
+                      "نتيجة S لأي بنسلين أو سيفالوسبورين تقليدي أو كاربابينيم "
+                      "هنا خطأ معملي ولا تُبلَّغ."),
+        "reason_en": ("MRSA carries mecA/mecC encoding low-affinity PBP2a — ALL "
+                      "beta-lactams are inactive (except ceftaroline/ceftobiprole). "
+                      "A Susceptible result for any conventional penicillin, "
+                      "cephalosporin or carbapenem is a laboratory error and must "
+                      "not be reported."),
+        "reference": "EUCAST Expert Rules -- staphylococci; CLSI M100 Ed36 Table 2C",
+    },
+    {
+        "id": "intr_mycoplasma_cellwall_agents",
+        "organisms": ["mycoplasma", "ureaplasma"],
+        "not_organisms": [],
+        "drugs": ["penicillin", "oxacillin", "ampicillin", "amoxicillin",
+                  "piperacillin", "cephalexin", "cefadroxil", "cephradine",
+                  "cefazolin", "cefaclor", "cefuroxime", "cefoxitin",
+                  "ceftriaxone", "cefotaxime", "ceftazidime", "cefixime",
+                  "cefepime", "cefoperazone", "imipenem", "meropenem",
+                  "ertapenem", "aztreonam", "vancomycin", "teicoplanin",
+                  "fosfomycin"],
+        "exclude": [],
+        "reason_ar": ("الـ Mycoplasma و Ureaplasma ليس لهما جدار خلوي "
+                      "(peptidoglycan) — فكل مضاد يعمل على جدار الخلية "
+                      "(بيتا-لاكتام · جلايكوببتيد · فوسفومايسين) غير فعّال "
+                      "جوهرياً. العلاج: ماكروليد أو تتراسيكلين أو فلوروكينولون."),
+        "reason_en": ("Mycoplasma and Ureaplasma have NO peptidoglycan cell wall, "
+                      "so every cell-wall-active agent (beta-lactams, "
+                      "glycopeptides, fosfomycin) is intrinsically inactive. "
+                      "Treat with a macrolide, tetracycline or fluoroquinolone."),
+        "reference": "EUCAST Intrinsic Resistance v3.3 -- organisms without a cell wall",
+    },
+    {
         "id": "intr_staph_gram_neg_agents",
         "organisms": ["staphylococcus", "staph"],
         "drugs": ["aztreonam", "colistin", "polymyxin", "nalidixic acid",

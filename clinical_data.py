@@ -245,3 +245,49 @@ INTRINSIC_RESISTANCE = {
                                "Cefoperazone", "Cefoperazone + Sulbactam",
                                "Cefoxitin", "Aztreonam", "Fosfomycin"],
 }
+
+# ── Aliases for the labels the UI actually offers ────────────────────────────
+#  Matching is substring-based, so a display label that shares no substring with
+#  a table key silently receives NO intrinsic filtering. These rows close that
+#  hole for every organism in the picker.
+#
+#  * "MRSA" / "VRE" are the same organisms as their binomials but share no
+#    substring with them.
+#  * "Mycoplasma" has NO CELL WALL, so every beta-lactam and glycopeptide is
+#    intrinsically inactive -- a textbook fact the table did not encode, leaving
+#    the engine free to recommend ampicillin for an atypical pneumonia.
+#  * "Enterobacterales (unspeciated)" needs the family-level Gram-positive-agent
+#    exclusions (EUCAST Table 1 header).
+_GP_ONLY = ["Vancomycin", "Teicoplanin", "Linezolid", "Daptomycin",
+            "Erythromycin", "Clarithromycin", "Azithromycin", "Clindamycin",
+            "Fusidic acid", "Rifampicin", "Oxacillin", "Penicillin"]
+
+INTRINSIC_RESISTANCE["mrsa"] = list(INTRINSIC_RESISTANCE["staphylococcus aureus"]) + [
+    # MRSA additionally: mecA/mecC alters PBP2a -> ALL beta-lactams inactive
+    # except the anti-MRSA cephalosporins (ceftaroline/ceftobiprole).
+    "Oxacillin", "Penicillin", "Ampicillin", "Amoxicillin",
+    "Amoxicillin + Clavulanic acid", "Ampicillin/Sulbactam",
+    "Piperacillin + Tazobactam", "Cephalexin", "Cefadroxil", "Cephradine",
+    "Cefazolin", "Cefaclor", "Cefuroxime", "Cefuroxime sodium", "Cefoxitin",
+    "Ceftriaxone", "Cefotaxime", "Ceftazidime", "Cefixime", "Cefepime",
+    "Cefoperazone", "Cefoperazone + Sulbactam",
+    "Imipenem/Cilastatin", "Meropenem", "Ertapenem",
+]
+INTRINSIC_RESISTANCE["vre"] = list(dict.fromkeys(
+    INTRINSIC_RESISTANCE["vre"] + INTRINSIC_RESISTANCE["enterococcus faecium"]))
+
+# Mycoplasma / Ureaplasma: no peptidoglycan cell wall.
+INTRINSIC_RESISTANCE["mycoplasma"] = [
+    "Penicillin", "Oxacillin", "Ampicillin", "Amoxicillin",
+    "Amoxicillin + Clavulanic acid", "Ampicillin/Sulbactam",
+    "Piperacillin + Tazobactam", "Cephalexin", "Cefadroxil", "Cephradine",
+    "Cefazolin", "Cefaclor", "Cefuroxime", "Cefuroxime sodium", "Cefoxitin",
+    "Ceftriaxone", "Cefotaxime", "Ceftazidime", "Cefixime", "Cefepime",
+    "Cefoperazone", "Cefoperazone + Sulbactam", "Aztreonam",
+    "Imipenem/Cilastatin", "Meropenem", "Ertapenem",
+    "Vancomycin", "Teicoplanin", "Fosfomycin", "Trimethoprim/Sulfamethoxazole",
+]
+INTRINSIC_RESISTANCE["ureaplasma"] = list(INTRINSIC_RESISTANCE["mycoplasma"])
+
+# Family-level fallback for an unspeciated Enterobacterales report.
+INTRINSIC_RESISTANCE["enterobacterales"] = list(_GP_ONLY)

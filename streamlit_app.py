@@ -459,7 +459,7 @@ def show_login_page():
         <p style='color:gray; margin:0'>AI-Assisted Antibiotic Decision Support -- Egyptian Market</p>
     </div>
     """, unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 2, 1])
+    _, col2, _ = st.columns([1, 2, 1])
     with col2:
         st.markdown("#### 🔐 تسجيل الدخول")
         email    = st.text_input("📧 البريد الإلكتروني", placeholder="example@hospital.com",
@@ -927,8 +927,13 @@ def analyze_antibiotics(
     _mech = predict_esbl(organism_type, sir_map) if sir_map else {}
     _mech = _mech or {}
     _mech_prob = _mech.get("probability")
-    _is_esbl_like   = _mech_prob in ("high", "ampc")
+    _is_esbl_like   = _mech_prob in ("high", "ampc", "ampc_plasmid")
+    # CONFIRMED only (>=2 carbapenems R). A single carbapenem R or Meropenem I is
+    # "possible_carbapenemase": it still raises the alert and asks for mCIM/PCR,
+    # but it must NOT ban agents the AST reports as active -- that turned a 55%
+    # suspicion into a full beta-lactam lockdown.
     _is_carbapenemase = _mech_prob == "carbapenemase"
+    _is_possible_carb = _mech_prob == "possible_carbapenemase"
 
     # ── Detect MRSA from AST markers (Oxacillin/Cefoxitin R), not just name ────
     # A S. aureus with Oxacillin-R or Cefoxitin-R IS MRSA -> ALL beta-lactams fail
@@ -950,20 +955,33 @@ def analyze_antibiotics(
                       or _mrsa_text_markers)
     _is_mrsa = _is_staph and _mrsa_marker_R
 
-    def _is_penicillin_or_ceph(info_dict: Dict) -> bool:
-        c = info_dict.get("class", "").lower()
-        # Penicillins & cephalosporins, but NOT BLI combos vs Carbapenems
-        if "carbapenem" in c:
-            return False
-        if "bli" in c or "tazobactam" in c or "sulbactam" in c or "clavulan" in c:
-            return False   # BLI combos handled separately (UTI-only caution)
-        return any(k in c for k in ("penicillin", "cephalosporin", "cephalosporins"))
+    def _cls_and_name(info_dict: Dict, drug_name: str = "") -> str:
+        """Class text PLUS drug name, lower-cased, for robust matching.
 
-    def _is_bli_combo(info_dict: Dict) -> bool:
-        c = info_dict.get("class", "").lower()
-        n = info_dict.get("name", "").lower() if isinstance(info_dict.get("name"), str) else ""
-        return ("bli" in c or "tazobactam" in c or "sulbactam" in c
-                or "clavulan" in c or "clavulanic" in n or "tazobactam" in n)
+        Matching on the class string alone silently mis-sorted any drug whose
+        class was phrased differently from the token being searched for.
+        """
+        c = (info_dict.get("class") or "").lower()
+        n = (drug_name or info_dict.get("name") or "")
+        return f"{c} | {str(n).lower()}"
+
+    _BLI_TOKENS = ("bli", "tazobactam", "sulbactam", "clavulan", "avibactam",
+                   "relebactam", "vaborbactam", "inhibitor")
+
+    def _is_penicillin_or_ceph(info_dict: Dict, drug_name: str = "") -> bool:
+        t = _cls_and_name(info_dict, drug_name)
+        if "carbapenem" in t or "penem" in t:
+            return False
+        if any(k in t for k in _BLI_TOKENS):
+            return False   # BLI combos handled separately (UTI-only caution)
+        return any(k in t for k in ("penicillin", "cephalosporin", "cephalosporins",
+                                    "cillin", "cef", "ceph"))
+
+    def _is_bli_combo(info_dict: Dict, drug_name: str = "") -> bool:
+        t = _cls_and_name(info_dict, drug_name)
+        if "carbapenem" in t or "relebactam" in t or "vaborbactam" in t:
+            return False          # carbapenem/BLI pairs handled by _is_carbapenem
+        return any(k in t for k in _BLI_TOKENS)
 
     def _is_carbapenem(info_dict: Dict) -> bool:
         return "carbapenem" in info_dict.get("class", "").lower()
@@ -1043,7 +1061,20 @@ def analyze_antibiotics(
         #   * Carbapenemase             -> avoid all beta-lactams (ban), even if S.
         #   * ESBL/AmpC + urine + S/I   -> UTI-only caution (warn), reported as tested.
         #   * ESBL/AmpC + anything else -> avoid; carbapenem preferred (ban).
-        if (_is_esbl_like or _is_carbapenemase) and _is_penicillin_or_ceph(info):
+        if _is_possible_carb and _is_penicillin_or_ceph(info, drug) and culture_result in ("S", "I"):
+            _w = dict(info)
+            _w["warning_reason"] = "possible_carbapenemase"
+            _w["esbl_note"] = (
+                "⚠️ يوجد اشتباه في كاربابينيميز (كاربابينيم واحد فقط R أو "
+                "Meropenem I) — والاشتباه **ليس** تأكيداً؛ النمط قد يكون فقد "
+                "بورين مع ESBL/AmpC. هذا الدواء حسّاس معملياً ويُبلَّغ كما هو "
+                "(EUCAST v16). أكّد بـ mCIM أو PCR قبل التصعيد، وفي العدوى "
+                "الشديدة فضّل الكاربابينيم أو استشر الأمراض المعدية."
+            )
+            warned.append({"name": drug, **_w})
+            continue
+
+        if (_is_esbl_like or _is_carbapenemase) and _is_penicillin_or_ceph(info, drug):
             _mech_name = ("Carbapenemase" if _is_carbapenemase
                           else "AmpC" if _mech_prob == "ampc" else "ESBL")
             _spec_cat = classify_specimen(culture_type)
@@ -1091,7 +1122,26 @@ def analyze_antibiotics(
         # ── ESBL + BLI combos (Amox-Clav, Pip-Tazo): UTI-only caution ─────────
         # Not banned outright (effective for uncomplicated ESBL UTI if S),
         # but NOT for bacteremia/serious infection (MERINO 2018).
-        if (_is_esbl_like or _is_carbapenemase) and _is_bli_combo(info):
+        if (_is_esbl_like or _is_carbapenemase or _is_possible_carb) \
+                and _is_bli_combo(info, drug):
+            # SPECIMEN GATING. The "UTI-only caution" is only a caution when the
+            # specimen IS urine. MERINO 2018 randomised ESBL BLOODSTREAM infection
+            # and found piperacillin-tazobactam inferior to meropenem (30-day
+            # mortality 12.3% vs 3.7%) even where pip-tazo tested susceptible --
+            # so on blood, CSF or any deep site a BLI combination is refused, not
+            # merely annotated. Hardening the class matching briefly moved these
+            # agents from banned to warned; this restores the ban off-urine.
+            if classify_specimen(culture_type) != "urine":
+                banned.append({**info, **build_banned_item(
+                    name=drug, category="organism",
+                    reason_short="ESBL + عينة غير بولية -- BLI غير كافٍ (MERINO 2018).",
+                    reason_detail=(
+                        "كائن منتج لـ ESBL في عينة غير بولية: توليفة المثبط (BLI) "
+                        "أظهرت وفيات أعلى من الكاربابينيم في تجرثم الدم "
+                        "(MERINO 2018: 12.3% مقابل 3.7%) حتى مع ثبوت الحساسية "
+                        "معملياً. استخدم Carbapenem."),
+                )})
+                continue
             _w = dict(info)
             _w["warning_reason"] = "esbl_bli_uti_only"
             _w["esbl_note"] = ("كائن ESBL: هذا المثبط (BLI) فعّال فقط لعدوى المسالك "
@@ -1145,7 +1195,12 @@ def analyze_antibiotics(
 
         # ── Fusidic acid: لا monotherapy في العدوى الجهازية ─────────────────────
         if "fusidic" in d_low and info.get("no_monotherapy_systemic"):
-            if culture_type in ("Blood", "CSF", "Sputum"):
+            # Substring match rather than equality: culture_type comes from the
+            # selectbox today, but an exact-match test fails silently the moment a
+            # label gains a suffix ("Sputum Culture"), and losing a "never use as
+            # monotherapy" warning is not a failure that should happen quietly.
+            _ct = (culture_type or "").lower()
+            if any(k in _ct for k in ("blood", "csf", "sputum")):
                 interactions_alerts.append(
                     "⚠️ Fusidic acid: لا يُستخدم منفرداً في العدوى الجهازية — "
                     "combination إلزامي (+ Rifampicin أو + Vancomycin). مقاومة سريعة."
@@ -1821,7 +1876,7 @@ def predict_esbl(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
         # signal, not a high-confidence call: keep confidence moderate and name
         # the alternative mechanism in the read-out.
         return {
-            "probability": "carbapenemase",
+            "probability": "possible_carbapenemase",
             "confidence": 62,
             "mechanism": "Possible OXA-48-like carbapenemase OR porin loss + ESBL/AmpC — Predicted",
             "markers_R": ["Ertapenem"] + primary_R,
@@ -1832,7 +1887,7 @@ def predict_esbl(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
         }
     if len(carb_R_list) == 1 or mero_I:
         return {
-            "probability": "carbapenemase",
+            "probability": "possible_carbapenemase",
             "confidence": 55,
             "mechanism": "Possible carbapenemase (low-level) — Predicted",
             "markers_R": carb_R_list or ["Meropenem (I)"],
@@ -1856,6 +1911,39 @@ def predict_esbl(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
             "markers_R": primary_R,
             "detail": "مقاومة لـ 3rd-gen cephalosporin في كائن Enterobacterale منتج لـ AmpC مزمن -- نمط AmpC وليس ESBL.",
             "action": "تجنب 3rd-gen cephalosporins حتى لو S. استخدم Cefepime أو Carbapenem. لا يُكتشف بـ DDST.",
+        }
+
+    # ── 2b. Plasmid-mediated AmpC in a NON-AmpC-prone Enterobacterale ─────
+    #  Cefoxitin is the classic phenotypic discriminator: ESBLs do not hydrolyse
+    #  cephamycins, so a true ESBL is normally cefoxitin-SUSCEPTIBLE, whereas AmpC
+    #  (chromosomal or plasmid-borne) IS cefoxitin-resistant. In organisms with no
+    #  chromosomal AmpC (E. coli, Klebsiella, Proteus mirabilis, Salmonella) a
+    #  cefoxitin-R + 3rd-gen-R phenotype therefore points at acquired pAmpC or at
+    #  porin loss -- not at a plain ESBL.
+    #
+    #  This is a QUALIFIER, not a re-diagnosis: cefoxitin resistance can also arise
+    #  from porin loss in a genuine ESBL producer, so the report names both
+    #  possibilities and tells the lab what the confirmatory test will do.
+    if (is_producer and not is_ampc_prone and primary_R and cefoxitin_R
+            and not _thin_panel):
+        return {
+            "probability": "ampc_plasmid",
+            "confidence": 70,
+            "mechanism": "Possible plasmid-mediated AmpC (pAmpC) or porin loss — not a plain ESBL",
+            "markers_R": primary_R + ["Cefoxitin"],
+            "detail": (
+                "مقاومة للجيل الثالث **مع** مقاومة للـ Cefoxitin في كائن لا يحمل "
+                "AmpC كروموسومي. الـ ESBL الكلاسيكي لا يحلّل السيفاميسينات، فيكون "
+                "عادةً حسّاساً للـ Cefoxitin — والنمط ده يرجّح AmpC مكتسب "
+                "(CMY-2 وأشباهه) أو فقد بورين، وليس ESBL بسيط."
+            ),
+            "action": (
+                "⚠️ اختبار التأكيد (DDST / combination disk) قد يخرج **سالباً** — "
+                "الكلافولانيت لا يثبّط AmpC. لا تعتمد على Amoxicillin-Clavulanate. "
+                "الـ Cefepime غالباً يظل فعّالاً في AmpC (راجع نتيجته على اللوحة)، "
+                "والكاربابينيم هو الخيار الآمن في العدوى الشديدة. "
+                "التمييز النهائي يحتاج PCR."
+            ),
         }
 
     # ── 3. ESBL (Enterobacterales ONLY) ───────────────────────────────────
@@ -2727,7 +2815,6 @@ def suggest_severity(
         reasons:   list of clinical reasons
         override:  True (user can still change it)
     """
-    spec_l = specimen.lower()
     _cat   = classify_specimen(specimen)
     hf     = [h.lower() for h in (host_factors or [])]
     syms   = [s.lower() for s in (symptoms or [])]
@@ -2874,7 +2961,6 @@ def get_treatment_duration(
     phenotypes: List[Dict], severity: str = "moderate",
 ) -> Dict[str, Any]:
     """Treatment Duration Engine -- IDSA AMR Guidance v4.0 (2024) | Sanford Guide 2025"""
-    spec = specimen.lower()
     org  = organism.lower()
     synd = (syndrome or "").lower()
     _cat = classify_specimen(specimen)
@@ -4370,57 +4456,37 @@ def generate_pdf_html_report(
                 "Exceptions: pregnancy / pre-urological surgery.",
             "استشر طبيب الأمراض المعدية.":
                 "Consult an infectious disease specialist.",
-            "التزم بمبادئ Antibiotic Stewardship.":
-                "Adhere to Antibiotic Stewardship principles.",
             "العينة من موقع معقم (CSF) -- أي نمو يُعدّ مرضياً بغض النظر عن العوامل الأخرى.":
                 "Specimen from a sterile site (CSF) -- any growth is pathogenic regardless of other factors.",
-            "المؤشرات تدعم التلوث أو الاستعمار بشكل كبير. العلاج غير مبرر في الغالب. تابع المريض كلينيكياً.":
-                "Indicators strongly support contamination/colonization. Treatment usually unjustified. Follow up clinically.",
             "تابع المريض وأعِد التقييم إذا ظهرت أعراض.":
                 "Follow up and reassess if symptoms appear.",
             "تشير المعطيات إلى Asymptomatic Bacteriuria. وفقاً لـ IDSA 2019: لا يُنصح بالعلاج إلا في الحامل أو قبل تدخل جراحي بولي.":
                 "Findings indicate Asymptomatic Bacteriuria. Per IDSA 2019: treatment not recommended except in pregnancy or before a urological procedure.",
             "لا تعطِ مضادات حيوية (Antibiotic Stewardship -- IDSA 2019).":
                 "Do NOT give antibiotics (Antibiotic Stewardship -- IDSA 2019).",
-            "لا تعطِ مضادات حيوية بناءً على هذه النتيجة.":
-                "Do NOT give antibiotics based on this result.",
         }
         result = text
         for ar, en in _PATHO_EN.items():
             result = result.replace(ar, en)
 
         # Word-level fallback for any remaining Arabic fragments
-        _WORD_EN = {
-            "إعطاء": "give", "قيّم": "assess", "إعادة": "repeat", "المزرعة": "culture",
-            "فكّر": "consider", "الوضع": "status", "الحيوية": "", "متاحة": "available",
-            "المضادات": "antibiotics", "كان": "if", "أعِد": "repeat", "تقييم": "assessment",
-            "المريض": "patient", "إذا": "if", "استمرت": "persist", "الأعراض": "symptoms",
-            "تطورت": "progress", "ابدأ": "start", "العلاج": "therapy", "التجريبي": "empiric",
-            "فوراً": "immediately", "ريثما": "pending", "تظهر": "appears", "نتيجة": "result",
-            "الحساسية": "sensitivity", "احتجز": "admit", "ومراقبته": "and monitor", "بشكل": "",
-            "مكثف": "intensive", "استشر": "consult", "طبيب": "physician", "الأمراض": "disease",
-            "المعدية": "infectious", "التزم": "adhere", "بمبادئ": "to principles", "تابع": "follow up",
-            "وأعِد": "and repeat", "التقييم": "assessment", "ظهرت": "appear", "تشير": "indicate",
-            "المعطيات": "findings", "إلى": "to", "وفقاً": "per", "لـ": "",
-            "لا": "do NOT", "تعطِ": "give", "مضادات": "antibiotics", "حيوية": "",
-            "بناءً": "based", "هذه": "this", "النتيجة": "result", "العينة": "specimen",
-            "من": "from", "موقع": "site", "معقم": "sterile", "أي": "any",
-            "نمو": "growth", "يُعدّ": "is", "مرضياً": "pathogenic", "بغض": "regardless",
-            "النظر": "", "عن": "of", "العوامل": "factors", "الأخرى": "other",
-            "احتجاز": "admission", "المؤشرات": "Indicators", "تدعم": "support", "بقوة": "strongly",
-            "وجود": "presence of", "عدوى": "infection", "حقيقية": "true", "يُنصح": "recommended",
-            "بالعلاج": "treatment", "الموجَّه": "directed", "بنتيجة": "by result", "مع": "with",
-            "مراعاة": "considering", "السياق": "context", "الكلينيكي": "clinical", "على": "on",
-            "الـ": "", "راجع": "review", "الجرعة": "dose", "حسب": "per",
-            "الوظيفة": "function", "الكلوية": "renal", "راعِ": "consider", "شدة": "severity",
-            "وعوامل": "and factors", "الخطر": "risk", "حدودية": "borderline", "كامل": "full",
-            "قبل": "before", "البدء": "starting",
-        }
+        # NOTE: a word-level Arabic->English dictionary (_WORD_EN) used to sit
+        # here but was never wired in -- the regex strip below always ran instead.
+        # It has been deleted rather than connected, because partial word
+        # substitution produced half-translated "franco" text that is harder to
+        # read than clean removal. What IS unsafe is deleting a clinical
+        # recommendation with no trace, so the strip now logs what it dropped.
         # Safety net: strip any residual Arabic so the English report is
         # guaranteed to contain ZERO Arabic (and never franco-garbage from
         # partial word substitution). Complete phrases above are fully
         # translated; this only catches anything not yet mapped.
         if re.compile(r'[؀-ۿ]').search(result):
+            _dropped = re.findall(r'[؀-ۿ\uFB50-\uFEFF]+(?:\s+[؀-ۿ\uFB50-\uFEFF]+)*', result)
+            if _dropped:
+                logger.warning(
+                    "EN report: %d Arabic fragment(s) had no translation and were "
+                    "removed -- add them to _PATHO_EN: %s",
+                    len(_dropped), " | ".join(f[:60] for f in _dropped[:5]))
             result = re.sub(r'[؀-ۿ\uFB50-\uFEFF]+', '', result)
             result = re.sub(r'\(\s*\)', '', result)            # drop empty parens
             result = re.sub(r'\s+([.,;:،])', r'\1', result)     # tidy space before punct
@@ -4452,8 +4518,8 @@ def generate_pdf_html_report(
     _WEAK_HEADER_PHENOTYPES = {"Possible MRSA"}
     _hdr_ph_labels = [p for p in ph_labels if p not in _WEAK_HEADER_PHENOTYPES]
     # Flags for Avoid-reason tagging (derived from passed-in results)
-    _is_esbl_like     = esbl_prob in ("high", "ampc")
-    _is_carbapenemase = esbl_prob == "carbapenemase"
+    _is_esbl_like     = esbl_prob in ("high", "ampc", "ampc_plasmid")
+    _is_carbapenemase = esbl_prob in ("carbapenemase", "possible_carbapenemase")
     _is_mrsa          = any("MRSA" in str(p).upper() for p in ph_labels) \
                         or "mrsa" in str(organism).lower()
 
@@ -4558,8 +4624,8 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:0.6mm 0; }
                 mdr_pills += pill("DTR-P.aeruginosa" if (esbl_result or {}).get("dtr") else "CR-P.aeruginosa",
                                   "background:#922b21;color:#fff" if (esbl_result or {}).get("dtr")
                                   else "background:#b7770d;color:#fff")
-            elif esbl_prob == "carbapenemase": mdr_pills += pill("CARBAPENEMASE","background:#922b21;color:#fff")
-            elif esbl_prob == "ampc":        mdr_pills += pill("AmpC","background:#b7770d;color:#fff")
+            elif esbl_prob in ("carbapenemase", "possible_carbapenemase"): mdr_pills += pill("CARBAPENEMASE","background:#922b21;color:#fff")
+            elif esbl_prob in ("ampc", "ampc_plasmid"):        mdr_pills += pill("AmpC","background:#b7770d;color:#fff")
             elif esbl_prob in ("high","moderate"): mdr_pills += pill("ESBL+","background:#b7770d;color:#fff")
         _pills_html = ("<div class='hdr-pills'>" + mdr_pills + "</div>") if mdr_pills else ""
         return f"""<div class="hdr">
@@ -4745,7 +4811,7 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:0.6mm 0; }
                 _rl = _wd.get("renal_limit","-")
                 _rn = _esc(_wd.get("renal_note",""))
                 _detail = f'Renal dose adjustment required | Threshold: CrCl \u2264 {_rl} ml/min' + (f' -- {_rn}' if _rn else '')
-            elif _wreason == "esbl_bli_uti_only":
+            elif _wreason in ("esbl_bli_uti_only", "possible_carbapenemase"):
                 _esbl_txt = (_wd.get("esbl_note_en") if _EN and _wd.get("esbl_note_en")
                              else _wd.get("esbl_note","ESBL organism -- BLI combo for uncomplicated UTI only"))
                 _detail = _esc(_esbl_txt)
@@ -5390,7 +5456,7 @@ def generate_decision_tree_image(
         alert_title = "🚨 CRE / XDR ALERT"
     elif _has_mdr:
         alert_title = "🔴 MDR/XDR ALERT"
-    elif _esbl_prob == "ampc":
+    elif _esbl_prob in ("ampc", "ampc_plasmid"):
         alert_title = "⚠  AmpC ALERT"
     elif _has_esbl:
         alert_title = "⚠  ESBL ALERT"
@@ -5412,13 +5478,13 @@ def generate_decision_tree_image(
 
     # ── ESBL / AmpC / Carbapenemase ────────────────────────────────────────────
     _esbl_mech = (esbl_result or {}).get("mechanism", "")
-    if _esbl_prob == "carbapenemase":
+    if _esbl_prob in ("carbapenemase", "possible_carbapenemase"):
         if "OXA-48" in _esbl_mech:
             alerts.append("Possible OXA-48 carbapenemase")
         else:
             alerts.append("Carbapenemase (KPC/MBL/OXA) possible!")
         alerts.append("Send to reference lab immediately.")
-    elif _esbl_prob == "ampc":
+    elif _esbl_prob in ("ampc", "ampc_plasmid"):
         alerts.append("Possible AmpC β-lactamase")
         alerts.append("Avoid 3rd-gen cephalosporins; use Cefepime/Carbapenem")
     elif _esbl_prob == "high":
@@ -5707,7 +5773,7 @@ def generate_report(
         if prob == "carbapenemase":
             L += [f"\n🚨 {esbl_r.get('mechanism','POSSIBLE CARBAPENEMASE PRODUCER').upper()}", sep2,
                   esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
-        elif prob == "ampc":
+        elif prob in ("ampc", "ampc_plasmid"):
             L += ["\n⚠️  POSSIBLE AmpC β-LACTAMASE PRODUCER", sep2,
                   esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
         elif prob == "high":
@@ -5757,6 +5823,12 @@ def generate_report(
             L += [f"{item['name']}{sir_tag}", sep2, f"WHO AWaRe : {item.get('aware','-')}"]
             if item.get("warning_reason") == "intermediate_culture":
                 L.append("Reason    : Intermediate (I) on culture result")
+            elif item.get("esbl_note") or item.get("esbl_note_en"):
+                # Mechanism warnings (ESBL BLI-in-UTI, suspected carbapenemase)
+                # carry their reason in esbl_note; without this branch they fell
+                # through to renal_note and printed an empty reason.
+                L.append("Reason    : " + (item.get("esbl_note_en")
+                                           or item.get("esbl_note", "-")))
             else:
                 L += [f"Renal note: {item.get('renal_note','-')}",
                       f"Limit CrCl: <= {item.get('renal_limit','-')} ml/min"]
@@ -6138,20 +6210,36 @@ if uploaded:
 
         st.divider()
 
-        is_renal = st.checkbox("🚩 Renal Impairment")
-        cl_cr    = 100.0
-        if is_renal:
-            s_cr  = st.number_input("Serum Creatinine (mg/dL)",
-                                    min_value=0.1, max_value=20.0, value=1.0, step=0.1)
+        _renal_flag = st.checkbox("🚩 Renal Impairment")
+        # Always offered, not hidden behind the checkbox: a reduced clearance that
+        # nobody thought to flag is exactly the case that needs catching.
+        s_cr = st.number_input(
+            "Serum Creatinine (mg/dL) — leave 0 if not available",
+            min_value=0.0, max_value=20.0, value=0.0, step=0.1,
+            help="If entered, CrCl is calculated (Cockcroft-Gault) and a CrCl "
+                 "below 60 ml/min engages renal dosing on its own.")
+        if s_cr > 0:
             cl_cr = calc_creatinine_clearance(age, weight, s_cr, sex)
             st.metric("CrCl (Cockcroft-Gault)", f"{cl_cr:.1f} ml/min",
                       delta=get_renal_severity(cl_cr),
                       delta_color="normal" if cl_cr >= 60 else ("off" if cl_cr >= 30 else "inverse"))
+        else:
+            cl_cr = 100.0
+        # Engage renal handling if EITHER the clinician flagged it OR the measured
+        # clearance is impaired.
+        is_renal = bool(_renal_flag) or (s_cr > 0 and cl_cr < 60)
+        if is_renal and not _renal_flag:
+            st.warning(f"⚠️ CrCl {cl_cr:.0f} ml/min — renal dose adjustment applied "
+                       "automatically (the impairment box was not ticked).")
 
         is_hepatic = st.checkbox("🚩 Hepatic Impairment")
         is_preg    = False
-        if sex == "Female" and 15 <= age <= 55:
-            is_preg = st.checkbox("🤰 Patient is Pregnant")
+        if sex == "Female":
+            is_preg = st.checkbox(
+                "🤰 Patient is Pregnant",
+                help="Shown for every female patient. The age window used to hide "
+                     "this control entirely, which made the pregnancy safety rules "
+                     "unreachable outside 15-55 rather than merely unticked.")
 
         current_meds = st.multiselect("💊 Current Medications", COMMON_MEDS)
 
@@ -6807,7 +6895,7 @@ if uploaded:
                            f"(confidence {_conf}%)\n"
                            + esbl_result["detail"] + "  \n🔹 " + esbl_result["action"])
                     st.error(_em)
-                elif prob == "ampc":
+                elif prob in ("ampc", "ampc_plasmid"):
                     _em = (f"[!] Possible AmpC β-Lactamase (confidence {_conf}%)\n"
                            + esbl_result["detail"] + "  \n🔹 " + esbl_result["action"])
                     st.error(_em)
@@ -6988,7 +7076,8 @@ if uploaded:
                 for item in _others:
                     sir_tag = (f" [{sir_map[item['name']]}]"
                                if sir_map and item['name'] in sir_map else "")
-                    if item.get("warning_reason") == "esbl_bli_uti_only":
+                    if item.get("warning_reason") in ("esbl_bli_uti_only",
+                                                      "possible_carbapenemase"):
                         st.warning(
                             f"**{item['name']}{sir_tag}** -- {item.get('esbl_note','')}"
                         )
