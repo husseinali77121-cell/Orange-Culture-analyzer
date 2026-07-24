@@ -181,8 +181,35 @@ def load_commercial_names(filepath: str = "commercial_names.txt") -> Dict[str, s
 
 COMMERCIAL_NAMES: Dict[str, str] = load_commercial_names()
 
+# The brand file and ABX_GUIDELINES spell combination drugs differently
+# ("Amoxicillin-Clavulanate" vs "Amoxicillin + Clavulanic acid",
+# "Ampicillin-Sulbactam" vs "Ampicillin/Sulbactam"). An exact lowercase lookup
+# therefore returned NOTHING for 11 of 51 agents -- including Augmentin, Unasyn,
+# Tazocin, Tienam and Septrin, the brands an Egyptian clinician is most likely to
+# want. Resolve through the same normalisation and alias index the OCR uses, so
+# either spelling finds the entry.
+_COMMERCIAL_BY_KEY: Dict[str, str] = {}
+for _g, _b in COMMERCIAL_NAMES.items():
+    _COMMERCIAL_BY_KEY[normalize_abx_key(_g)] = _b
+    _canon = ABX_ALIAS_INDEX.get(normalize_abx_key(_g))
+    if _canon:
+        _COMMERCIAL_BY_KEY.setdefault(normalize_abx_key(_canon), _b)
+
 def get_commercial_name(generic: str) -> str:
-    return COMMERCIAL_NAMES.get(generic.lower(), "")
+    if not generic:
+        return ""
+    direct = COMMERCIAL_NAMES.get(generic.lower(), "")
+    if direct:
+        return direct
+    key = normalize_abx_key(generic)
+    if key in _COMMERCIAL_BY_KEY:
+        return _COMMERCIAL_BY_KEY[key]
+    # Last resort: the drug's own declared aliases (e.g. "augmentin").
+    for _alias in (ABX_GUIDELINES.get(generic, {}) or {}).get("aliases", []):
+        hit = _COMMERCIAL_BY_KEY.get(normalize_abx_key(_alias))
+        if hit:
+            return hit
+    return ""
 
 COMMON_MEDS = [
     "Antacids (مضادات الحموضة)",
@@ -785,10 +812,40 @@ def detect_pus_cells(text: str) -> str:
         r"(\d+\s*[-–]\s*\d+)\s*/\s*hpf",
         r"(\d+)\s*/\s*hpf",
     ]
-    for pat in patterns:
+    # Anchored patterns (1-2) may search the whole text: they carry their own
+    # "pus cells" / "wbc" label. The bare /HPF patterns (3-4) MUST stay inside the
+    # pus line, otherwise they pick up whichever analyte happens to be printed
+    # first -- RBCs, casts, epithelial cells.
+    for pat in patterns[:2]:
         m = re.search(pat, text_l, re.IGNORECASE)
         if m:
             return m.group(1).strip()
+    if _pus_line:
+        for pat in patterns[2:]:
+            m = re.search(pat, _pus_line, re.IGNORECASE)
+            if m:
+                return m.group(1).strip()
+        # "Pus cells / HPF    2-4" puts the unit before the value, so the
+        # number-then-/HPF patterns miss it. Strip the label and the unit off the
+        # pus line and take whatever number is left -- still confined to that line.
+        _rest = re.sub(r"pus\s*cells?|w\.?\s*b\.?\s*c\.?s?|leu[ck]ocytes?|صديد",
+                       " ", _pus_line, flags=re.IGNORECASE)
+        _rest = re.sub(r"/?\s*h\.?p\.?f\.?|per\s+field|[:\-–]\s*$", " ", _rest,
+                       flags=re.IGNORECASE)
+        m = re.search(r"(\d+\s*[-–]\s*\d+|\d+)", _rest)
+        if m:
+            return m.group(1).strip()
+        return ""
+
+    # No pus/WBC label anywhere. Fall back to a bare "N/HPF" ONLY when the report
+    # names no competing analyte -- otherwise the first /HPF figure in the report
+    # belongs to something else and must not be reported as a pus-cell count.
+    if not re.search(r"r\.?\s*b\.?\s*c|red\s*b|erythro|cast|epithel|crystal|"
+                     r"yeast|bacteri|حمراء|بلورات", text_l):
+        for pat in patterns[2:]:
+            m = re.search(pat, text_l, re.IGNORECASE)
+            if m:
+                return m.group(1).strip()
     return ""
 
 def detect_rbcs(text: str) -> str:
@@ -808,10 +865,17 @@ def detect_rbcs(text: str) -> str:
     # Handle text qualifiers for RBCs
     if re.search(r"tntc", text_l) and "pus" not in text_l[:text_l.find("tntc")]:
         return "TNTC"
-    # Second /HPF line = RBCs
-    hpf_lines = [l for l in text_l.splitlines() if "/hpf" in l or "hpf" in l]
-    if len(hpf_lines) >= 2:
-        _rbc_l = hpf_lines[1]
+    # Fallback: find the /HPF line that actually NAMES red cells. Never guess by
+    # position -- the old "second /HPF line" rule returned the pus-cell count as
+    # RBCs whenever the RBC label was dotted (R.B.Cs), and fabricated a value from
+    # the casts line on reports that had no RBC row at all.
+    _RBC_LABEL = re.compile(r"r\.?\s*b\.?\s*c|red\s*b|erythro|كريات\s*حمراء|حمراء")
+    _NOT_RBC   = re.compile(r"pus|w\.?\s*b\.?\s*c|leu[ck]|صديد|cast|epithel|crystal|"
+                            r"bacteri|yeast|mucus|املاح|بلورات")
+    hpf_lines = [l for l in text_l.splitlines() if "hpf" in l]
+    _cands = [l for l in hpf_lines if _RBC_LABEL.search(l) and not _NOT_RBC.search(l)]
+    if _cands:
+        _rbc_l = _cands[0]
         m_ov = re.search(r"over\s*(\d+)|>\s*(\d+)", _rbc_l)
         if m_ov:
             n = m_ov.group(1) or m_ov.group(2)
@@ -1435,16 +1499,27 @@ def analyze_antibiotics(
 # =========================================================
 # تعريف الفئات حسب Magiorakos et al. 2012 (ECDC/CDC)
 MDR_CATEGORIES = {
-    "Aminoglycosides":         ["Gentamicin","Amikacin"],
+    "Aminoglycosides":         ["Gentamicin","Amikacin","Tobramycin","Netilmicin"],
     "Antipseudomonal Penics":  ["Piperacillin + Tazobactam"],
-    "Extended-Sp Cephalosporins": ["Ceftriaxone","Cefotaxime","Cefixime","Cefuroxime"],
+    # Magiorakos Table 1 counts 3rd AND 4th generation as ONE category. Splitting
+    # them across three entries scored a plain ESBL at 3 resistant categories and
+    # labelled it MDR, when the correct count is 1 and the answer is NOT MDR.
+    "Extended-Sp Cephalosporins": ["Ceftriaxone","Cefotaxime","Cefixime",
+                                   "Ceftazidime","Cefoperazone",
+                                   "Cefoperazone + Sulbactam","Cefepime"],
+    # 1st/2nd generation: a distinct Magiorakos category that had no entry, so
+    # resistance to it counted for nothing. Cefuroxime is 2nd gen and moves here.
+    "Non-Extended-Sp Cephalosporins": ["Cephalexin","Cefadroxil","Cephradine",
+                                       "Cefazolin","Cefaclor","Cefuroxime",
+                                       "Cefuroxime sodium"],
+    "Cephamycins":             ["Cefoxitin"],
+    "Monobactams":             ["Aztreonam"],
+    "Penicillins":             ["Ampicillin","Amoxicillin"],
     "Carbapenems":             ["Imipenem/Cilastatin","Meropenem","Ertapenem"],
     "Fluoroquinolones":        ["Ciprofloxacin","Levofloxacin","Ofloxacin","Norfloxacin"],
     "Folate PI":               ["Trimethoprim/Sulfamethoxazole"],
     "Penicillins+BLI":         ["Amoxicillin + Clavulanic acid","Ampicillin/Sulbactam"],
     "Polymyxins":              ["Colistin"],
-    "Cephalosporins-4th":      ["Cefepime"],
-    "Cephalosporins-3rd-AP":   ["Ceftazidime","Cefoperazone","Cefoperazone + Sulbactam"],
     "Glycopeptides":           ["Vancomycin"],
     "Oxazolidinones":          ["Linezolid"],
     "Nitrofurans":             ["Nitrofurantoin"],
@@ -1459,7 +1534,8 @@ MDR_CATEGORIES = {
 MDR_CATEGORIES_GRAM_NEG = frozenset([
     "Aminoglycosides", "Antipseudomonal Penics", "Extended-Sp Cephalosporins",
     "Carbapenems", "Fluoroquinolones", "Folate PI", "Penicillins+BLI",
-    "Polymyxins", "Cephalosporins-4th", "Cephalosporins-3rd-AP",
+    "Polymyxins", "Non-Extended-Sp Cephalosporins", "Cephamycins",
+    "Monobactams", "Penicillins",
     "Nitrofurans", "Fosfomycins", "Tetracyclines",
 ])
 # Categories meaningful for Gram-positive organisms
@@ -5440,7 +5516,9 @@ def generate_decision_tree_image(
     _has_cre    = any(p in _ph_names for p in ["CRE","CRAB","CRPA"])
     _has_mdr    = (mdr_result or {}).get("level") in ("XDR","PDR")
     _esbl_prob  = (esbl_result or {}).get("probability")
-    _has_esbl   = _esbl_prob in ("high","carbapenemase","ampc")
+    _has_esbl   = _esbl_prob in ("high", "carbapenemase", "ampc",
+                                 "ampc_plasmid", "possible_carbapenemase",
+                                 "crpa")
 
     if _has_cre or _has_mdr:
         AB_BG = (255, 237, 234);  AB_BD = (183, 52, 52);   AB_TXT = (148, 30, 30)
@@ -5945,12 +6023,43 @@ if not st.session_state.authenticated:
 handle_session_timeout()
 render_top_bar()
 
+# ── Module health, shown before anything else ────────────────────────────────
+#  A missing clinical_data.py silently disables intrinsic-resistance filtering:
+#  inactive agents stop being routed to Avoid and stop being stripped before MDR
+#  counting. That is a degraded clinical mode, and it used to be reported only
+#  inside a COLLAPSED expander among ordinary data notes -- so the app could run
+#  for months giving weaker advice with nobody noticing. Anything that changes
+#  what the engine is capable of is now surfaced at the top, unmissable.
+_MODULE_HEALTH = [
+    ("clinical_data.py  (intrinsic resistance table)", INTRINSIC_TABLE_OK, True),
+    ("ast_reportability + ast_consistency  (QC panel)", AST_RULES_MODULES_AVAILABLE, False),
+    ("ast_qa_engine.py  (AST quality check)", AST_QA_AVAILABLE, False),
+    ("Arabic shaping  (arabic-reshaper + python-bidi)", ARABIC_SUPPORT, False),
+]
+_degraded = [(n, crit) for n, ok, crit in _MODULE_HEALTH if not ok]
+if any(crit for _, crit in _degraded):
+    st.error(
+        "🛑 **DEGRADED CLINICAL MODE — do not use for reporting.**  \n"
+        + "  \n".join(f"❌ `{n}` is missing." for n, crit in _degraded if crit)
+        + "  \n\nIntrinsically inactive antibiotics will NOT be filtered out of the "
+          "recommendations and will NOT be excluded from MDR counting. "
+          "Upload the missing file next to `streamlit_app.py` and restart."
+    )
+elif _degraded:
+    st.warning("⚠️ Optional modules unavailable: "
+               + ", ".join(f"`{n}`" for n, _ in _degraded)
+               + ". Core recommendations are unaffected.")
+
 startup_issues = get_startup_validation_issues()
 if startup_issues:
-    with st.expander("🧪 Data validation at startup", expanded=False):
-        st.warning(f"Found {len(startup_issues)} data issue(s).")
+    with st.expander(f"🧪 Data validation at startup ({len(startup_issues)})",
+                     expanded=False):
         for issue in startup_issues:
             st.write(f"- {issue}")
+
+with st.expander("🧩 Module health", expanded=False):
+    for _n, _ok, _crit in _MODULE_HEALTH:
+        st.write(f"{'✅' if _ok else ('❌' if _crit else '⚠️')} {_n}")
 
 st.title("🔬 Microbiology CDSS")
 st.caption("AI-Assisted Antibiotic Decision Support -- Egyptian Market Edition")

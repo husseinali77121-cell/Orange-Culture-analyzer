@@ -60,8 +60,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -98,7 +97,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -204,8 +203,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Penicillins+BLI",
@@ -300,8 +298,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Penicillins+BLI",
@@ -352,7 +349,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -399,9 +398,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -446,8 +444,8 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -494,7 +492,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -585,11 +584,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -745,11 +744,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -798,7 +797,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -854,9 +855,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -908,8 +908,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -1013,7 +1013,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -1124,13 +1125,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -1304,13 +1305,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -1397,8 +1398,6 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -1438,7 +1437,6 @@
   "esbl_conf": 75,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -1603,8 +1601,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -1746,8 +1742,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -1795,7 +1789,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -1843,9 +1839,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -1888,8 +1883,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -1979,7 +1974,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -2072,11 +2068,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -2229,11 +2225,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -2760,7 +2756,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -2812,9 +2810,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -2862,8 +2859,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -2959,7 +2956,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -3062,11 +3060,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -3231,11 +3229,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -3508,7 +3506,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -3557,9 +3557,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -3604,8 +3603,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -3695,7 +3694,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -3792,11 +3792,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -3905,11 +3905,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -3978,8 +3978,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
@@ -4048,8 +4047,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -4083,7 +4081,7 @@
   "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -4179,8 +4177,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Polymyxins"
   ],
@@ -4266,8 +4263,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -4312,6 +4308,7 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
@@ -4358,8 +4355,6 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
@@ -4402,9 +4397,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
@@ -4580,8 +4574,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -4692,8 +4685,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -4774,8 +4766,6 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -4812,7 +4802,6 @@
   "esbl_conf": 75,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -4965,8 +4954,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -5061,8 +5048,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -5420,7 +5405,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -5446,7 +5431,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -5523,7 +5508,7 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Polymyxins",
@@ -5548,7 +5533,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -5598,7 +5583,7 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Tetracyclines"
@@ -6089,7 +6074,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -6145,9 +6132,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -6199,8 +6185,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -6304,7 +6290,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -6415,13 +6402,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -6595,13 +6582,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -6650,7 +6637,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -6698,9 +6687,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -6743,8 +6731,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -6834,7 +6822,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -6927,11 +6916,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -7084,11 +7073,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -7135,7 +7124,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -7181,9 +7172,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -7227,8 +7217,8 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -7274,7 +7264,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -7363,11 +7354,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -7520,11 +7511,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -7571,7 +7562,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -7623,9 +7616,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -7673,8 +7665,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -7770,7 +7762,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -7873,11 +7866,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -8042,11 +8035,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -9104,8 +9097,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -9142,7 +9134,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -9248,8 +9240,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Penicillins+BLI",
@@ -9344,8 +9335,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Penicillins+BLI",
@@ -9396,7 +9386,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -9443,9 +9435,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -9490,8 +9481,8 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -9538,7 +9529,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -9629,11 +9621,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -9789,11 +9781,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -9842,7 +9834,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -9898,9 +9892,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -9952,8 +9945,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -10057,7 +10050,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -10168,13 +10162,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -10348,13 +10342,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -10403,7 +10397,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -10451,9 +10447,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -10496,8 +10491,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -10587,7 +10582,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -10680,11 +10676,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -10837,11 +10833,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -11149,7 +11145,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -11201,9 +11199,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -11251,8 +11248,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -11348,7 +11345,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -11451,11 +11449,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -11620,11 +11618,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -11897,7 +11895,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -11946,9 +11946,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -11993,8 +11992,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -12084,7 +12083,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -12181,11 +12181,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -12294,11 +12294,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -12367,8 +12367,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
@@ -12437,8 +12436,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -12472,7 +12470,7 @@
   "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -12568,8 +12566,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Polymyxins"
   ],
@@ -12655,8 +12652,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -13236,8 +13232,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -13274,7 +13269,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -13380,8 +13375,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Penicillins+BLI",
@@ -13476,8 +13470,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Penicillins+BLI",
@@ -13530,7 +13523,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -13586,9 +13581,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -13640,8 +13634,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -13745,7 +13739,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -13856,13 +13851,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -14036,13 +14031,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -14129,8 +14124,6 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -14168,7 +14161,6 @@
   "esbl_conf": 75,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -14331,8 +14323,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -14472,8 +14462,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -14519,7 +14507,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -14567,9 +14557,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -14612,8 +14601,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -14703,7 +14692,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -14796,11 +14786,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -14953,11 +14943,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -15004,7 +14994,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -15050,9 +15042,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -15096,8 +15087,8 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -15143,7 +15134,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -15232,11 +15224,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -15389,11 +15381,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -15437,7 +15429,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -15485,9 +15479,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -15531,8 +15524,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -15620,7 +15613,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -15715,11 +15709,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -15871,11 +15865,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -15924,7 +15918,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -15976,9 +15972,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -16026,8 +16021,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -16123,7 +16118,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -16226,11 +16222,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -16395,11 +16391,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -16450,7 +16446,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -16498,9 +16496,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -16546,8 +16543,8 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -16595,7 +16592,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -16688,11 +16686,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -16851,11 +16849,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -17428,8 +17426,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
@@ -17498,8 +17495,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -17533,7 +17529,7 @@
   "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -17629,8 +17625,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Polymyxins"
   ],
@@ -17716,8 +17711,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -18072,7 +18066,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -18098,7 +18092,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -18175,7 +18169,7 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Polymyxins",
@@ -18200,7 +18194,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -18250,7 +18244,7 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Tetracyclines"
@@ -18535,7 +18529,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -18581,9 +18577,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -18627,8 +18622,8 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -18674,7 +18669,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -18763,11 +18759,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -18920,11 +18916,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -18973,7 +18969,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -19029,9 +19027,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -19083,8 +19080,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -19188,7 +19185,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -19299,13 +19297,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -19479,13 +19477,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -19534,6 +19532,7 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
@@ -19580,8 +19579,6 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
@@ -19624,9 +19621,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
@@ -19802,8 +19798,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -19914,8 +19909,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -19963,6 +19957,7 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
@@ -20007,8 +20002,6 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
@@ -20049,9 +20042,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
@@ -20219,8 +20211,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -20327,8 +20318,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -20408,8 +20398,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -20448,7 +20437,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -20560,8 +20549,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Penicillins+BLI",
@@ -20660,8 +20648,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Penicillins+BLI",
@@ -20756,8 +20743,6 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -20799,7 +20784,6 @@
   "esbl_conf": 75,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -20983,8 +20967,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -21097,8 +21079,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -21149,7 +21129,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -21203,9 +21185,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -21250,8 +21231,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -21345,7 +21326,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -21452,13 +21434,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -21575,13 +21557,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -21630,7 +21612,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -21685,9 +21669,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -21734,8 +21717,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -21829,7 +21812,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -21940,13 +21924,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -22065,13 +22049,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -22118,7 +22102,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -22173,9 +22159,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -22221,8 +22206,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -22318,7 +22303,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -22427,13 +22413,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -22552,13 +22538,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -22824,7 +22810,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -22877,9 +22865,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -22924,8 +22911,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -23015,7 +23002,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -23122,13 +23110,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -23243,13 +23231,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -23296,7 +23284,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -23351,9 +23341,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -23398,8 +23387,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -23494,7 +23483,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -23603,13 +23593,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -23726,13 +23716,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -23781,7 +23771,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -23838,9 +23830,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -23889,8 +23880,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -23988,7 +23979,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -24103,13 +24095,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -24232,13 +24224,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -24540,8 +24532,6 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -24578,7 +24568,6 @@
   "esbl_conf": 75,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -24741,8 +24730,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -24841,8 +24828,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -24888,7 +24873,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -24940,9 +24927,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -24986,8 +24972,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -25075,7 +25061,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -25180,12 +25167,12 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -25295,12 +25282,12 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -25381,8 +25368,6 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -25418,7 +25403,6 @@
   "esbl_conf": 75,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -25577,8 +25561,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -25675,8 +25657,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -25750,8 +25730,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
@@ -25824,8 +25803,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -25861,7 +25839,7 @@
   "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -25963,8 +25941,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Fosfomycins",
    "Polymyxins"
@@ -26056,8 +26033,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Fosfomycins"
   ],
@@ -26817,8 +26793,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -26855,7 +26830,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
+   "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -26961,8 +26936,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Penicillins+BLI",
@@ -27057,8 +27031,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Penicillins+BLI",
@@ -27109,7 +27082,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -27156,9 +27131,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -27203,8 +27177,8 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -27251,7 +27225,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -27342,11 +27317,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -27502,11 +27477,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -27555,7 +27530,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -27611,9 +27588,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -27665,8 +27641,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -27770,7 +27746,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -27881,13 +27858,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -28061,13 +28038,13 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
    "Nitrofurans",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -28116,7 +28093,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -28164,9 +28143,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -28209,8 +28187,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -28300,7 +28278,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -28393,11 +28372,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -28550,11 +28529,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -28901,8 +28880,6 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
@@ -28941,9 +28918,8 @@
   "dtr": null,
   "esbl": "ampc",
   "esbl_conf": 75,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
@@ -29113,8 +29089,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -29261,8 +29235,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
@@ -29313,7 +29285,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -29365,9 +29339,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -29415,8 +29388,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -29512,7 +29485,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -29615,11 +29589,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Polymyxins",
    "Tetracyclines"
@@ -29784,11 +29758,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI",
    "Tetracyclines"
   ],
@@ -30061,7 +30035,9 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -30110,9 +30086,8 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -30157,8 +30132,8 @@
   "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -30248,7 +30223,8 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Extended-Sp Cephalosporins",
-   "Fluoroquinolones"
+   "Fluoroquinolones",
+   "Non-Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -30345,11 +30321,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -30458,11 +30434,11 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Cephamycins",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI",
+   "Non-Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -30540,8 +30516,6 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -30577,7 +30551,6 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP",
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -30726,8 +30699,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI"
@@ -30819,8 +30790,6 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Folate PI"
@@ -30888,8 +30857,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
@@ -30958,8 +30926,7 @@
   "mdr_cats": [
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -30993,7 +30960,7 @@
   "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [
-   "Cephalosporins-3rd-AP"
+   "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -31089,8 +31056,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones",
    "Polymyxins"
   ],
@@ -31176,8 +31142,7 @@
    "Aminoglycosides",
    "Antipseudomonal Penics",
    "Carbapenems",
-   "Cephalosporins-3rd-AP",
-   "Cephalosporins-4th",
+   "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
