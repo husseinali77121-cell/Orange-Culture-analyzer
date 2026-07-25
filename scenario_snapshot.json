@@ -1045,17 +1045,13 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
    "Fosfomycin",
    "Nitrofurantoin",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -1079,11 +1075,15 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Blood|E. coli|pdr": {
@@ -1543,11 +1543,9 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
-   "Ertapenem",
-   "Piperacillin + Tazobactam"
+   "Ertapenem"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -1568,7 +1566,9 @@
   ],
   "warned": [
    "Cefepime",
-   "Ceftazidime"
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Blood|Enterobacter cloacae|pdr": {
@@ -2003,13 +2003,9 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
-   "Ertapenem",
-   "Piperacillin + Tazobactam"
+   "Ertapenem"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -2028,10 +2024,14 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
-   "Cefuroxime"
+   "Cefuroxime",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Blood|Enterobacterales (unspeciated)|pdr": {
@@ -2986,15 +2986,11 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -3016,11 +3012,15 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Blood|Klebsiella spp.|pdr": {
@@ -3721,15 +3721,11 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -3752,11 +3748,15 @@
    "nobp_imipenem_proteae:Imipenem/Cilastatin"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Blood|Proteus mirabilis|pdr": {
@@ -4899,11 +4899,9 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
-   "Ertapenem",
-   "Piperacillin + Tazobactam"
+   "Ertapenem"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -4924,7 +4922,9 @@
   ],
   "warned": [
    "Cefepime",
-   "Ceftazidime"
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Blood|Serratia marcescens|pdr": {
@@ -6322,17 +6322,13 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
    "Fosfomycin",
    "Nitrofurantoin",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -6356,11 +6352,15 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "CSF|E. coli|pdr": {
@@ -6851,13 +6851,9 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
-   "Ertapenem",
-   "Piperacillin + Tazobactam"
+   "Ertapenem"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -6876,10 +6872,14 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
-   "Cefuroxime"
+   "Cefuroxime",
+   "Piperacillin + Tazobactam"
   ]
  },
  "CSF|Enterobacterales (unspeciated)|pdr": {
@@ -7792,15 +7792,11 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -7822,11 +7818,15 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "CSF|Klebsiella spp.|pdr": {
@@ -10082,17 +10082,13 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
    "Fosfomycin",
    "Nitrofurantoin",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -10116,11 +10112,15 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Pus|E. coli|pdr": {
@@ -10611,13 +10611,9 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
-   "Ertapenem",
-   "Piperacillin + Tazobactam"
+   "Ertapenem"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -10636,10 +10632,14 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
-   "Cefuroxime"
+   "Cefuroxime",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Pus|Enterobacterales (unspeciated)|pdr": {
@@ -11375,15 +11375,11 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -11405,11 +11401,15 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Pus|Klebsiella spp.|pdr": {
@@ -12110,15 +12110,11 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -12141,11 +12137,15 @@
    "nobp_imipenem_proteae:Imipenem/Cilastatin"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Pus|Proteus mirabilis|pdr": {
@@ -13771,17 +13771,13 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
    "Fosfomycin",
    "Nitrofurantoin",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -13805,11 +13801,15 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Sputum|E. coli|pdr": {
@@ -14267,11 +14267,9 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
-   "Ertapenem",
-   "Piperacillin + Tazobactam"
+   "Ertapenem"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -14290,7 +14288,9 @@
   ],
   "warned": [
    "Cefepime",
-   "Ceftazidime"
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Sputum|Enterobacter aerogenes|pdr": {
@@ -14721,13 +14721,9 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
-   "Ertapenem",
-   "Piperacillin + Tazobactam"
+   "Ertapenem"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -14746,10 +14742,14 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
-   "Cefuroxime"
+   "Cefuroxime",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Sputum|Enterobacterales (unspeciated)|pdr": {
@@ -15642,13 +15642,9 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
-   "Ertapenem",
-   "Piperacillin + Tazobactam"
+   "Ertapenem"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -15669,10 +15665,14 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
-   "Cefuroxime"
+   "Cefuroxime",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Sputum|Klebsiella pneumoniae|pdr": {
@@ -16148,15 +16148,11 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -16178,11 +16174,15 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Sputum|Klebsiella spp.|pdr": {
@@ -19218,16 +19218,12 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
    "Fosfomycin",
-   "Nitrofurantoin",
-   "Piperacillin + Tazobactam"
+   "Nitrofurantoin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -19251,11 +19247,15 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Stool|E. coli|pdr": {
@@ -27778,17 +27778,13 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
    "Fosfomycin",
    "Nitrofurantoin",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -27812,11 +27808,15 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Wound Swab|E. coli|pdr": {
@@ -28307,13 +28307,9 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
-   "Ertapenem",
-   "Piperacillin + Tazobactam"
+   "Ertapenem"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -28332,10 +28328,14 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
-   "Cefuroxime"
+   "Cefuroxime",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Wound Swab|Enterobacterales (unspeciated)|pdr": {
@@ -29031,12 +29031,9 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Ampicillin/Sulbactam",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
-   "Ertapenem",
-   "Piperacillin + Tazobactam"
+   "Ertapenem"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -29054,8 +29051,11 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Ampicillin/Sulbactam",
    "Cefepime",
-   "Ceftazidime"
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Wound Swab|Hafnia alvei|pdr": {
@@ -29515,15 +29515,11 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -29545,11 +29541,15 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Wound Swab|Klebsiella spp.|pdr": {
@@ -30250,15 +30250,11 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Cefixime",
-   "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftriaxone",
    "Ertapenem",
-   "Norfloxacin",
-   "Piperacillin + Tazobactam"
+   "Norfloxacin"
   ],
   "dtr": null,
   "esbl": "possible_carbapenemase",
@@ -30281,11 +30277,15 @@
    "nobp_imipenem_proteae:Imipenem/Cilastatin"
   ],
   "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
    "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefoxitin",
    "Ceftazidime",
    "Cefuroxime",
-   "Cefuroxime sodium"
+   "Cefuroxime sodium",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Wound Swab|Proteus mirabilis|pdr": {

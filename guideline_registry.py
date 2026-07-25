@@ -216,8 +216,10 @@ RULES: Dict[str, Dict[str, Any]] = {
                 "the tetracycline that actually works here.",
     },
     "intr_stenotrophomonas": {
-        "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        # DUPLICATE-KEY FIX: this row carried verified/checked_by/checked_on/
+        # countersigned_by TWICE. Python keeps the last occurrence, so the first
+        # set was silently discarded -- harmless while the values matched, but a
+        # trap the moment someone edited the top pair and saw no effect.
         "assertion": "S. maltophilia: L1 metallo-beta-lactamase -> all carbapenems, "
                      "plus intrinsic aminoglycoside and most beta-lactam resistance. "
                      "TMP-SMX is the established agent. Table 2 fn.7 is NARROWER "

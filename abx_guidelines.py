@@ -18,7 +18,10 @@ ABX_GUIDELINES = {
         "priority": 1, "class": "Beta-lactamase Inhibitor Combination",
         "note": "✅ خيار قياسي للعدوى البسيطة والمتوسطة (مثل Augmentin/Curam). Bioavailability فموي ~90%.",
         "renal_limit": 30, "renal_note": "CrCl 10-30: 500/125mg q12h (تجنّب 875mg). CrCl <10: 500/125mg q24h. BNF 2025.",
-        "hepatic_caution": False, "aware": "Access", "high_po": True,
+        # HEPATIC FIX: clavulanate is the commonest single cause of drug-induced
+        # liver injury worldwide. HEPATIC_DOSING already said "Child-Pugh C: Avoid";
+        # this flag said False, so the two tables contradicted each other.
+        "hepatic_caution": True, "aware": "Access", "high_po": True,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
         "aliases": ["augmentin","curam","amoxiclav","co-amoxiclav"],
@@ -462,7 +465,8 @@ ABX_GUIDELINES = {
         "priority": 4, "class": "Aminoglycoside (IV/IM)",
         "note": "💉 (مثل Amikin) IV/IM فقط — لا bioavailability فموي. فعال ضد السالبات المقاومة.",
         "renal_limit": 60, "renal_note": "15-20mg/kg q24h. CrCl 40-60: q36h. CrCl 20-40: q48h. CrCl <20: monitoring-based dosing. KDIGO 2024.",
-        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        # AWaRe FIX: amikacin is an Access agent in WHO AWaRe 2023, not Watch.
+        "hepatic_caution": False, "aware": "Access", "high_po": False,
         "preg_status": "Banned",
         "preg_note": (
             "ممنوع في الحمل — Amikacin:\n"
@@ -604,7 +608,8 @@ ABX_GUIDELINES = {
             "فعال للكلاميديا والمايكوبلازما."
         ),
         "renal_limit": 0, "renal_note": "🟢 آمن كلوياً نسبياً.",
-        "hepatic_caution": True, "aware": "Watch", "high_po": True,
+        # AWaRe FIX: doxycycline is Access in WHO AWaRe 2023 (minocycline stays Watch).
+        "hepatic_caution": True, "aware": "Access", "high_po": True,
         "preg_status": "Banned",
         "preg_note": (
             "⛔ ممنوع في الحمل — Doxycycline (Tetracycline class):\n"
@@ -900,7 +905,10 @@ _EXTRA_ENTRIES = {
         "priority": 2, "class": "Penicillin (IV/Oral)",
         "note": "⚠️ مقاومة عالية (>80%) في معظم الكائنات بدون مثبط. يُستخدم غالباً بمثبط (Ampicillin/Sulbactam).",
         "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
-        "hepatic_caution": False, "aware": "Access", "high_po": True,
+        # BIOAVAILABILITY FIX: oral ampicillin is only ~30-40% absorbed (food
+        # reduces it further). It is NOT an IV->PO switch candidate -- amoxicillin
+        # (~90%) is the oral equivalent. high_po was True and drove a wrong switch.
+        "hepatic_caution": False, "aware": "Access", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
         "aliases": ["ampicillin","ampicil","ampicilli"],
@@ -1187,7 +1195,7 @@ _EXTRA_ENTRIES_3 = {
             "✅ تغطية ممتازة لـ MSSA وStrep والأنيروبيك."
         ),
         "renal_limit": 0, "renal_note": "🟢 آمن كلوياً — يُطرح كبدياً.",
-        "hepatic_caution": True, "aware": "Watch", "high_po": True,
+        "hepatic_caution": True, "aware": "Access", "high_po": True,
         "preg_status": "Warn",
         "preg_note": (
             "⚠️ Clindamycin في الحمل:\n"

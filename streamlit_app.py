@@ -96,6 +96,21 @@ except Exception:
     _fmt_consistency = None
     AST_RULES_MODULES_AVAILABLE = False
 
+# Terminal safety gate + unified clinical constraint map. This is the layer that
+# adds site penetration (can the drug physically reach the infection?) on top of
+# the organism/host reasoning the main engine already does. Treated as CRITICAL
+# in _MODULE_HEALTH: without it the app silently loses meningeal-penetration
+# checking and the hepatic layer, and nothing on screen would say so.
+try:
+    from safety_gate import apply_safety_gate, GATE_VERSION
+    from clinical_matrix import MATRIX_VERSION
+    SAFETY_GATE_AVAILABLE = True
+except Exception as _sg_exc:
+    apply_safety_gate = None
+    GATE_VERSION = MATRIX_VERSION = "unavailable"
+    SAFETY_GATE_AVAILABLE = False
+    logger.error("safety_gate/clinical_matrix unavailable: %s", _sg_exc)
+
 # =========================================================
 # ملاحظة: Ampicillin, Amoxicillin, Tetracycline, Cephradine
 # منقولة بالكامل إلى abx_guidelines.py
@@ -257,11 +272,14 @@ def _hide_urine_only(names, specimen):
     on non-urine sites (they reach therapeutic levels only in urine). The ranking side
     already strips these from `allowed`; this keeps the reference list honest too.
     Norfloxacin keeps an enteric (GI) role, so it is retained for Stool."""
-    sl = (specimen or "").lower()
-    if "urine" in sl:
+    # Uses the canonical classifier so that this display filter cannot drift away
+    # from the therapeutic filter in analyze_antibiotics -- they must agree on
+    # what counts as urine, or the reference list contradicts the recommendation.
+    cat = classify_specimen(specimen)
+    if cat == "urine":
         return list(names or [])
     drop = {"nitrofurantoin", "fosfomycin"}
-    if "stool" not in sl:
+    if cat != "stool":
         drop = drop | {"norfloxacin"}
     return [n for n in (names or []) if n.lower().strip() not in drop]
 
@@ -352,13 +370,31 @@ init_session_state()
 # أدوات مساعدة
 # =========================================================
 def fuzzy_match(a: str, b: str) -> float:
+    """Similarity 0-100 between two drug-name strings.
+
+    BUG FIXED: the old body returned a flat 100.0 whenever either string was a
+    substring of the other. That made the caller's `>= 82` threshold completely
+    inert -- a single OCR character was enough to bind a garbage token to a real
+    antibiotic ('a' vs 'Amikacin' scored 100.0). Containment is now scored by
+    how much of the LONGER string the match actually covers, and a floor is
+    applied so a fragment can never outscore a genuine near-miss.
+    """
     a = (a or "").lower().strip()
     b = (b or "").lower().strip()
     if not a or not b:
         return 0.0
-    if a in b or b in a:
+    if a == b:
         return 100.0
-    return SequenceMatcher(None, a, b).ratio() * 100
+    ratio = SequenceMatcher(None, a, b).ratio() * 100
+    if a in b or b in a:
+        short, long = (a, b) if len(a) <= len(b) else (b, a)
+        # A containment is only as strong as its coverage of the longer name,
+        # and fragments under 4 characters carry no evidential weight at all.
+        if len(short) < 4:
+            return ratio
+        coverage = (len(short) / len(long)) * 100
+        return max(ratio, coverage)
+    return ratio
 
 def make_file_hash(file_bytes: bytes) -> str:
     return hashlib.sha256(file_bytes).hexdigest()
@@ -638,15 +674,22 @@ def detect_sex(text_lower: str) -> Optional[str]:
 # before anything else.
 # ─────────────────────────────────────────────────────────────────────────
 _SPECIMEN_CATEGORY_RULES = [
-    # (category, [keywords])  — checked top-to-bottom; first hit wins
-    ("blood",   ["blood culture", "blood"]),
-    ("csf",     ["csf", "cerebrospinal"]),
-    ("urine",   ["urine", "mid-stream", "midstream", "msu"]),
-    ("sputum",  ["sputum", "respiratory", "tracheal", "bronch", "bal"]),
+    # (category, [keywords])  — checked top-to-bottom; FIRST HIT WINS, so the
+    # order below is load-bearing: the generic "swab" keyword sits in the LAST
+    # rule precisely so that "throat swab" and "nasopharyngeal swab" are claimed
+    # by the respiratory rule above it. Before this fix "throat swab" fell into
+    # 'wound', which routed an upper-respiratory isolate through soft-tissue
+    # logic. Anything genuinely unrecognised still returns '' and every caller
+    # must treat '' as fail-closed, never as "no restriction".
+    ("blood",   ["blood culture", "blood", "bacteraem", "bacterem", "septicaem"]),
+    ("csf",     ["csf", "cerebrospinal", "lumbar puncture", "نخاعي"]),
+    ("urine",   ["urine", "mid-stream", "midstream", "msu", "catheter specimen", "بول"]),
+    ("sputum",  ["sputum", "respiratory", "tracheal", "endotracheal", "bronch", "bal",
+                 "throat", "pharyn", "nasopharyn", "tonsil", "بلغم", "حلق"]),
     ("stool",   ["stool", "fecal", "faecal", "feces", "faeces", "rectal", "براز"]),
-    ("abdomen", ["abdomen", "abdominal", "periton", "ascit"]),
-    ("pus",     ["pus", "abscess"]),
-    ("wound",   ["wound", "tissue", "swab", "ulcer"]),
+    ("abdomen", ["abdomen", "abdominal", "periton", "ascit", "bile", "biliary"]),
+    ("pus",     ["pus", "abscess", "empyema", "صديد", "خراج"]),
+    ("wound",   ["wound", "tissue", "swab", "ulcer", "burn", "skin", "جرح", "مسحة"]),
 ]
 
 def classify_specimen(specimen: str) -> str:
@@ -963,6 +1006,68 @@ def is_intrinsically_avoided(organism_type: str, drug_name: str, drug_info: Dict
 def build_banned_item(name: str, category: str, reason_short: str, reason_detail: str) -> Dict[str, str]:
     return {"name": name, "category": category,
             "reason_short": reason_short, "reason_detail": reason_detail}
+# ═══════════════════════════════════════════════════════════════════════
+# HEPATIC DOSING TABLE — defined here (not further down the file) because
+# analyze_antibiotics() now ENFORCES it rather than merely annotating it.
+# Keeping a table below its only consumer works by accident of module
+# execution order; declaring it first makes the dependency explicit.
+# ═══════════════════════════════════════════════════════════════════════
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ENGINE 3 -- Hepatic Dosing (Child-Pugh A/B/C)
+# BNF 2025 | Lexicomp 2025 | UpToDate 2025
+# ═══════════════════════════════════════════════════════════════════════
+HEPATIC_DOSING: Dict[str, Dict] = {
+    # ── Keys match abx_guidelines.py drug names exactly for lookup to work ──
+    # Drugs marked [MDR/REF only] not in active formulary -- kept for reference display.
+    "Metronidazole":                 {"A": ("Normal","No adjustment"), "B": ("Reduce 50%","Reduce dose by 50%"), "C": ("Avoid/Reduce","Avoid if possible; if essential max 500mg q12h"), "note": "Extensive hepatic metabolism"},
+    "Clindamycin":                   {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution; reduce 25-50%"), "C": ("Avoid","Avoid -- accumulation risk"), "note": "Primary hepatic metabolism [MDR/REF only]"},
+    "Rifampicin":                    {"A": ("Normal (no jaundice)","Normal if no jaundice"), "B": ("Max 8mg/kg/d","Max 8mg/kg/day; weekly LFTs"), "C": ("Avoid","Avoid -- hepatotoxic + CYP inducer"), "note": "Hepatotoxic + strong CYP inducer [MDR/REF only]"},
+    "Erythromycin":                  {"A": ("Normal","No adjustment"), "B": ("Reduce 25%","Reduce dose by 25%"), "C": ("Reduce 50%","Reduce 50% or avoid"), "note": "Cholestatic hepatitis risk [MDR/REF only]"},
+    "Ceftriaxone":                   {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment; max 2g/day"), "C": ("Max 2g/day","2g/day maximum -- biliary sludge risk"), "note": "Dual hepatic/renal elimination"},
+    "Linezolid":                     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No adjustment -- primarily renal"), "note": "No hepatic dose adjustment required"},
+    "Vancomycin":                    {"A": ("Renal-based","AUC/MIC monitoring"), "B": ("Renal-based","AUC/MIC monitoring"), "C": ("Renal-based","AUC/MIC monitoring"), "note": "Primarily renal -- no hepatic adjustment"},
+    "Ciprofloxacin":                 {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Reduce 50%","Reduce by 50% in severe failure"), "note": "Partial hepatic metabolism"},
+    "Doxycycline":                   {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Avoid","Avoid in severe hepatic failure"), "note": "Biliary excretion pathway"},
+    "Amoxicillin + Clavulanic acid": {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Avoid","Avoid -- Clavulanate-associated DILI risk"), "note": "Clavulanate linked to drug-induced liver injury"},
+    "Piperacillin + Tazobactam":     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal (renal)","No hepatic adjustment -- monitor renal"), "note": "Primarily renal elimination"},
+    "Tigecycline":                   {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Reduce","100mg loading then 12.5mg q12h in Child-Pugh C"), "note": "Biliary excretion -- adjust in severe impairment [MDR/REF only]"},
+    "Colistin":                      {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Renal-based","Based on CrCl -- primarily renal"), "note": "Primarily renal elimination"},
+    "Nitrofurantoin":                {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Avoid","Avoid in hepatic failure"), "note": "Cholestatic hepatitis risk"},
+    "Chloramphenicol":               {"A": ("Caution","Use with caution"), "B": ("Avoid","Avoid"), "C": ("Avoid","Avoid -- gray syndrome risk"), "note": "Hepatic glucuronidation -- accumulates [MDR/REF only]"},
+    "Trimethoprim/Sulfamethoxazole": {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Avoid","Avoid in severe hepatic failure"), "note": "Hepatic acetylation -- accumulates"},
+    "Azithromycin":                  {"A": ("Normal","No adjustment"), "B": ("Caution","Monitor LFTs"), "C": ("Avoid","Avoid in severe hepatic failure"), "note": "Biliary excretion -- hepatic impairment increases exposure"},
+    "Clarithromycin":                {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Avoid","Avoid -- accumulation + QT risk"), "note": "Hepatic CYP3A4 metabolism"},
+    "Meropenem":                     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Caution","No formal adjustment -- monitor clinically"), "note": "Minimal hepatic metabolism"},
+    "Imipenem/Cilastatin":           {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Caution","No formal adjustment -- monitor seizure risk"), "note": "Minimal hepatic metabolism"},
+    "Levofloxacin":                  {"A": ("Normal","No adjustment"), "B": ("Caution","Monitor LFTs"), "C": ("Caution","No formal adjustment -- primarily renal; monitor"), "note": "Partial hepatic metabolism -- primarily renal"},
+    "Ofloxacin":                     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No hepatic adjustment -- primarily renal"), "note": "Primarily renal elimination"},
+    "Norfloxacin":                   {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No hepatic adjustment -- primarily renal"), "note": "Primarily renal elimination"},
+    "Ertapenem":                     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No hepatic adjustment required"), "note": "Primarily renal elimination"},
+    "Ampicillin/Sulbactam":          {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No hepatic adjustment -- primarily renal"), "note": "Primarily renal elimination"},
+    "Fosfomycin":                    {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No hepatic adjustment"), "note": "Primarily renal elimination"},
+    "Cephalexin":                    {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No hepatic adjustment"), "note": "Primarily renal elimination"},
+    "Gentamicin":                    {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal (renal)","Primarily renal -- no hepatic adjustment; monitor nephrotoxicity"), "note": "Primarily renal -- ototoxic + nephrotoxic"},
+    "Amikacin":                      {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal (renal)","Primarily renal -- no hepatic adjustment; monitor nephrotoxicity"), "note": "Primarily renal -- ototoxic + nephrotoxic"},
+    # ── COVERAGE GAP CLOSED ────────────────────────────────────────────────
+    # These nine agents all carry hepatic_caution=True in abx_guidelines.py yet
+    # had NO row here, so get_hepatic_recommendations() returned nothing for
+    # them and a cirrhotic patient received no hepatic guidance at all on the
+    # very drugs the formulary had already flagged as hepatically risky.
+    "Tobramycin":                    {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal (renal)","Primarily renal -- no hepatic adjustment; monitor nephrotoxicity"), "note": "Primarily renal -- ototoxic + nephrotoxic"},
+    "Moxifloxacin":                  {"A": ("Normal","No adjustment"), "B": ("Caution","Monitor LFTs; withdraw if transaminases rise"), "C": ("Avoid","CONTRAINDICATED in Child-Pugh C (EMA/FDA label) and if ALT/AST >5x ULN"), "note": "Hepatic metabolism with no renal escape route; highest fulminant-hepatitis signal of the fluoroquinolones"},
+    "Gatifloxacin":                  {"A": ("Normal","No adjustment"), "B": ("Caution","Monitor LFTs and glucose"), "C": ("Avoid","Avoid -- hepatic metabolism plus dysglycaemia risk"), "note": "Hepatic metabolism; withdrawn in several markets for dysglycaemia"},
+    "Tetracycline":                  {"A": ("Caution","Use with caution"), "B": ("Avoid","Avoid"), "C": ("Avoid","Avoid -- dose-related hepatotoxicity, microvesicular steatosis"), "note": "Fatal fatty liver reported with high/IV doses; the most hepatotoxic tetracycline"},
+    "Minocycline":                   {"A": ("Normal","No adjustment"), "B": ("Caution","Monitor LFTs"), "C": ("Avoid","Avoid -- autoimmune hepatitis and DRESS reported"), "note": "Hepatic metabolism; idiosyncratic autoimmune hepatitis on prolonged use"},
+    "Tinidazole":                    {"A": ("Normal","No adjustment"), "B": ("Reduce 50%","Reduce dose by 50%"), "C": ("Avoid","Avoid -- extensive CYP3A4 metabolism, accumulation"), "note": "Extensive hepatic metabolism (mirrors Metronidazole but longer half-life)"},
+    "Oxacillin":                     {"A": ("Normal","No adjustment"), "B": ("Caution","Monitor LFTs; consider Cefazolin instead"), "C": ("Avoid","Avoid -- prefer Cefazolin (less hepatotoxic, equal MSSA efficacy)"), "note": "Dose-related cholestatic hepatitis, especially >8 g/day"},
+    "Fusidic acid":                  {"A": ("Caution","Monitor LFTs"), "B": ("Avoid","Avoid"), "C": ("Avoid","Avoid -- biliary excretion, dose-dependent jaundice"), "note": "Biliary excretion; hyperbilirubinaemia and cholestasis are common, worse with statin co-administration"},
+    "Cefoperazone":                  {"A": ("Normal","No adjustment"), "B": ("Caution","Max 4 g/day; monitor INR, give vitamin K"), "C": ("Avoid","Avoid -- max 2 g/day if unavoidable; biliary obstruction abolishes the main clearance route"), "note": "~70% biliary excretion; NMTT side chain causes hypoprothrombinaemia and bleeding"},
+    "Cefoperazone + Sulbactam":      {"A": ("Normal","No adjustment"), "B": ("Caution","Max 4 g/day cefoperazone component; monitor INR, give vitamin K"), "C": ("Avoid","Avoid -- max 2 g/day if unavoidable"), "note": "~70% biliary excretion; NMTT side chain causes hypoprothrombinaemia and bleeding"},
+}
+
+
 
 def analyze_antibiotics(
     final_drugs: List[str],
@@ -976,7 +1081,12 @@ def analyze_antibiotics(
     is_hepatic: bool,
     current_meds: List[str],
     sir_map: Dict[str, str],
+    child_pugh: str = "C",
 ) -> Tuple[List[Dict], List[Dict], List[Dict], List[Dict], List[str]]:
+    # child_pugh defaults to the WORST grade on purpose. If the caller knows the
+    # grade it passes it; if it does not, the engine must not silently assume the
+    # mildest liver disease and hand back agents that are contraindicated in
+    # decompensated cirrhosis. Fail-closed, never fail-permissive.
     allowed:            List[Dict] = []
     warned:             List[Dict] = []
     banned:             List[Dict] = []
@@ -1186,7 +1296,51 @@ def analyze_antibiotics(
         # ── ESBL + BLI combos (Amox-Clav, Pip-Tazo): UTI-only caution ─────────
         # Not banned outright (effective for uncomplicated ESBL UTI if S),
         # but NOT for bacteremia/serious infection (MERINO 2018).
-        if (_is_esbl_like or _is_carbapenemase or _is_possible_carb) \
+        # A *suspicion* of carbapenemase is handled the same way for BLI combos as
+        # it already is for cephalosporins: warn and ask for confirmation, do not
+        # ban. Previously the two branches contradicted each other -- on a blood
+        # culture with a single Ertapenem-R, an S cephalosporin was merely WARNED
+        # while S Piperacillin-Tazobactam was BANNED. That is backwards: pip-tazo
+        # is the more robust of the two against a porin-loss/AmpC phenotype, which
+        # is the commonest benign explanation for isolated ertapenem resistance.
+        # Confirmed ESBL / confirmed carbapenemase keep the off-urine ban (MERINO).
+        if _is_possible_carb and not (_is_esbl_like or _is_carbapenemase) \
+                and _is_bli_combo(info, drug) and culture_result in ("S", "I"):
+            _w = dict(info)
+            _w["warning_reason"] = "possible_carbapenemase"
+            _systemic = classify_specimen(culture_type) != "urine"
+            if _systemic:
+                _w["esbl_note"] = (
+                    "⛔ لا تستخدمه كعلاج نهائي منفرد في هذه العينة. اشتباه كاربابينيميز "
+                    "غير مؤكد (كاربابينيم واحد R أو Meropenem I) في عينة جهازية. "
+                    "التوليفة حسّاسة معملياً وتُبلَّغ كما هي (EUCAST v16)، لكن MERINO 2018 "
+                    "أظهرت وفيات أعلى مع BLI مقابل الكاربابينيم في تجرثم الدم. "
+                    "ابدأ بالكاربابينيم وأكّد بـ mCIM أو PCR، ولا تنزل لهذه التوليفة إلا "
+                    "بعد نفي الإنزيم واستشارة الأمراض المعدية."
+                )
+                _w["esbl_note_en"] = (
+                    "DO NOT use as definitive monotherapy for this specimen. "
+                    "Unconfirmed carbapenemase suspicion on a systemic site. Susceptible "
+                    "in vitro and reported as tested (EUCAST v16), but MERINO 2018 showed "
+                    "higher mortality with BLI versus meropenem in bacteraemia. Start a "
+                    "carbapenem, confirm with mCIM/PCR, and de-escalate to this agent only "
+                    "once the enzyme is excluded and ID has been consulted."
+                )
+            else:
+                _w["esbl_note"] = (
+                    "⚠️ اشتباه كاربابينيميز غير مؤكد (كاربابينيم واحد R أو Meropenem I). "
+                    "هذه التوليفة حسّاسة معملياً وتُبلَّغ كما هي (EUCAST v16). خيار مقبول "
+                    "لعدوى المسالك البولية البسيطة عند ثبوت الحساسية؛ أكّد بـ mCIM أو PCR."
+                )
+                _w["esbl_note_en"] = (
+                    "Unconfirmed carbapenemase suspicion. Susceptible in vitro and reported "
+                    "as tested (EUCAST v16). Acceptable for uncomplicated lower UTI when "
+                    "proven S; confirm with mCIM or PCR."
+                )
+            warned.append({"name": drug, **_w})
+            continue
+
+        if (_is_esbl_like or _is_carbapenemase) \
                 and _is_bli_combo(info, drug):
             # SPECIMEN GATING. The "UTI-only caution" is only a caution when the
             # specimen IS urine. MERINO 2018 randomised ESBL BLOODSTREAM infection
@@ -1227,14 +1381,33 @@ def analyze_antibiotics(
                     drug, "child", "غير مناسب < 18 سنة.", CHILD_BAN_REASONS["fluoroquinolone"]
                 ))
                 continue
-            if "tetracycline" in cls and age < 8:
+            if "tetracycline" in cls:
+                # The age<8 guard used to sit on this branch, so a tetracycline
+                # given to an 8-17 year old fell through to the generic message
+                # below and the clinician was told "not preferred for children"
+                # with no reason -- losing the dental-staining/bone-deposition
+                # rationale that is the whole point of the restriction, and
+                # losing the fact that AAP Red Book 2024 and CLSI now accept
+                # short courses of doxycycline (<21 days) at any age.
+                _tet_reason = CHILD_BAN_REASONS["tetracycline"]
+                if age >= 8:
+                    _tet_reason += (
+                        "\n\nملاحظة (AAP Red Book 2024): بعد سن 8 سنوات لم يعد "
+                        "التصبغ السني عائقاً، و Doxycycline لدورات قصيرة (< 21 يوم) "
+                        "مقبول في هذه الفئة العمرية عند وجود دواعٍ واضحة "
+                        "(rickettsial / atypical / MRSA بالجلد). القرار للطبيب المعالج."
+                    )
                 banned.append(build_banned_item(
-                    drug, "child", "غير مناسب < 8 سنوات.", CHILD_BAN_REASONS["tetracycline"]
+                    drug, "child",
+                    f"غير مناسب < 8 سنوات." if age < 8
+                    else "يحتاج قرار طبيب — تتراسيكلين في عمر 8-17 سنة.",
+                    _tet_reason,
                 ))
                 continue
             banned.append(build_banned_item(
                 drug, "child", "غير مفضل للأطفال.",
-                "يحتاج تقييم متخصص أو لا يُنصح به روتينياً لهذه الفئة العمرية.",
+                f"{drug}: يحتاج تقييم متخصص أو لا يُنصح به روتينياً في عمر {age} سنة. "
+                f"{info.get('child_note', '')}".strip(),
             ))
             continue
 
@@ -1318,15 +1491,24 @@ def analyze_antibiotics(
             ))
             continue
 
-        renal_limit = info.get("renal_limit", 0)
-        if is_renal and renal_limit > 0 and cl_cr <= renal_limit:
-            warned.append({"name": drug, **info, "warning_reason": "renal_adjustment"})
-            continue
-
         # ══════════════════════════════════════════════════════════════════
         # PREGNANCY SAFETY BLOCK
         # Updated per: ACOG 2023, BNF 2025, EMA 2025, ENTIS 2024,
         #              IDSA AMR Guidance v4.0 (2024), WHO AWaRe 2023, BMJ Teratology 2023
+        #
+        # ORDERING IS LOAD-BEARING -- DO NOT MOVE THE RENAL BLOCK BACK ABOVE THIS.
+        # The renal-adjustment branch below ends in `continue`. While it sat
+        # BEFORE this block, any drug whose renal_limit happened to exceed the
+        # patient's CrCl skipped pregnancy screening entirely: a pregnant woman
+        # with CrCl 55 was shown Gentamicin, Amikacin and Tobramycin (fetal
+        # ototoxicity, FDA category D) as "Use with caution -- needs renal
+        # adjustment" instead of BANNED, and at CrCl <=30 Clarithromycin,
+        # TMP-SMX and Gatifloxacin leaked the same way. The leak was invisible
+        # in testing because it only fires when BOTH is_renal is ticked AND
+        # cl_cr <= that particular drug's renal_limit. A sweep over
+        # 7 specimens x 20 organisms x 7 CrCl values found 560 leaking cells.
+        # Absolute teratogenic contraindications must be resolved before any
+        # branch that can exit the loop early.
         # ══════════════════════════════════════════════════════════════════
         if is_preg:
 
@@ -1445,6 +1627,49 @@ def analyze_antibiotics(
                 preg_warn_items.append({"name": drug, **info})
                 continue
 
+        # ══════════════════════════════════════════════════════════════════
+        # HEPATIC CONTRAINDICATIONS -- enforced, not merely annotated
+        # ------------------------------------------------------------------
+        # HEPATIC_DOSING already recorded "Avoid" verdicts for Child-Pugh C, but
+        # nothing consumed them: get_hepatic_recommendations() only ANNOTATED the
+        # allowed list, so ten agents carrying an explicit Avoid -- including
+        # Amoxicillin-Clavulanate (DILI), Chloramphenicol, Nitrofurantoin
+        # (cholestatic hepatitis), Doxycycline, Azithromycin and Clarithromycin --
+        # stayed in the recommended bucket for a decompensated cirrhotic. The
+        # verdict is now applied here, at the point of decision.
+        # BNF 2025 hepatic impairment | LiverTox (NIH) | Lexicomp 2025
+        # ══════════════════════════════════════════════════════════════════
+        if is_hepatic:
+            _hep_row = HEPATIC_DOSING.get(drug)
+            if _hep_row:
+                _grade = (child_pugh or "C").strip().upper()[:1] or "C"
+                if _grade not in ("A", "B", "C"):
+                    _grade = "C"
+                _lvl, _rec = _hep_row.get(_grade, ("Normal", "No adjustment"))
+                if "avoid" in str(_lvl).lower():
+                    banned.append(build_banned_item(
+                        drug, "hepatic",
+                        f"ممنوع في القصور الكبدي (Child-Pugh {_grade}).",
+                        f"{drug}: {_rec}. {_hep_row.get('note', '')} "
+                        f"المرجع: BNF 2025 (hepatic impairment) / LiverTox NIH.",
+                    ))
+                    continue
+                if str(_lvl).lower() not in ("normal", "renal-based", "auc/mic monitoring",
+                                             "normal (renal)"):
+                    warned.append({"name": drug, **info,
+                                   "warning_reason": "hepatic_adjustment",
+                                   "hepatic_level": _lvl, "hepatic_rec": _rec})
+                    continue
+
+        # ── Renal dose adjustment (a CAUTION, so it must run last) ────────────
+        # Kept below every absolute contraindication on purpose: this branch
+        # exits the loop, and anything that exits the loop must not be able to
+        # pre-empt a hard ban. See the ordering note in the pregnancy block.
+        renal_limit = info.get("renal_limit", 0)
+        if is_renal and renal_limit > 0 and cl_cr <= renal_limit:
+            warned.append({"name": drug, **info, "warning_reason": "renal_adjustment"})
+            continue
+
         if culture_result == "I":
             warned.append({"name": drug, **info, "warning_reason": "intermediate_culture"})
             continue
@@ -1462,9 +1687,18 @@ def analyze_antibiotics(
     #   • Norfloxacin: poor serum levels -> urinary (and some GI) use only.
     # They are BANNED (with a reason) for every non-urine systemic specimen.
     # For stool/GI, Norfloxacin retains an enteric role so only Nitro/Fosfo go.
-    _spec_l     = culture_type.lower()
-    is_urine    = "urine" in _spec_l
-    is_stool_gi = any(k in _spec_l for k in ["stool", "fecal", "rectal"])
+    # Canonical classifier, not a raw substring test. Three different "is this
+    # urine?" tests used to coexist in this file and they disagreed: the ESBL
+    # branch asked classify_specimen(), this filter asked `"urine" in text`, and
+    # _hide_urine_only() asked a third. For "MSU", "Midstream" or "Catheter
+    # specimen" the first said urine and the other two said not-urine, so
+    # Nitrofurantoin and Fosfomycin were banned off a genuine urine sample as
+    # "specimen-inappropriate" -- removing the two best-targeted oral agents for
+    # an uncomplicated UTI. One classifier, one answer.
+    _spec_cat_final = classify_specimen(culture_type)
+    _spec_l     = (culture_type or "").lower()
+    is_urine    = _spec_cat_final == "urine"
+    is_stool_gi = _spec_cat_final == "stool"
 
     if not is_urine:
         if is_stool_gi:
@@ -3167,45 +3401,6 @@ def evaluate_iv_po_switch(
                     else "IV->PO switch NOT recommended at this time."),
         "ref": "IDSA OPAT 2019 | BNF 2025 | BSAC 2023",
     }
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# ENGINE 3 -- Hepatic Dosing (Child-Pugh A/B/C)
-# BNF 2025 | Lexicomp 2025 | UpToDate 2025
-# ═══════════════════════════════════════════════════════════════════════
-HEPATIC_DOSING: Dict[str, Dict] = {
-    # ── Keys match abx_guidelines.py drug names exactly for lookup to work ──
-    # Drugs marked [MDR/REF only] not in active formulary -- kept for reference display.
-    "Metronidazole":                 {"A": ("Normal","No adjustment"), "B": ("Reduce 50%","Reduce dose by 50%"), "C": ("Avoid/Reduce","Avoid if possible; if essential max 500mg q12h"), "note": "Extensive hepatic metabolism"},
-    "Clindamycin":                   {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution; reduce 25-50%"), "C": ("Avoid","Avoid -- accumulation risk"), "note": "Primary hepatic metabolism [MDR/REF only]"},
-    "Rifampicin":                    {"A": ("Normal (no jaundice)","Normal if no jaundice"), "B": ("Max 8mg/kg/d","Max 8mg/kg/day; weekly LFTs"), "C": ("Avoid","Avoid -- hepatotoxic + CYP inducer"), "note": "Hepatotoxic + strong CYP inducer [MDR/REF only]"},
-    "Erythromycin":                  {"A": ("Normal","No adjustment"), "B": ("Reduce 25%","Reduce dose by 25%"), "C": ("Reduce 50%","Reduce 50% or avoid"), "note": "Cholestatic hepatitis risk [MDR/REF only]"},
-    "Ceftriaxone":                   {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment; max 2g/day"), "C": ("Max 2g/day","2g/day maximum -- biliary sludge risk"), "note": "Dual hepatic/renal elimination"},
-    "Linezolid":                     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No adjustment -- primarily renal"), "note": "No hepatic dose adjustment required"},
-    "Vancomycin":                    {"A": ("Renal-based","AUC/MIC monitoring"), "B": ("Renal-based","AUC/MIC monitoring"), "C": ("Renal-based","AUC/MIC monitoring"), "note": "Primarily renal -- no hepatic adjustment"},
-    "Ciprofloxacin":                 {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Reduce 50%","Reduce by 50% in severe failure"), "note": "Partial hepatic metabolism"},
-    "Doxycycline":                   {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Avoid","Avoid in severe hepatic failure"), "note": "Biliary excretion pathway"},
-    "Amoxicillin + Clavulanic acid": {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Avoid","Avoid -- Clavulanate-associated DILI risk"), "note": "Clavulanate linked to drug-induced liver injury"},
-    "Piperacillin + Tazobactam":     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal (renal)","No hepatic adjustment -- monitor renal"), "note": "Primarily renal elimination"},
-    "Tigecycline":                   {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Reduce","100mg loading then 12.5mg q12h in Child-Pugh C"), "note": "Biliary excretion -- adjust in severe impairment [MDR/REF only]"},
-    "Colistin":                      {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Renal-based","Based on CrCl -- primarily renal"), "note": "Primarily renal elimination"},
-    "Nitrofurantoin":                {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Avoid","Avoid in hepatic failure"), "note": "Cholestatic hepatitis risk"},
-    "Chloramphenicol":               {"A": ("Caution","Use with caution"), "B": ("Avoid","Avoid"), "C": ("Avoid","Avoid -- gray syndrome risk"), "note": "Hepatic glucuronidation -- accumulates [MDR/REF only]"},
-    "Trimethoprim/Sulfamethoxazole": {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Avoid","Avoid in severe hepatic failure"), "note": "Hepatic acetylation -- accumulates"},
-    "Azithromycin":                  {"A": ("Normal","No adjustment"), "B": ("Caution","Monitor LFTs"), "C": ("Avoid","Avoid in severe hepatic failure"), "note": "Biliary excretion -- hepatic impairment increases exposure"},
-    "Clarithromycin":                {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Avoid","Avoid -- accumulation + QT risk"), "note": "Hepatic CYP3A4 metabolism"},
-    "Meropenem":                     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Caution","No formal adjustment -- monitor clinically"), "note": "Minimal hepatic metabolism"},
-    "Imipenem/Cilastatin":           {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Caution","No formal adjustment -- monitor seizure risk"), "note": "Minimal hepatic metabolism"},
-    "Levofloxacin":                  {"A": ("Normal","No adjustment"), "B": ("Caution","Monitor LFTs"), "C": ("Caution","No formal adjustment -- primarily renal; monitor"), "note": "Partial hepatic metabolism -- primarily renal"},
-    "Ofloxacin":                     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No hepatic adjustment -- primarily renal"), "note": "Primarily renal elimination"},
-    "Norfloxacin":                   {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No hepatic adjustment -- primarily renal"), "note": "Primarily renal elimination"},
-    "Ertapenem":                     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No hepatic adjustment required"), "note": "Primarily renal elimination"},
-    "Ampicillin/Sulbactam":          {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No hepatic adjustment -- primarily renal"), "note": "Primarily renal elimination"},
-    "Fosfomycin":                    {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No hepatic adjustment"), "note": "Primarily renal elimination"},
-    "Cephalexin":                    {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No hepatic adjustment"), "note": "Primarily renal elimination"},
-    "Gentamicin":                    {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal (renal)","Primarily renal -- no hepatic adjustment; monitor nephrotoxicity"), "note": "Primarily renal -- ototoxic + nephrotoxic"},
-    "Amikacin":                      {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal (renal)","Primarily renal -- no hepatic adjustment; monitor nephrotoxicity"), "note": "Primarily renal -- ototoxic + nephrotoxic"},
-}
 
 def get_hepatic_recommendations(allowed_drugs: List[Dict], child_pugh: str) -> List[Dict[str, str]]:
     """Hepatic dosing recommendations -- BNF 2025 | Lexicomp 2025"""
@@ -4915,12 +5110,20 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:0.6mm 0; }
         H.append('</div>')
 
     # ── Interactions (compact) ─────────────────────────────────────────
+    # SILENT-TRUNCATION FIX: this used to print `interactions[:4]`, so on a
+    # hepatic patient with several flagged agents the 5th warning onwards simply
+    # never appeared in the document the physician actually reads -- and nothing
+    # told anyone it had been dropped. All items are now printed; if the list is
+    # long the overflow is condensed onto one line rather than discarded.
     if interactions:
+        _ia_all = list(interactions)
+        _ia_head, _ia_tail = _ia_all[:6], _ia_all[6:]
+        _rows = [f'<span style="font-size:9pt">{_esc(ia)}</span>' for ia in _ia_head]
+        if _ia_tail:
+            _rows.append('<span style="font-size:8pt">+ '
+                         + _esc(" · ".join(_ia_tail)) + '</span>')
         H.append(f'<div class="sec-ttl" style="margin-top:0.6mm">{_T["interactions"]}</div>'
-                 '<div class="alert al-warn">'
-                 + '<br>'.join(f'<span style="font-size:9pt">{_esc(ia)}</span>'
-                               for ia in interactions[:4])
-                 + '</div>')
+                 '<div class="alert al-warn">' + '<br>'.join(_rows) + '</div>')
 
     # 2-column equal — Treatment Duration LEFT, Pathogenicity RIGHT
     H.append('<div class="grid2" style="margin-top:0.6mm">')
@@ -6032,6 +6235,8 @@ render_top_bar()
 #  what the engine is capable of is now surfaced at the top, unmissable.
 _MODULE_HEALTH = [
     ("clinical_data.py  (intrinsic resistance table)", INTRINSIC_TABLE_OK, True),
+    (f"safety_gate + clinical_matrix  (site/host safety map v{MATRIX_VERSION})",
+     SAFETY_GATE_AVAILABLE, True),
     ("ast_reportability + ast_consistency  (QC panel)", AST_RULES_MODULES_AVAILABLE, False),
     ("ast_qa_engine.py  (AST quality check)", AST_QA_AVAILABLE, False),
     ("Arabic shaping  (arabic-reshaper + python-bidi)", ARABIC_SUPPORT, False),
@@ -6953,6 +7158,8 @@ if uploaded:
         # ── تحليل المضادات ────────────────────────────────────────────────────
         # النقطة ٤: analyze_antibiotics يُستدعى مباشرة بقيم اللحظة
         # فأي تغيير في أي widget يُعيد تشغيل Streamlit -> تحديث فوري
+        _child_pugh_now = st.session_state.get("child_pugh_class", "C") if is_hepatic else "A"
+
         allowed, warned, banned, preg_warn_items, interactions_alerts = analyze_antibiotics(
             final_drugs=final_drugs,
             organism_type=organism_type,
@@ -6962,7 +7169,52 @@ if uploaded:
             is_preg=is_preg, is_hepatic=is_hepatic,
             current_meds=current_meds,
             sir_map=sir_map,
+            child_pugh=_child_pugh_now,
         )
+
+        # ══════════════════════════════════════════════════════════════════════
+        # TERMINAL SAFETY GATE — second, independent opinion before display
+        # ----------------------------------------------------------------------
+        # clinical_matrix.py + safety_gate.py were written, tested (33 proofs)
+        # and then never imported by this file, so the whole layer was inert.
+        # It supplies what analyze_antibiotics structurally cannot: the
+        # pharmacokinetic compartment. Without it this app was placing
+        # Cefazolin, Cephalexin, Clindamycin, Azithromycin and Ertapenem in the
+        # RECOMMENDED bucket for a CSF isolate — none of them reliably cross the
+        # blood-brain barrier at meningeal doses.
+        #
+        # The gate is DEMOTE-ONLY (allowed -> caution -> avoid, never the
+        # reverse), which is what makes it safe to run in front of a live
+        # engine: the worst a bug in it can do is make the advice stricter.
+        # ══════════════════════════════════════════════════════════════════════
+        if SAFETY_GATE_AVAILABLE:
+            allowed, warned, banned, _gate_report = apply_safety_gate(
+                allowed, warned, banned,
+                organism=organism_type, specimen=culture_type, sir_map=sir_map,
+                age_years=age, is_pregnant=is_preg, cl_cr=cl_cr,
+                is_renal=is_renal, is_hepatic=is_hepatic,
+                child_pugh=_child_pugh_now,
+            )
+            _moves = _gate_report.get("moves") or []
+            if _moves:
+                with st.expander(
+                    f"🛡️ Safety gate — {len(_moves)} agent(s) reclassified",
+                    expanded=any(m.get("to") == "banned" for m in _moves),
+                ):
+                    st.caption(
+                        "طبقة أمان مستقلة راجعت المخرجات (نفاذية الموقع، الحمل، الكبد، "
+                        "الكلى، العمر). لا يمكنها ترقية أي دواء — فقط تشديد التصنيف."
+                    )
+                    for _m in _moves:
+                        st.write(
+                            f"- **{_m.get('drug')}**: `{_m.get('from')}` → "
+                            f"`{_m.get('to')}` — {_m.get('reason_ar') or _m.get('reason') or ''}"
+                        )
+            if not _gate_report.get("specimen_recognised", True):
+                st.warning(
+                    f"⚠️ الطبقة الآمنة لم تتعرف على نوع العينة «{culture_type}» — "
+                    "تم تطبيق سياسة fail-closed. راجع التوصيات يدوياً."
+                )
 
         if interactions_alerts:
             st.warning("⚡ Interactions / Hepatic Warnings")
