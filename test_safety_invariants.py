@@ -69,6 +69,13 @@ _WANT = [
     "SPECIMEN_TYPES", "BACTERIA_TYPES", "ORGANISM_AVOID_CLASS_MAP",
     "RENAL_BAN_REASONS", "CHILD_BAN_REASONS", "_SPECIMEN_CATEGORY_RULES",
     "classify_specimen", "is_intrinsically_avoided", "build_banned_item",
+    # Shared helpers the engines now call. They must be extracted BEFORE the
+    # functions that use them, or the re-exec'd copy raises NameError.
+    "_SIR_ALIASES", "normalize_sir_value", "normalize_sir_map",
+    "_PREG_ALIASES", "preg_status_of", "_ACQUIRED_NOT_INTRINSIC",
+    "MDR_CATEGORIES_STAPH", "MDR_CATEGORIES_ENTEROCOCCUS",
+    "MDR_CATEGORIES_STREP", "MDR_NOT_APPLICABLE", "MDR_OUTSIDE_MAGIORAKOS",
+    "NEONATAL_RESTRICTIONS",
     "ESBL_PRODUCERS", "AMPC_PRODUCERS", "ESBL_MARKERS", "CARBAPENEMS",
     "is_esbl_producer", "predict_esbl", "MDR_CATEGORIES",
     "MDR_CATEGORIES_GRAM_NEG", "MDR_CATEGORIES_GRAM_POS",

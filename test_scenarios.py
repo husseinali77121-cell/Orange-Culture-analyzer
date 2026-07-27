@@ -166,10 +166,18 @@ def run_case(case: dict) -> dict:
             fail(cid, "INV-10 QC-catches-offsite-urinary-agent")
 
     # INV-11  an all-susceptible wild type has options and is not MDR
+    #
+    # EXEMPTION: an organism whose IDENTIFICATION already names an acquired
+    # mechanism has no wild-type form. "Wild-type MRSA" is a contradiction --
+    # mecA is the acquired mechanism -- and Magiorakos Table 1, criterion (i)
+    # states that an MRSA is always MDR by virtue of being an MRSA. Asserting
+    # level=None for these would require deleting that rule, which is the
+    # under-call this invariant exists to prevent everywhere else.
+    _self_declaring = ("mrsa", "vre", "mrse")
     if case["archetype"] == "wild_type":
         if not a:
             fail(cid, "INV-11 wild-type-has-options", "Allowed list is empty")
-        if mdr.get("level"):
+        if mdr.get("level") and org.lower().strip() not in _self_declaring:
             fail(cid, "INV-11 wild-type-not-MDR", f"level={mdr.get('level')}")
 
     # INV-12  pathogenicity output is well formed

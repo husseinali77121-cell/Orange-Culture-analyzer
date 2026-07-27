@@ -30,7 +30,10 @@ SEED   = int(os.environ.get("SEED", "1"))
 # ── AST-extract the pure logic bundle from the monolith ────────────────────────
 _WANT = ["INTRINSIC_RESISTANCE","ESBL_PRODUCERS","AMPC_PRODUCERS","ESBL_MARKERS",
          "CARBAPENEMS","ORGANISM_AVOID_CLASS_MAP","is_esbl_producer",
-         "_remove_intrinsic_resistance","predict_esbl","is_intrinsically_avoided"]
+         "_remove_intrinsic_resistance","predict_esbl","is_intrinsically_avoided",
+         # Shared helpers introduced with SIR normalisation -- extracted so the
+         # re-exec'd predict_esbl can still resolve them.
+         "_SIR_ALIASES","normalize_sir_value","normalize_sir_map"]
 def _extract(path, names):
     src = open(path, encoding="utf-8").read(); tree = ast.parse(src); lines = src.splitlines(keepends=True)
     seg = {}

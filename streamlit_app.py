@@ -2,8 +2,11 @@
 # Microbiology CDSS -- All Rights Reserved
 # Unauthorized copying or distribution is prohibited.
 
+import base64
+import hmac
 import io
 import json
+import os
 import re
 import time
 import hashlib
@@ -89,12 +92,22 @@ try:
         format_issue as _fmt_consistency,
     )
     AST_RULES_MODULES_AVAILABLE = True
-except Exception:
+    AST_RULES_IMPORT_ERROR = ""
+except Exception as _ast_rules_exc:
+    # A bare `except: pass` here is how the whole reportability + consistency QC
+    # layer can switch itself off in production with nothing on screen. One
+    # NameError in a rule table (a helper referenced before it is defined is
+    # enough) silently downgrades the product from ~60 traceable rules to the
+    # small inline fallback set. Record the reason and surface it in
+    # get_startup_validation_issues() so it can never be invisible again.
     _check_reportability_ext = None
     _check_consistency_ext = None
     _fmt_reportability = None
     _fmt_consistency = None
     AST_RULES_MODULES_AVAILABLE = False
+    AST_RULES_IMPORT_ERROR = f"{type(_ast_rules_exc).__name__}: {_ast_rules_exc}"
+    logger.error("ast_reportability/ast_consistency unavailable -- AST QC is "
+                 "running on the inline fallback rules only: %s", _ast_rules_exc)
 
 # Terminal safety gate + unified clinical constraint map. This is the layer that
 # adds site penetration (can the drug physically reach the infection?) on top of
@@ -267,6 +280,25 @@ ORGANISM_AVOID_CLASS_MAP = {
 }
 
 
+def _drop_intrinsic(names, organism):
+    """Remove agents this organism is intrinsically resistant to.
+
+    The Organism Guidance panel printed first/second/third-line straight from
+    ORGANISM_PROFILE with only the urine-only filter applied. Nothing checked
+    the intrinsic table, so a single stale row in the profile put a drug the
+    engine BANS on the same screen as a recommendation. This closes the display
+    against the same source of truth the engine uses, so the two cannot drift
+    apart again even if a profile row is edited carelessly.
+    """
+    out = []
+    for n in (names or []):
+        info = ABX_GUIDELINES.get(n, {})
+        if is_intrinsically_avoided(organism, n, info):
+            continue
+        out.append(n)
+    return out
+
+
 def _hide_urine_only(names, specimen):
     """Drop urine-only agents from organism first/second/third-line *guidance display*
     on non-urine sites (they reach therapeutic levels only in urine). The ranking side
@@ -295,6 +327,65 @@ def load_subscribers() -> Dict[str, str]:
         return {}
 
 SUBSCRIBERS = load_subscribers()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# PASSWORD VERIFICATION
+# ----------------------------------------------------------------------
+# The commercial build authenticated on an EMAIL ADDRESS ALONE. Anyone who knew
+# or guessed a subscriber's address had full access to a paid product, and there
+# was no way for a customer to revoke a leaked login short of deleting the
+# account. Email is an identifier, not a secret.
+#
+# Rollout is deliberately backward-compatible so no existing customer is locked
+# out on deploy:
+#   * secrets["subscriber_hashes"] = {"<email>": "pbkdf2_sha256$<iters>$<salt>$<hash>"}
+#   * an email WITH a hash must supply the matching password
+#   * an email WITHOUT a hash still logs in as before, but the account is listed
+#     in get_startup_validation_issues() so the gap is visible rather than silent
+#
+# Generate a hash with:  python -c "import streamlit_app as a; \
+#                                   print(a.make_password_hash('the-password'))"
+# ═══════════════════════════════════════════════════════════════════════
+_PBKDF2_ITERATIONS = 240_000
+
+
+def make_password_hash(password: str, iterations: int = _PBKDF2_ITERATIONS) -> str:
+    """Encode a password as pbkdf2_sha256$iterations$salt$hash (base64 parts)."""
+    salt = os.urandom(16)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+    return "pbkdf2_sha256${}${}${}".format(
+        iterations,
+        base64.b64encode(salt).decode("ascii"),
+        base64.b64encode(dk).decode("ascii"),
+    )
+
+
+def load_subscriber_hashes() -> Dict[str, str]:
+    try:
+        raw = st.secrets.get("subscriber_hashes", "{}")
+        data = json.loads(raw) if isinstance(raw, str) else dict(raw)
+        return {str(k).strip().lower(): str(v).strip() for k, v in data.items()}
+    except Exception:
+        return {}
+
+
+SUBSCRIBER_HASHES = load_subscriber_hashes()
+
+
+def verify_password(password: str, encoded: str) -> bool:
+    """Constant-time check of a password against a stored pbkdf2 record."""
+    try:
+        algo, iters, salt_b64, hash_b64 = str(encoded).split("$", 3)
+        if algo != "pbkdf2_sha256":
+            return False
+        dk = hashlib.pbkdf2_hmac(
+            "sha256", (password or "").encode("utf-8"),
+            base64.b64decode(salt_b64), int(iters),
+        )
+        return hmac.compare_digest(dk, base64.b64decode(hash_b64))
+    except Exception:
+        return False
 
 # =========================================================
 # Session State
@@ -450,6 +541,44 @@ def get_startup_validation_issues() -> List[str]:
     ))
     issues.extend(validate_organism_profile(known_antibiotics=list(ABX_GUIDELINES.keys())))
     issues.extend(validate_specimen_organism_map(known_organisms=list(ORGANISM_PROFILE.keys())))
+    if not SUBSCRIBER_HASHES:
+        issues.append(
+            "[SECURITY] No subscriber_hashes secret is configured -- login is by "
+            "email address alone, so anyone who knows a customer's address has "
+            "full access. Add a secrets entry: subscriber_hashes = "
+            '{"user@lab.com": "pbkdf2_sha256$..."} (generate with '
+            "make_password_hash())."
+        )
+    else:
+        _open = sorted(e for e in SUBSCRIBERS if e not in SUBSCRIBER_HASHES)
+        if _open:
+            issues.append(
+                f"[SECURITY] {len(_open)} subscriber account(s) still have no "
+                f"password set: {', '.join(_open[:5])}"
+                + (" ..." if len(_open) > 5 else "")
+            )
+    _bad_preg = sorted(
+        f"{d} = {i.get('preg_status')!r}" for d, i in ABX_GUIDELINES.items()
+        if str(i.get("preg_status") or "").strip().upper() not in _PREG_ALIASES
+    )
+    if _bad_preg:
+        issues.append(
+            "[WARNING] preg_status values outside the Safe/Warn/Banned enum -- "
+            "they are being treated as 'Warn' (fail-closed) but should be "
+            f"corrected in abx_guidelines.py: {', '.join(_bad_preg)}"
+        )
+    if not AST_RULES_MODULES_AVAILABLE:
+        issues.append(
+            "[CRITICAL] ast_reportability / ast_consistency failed to load -- the "
+            "AST QC report is running on the small inline fallback rule set. "
+            "Intrinsic-resistance and panel-discrepancy findings will be MISSING "
+            f"from every report. Reason: {AST_RULES_IMPORT_ERROR or 'unknown'}"
+        )
+    if not AST_QA_AVAILABLE:
+        issues.append(
+            "[CRITICAL] ast_qa_engine failed to load -- Level-1 AST QA checks are "
+            "disabled."
+        )
     if not INTRINSIC_TABLE_OK:
         issues.append(
             "[CRITICAL] clinical_data.py not found -- INTRINSIC_RESISTANCE is empty. "
@@ -527,9 +656,12 @@ def show_login_page():
         st.markdown("#### 🔐 تسجيل الدخول")
         email    = st.text_input("📧 البريد الإلكتروني", placeholder="example@hospital.com",
                                  label_visibility="collapsed")
+        password = st.text_input("🔑 كلمة المرور", type="password",
+                                 placeholder="كلمة المرور",
+                                 label_visibility="collapsed")
         login_btn = st.button("دخول", use_container_width=True, type="primary")
         if login_btn:
-            return email.strip().lower()
+            return email.strip().lower(), password
         st.markdown("---")
         st.markdown("""
         <div style='text-align:center; font-size:0.9rem; color:gray'>
@@ -542,7 +674,7 @@ def show_login_page():
         """, unsafe_allow_html=True)
     return None
 
-def check_subscription(email: str) -> bool:
+def check_subscription(email: str, password: str = "") -> bool:
     email = (email or "").strip().lower()
     if not email or "@" not in email:
         st.warning("⚠️ أدخل بريدًا إلكترونيًا صحيحًا")
@@ -557,6 +689,17 @@ def check_subscription(email: str) -> bool:
             "🔹 سنوي: **2000 جنيه** *(توفير 400 ج)*"
         )
         return False
+    _stored = SUBSCRIBER_HASHES.get(email)
+    if _stored:
+        if not verify_password(password, _stored):
+            st.error("❌ كلمة المرور غير صحيحة")
+            logger.warning("failed login attempt for %s", email)
+            return False
+    elif SUBSCRIBER_HASHES:
+        # Hashes are configured for other accounts but not this one -- do not
+        # silently accept a bare email while the rest of the estate is protected.
+        st.warning("⚠️ هذا الحساب بدون كلمة مرور. تواصل مع الدعم لتفعيلها.")
+
     days_left = get_subscription_days_left(email)
     if days_left is None:
         st.error("خطأ في بيانات الاشتراك، تواصل مع الدعم")
@@ -593,6 +736,15 @@ def render_top_bar() -> None:
     with left:
         days = get_subscription_days_left(st.session_state.get("email", ""))
         st.session_state.days_left = days
+        if days is None:
+            # The account disappeared from the subscriber table mid-session
+            # (revoked, refunded, typo-fixed). Access must stop immediately.
+            logout("تم إنهاء الجلسة: الحساب لم يعد مسجلاً.")
+        elif days < 0:
+            # check_subscription() only runs at LOGIN. Without this branch an
+            # expired subscription kept full access until the 30-minute idle
+            # timeout happened to fire.
+            logout(f"⏳ انتهى اشتراكك منذ {abs(days)} يوم. للتجديد: 01016872801")
         if days is not None:
             if days <= 3:
                 st.warning(
@@ -988,7 +1140,13 @@ def is_intrinsically_avoided(organism_type: str, drug_name: str, drug_info: Dict
     # a single source of truth shared with MDR-stripping and mechanism inference.
     _org_l = (organism_type or "").lower().strip()
     for _org_key, _drug_list in INTRINSIC_RESISTANCE.items():
-        if (_org_key in _org_l or _org_l in _org_key) and drug_name in _drug_list:
+        # Same length guard as _remove_intrinsic_resistance -- without it an
+        # unreadable organism name banned every drug that is intrinsic to ANY
+        # organism in the table.
+        if not _org_key:
+            continue
+        if (_org_key in _org_l or (len(_org_l) >= 4 and _org_l in _org_key)) \
+                and drug_name in _drug_list:
             return True
 
     organism_avoid = (ORGANISM_PROFILE.get(organism_type) or {}).get("avoid", [])
@@ -1012,6 +1170,50 @@ def build_banned_item(name: str, category: str, reason_short: str, reason_detail
 # Keeping a table below its only consumer works by accident of module
 # execution order; declaring it first makes the dependency explicit.
 # ═══════════════════════════════════════════════════════════════════════
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# NEONATAL / YOUNG-INFANT CONTRAINDICATIONS
+# ----------------------------------------------------------------------
+# `child_safe` in abx_guidelines.py is a single boolean covering the whole
+# 0-17 range, so three agents with hard NEONATAL contraindications were
+# returned as ALLOWED, with no flag at all, for a patient entered as age 0:
+#
+#   Ceftriaxone   -> bilirubin displacement (kernicterus) and fatal
+#                    ceftriaxone-calcium precipitates in neonates
+#   TMP-SMX       -> sulfonamide bilirubin displacement, <2 months
+#   Nitrofurantoin-> haemolytic anaemia, immature erythrocyte enzymes
+#
+# The dashboard ALREADY collects `age_months` for under-1s and then throws it
+# away (it only seeded the weight default). Threading it through makes the
+# thresholds exact instead of banning the whole first year.
+#
+# Each entry: drug -> (limit_in_months, ban_or_warn, alternative, reason)
+# ═══════════════════════════════════════════════════════════════════════
+NEONATAL_RESTRICTIONS: Dict[str, Dict[str, Any]] = {
+    "Ceftriaxone": {
+        "months": 1, "action": "ban", "alt": "Cefotaxime",
+        "reason": ("🚫 يُمنع في حديثي الولادة (≤ 28 يوم): يزيح البيليروبين عن "
+                   "الألبومين → خطر kernicterus، ويكوّن راسب قاتل مع محاليل "
+                   "الكالسيوم الوريدية. البديل المباشر: Cefotaxime بنفس الطيف. "
+                   "(FDA label / BNFc / AAP Red Book)"),
+    },
+    "Trimethoprim/Sulfamethoxazole": {
+        "months": 2, "action": "ban", "alt": "بيتا-لاكتام حسب الحساسية",
+        "reason": ("🚫 يُمنع تحت شهرين: السلفوناميد يزيح البيليروبين عن "
+                   "الألبومين → kernicterus. (BNFc / AAP Red Book)"),
+    },
+    "Nitrofurantoin": {
+        "months": 3, "action": "ban", "alt": "Cephalexin أو Amoxicillin",
+        "reason": ("🚫 يُمنع تحت 3 شهور: أنظمة إنزيمات كرات الدم الحمراء غير "
+                   "ناضجة → أنيميا انحلالية. (BNFc / EMA)"),
+    },
+    "Ciprofloxacin": {
+        "months": 1, "action": "warn", "alt": "",
+        "reason": ("⚠️ في حديثي الولادة يُستخدم فقط لدواعٍ مهدِّدة للحياة "
+                   "وبقرار استشاري."),
+    },
+}
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -1069,6 +1271,88 @@ HEPATIC_DOSING: Dict[str, Dict] = {
 
 
 
+# ═══════════════════════════════════════════════════════════════════════
+# SIR NORMALISATION — the single entry point for every S/I/R value
+# ----------------------------------------------------------------------
+# Every engine in this file compares with `== "R"` / `in ("R","I")`. Nothing
+# validated the values, and the interactive editor coerced anything it did not
+# recognise straight to "S":
+#
+#     if cur not in sir_options: cur = "S"        <-- fail-OPEN
+#
+# so a lowercase "r", a trailing space, or the word "Resistant" arriving from
+# OCR, a pasted table or a future JSON import made a RESISTANT drug come back
+# ALLOWED. The Streamlit selectbox happens to constrain the values today, which
+# is the only reason this has not fired in production; it is one import feature
+# away from doing so.
+#
+# SDD (Susceptible-Dose Dependent) is a real CLSI M100 category -- cefepime vs
+# Enterobacterales is the everyday example -- and was silently read as plain S,
+# i.e. standard dosing for a result that explicitly requires a high-dose
+# regimen. It maps to "I" so the existing increased-exposure warning fires.
+#
+# NS (non-susceptible) maps to R: it is the conservative direction and the only
+# one that cannot cost a patient a failed therapy.
+# ═══════════════════════════════════════════════════════════════════════
+_SIR_ALIASES = {
+    "S": "S", "SUSCEPTIBLE": "S", "SENSITIVE": "S", "SENS": "S", "حساس": "S",
+    "I": "I", "INTERMEDIATE": "I", "INTER": "I", "INT": "I", "متوسط": "I",
+    "SDD": "I", "SUSCEPTIBLE-DOSE DEPENDENT": "I", "SUSCEPTIBLE DOSE DEPENDENT": "I",
+    "R": "R", "RESISTANT": "R", "RESIST": "R", "RES": "R", "مقاوم": "R",
+    "NS": "R", "NON-SUSCEPTIBLE": "R", "NONSUSCEPTIBLE": "R",
+}
+
+
+def normalize_sir_value(value: Any) -> Optional[str]:
+    """One S/I/R value -> canonical 'S' | 'I' | 'R', or None if unreadable.
+
+    Returning None (rather than defaulting to 'S') is deliberate: an
+    uninterpretable result must drop out of the panel, never be presented to a
+    clinician as a susceptible agent.
+    """
+    if value is None:
+        return None
+    v = str(value).strip().upper().replace("_", " ")
+    return _SIR_ALIASES.get(v)
+
+
+def normalize_sir_map(sir_map: Optional[Dict[str, Any]]) -> Dict[str, str]:
+    """Canonicalise a whole panel, dropping entries that cannot be read."""
+    out: Dict[str, str] = {}
+    for drug, value in (sir_map or {}).items():
+        v = normalize_sir_value(value)
+        if v is not None:
+            out[str(drug)] = v
+        elif value not in (None, ""):
+            logger.warning("unreadable AST value %r for %r -- dropped from the "
+                           "panel rather than assumed susceptible", value, drug)
+    return out
+
+
+# ── Pregnancy status: canonicalise the enum ─────────────────────────────────
+# abx_guidelines.py declares four distinct values -- Safe / Warn / Banned and,
+# on Aztreonam alone, "Caution". Every consumer tested only for "Banned" and
+# "Warn", so "Caution" fell through every branch and the drug reached a pregnant
+# patient with no flag at all -- indistinguishable from Safe. An undocumented
+# fourth value silently meaning "Safe" is exactly the drift a clinical table
+# must not tolerate.
+_PREG_ALIASES = {
+    "SAFE": "Safe", "": "Safe", "NONE": "Safe",
+    "WARN": "Warn", "CAUTION": "Warn", "WARNING": "Warn", "MONITOR": "Warn",
+    "BANNED": "Banned", "CONTRAINDICATED": "Banned", "AVOID": "Banned",
+}
+
+
+def preg_status_of(info: Dict[str, Any]) -> str:
+    """Canonical Safe | Warn | Banned for one formulary entry.
+
+    Unknown values fail CLOSED to "Warn": an unrecognised label must raise a
+    flag, never suppress one.
+    """
+    raw = str(info.get("preg_status") or "").strip().upper()
+    return _PREG_ALIASES.get(raw, "Warn")
+
+
 def analyze_antibiotics(
     final_drugs: List[str],
     organism_type: str,
@@ -1082,11 +1366,18 @@ def analyze_antibiotics(
     current_meds: List[str],
     sir_map: Dict[str, str],
     child_pugh: str = "C",
+    age_months: Optional[int] = None,
 ) -> Tuple[List[Dict], List[Dict], List[Dict], List[Dict], List[str]]:
     # child_pugh defaults to the WORST grade on purpose. If the caller knows the
     # grade it passes it; if it does not, the engine must not silently assume the
     # mildest liver disease and hand back agents that are contraindicated in
     # decompensated cirrhosis. Fail-closed, never fail-permissive.
+    # Drugs that WERE on the panel but whose result could not be read. They must
+    # not fall through to the untested-drug path, which would present them as
+    # ordinary options.
+    _unreadable = {str(d) for d, v in (sir_map or {}).items()
+                   if normalize_sir_value(v) is None}
+    sir_map = normalize_sir_map(sir_map)
     allowed:            List[Dict] = []
     warned:             List[Dict] = []
     banned:             List[Dict] = []
@@ -1162,6 +1453,14 @@ def analyze_antibiotics(
 
     for drug in final_drugs:
         if drug not in ABX_GUIDELINES:
+            continue
+        if drug in _unreadable:
+            banned.append(build_banned_item(
+                drug, "unreadable",
+                "نتيجة الحساسية غير مقروءة.",
+                f"{drug}: القيمة المسجّلة في اللوحة ليست S أو I أو R. لا يمكن "
+                "تفسيرها، ولا يجوز افتراض أنها حساسة. أعد إدخال النتيجة يدوياً.",
+            ))
             continue
         info           = ABX_GUIDELINES[drug]
         d_low          = drug.lower()
@@ -1411,6 +1710,39 @@ def analyze_antibiotics(
             ))
             continue
 
+        # ── NEONATAL / YOUNG-INFANT gate ──────────────────────────────────────
+        # Runs only when the patient is inside the first year, and only when we
+        # actually know the age in months. If the clinician entered age=0 years
+        # WITHOUT the months field, we cannot tell a 3-week-old from an
+        # 11-month-old -- so we warn rather than silently allowing, which is the
+        # behaviour that shipped.
+        if age < 1 and drug in NEONATAL_RESTRICTIONS:
+            _neo = NEONATAL_RESTRICTIONS[drug]
+            _alt = f" البديل: {_neo['alt']}." if _neo.get("alt") else ""
+            if age_months is None:
+                warned.append({
+                    "name": drug, "category": "neonate",
+                    "reason_short": f"عمر غير محدد بالشهور — تحقق من حد الـ {_neo['months']} شهور.",
+                    "reason_detail": (f"{_neo['reason']}{_alt}\n\n"
+                                      "أدخل العمر بالشهور (خانة «أقل من سنة») "
+                                      "ليطبّق النظام الحد العمري بدقة."),
+                })
+                continue
+            if age_months < _neo["months"]:
+                if _neo["action"] == "ban":
+                    banned.append(build_banned_item(
+                        drug, "neonate",
+                        f"يُمنع تحت {_neo['months']} شهر (العمر {age_months} شهر).",
+                        f"{_neo['reason']}{_alt}",
+                    ))
+                else:
+                    warned.append({
+                        "name": drug, "category": "neonate",
+                        "reason_short": f"حذر شديد تحت {_neo['months']} شهر.",
+                        "reason_detail": f"{_neo['reason']}{_alt}",
+                    })
+                continue
+
         # Nitrofurantoin: contraindicated below its renal threshold (EMA/BNF 2025 = 45)
         # ── D-test: Inducible Clindamycin Resistance (CLSI M100 Ed36) ──────────
         if "clindamycin" in d_low and culture_result == "S":
@@ -1540,7 +1872,7 @@ def analyze_antibiotics(
                 continue
 
             # ── 3. TMP-SMX & Sulfonamides: BANNED ────────────────────────────
-            if (info.get("preg_status") == "Banned"
+            if (preg_status_of(info) == "Banned"
                     and ("sulfonamide" in cls or "trimethoprim" in d_low
                          or "sulfamethox" in d_low)):
                 preg_note = info.get("preg_note") or (
@@ -1572,7 +1904,7 @@ def analyze_antibiotics(
                 continue
 
             # ── 5. Any remaining preg_status="Banned": BANNED ─────────────────
-            if info.get("preg_status") == "Banned":
+            if preg_status_of(info) == "Banned":
                 preg_note = info.get("preg_note") or "⛔ ممنوع في الحمل."
                 banned.append(build_banned_item(
                     drug, "pregnancy",
@@ -1623,7 +1955,7 @@ def analyze_antibiotics(
                 continue
 
             # ── 9. Carbapenems / Vancomycin / Colistin (Warn): physician ──────
-            if info.get("preg_status") == "Warn":
+            if preg_status_of(info) == "Warn":
                 preg_warn_items.append({"name": drug, **info})
                 continue
 
@@ -1748,9 +2080,15 @@ MDR_CATEGORIES = {
                                        "Cefuroxime sodium"],
     "Cephamycins":             ["Cefoxitin"],
     "Monobactams":             ["Aztreonam"],
-    "Penicillins":             ["Ampicillin","Amoxicillin"],
+    # Penicillin (benzylpenicillin) had no category at all, so a penicillin-R
+    # pneumococcus scored zero for the one class that defines PRSP.
+    "Penicillins":             ["Ampicillin","Amoxicillin","Penicillin"],
     "Carbapenems":             ["Imipenem/Cilastatin","Meropenem","Ertapenem"],
-    "Fluoroquinolones":        ["Ciprofloxacin","Levofloxacin","Ofloxacin","Norfloxacin"],
+    # Moxifloxacin and Gatifloxacin were in the formulary but in NO category, so
+    # resistance to them counted for nothing. Magiorakos lists moxifloxacin under
+    # Fluoroquinolones for S. aureus, Enterococcus and Enterobacteriaceae alike.
+    "Fluoroquinolones":        ["Ciprofloxacin","Levofloxacin","Ofloxacin","Norfloxacin",
+                                "Moxifloxacin","Gatifloxacin"],
     "Folate PI":               ["Trimethoprim/Sulfamethoxazole"],
     "Penicillins+BLI":         ["Amoxicillin + Clavulanic acid","Ampicillin/Sulbactam"],
     "Polymyxins":              ["Colistin"],
@@ -1762,6 +2100,26 @@ MDR_CATEGORIES = {
     "Macrolides":              ["Azithromycin", "Clarithromycin", "Erythromycin"],
     "Lincosamides":            ["Clindamycin"],
     "Rifamycins":              ["Rifampicin"],
+    # ── Categories that had NO entry at all before ────────────────────────────
+    # Magiorakos Table 1 (S. aureus): "Anti-staphylococcal beta-lactams (or
+    # cephamycins)" with oxacillin OR cefoxitin as the marker agent. Neither
+    # Oxacillin nor Penicillin belonged to any category, and Cephamycins was
+    # excluded from the Gram-positive set -- so a textbook MRSA (oxacillin R,
+    # cefoxitin R, penicillin R, erythromycin R, ciprofloxacin R) scored only
+    # 2 categories and came back level=None. This category is used ONLY in the
+    # staphylococcal set, so Cefoxitin is never double-counted against the
+    # Gram-negative "Cephamycins" entry.
+    "Anti-staphylococcal Beta-lactams": ["Oxacillin", "Cefoxitin"],
+    # Magiorakos Table 1: "Fucidanes". Fusidic acid was in the formulary with no
+    # category, so fusidic-acid resistance in S. aureus counted for nothing.
+    "Fusidanes":               ["Fusidic acid"],
+    # Pneumococci are OUTSIDE the Magiorakos scope (the paper covers S. aureus,
+    # Enterococcus, Enterobacteriaceae, P. aeruginosa and Acinetobacter only).
+    # This single "Cephalosporins" bucket follows the conventional MDRSP
+    # definition and deliberately merges 2nd/3rd-generation agents, so one
+    # PBP-mediated mechanism cannot be counted twice.
+    "Cephalosporins (pneumococcal)": ["Cefuroxime", "Cefuroxime sodium",
+                                      "Ceftriaxone", "Cefotaxime", "Cefixime"],
 }
 
 # Categories meaningful for Gram-negative organisms (Enterobacterales / non-fermenters)
@@ -1772,11 +2130,56 @@ MDR_CATEGORIES_GRAM_NEG = frozenset([
     "Monobactams", "Penicillins",
     "Nitrofurans", "Fosfomycins", "Tetracyclines",
 ])
-# Categories meaningful for Gram-positive organisms
+# ── Gram-positive category sets — ONE SET PER ORGANISM GROUP ────────────────
+# A single flat "Gram-positive" set cannot be correct, because Magiorakos builds
+# a DIFFERENT category list for each organism. The old flat set contained
+# neither Penicillins nor any anti-staphylococcal beta-lactam entry, so the two
+# resistances that define MRSA and ampicillin-resistant E. faecium were both
+# invisible to the classifier, while Nitrofurans (a urinary agent that appears
+# in no Magiorakos table) padded the denominator and pushed isolates away from
+# an XDR call.
+#
+# Magiorakos et al., Clin Microbiol Infect 2012;18:268-281.
+
+# Table 1 — Staphylococcus aureus.
+# Categories present in this formulary; those with no agent stocked here
+# (anti-MRSA cephalosporins, glycylcyclines, lipopeptides, phenicols,
+# streptogramins, ansamycins) simply never contribute.
+MDR_CATEGORIES_STAPH = frozenset([
+    "Anti-staphylococcal Beta-lactams", "Aminoglycosides", "Fluoroquinolones",
+    "Folate PI", "Fusidanes", "Glycopeptides", "Lincosamides", "Macrolides",
+    "Oxazolidinones", "Tetracyclines", "Rifamycins", "Fosfomycins",
+])
+
+# Table 2 — Enterococcus spp.
+# Note what is ABSENT and must stay absent: cephalosporins and folate-pathway
+# inhibitors (intrinsic / no in-vivo activity) and nitrofurantoin (not a
+# Magiorakos category). Penicillins here means AMPICILLIN — the single most
+# important marker for E. faecium, previously uncounted.
+MDR_CATEGORIES_ENTEROCOCCUS = frozenset([
+    "Penicillins", "Aminoglycosides", "Carbapenems", "Fluoroquinolones",
+    "Glycopeptides", "Oxazolidinones", "Tetracyclines",
+])
+
+# Streptococci (incl. S. pneumoniae) — NOT a Magiorakos organism.
+# Follows the conventional MDRSP definition: non-susceptibility to >=3 of
+# penicillin, cephalosporins, macrolides, lincosamides, tetracyclines,
+# folate-pathway inhibitors, fluoroquinolones, glycopeptides, oxazolidinones.
+# Flagged as a non-Magiorakos basis in the returned `basis` field.
+MDR_CATEGORIES_STREP = frozenset([
+    "Penicillins", "Cephalosporins (pneumococcal)", "Macrolides",
+    "Lincosamides", "Tetracyclines", "Folate PI", "Fluoroquinolones",
+    "Glycopeptides", "Oxazolidinones",
+])
+
+# Retained for backward compatibility with any external caller / older test that
+# still imports the flat name. It is the union of the three sets above and is
+# NOT used by classify_mdr any more.
 MDR_CATEGORIES_GRAM_POS = frozenset([
-    "Glycopeptides", "Oxazolidinones", "Macrolides", "Lincosamides",
-    "Tetracyclines", "Fluoroquinolones", "Folate PI", "Rifamycins",
-    "Aminoglycosides", "Penicillins+BLI", "Nitrofurans",
+    "Anti-staphylococcal Beta-lactams", "Cephalosporins (pneumococcal)",
+    "Penicillins", "Aminoglycosides", "Carbapenems", "Fluoroquinolones",
+    "Folate PI", "Fusidanes", "Glycopeptides", "Lincosamides", "Macrolides",
+    "Oxazolidinones", "Tetracyclines", "Rifamycins", "Fosfomycins",
 ])
 
 GRAM_POSITIVE_ORGANISMS = frozenset([
@@ -1787,6 +2190,38 @@ GRAM_POSITIVE_ORGANISMS = frozenset([
     "streptococcus agalactiae", "streptococcus viridans",
     "listeria monocytogenes", "corynebacterium",
 ])
+
+# ── Organisms for which the MDR/XDR/PDR framework does not apply at all ──────
+# Returning "XDR" for an anaerobe or a Legionella is not a conservative error --
+# it is a fabricated alarm that drives escalation to reserve agents. Before this
+# guard, `Anaerobes` and `Legionella pneumophila` were routed into the
+# GRAM-NEGATIVE category set (they match no Gram-positive key) and, having no
+# intrinsic-resistance row to strip their EXPECTED beta-lactam and
+# aminoglycoside resistance, both came back XDR on 9 of 11 categories.
+#
+#  * no cell wall            -> every beta-lactam/glycopeptide result is expected
+#  * obligate intracellular  -> AST is not performed and has no breakpoints
+#  * anaerobes               -> intrinsically resistant to aminoglycosides;
+#                               Magiorakos builds no category table for them
+MDR_NOT_APPLICABLE = (
+    "mycoplasma", "ureaplasma", "chlamydia", "chlamydophila",
+    "legionella", "rickettsia", "coxiella", "bartonella", "brucella",
+    "treponema", "borrelia", "leptospira",
+    "anaerobe", "لاهوائي", "bacteroides", "clostrid", "fusobacterium",
+    "peptostreptococcus", "prevotella", "veillonella", "actinomyces",
+    "mycobacter",
+)
+
+# Aerobic organisms that ARE routinely classified in the literature but sit
+# outside the five species Magiorakos actually tabulated. They keep a level, but
+# the read-out says which authority it rests on so nobody quotes "Magiorakos
+# XDR" for a Stenotrophomonas.
+MDR_OUTSIDE_MAGIORAKOS = (
+    "stenotrophomonas", "burkholderia", "salmonella", "shigella",
+    "campylobacter", "haemophilus", "influenzae", "aeromonas",
+    "moraxella", "neisseria", "vibrio", "yersinia", "listeria",
+    "corynebacterium", "streptococc",
+)
 
 # ============================================================================
 #  INTRINSIC_RESISTANCE — moved to clinical_data.py (SINGLE SOURCE OF TRUTH)
@@ -1816,13 +2251,54 @@ except Exception as _intrinsic_exc:          # pragma: no cover - deployment fau
     INTRINSIC_TABLE_OK = False
 
 
-def _remove_intrinsic_resistance(organism: str, sir_map: Dict[str, str]) -> Dict[str, str]:
-    """Drop drugs the organism is intrinsically resistant to (not acquired)."""
-    org_l = organism.lower().strip()
+# mecA (MRSA) and vanA/vanB (VRE) are ACQUIRED mechanisms, not intrinsic ones.
+# They live in INTRINSIC_RESISTANCE under the pseudo-species keys "mrsa"/"vre"
+# because that table also drives the therapeutic Avoid list, where banning every
+# beta-lactam on an MRSA is exactly right. But Magiorakos strips only INTRINSIC
+# categories before counting, and counts acquired resistance. Leaving these rows
+# in place for the MDR pass deleted the very categories that define the
+# phenotype: an isolate reported as "VRE" lost its Glycopeptides category and
+# came back level=None, while the SAME isolate reported as "Enterococcus
+# faecium" came back MDR. One isolate must not get two answers because of how
+# the lab typed its name.
+_ACQUIRED_NOT_INTRINSIC = {
+    "mrsa": {"Oxacillin", "Penicillin", "Cefoxitin", "Ampicillin", "Amoxicillin",
+             "Amoxicillin + Clavulanic acid", "Ampicillin/Sulbactam",
+             "Piperacillin + Tazobactam", "Cephalexin", "Cefadroxil", "Cephradine",
+             "Cefazolin", "Cefaclor", "Cefuroxime", "Cefuroxime sodium",
+             "Ceftriaxone", "Cefotaxime", "Cefixime", "Ceftazidime", "Cefepime",
+             "Cefoperazone", "Cefoperazone + Sulbactam",
+             "Imipenem/Cilastatin", "Meropenem", "Ertapenem"},
+    "vre":  {"Vancomycin", "Teicoplanin"},
+}
+
+
+def _remove_intrinsic_resistance(organism: str, sir_map: Dict[str, str],
+                                 keep_acquired: bool = False) -> Dict[str, str]:
+    """Drop drugs the organism is intrinsically resistant to (not acquired).
+
+    keep_acquired=True (used by classify_mdr) additionally keeps the agents whose
+    resistance on that row is an ACQUIRED mechanism, so the MDR/XDR count sees
+    them. Everything else -- the Avoid list, mechanism inference -- keeps the
+    default and still strips the whole row.
+    """
+    org_l = (organism or "").lower().strip()
     drugs_to_drop = set()
     for org_key, drug_list in INTRINSIC_RESISTANCE.items():
-        if org_key in org_l or org_l in org_key:
-            drugs_to_drop.update(drug_list)
+        if not org_key:
+            continue
+        # Reverse containment (`org_l in org_key`) exists so that "proteus"
+        # picks up "proteus mirabilis". Ungated, it also makes EVERY key match a
+        # blank or 1-2 character name: `"" in "escherichia coli"` is True, so an
+        # organism the OCR failed to read stripped the ENTIRE panel and
+        # classify_mdr came back level=None with total_tested=0 -- a silent
+        # false-negative on the MDR alert. A genus fragment is never shorter
+        # than four characters.
+        if org_key in org_l or (len(org_l) >= 4 and org_l in org_key):
+            _row = set(drug_list)
+            if keep_acquired:
+                _row -= _ACQUIRED_NOT_INTRINSIC.get(org_key, set())
+            drugs_to_drop.update(_row)
     if not drugs_to_drop:
         return dict(sir_map)
     return {d: v for d, v in sir_map.items() if d not in drugs_to_drop}
@@ -1842,16 +2318,52 @@ def classify_mdr(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
     • Also returns `conservative_resistant_categories` (the stricter "all agents
       lost" view) as METADATA only — never used to set the level.
     """
+    sir_map = normalize_sir_map(sir_map)
     if not sir_map:
         return {"level": None, "resistant_categories": [], "total_tested": 0}
 
-    # 1. Strip intrinsic resistance
-    clean_map = _remove_intrinsic_resistance(organism, sir_map)
+    org_l = (organism or "").lower().strip()
 
-    # 2. Choose category set by Gram stain
-    org_l = organism.lower().strip()
-    is_gram_pos = any(g in org_l for g in GRAM_POSITIVE_ORGANISMS)
-    applicable = MDR_CATEGORIES_GRAM_POS if is_gram_pos else MDR_CATEGORIES_GRAM_NEG
+    # 0. Organisms the framework was never built for -> refuse, do not guess.
+    if any(k in org_l for k in MDR_NOT_APPLICABLE):
+        return {
+            "level": None, "resistant_categories": [], "total_tested": 0,
+            "not_applicable": True,
+            "basis": "not applicable",
+            "warnings": [
+                "ℹ️ تصنيف MDR/XDR/PDR غير منطبق على هذا الكائن — المقاومة "
+                "الظاهرة هنا متوقعة جوهرياً (لا جدار خلوي / لاهوائي / داخل "
+                "خلوي إجباري) وليست مقاومة مكتسبة. Magiorakos 2012 لا يضع "
+                "جدول فئات لهذه المجموعة."
+            ],
+        }
+
+    # 1. Strip intrinsic resistance (Magiorakos: an intrinsically-resistant
+    #    category is removed BEFORE the criteria are applied) -- but keep the
+    #    ACQUIRED mecA / van resistances, which the same criteria count.
+    clean_map = _remove_intrinsic_resistance(organism, sir_map, keep_acquired=True)
+
+    # 2. Choose the category set for THIS organism group, not one flat
+    #    Gram-positive list. Order matters: enterococci and streptococci must be
+    #    tested before the generic staphylococcal branch.
+    if any(k in org_l for k in ("enterococc", "vre")):
+        applicable, _group, _basis = (MDR_CATEGORIES_ENTEROCOCCUS, "enterococcus",
+                                      "Magiorakos 2012, Table 2")
+    elif "streptococc" in org_l or "pneumococc" in org_l:
+        applicable, _group, _basis = (MDR_CATEGORIES_STREP, "streptococcus",
+                                      "MDRSP convention — outside Magiorakos scope")
+    elif any(k in org_l for k in ("staphylococc", "staph", "mrsa", "mssa")):
+        applicable, _group, _basis = (MDR_CATEGORIES_STAPH, "staphylococcus",
+                                      "Magiorakos 2012, Table 1")
+    elif any(g in org_l for g in GRAM_POSITIVE_ORGANISMS):
+        applicable, _group, _basis = (MDR_CATEGORIES_GRAM_POS, "gram-positive (other)",
+                                      "outside Magiorakos scope")
+    else:
+        applicable, _group, _basis = (MDR_CATEGORIES_GRAM_NEG, "gram-negative",
+                                      "Magiorakos 2012, Tables 3-5")
+    if any(k in org_l for k in MDR_OUTSIDE_MAGIORAKOS) and "Magiorakos" in _basis:
+        _basis = "outside Magiorakos scope — literature convention"
+    is_gram_pos = _group != "gram-negative"
 
     resistant_cats     = []
     susceptible_cats   = []
@@ -1911,11 +2423,26 @@ def classify_mdr(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
     # category) to cover every evaluable category.
     _no_susceptible_anywhere = (len(conservative_resistant_cats) == total_cats)
 
+    # Magiorakos Table 1, criterion (i): "an MRSA is always considered MDR by
+    # virtue of being an MRSA" -- because oxacillin/cefoxitin resistance predicts
+    # non-susceptibility to every beta-lactam category in the document except the
+    # anti-MRSA cephalosporins. Detected from the AST MARKERS, not from the
+    # organism name, so it fires on an isolate the lab reported as plain
+    # "Staphylococcus aureus" with Oxacillin R -- which is how most labs report.
+    _is_staph_grp = _group == "staphylococcus"
+    _mrsa_by_marker = clean_map.get("Oxacillin") in ("R", "I") or \
+                      clean_map.get("Cefoxitin") in ("R", "I")
+    _mrsa_by_name = org_l == "mrsa" or "methicillin-resistant" in org_l \
+                    or "methicillin resistant" in org_l
+    _is_mrsa_mdr = _is_staph_grp and (_mrsa_by_marker or _mrsa_by_name)
+
     if _no_susceptible_anywhere and _enough_for_xdr and _enough_multidrug:
         level = "PDR"
     elif (total_cats - r_count) <= 2 and r_count >= 3 and _enough_for_xdr and _enough_multidrug:
         level = "XDR"
     elif r_count >= 3:
+        level = "MDR"
+    elif _is_mrsa_mdr:
         level = "MDR"
     else:
         level = None
@@ -1934,6 +2461,14 @@ def classify_mdr(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
         warnings.append(f"⚠️ Only {total_cats} categories testable -- MDR classification may be unreliable.")
     if single_drug_cats:
         warnings.append(f"⚠️ Categories judged on a single agent: {', '.join(single_drug_cats)}")
+    if _is_mrsa_mdr and level == "MDR" and r_count < 3:
+        warnings.append("ℹ️ MDR بحكم التعريف: كل MRSA يُصنَّف MDR — مقاومة "
+                        "Oxacillin/Cefoxitin تتنبأ بعدم الحساسية لكل فئات "
+                        "البيتا-لاكتام (Magiorakos 2012, Table 1, criterion i).")
+    if _basis.startswith("outside") or "MDRSP" in _basis:
+        warnings.append(f"ℹ️ أساس التصنيف: {_basis}. Magiorakos 2012 يغطي "
+                        "S. aureus · Enterococcus · Enterobacteriaceae · "
+                        "P. aeruginosa · Acinetobacter فقط.")
     if _capped:
         warnings.append("⚠️ Resistance pattern suggests XDR/PDR, but the evidence is too thin "
                         "(few categories, or resistant categories rest on a single agent each) -- "
@@ -1951,6 +2486,10 @@ def classify_mdr(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
         "reliable":               reliable,
         "warnings":               warnings,
         "gram":                   "positive" if is_gram_pos else "negative",
+        "group":                  _group,
+        "basis":                  _basis,
+        "mrsa_rule_applied":      bool(_is_mrsa_mdr),
+        "not_applicable":         False,
     }
 
 MDR_INFO = {
@@ -2031,6 +2570,7 @@ def predict_esbl(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
         - high             : ≥2 carbapenems R
         - moderate         : 1 carbapenem R (or Meropenem I)
     """
+    sir_map = normalize_sir_map(sir_map)
     if not sir_map:
         return {"probability": None, "confidence": 0}
 
@@ -2924,32 +3464,77 @@ _CFU_SUPERSCRIPTS = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
 
 
 def _parse_cfu(text: str) -> int:
-    """استخرج قيمة CFU رقمية من النص"""
+    """Numeric CFU/mL from a free-text colony-count field.
+
+    REWRITTEN. The previous body ended with `val = int(nums[-1])` -- the LAST
+    number anywhere in the string. Any trailing digit hijacked the result:
+
+        "Colony count 100000 CFU/mL (specimen 2)"  ->  2
+        "10 5 CFU/mL"   (OCR lost the superscript) ->  5
+        "Growth < 10^4 CFU/mL"                     ->  10000  (direction dropped)
+
+    The first two turn a significant count into an insignificant one, which is
+    the direction that costs a patient a treated infection. The third does the
+    opposite and manufactures significance out of an explicitly sub-threshold
+    report.
+
+    Strategy: normalise, then read the count that is ACTUALLY tied to a CFU /
+    count keyword or to power-of-ten notation, and honour the comparison
+    operator that precedes it.
+    """
     if not text:
         return 0
-    # FIX (#U1): normalize Unicode superscripts after "10" -> caret form
-    # ("10⁵" -> "10^5") so report-style input (superscript exponents) parses
-    # correctly. Without this, "≥ 10⁵" was read as 10 -> a significant UTI
-    # scored as insignificant (patient-safety false-negative).
-    text = re.sub(r'10([⁰¹²³⁴⁵⁶⁷⁸⁹]+)',
-                  lambda m: '10^' + m.group(1).translate(_CFU_SUPERSCRIPTS), text)
-    # Clean spaces (incl. thin space U+2009) before threshold checks
-    t_clean = text.lower().replace(" ", "").replace("\u2009", "").strip()
-    if any(x in t_clean for x in ["≥", ">=", ">10^5", ">100000", "10^5", "≥10", ">=10"]):
-        if "10^5" in t_clean or "100000" in t_clean:
-            return 100000
-        if "10^4" in t_clean or "10000" in t_clean:
-            return 10000
-    nums = re.findall(r'[\d]+', text.replace(",", ""))
-    if not nums:
+    t = str(text)
+
+    # Unicode superscripts after "10" -> caret form ("10⁵" -> "10^5").
+    t = re.sub(r"10\s*([\u2070\u00b9\u00b2\u00b3\u2074-\u2079]+)",
+               lambda m: "10^" + m.group(1).translate(_CFU_SUPERSCRIPTS), t)
+    # OCR frequently renders "10⁵" as "10 5" / "10-5" once the superscript is
+    # lost. A bare "10" followed by a single digit 2-9 is a lost exponent, never
+    # a real count of "5 CFU/mL".
+    t = re.sub(r"\b10\s*[\-\u2013 ]\s*([2-9])\b", r"10^\1", t)
+    t = t.replace("\u2009", " ")
+
+    low = t.lower()
+    if any(k in low for k in ("no growth", "sterile", "no organism", "لا يوجد نمو")):
         return 0
-    val = int(nums[-1])
-    # إذا كان الرقم صغير جداً (مثل "10" تعني 10^5 أحياناً)
-    if val <= 9 and "^" in text:
-        exp_match = re.findall(r'\^(\d+)', text)
-        if exp_match:
-            val = 10 ** int(exp_match[0])
-    return val
+
+    # Direction: does the report say the count is BELOW a threshold?
+    _below = bool(re.search(r"[<\u2264]|less than|below|أقل من", low))
+
+    def _mag(m):
+        """Value of one power-of-ten or plain-integer match."""
+        if m.group("exp"):
+            return 10 ** int(m.group("exp"))
+        return int(m.group("num").replace(",", "").replace(" ", ""))
+
+    # Every candidate count in the string, in order.
+    pat = re.compile(r"(?:10\s*\^\s*(?P<exp>\d+))|(?P<num>\d[\d, ]{2,})")
+    cands = [(m.start(), _mag(m)) for m in pat.finditer(t)]
+    if not cands:
+        # Last resort: a lone small integer, but ONLY if a CFU keyword is present,
+        # so "(specimen 2)" on its own can never become a colony count.
+        if re.search(r"cfu|colon|count|/ml", low):
+            lone = re.findall(r"\b\d+\b", t)
+            if lone:
+                return int(lone[-1])
+        return 0
+
+    # Prefer a candidate that sits next to a CFU / count keyword; otherwise take
+    # the LARGEST candidate rather than the last one, because report suffixes
+    # ("sample #3", "(specimen 2)", "2 organisms") are always small integers.
+    anchored = []
+    for pos, val in cands:
+        window = low[max(0, pos - 22): pos + 26]
+        if re.search(r"cfu|colon|count|/ml|/cc|بكتير|مستعمر", window):
+            anchored.append(val)
+    value = max(anchored) if anchored else max(v for _, v in cands)
+
+    # "< 10^4" means the count did NOT reach 10^4. Returning 10^4 flips a
+    # sub-threshold report into a significant one at every downstream >= test.
+    if _below and value > 0:
+        value -= 1
+    return value
 
 
 def _parse_pus(text: str):
@@ -3876,6 +4461,7 @@ def run_ast_qc(organism: str, sir_map: Dict[str, str], specimen: str = "") -> Li
     recommendations, so it can flag freely without affecting any decision.
     Returns a de-duplicated list of {id, severity, message, fix}.
     """
+    sir_map = normalize_sir_map(sir_map)
     if not sir_map:
         return []
     org_lower = (organism or "").lower()
@@ -4940,7 +5526,8 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:0.6mm 0; }
         # back to the specimen syndrome. This stops e.g. Azithromycin being labelled
         # "FIRST-LINE" for an Enterobacterales (macrolides aren't first-line for GNB),
         # even though the CAP syndrome lists it as an empiric first choice.
-        _prof_fl = (ORGANISM_PROFILE.get(organism) or {}).get("first_line") or []
+        _prof_fl = _drop_intrinsic(
+            (ORGANISM_PROFILE.get(organism) or {}).get("first_line") or [], organism)
         _syn_fl  = INFECTION_SYNDROMES.get((specimen, None), {})
         _fl_src  = _prof_fl or (_syn_fl.get("first_choice") or [])
         _fl_norm = {normalize_abx_key(n) for n in _fl_src}
@@ -6072,7 +6659,7 @@ def generate_report(
     if allowed:
         for item in allowed:
             sir_tag  = f" [Culture: {sir_map[item['name']]}]" if sir_map and item['name'] in sir_map else ""
-            preg_tag = " [Pregnancy: caution]" if (is_preg and item.get("preg_status") == "Warn") else ""
+            preg_tag = " [Pregnancy: caution]" if (is_preg and preg_status_of(item) == "Warn") else ""
             L += [f"\n{item['name']}{sir_tag}{preg_tag}", sep2,
                   f"WHO AWaRe : {item.get('aware','-')}",
                   f"Class     : {item.get('class','-')}",
@@ -6084,7 +6671,7 @@ def generate_report(
                 L.append(f"Note      : {item.get('note','')}")
             if is_renal:
                 L.append(f"Renal     : {item.get('renal_note','-')}")
-            if is_preg and item.get("preg_status") == "Warn":
+            if is_preg and preg_status_of(item) == "Warn":
                 pn = (item.get("preg_note") or "").splitlines()
                 if pn:
                     L.append(f"Pregnancy : {pn[0]}")
@@ -6215,9 +6802,10 @@ def generate_report(
 # واجهة التطبيق الرئيسية
 # =========================================================
 if not st.session_state.authenticated:
-    email_input = show_login_page()
-    if email_input:
-        if check_subscription(email_input):
+    _login = show_login_page()
+    if _login:
+        email_input, password_input = _login
+        if check_subscription(email_input, password_input):
             st.session_state.authenticated = True
             st.session_state.last_activity = time.time()
             st.rerun()
@@ -6394,7 +6982,9 @@ if uploaded:
         # empiric therapy from the profile and tell the user to ignore the AST panel.
         _ATYPICAL_NO_AST = {"Legionella pneumophila", "Mycoplasma spp.", "Rickettsia spp."}
         if organism_type in _ATYPICAL_NO_AST:
-            _emp = (ORGANISM_PROFILE.get(organism_type) or {}).get("first_line", [])
+            _emp = _drop_intrinsic(
+                (ORGANISM_PROFILE.get(organism_type) or {}).get("first_line", []),
+                organism_type)
             _emp_txt = "، ".join(_emp) if _emp else "—"
             st.warning(
                 f"⚠️ **{organism_type}** لا يُزرع بالمزرعة الروتينية ولا يوجد له اختبار "
@@ -6475,12 +7065,18 @@ if uploaded:
                 spec_ctx = (op.get("specimen_context") or {}).get(culture_type, "")
                 if spec_ctx:
                     st.warning(f"**{culture_type} Context:** {spec_ctx}")
-                if _hide_urine_only(op.get("first_line"), culture_type):
-                    st.write("**First-line:**", ", ".join(_hide_urine_only(op.get("first_line"), culture_type)))
-                if _hide_urine_only(op.get("second_line"), culture_type):
-                    st.write("**Second-line:**", ", ".join(_hide_urine_only(op.get("second_line"), culture_type)))
-                if _hide_urine_only(op.get("third_line"), culture_type):
-                    st.write("**Third-line:**", ", ".join(_hide_urine_only(op.get("third_line"), culture_type)))
+                _t_first_line = _drop_intrinsic(
+                    _hide_urine_only(op.get("first_line"), culture_type), organism_type)
+                if _t_first_line:
+                    st.write("**First-line:**", ", ".join(_t_first_line))
+                _t_second_line = _drop_intrinsic(
+                    _hide_urine_only(op.get("second_line"), culture_type), organism_type)
+                if _t_second_line:
+                    st.write("**Second-line:**", ", ".join(_t_second_line))
+                _t_third_line = _drop_intrinsic(
+                    _hide_urine_only(op.get("third_line"), culture_type), organism_type)
+                if _t_third_line:
+                    st.write("**Third-line:**", ", ".join(_t_third_line))
                 if op.get("avoid"):
                     st.error("**Avoid:** " + ", ".join(op["avoid"]))
                 if culture_type == "Urine" and op.get("urine_note"):
@@ -7164,7 +7760,7 @@ if uploaded:
             final_drugs=final_drugs,
             organism_type=organism_type,
             culture_type=culture_type,
-            age=age, sex=sex,
+            age=age, sex=sex, age_months=age_months,
             is_renal=is_renal, cl_cr=cl_cr,
             is_preg=is_preg, is_hepatic=is_hepatic,
             current_meds=current_meds,
@@ -7450,7 +8046,7 @@ if uploaded:
             for item in allowed:
                 sir_badge = (f" [{sir_map[item['name']]}]"
                              if sir_map and item['name'] in sir_map else "")
-                preg_flag = " 🤰" if (is_preg and item.get("preg_status") == "Warn") else ""
+                preg_flag = " 🤰" if (is_preg and preg_status_of(item) == "Warn") else ""
                 aware_val = item.get("aware", "Unknown")
                 color_val = AWARE_COLORS.get(aware_val, aware_val)
                 with st.expander(
@@ -7465,7 +8061,7 @@ if uploaded:
                         st.info(f"**{culture_type} Note:** {spec_note}")
                     if is_renal:
                         st.caption(f"Renal: {item.get('renal_note','-')}")
-                    if is_preg and item.get("preg_status") == "Warn":
+                    if is_preg and preg_status_of(item) == "Warn":
                         pn = (item.get("preg_note") or "").splitlines()
                         if pn:
                             st.caption(f"🤰 {pn[0]}")

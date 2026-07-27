@@ -56,6 +56,32 @@ def _nk(s: str) -> str:
     return _NORM.sub("", (s or "").lower())
 
 
+def _mecA_phenotype(organism: str, sir_map: Dict[str, str]) -> bool:
+    """True when the panel itself declares methicillin resistance.
+
+    Most laboratories report the organism as plain "Staphylococcus aureus" and
+    let the oxacillin/cefoxitin result carry the MRSA call. A rule keyed only on
+    the STRING "mrsa" therefore stayed silent on the majority of real reports,
+    while analyze_antibiotics -- which reads the markers -- banned every
+    beta-lactam on the same isolate. The two halves of the product disagreed.
+    """
+    o = (organism or "").lower()
+    # The NAME alone is sufficient evidence: if the laboratory has already
+    # identified the isolate as MRSA, an Oxacillin-S line on the same panel is a
+    # contradiction that must still be flagged. Requiring the marker as well
+    # would silence the rule on exactly that error.
+    if "mrsa" in o or "mrse" in o or "methicillin-resistant" in o \
+            or "methicillin resistant" in o:
+        return True
+    for name, val in (sir_map or {}).items():
+        n = _nk(name)
+        if n in ("oxacillin", "cefoxitin", "methicillin", "cloxacillin",
+                 "flucloxacillin", "dicloxacillin"):
+            if str(val).strip().upper() in ("R", "I"):
+                return True
+    return False
+
+
 def _org_matches(organism: str, names: List[str]) -> bool:
     o = (organism or "").lower()
     return any(n in o for n in names)
@@ -311,16 +337,27 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
         # the recommendation panel refused it. Same two-engine split as the
         # Acinetobacter and Enterococcus cases.
         "id": "intr_mrsa_betalactams",
-        "organisms": ["mrsa", "methicillin-resistant staph", "methicillin resistant staph"],
+        # WAS: ["mrsa", "methicillin-resistant staph", ...] -- name-only matching.
+        # A panel reported as "Staphylococcus aureus" with Oxacillin R and
+        # Ceftriaxone S passed QC in COMPLETE SILENCE, because the string "mrsa"
+        # never appeared. Now any staphylococcus qualifies and the phenotype gate
+        # decides, exactly as analyze_antibiotics already does.
+        "organisms": ["staphylococc", "staph", "mrsa", "mrse",
+                      "methicillin-resistant staph", "methicillin resistant staph"],
         "not_organisms": [],
-        "drugs": ["penicillin", "oxacillin", "ampicillin", "amoxicillin",
+        "phenotype_gate": _mecA_phenotype,
+        "drugs": ["penicillin", "ampicillin", "amoxicillin",
                   "piperacillin", "cephalexin", "cefadroxil", "cephradine",
-                  "cefazolin", "cefaclor", "cefuroxime", "cefoxitin",
+                  "cefazolin", "cefaclor", "cefuroxime",
                   "ceftriaxone", "cefotaxime", "ceftazidime", "cefixime",
                   "cefepime", "cefoperazone", "imipenem", "meropenem",
                   "ertapenem", "aztreonam"],
+        # Oxacillin and Cefoxitin are the MARKERS. They are the one beta-lactam
+        # result the laboratory MUST report on a staphylococcus, so they are
+        # removed from the drug list -- previously the finding told the lab to
+        # suppress the very disc that established the phenotype.
         # The anti-MRSA cephalosporins retain activity and must stay reportable.
-        "exclude": ["ceftaroline", "ceftobiprole"],
+        "exclude": ["ceftaroline", "ceftobiprole", "oxacillin", "cefoxitin"],
         "reason_ar": ("MRSA يحمل mecA/mecC المنتج لـ PBP2a منخفض الألفة — كل "
                       "البيتا-لاكتام غير فعّال (عدا Ceftaroline/Ceftobiprole). "
                       "نتيجة S لأي بنسلين أو سيفالوسبورين تقليدي أو كاربابينيم "
@@ -708,6 +745,10 @@ def _check(rules, organism, sir_map, category, severity):
         if rule["organisms"] and not _org_matches(organism, rule["organisms"]):
             continue
         if rule.get("not_organisms") and _org_matches(organism, rule["not_organisms"]):
+            continue
+        # A rule may additionally demand a PHENOTYPE seen on this very panel.
+        _gate = rule.get("phenotype_gate")
+        if _gate is not None and not _gate(organism, sir_map):
             continue
         hits = [d for d in sir_map
                 if _drug_matches(d, rule["drugs"], rule.get("exclude", []))]

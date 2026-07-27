@@ -75,8 +75,15 @@ ORGANISM_PROFILE = {
     },
     "Acinetobacter baumannii": {
         "first_line": ["Ampicillin/Sulbactam","Cefoperazone + Sulbactam"],
+        # Doxycycline was listed here even after clinical_data.py was corrected to
+        # mark it intrinsically resistant -- EUCAST Intrinsic Resistance v3.3,
+        # Table 2 fn.2: Acinetobacter is intrinsically resistant to tetracycline
+        # and doxycycline but NOT to minocycline and tigecycline. The engine
+        # banned it while this list still displayed it as second-line, so one
+        # screen contradicted the other. Replaced by the agent that actually
+        # works.
         "second_line": ["Meropenem","Imipenem/Cilastatin","Amikacin",
-                        "Trimethoprim/Sulfamethoxazole","Doxycycline"],
+                        "Trimethoprim/Sulfamethoxazole","Minocycline"],
         "third_line":  ["Colistin"],
         "avoid": ["Ertapenem","Cephalexin","Cefuroxime","Ceftriaxone",
                   "Azithromycin","Clarithromycin","Nitrofurantoin","Fosfomycin"],

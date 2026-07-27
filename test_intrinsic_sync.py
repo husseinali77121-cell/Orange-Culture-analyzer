@@ -68,6 +68,13 @@ def qa_for(org: str) -> set:
 def rp_for(org: str) -> set:
     hit: set = set()
     for r in RP.INTRINSIC_RULES:
+        # A rule carrying `phenotype_gate` is CONDITIONAL: it applies only when
+        # the panel itself shows the mechanism (e.g. the MRSA beta-lactam rule
+        # fires on Oxacillin/Cefoxitin R, not on the species name). Such a rule
+        # makes no unconditional intrinsic claim about the species, so comparing
+        # it against the species-level canonical table is a category error.
+        if r.get("phenotype_gate") is not None:
+            continue
         if RP._org_matches(org, r["organisms"]):
             hit |= {d for d in DRUGS if RP._drug_matches(d, r["drugs"], r["exclude"])}
     return hit

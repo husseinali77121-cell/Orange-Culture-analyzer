@@ -346,14 +346,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -394,14 +388,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Carbapenems",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -442,12 +430,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -488,13 +472,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Non-Extended-Sp Cephalosporins"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -536,10 +515,7 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [
-   "Carbapenems",
-   "Extended-Sp Cephalosporins"
-  ],
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -579,20 +555,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "PDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Antipseudomonal Penics",
-   "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
-   "Polymyxins",
-   "Tetracyclines"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -611,10 +575,7 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Fluoroquinolones"
-  ],
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -739,19 +700,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "XDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Antipseudomonal Penics",
-   "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
-   "Tetracyclines"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -2331,10 +2281,8 @@
   "mdr_cats": [
    "Fluoroquinolones",
    "Glycopeptides",
-   "Macrolides",
-   "Nitrofurans",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -2358,7 +2306,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -2486,9 +2436,7 @@
   "mdr_cats": [
    "Fluoroquinolones",
    "Glycopeptides",
-   "Macrolides",
-   "Nitrofurans",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -2577,9 +2525,8 @@
   "mdr_cats": [
    "Fluoroquinolones",
    "Glycopeptides",
-   "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -2600,7 +2547,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -2709,8 +2658,7 @@
   "mdr_cats": [
    "Fluoroquinolones",
    "Glycopeptides",
-   "Macrolides",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -3267,7 +3215,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -3295,7 +3243,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
    "Fluoroquinolones"
@@ -3323,7 +3271,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -3353,6 +3301,7 @@
    "Aminoglycosides",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
@@ -3376,7 +3325,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
    "Fluoroquinolones"
@@ -3406,7 +3355,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -3433,7 +3382,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -3464,6 +3413,7 @@
    "Aminoglycosides",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
@@ -5168,16 +5118,18 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
-   "Penicillins+BLI"
+   "Anti-staphylococcal Beta-lactams"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
    "MRSA"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+  ],
   "warned": []
  },
  "Blood|Staphylococcus aureus|pdr": {
@@ -5209,13 +5161,14 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -5224,7 +5177,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "QC005"
+   "QC005",
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
   ],
   "warned": []
  },
@@ -5350,12 +5304,13 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Penicillins+BLI",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -5363,7 +5318,9 @@
    "MRSA"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+  ],
   "warned": []
  },
  "Blood|Stenotrophomonas maltophilia|ampc": {
@@ -5659,6 +5616,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -5691,15 +5649,16 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": "PDR",
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -5718,7 +5677,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -5818,14 +5779,15 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": "XDR",
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -5905,9 +5867,8 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Fluoroquinolones",
-   "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -5926,7 +5887,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -6027,8 +5990,7 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Fluoroquinolones",
-   "Macrolides",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -8138,13 +8100,14 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -8254,12 +8217,13 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -8287,7 +8251,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -8315,7 +8279,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
    "Fluoroquinolones"
@@ -8343,7 +8307,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -8373,6 +8337,7 @@
    "Aminoglycosides",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
@@ -8396,7 +8361,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
    "Fluoroquinolones"
@@ -8426,7 +8391,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -8453,7 +8418,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -8484,6 +8449,7 @@
    "Aminoglycosides",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
@@ -8600,16 +8566,18 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
-   "Penicillins+BLI"
+   "Anti-staphylococcal Beta-lactams"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [
    "MRSA"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+  ],
   "warned": []
  },
  "CSF|Staphylococcus aureus|pdr": {
@@ -8641,13 +8609,14 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -8656,7 +8625,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "QC005"
+   "QC005",
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
   ],
   "warned": []
  },
@@ -8782,12 +8752,13 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Penicillins+BLI",
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -8795,7 +8766,9 @@
    "MRSA"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+  ],
   "warned": []
  },
  "CSF|Streptococcus pneumoniae|intrinsic_violation": {
@@ -8861,6 +8834,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -8893,15 +8867,16 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": "PDR",
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -8920,7 +8895,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
   "preg_warn": [],
@@ -9020,14 +8997,15 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": "XDR",
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -9383,14 +9361,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -9431,14 +9403,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Carbapenems",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -9479,12 +9445,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -9525,13 +9487,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Non-Extended-Sp Cephalosporins"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -9573,10 +9530,7 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [
-   "Carbapenems",
-   "Extended-Sp Cephalosporins"
-  ],
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -9616,20 +9570,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "PDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Antipseudomonal Penics",
-   "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
-   "Polymyxins",
-   "Tetracyclines"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -9648,10 +9590,7 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Fluoroquinolones"
-  ],
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -9776,19 +9715,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "XDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Antipseudomonal Penics",
-   "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
-   "Tetracyclines"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -10939,10 +10867,8 @@
   "mdr_cats": [
    "Fluoroquinolones",
    "Glycopeptides",
-   "Macrolides",
-   "Nitrofurans",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -10966,7 +10892,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -11094,9 +11022,7 @@
   "mdr_cats": [
    "Fluoroquinolones",
    "Glycopeptides",
-   "Macrolides",
-   "Nitrofurans",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -11656,7 +11582,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -11684,7 +11610,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
    "Fluoroquinolones"
@@ -11712,7 +11638,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -11742,6 +11668,7 @@
    "Aminoglycosides",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
@@ -11765,7 +11692,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
    "Fluoroquinolones"
@@ -11795,7 +11722,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -11822,7 +11749,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -11853,6 +11780,7 @@
    "Aminoglycosides",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
@@ -12770,16 +12698,18 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
-   "Penicillins+BLI"
+   "Anti-staphylococcal Beta-lactams"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
    "MRSA"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+  ],
   "warned": []
  },
  "Pus|Staphylococcus aureus|pdr": {
@@ -12811,13 +12741,14 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -12826,7 +12757,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "QC005"
+   "QC005",
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
   ],
   "warned": []
  },
@@ -12952,12 +12884,13 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Penicillins+BLI",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -12965,7 +12898,9 @@
    "MRSA"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+  ],
   "warned": []
  },
  "Pus|VRE|intrinsic_violation": {
@@ -13039,9 +12974,8 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Fluoroquinolones",
-   "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -13060,7 +12994,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -13161,8 +13097,7 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Fluoroquinolones",
-   "Macrolides",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -16443,14 +16378,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -16492,14 +16421,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Carbapenems",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -16541,12 +16464,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -16588,13 +16507,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Non-Extended-Sp Cephalosporins"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -16637,10 +16551,7 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [
-   "Carbapenems",
-   "Extended-Sp Cephalosporins"
-  ],
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -16681,20 +16592,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "PDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Antipseudomonal Penics",
-   "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
-   "Polymyxins",
-   "Tetracyclines"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -16713,10 +16612,7 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Fluoroquinolones"
-  ],
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -16844,19 +16740,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "XDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Antipseudomonal Penics",
-   "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
-   "Tetracyclines"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -16884,7 +16769,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -16912,7 +16797,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
    "Fluoroquinolones"
@@ -16940,7 +16825,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -16970,6 +16855,7 @@
    "Aminoglycosides",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
@@ -16993,7 +16879,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
    "Fluoroquinolones"
@@ -17023,7 +16909,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -17050,7 +16936,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -17081,6 +16967,7 @@
    "Aminoglycosides",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
@@ -17223,10 +17110,7 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Fluoroquinolones"
-  ],
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -17251,13 +17135,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Fluoroquinolones",
-   "Polymyxins",
-   "Tetracyclines"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -17274,10 +17153,7 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Fluoroquinolones"
-  ],
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -17360,12 +17236,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Fluoroquinolones",
-   "Tetracyclines"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -17829,16 +17701,18 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
-   "Penicillins+BLI"
+   "Anti-staphylococcal Beta-lactams"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
    "MRSA"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+  ],
   "warned": []
  },
  "Sputum|Staphylococcus aureus|pdr": {
@@ -17870,13 +17744,14 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -17885,7 +17760,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "QC005"
+   "QC005",
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
   ],
   "warned": []
  },
@@ -18011,12 +17887,13 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Penicillins+BLI",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -18024,7 +17901,9 @@
    "MRSA"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+  ],
   "warned": []
  },
  "Sputum|Stenotrophomonas maltophilia|ampc": {
@@ -18320,6 +18199,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -18352,15 +18232,16 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": "PDR",
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -18379,7 +18260,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -18479,14 +18362,15 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": "XDR",
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -22646,10 +22530,8 @@
   "mdr_cats": [
    "Fluoroquinolones",
    "Glycopeptides",
-   "Macrolides",
-   "Nitrofurans",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -22670,7 +22552,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -22764,9 +22648,7 @@
   "mdr_cats": [
    "Fluoroquinolones",
    "Glycopeptides",
-   "Macrolides",
-   "Nitrofurans",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -24268,7 +24150,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -24299,7 +24181,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
    "Fluoroquinolones"
@@ -24330,7 +24212,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -24363,10 +24245,11 @@
    "Aminoglycosides",
    "Fluoroquinolones",
    "Folate PI",
+   "Fosfomycins",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Nitrofurans",
    "Oxazolidinones",
    "Tetracyclines"
   ],
@@ -24387,7 +24270,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
    "Fluoroquinolones"
@@ -24418,7 +24301,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -24452,10 +24335,11 @@
    "Aminoglycosides",
    "Fluoroquinolones",
    "Folate PI",
+   "Fosfomycins",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Nitrofurans",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -26161,16 +26045,18 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
-   "Penicillins+BLI"
+   "Anti-staphylococcal Beta-lactams"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
    "MRSA"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+  ],
   "warned": []
  },
  "Urine|Staphylococcus aureus|pdr": {
@@ -26205,14 +26091,15 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
+   "Fosfomycins",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Nitrofurans",
    "Oxazolidinones",
-   "Penicillins+BLI",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -26221,7 +26108,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "QC005"
+   "QC005",
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
   ],
   "warned": []
  },
@@ -26315,13 +26203,14 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
+   "Fosfomycins",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Nitrofurans",
-   "Penicillins+BLI",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -26329,7 +26218,9 @@
    "MRSA"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+  ],
   "warned": []
  },
  "Urine|Streptococcus agalactiae|intrinsic_violation": {
@@ -26395,6 +26286,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -26429,14 +26321,14 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Nitrofurans",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -26455,7 +26347,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -26521,13 +26415,13 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Nitrofurans",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -26616,10 +26510,8 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Fluoroquinolones",
-   "Macrolides",
-   "Nitrofurans",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -26638,7 +26530,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -26721,9 +26615,7 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Fluoroquinolones",
-   "Macrolides",
-   "Nitrofurans",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -27079,14 +26971,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -27127,14 +27013,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Carbapenems",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -27175,12 +27055,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -27221,13 +27097,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Non-Extended-Sp Cephalosporins"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -27269,10 +27140,7 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [
-   "Carbapenems",
-   "Extended-Sp Cephalosporins"
-  ],
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -27312,20 +27180,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "PDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Antipseudomonal Penics",
-   "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
-   "Polymyxins",
-   "Tetracyclines"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -27344,10 +27200,7 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Fluoroquinolones"
-  ],
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -27472,19 +27325,8 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "XDR",
-  "mdr_cats": [
-   "Aminoglycosides",
-   "Antipseudomonal Penics",
-   "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
-   "Tetracyclines"
-  ],
+  "mdr": null,
+  "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -28635,10 +28477,8 @@
   "mdr_cats": [
    "Fluoroquinolones",
    "Glycopeptides",
-   "Macrolides",
-   "Nitrofurans",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -28662,7 +28502,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -28790,9 +28632,7 @@
   "mdr_cats": [
    "Fluoroquinolones",
    "Glycopeptides",
-   "Macrolides",
-   "Nitrofurans",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -29796,7 +29636,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -29824,7 +29664,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
    "Fluoroquinolones"
@@ -29852,7 +29692,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -29882,6 +29722,7 @@
    "Aminoglycosides",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
@@ -29905,7 +29746,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
    "Fluoroquinolones"
@@ -29935,7 +29776,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -29962,7 +29803,7 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -29993,6 +29834,7 @@
    "Aminoglycosides",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
@@ -31260,16 +31102,18 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": null,
+  "mdr": "MDR",
   "mdr_cats": [
-   "Penicillins+BLI"
+   "Anti-staphylococcal Beta-lactams"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
    "MRSA"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+  ],
   "warned": []
  },
  "Wound Swab|Staphylococcus aureus|pdr": {
@@ -31301,13 +31145,14 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -31316,7 +31161,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "QC005"
+   "QC005",
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
   ],
   "warned": []
  },
@@ -31442,12 +31288,13 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
    "Fluoroquinolones",
    "Folate PI",
+   "Fusidanes",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Penicillins+BLI",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -31455,7 +31302,9 @@
    "MRSA"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+  ],
   "warned": []
  },
  "Wound Swab|Streptococcus pyogenes|intrinsic_violation": {
@@ -31515,6 +31364,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -31546,13 +31396,14 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -31571,7 +31422,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -31664,12 +31517,13 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
    "Lincosamides",
    "Macrolides",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -31749,9 +31603,8 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Fluoroquinolones",
-   "Macrolides",
    "Oxazolidinones",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -31770,7 +31623,9 @@
   "esbl": null,
   "esbl_conf": 0,
   "mdr": null,
-  "mdr_cats": [],
+  "mdr_cats": [
+   "Penicillins"
+  ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
@@ -31871,8 +31726,7 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Fluoroquinolones",
-   "Macrolides",
-   "Penicillins+BLI",
+   "Penicillins",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
