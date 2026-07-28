@@ -371,7 +371,7 @@ def generate_decision_tree_image(
     fx1 = P + 3*(fw4+G); fx2 = W - P
     rbox(draw, (fx1, FY1, fx2, FY2), FOOT_BG, FOOT_BD, radius=12, width=2)
     draw.text((fx1+10*S, FY1+10*S), "REFERENCES", fill=DARK, font=F_SUBTITL)
-    refs = ["EUCAST 2026","CLSI M100 2026","IDSA AMR 2025",
+    refs = ["EUCAST Breakpoint Tables v16.0 (2026)","CLSI M100 Ed36","IDSA AMR Guidance v4.0 (2024)",
             "WHO AWaRe 2025","Egypt Nat. Guidelines","BNF 2025 | FDA Labels"]
     ry = FY1 + 30*S
     for ref in refs:
@@ -602,7 +602,7 @@ def generate_report(
     L += ["\nDISCLAIMER", sep,
           "هذا التقرير أداة مساعدة للقرار الطبي وليس بديلاً عن التقييم السريري.",
           "القرار النهائي للوصف العلاجي يعود للطبيب المعالج.", sep,
-          "Guidelines: EUCAST 2026 | CLSI M100 2026 | IDSA AMR 2025 | Egypt National",
+          "Guidelines: EUCAST Breakpoint Tables v16.0 (2026) | CLSI M100 Ed36 | IDSA AMR Guidance v4.0 (2024) | Egypt National",
           "Route info: BNF 2025 | FDA Labels | WHO AWaRe 2025",
           "WHO AWaRe : Access | Watch | Reserve", sep,
           f"Developed by Dr / Hussein Ali | {lab_name}{(' | ' + lab_city) if lab_city else ''}", sep]

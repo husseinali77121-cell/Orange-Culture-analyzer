@@ -1,7 +1,7 @@
 # modules/mdr.py
 # © Dr. Hussein Ali — Orange Lab
 # MDR/XDR/PDR Classification + ESBL Prediction
-# المرجع: CLSI M100 2026, EUCAST 2026, WHO 2022
+# المرجع: CLSI M100 Ed36, EUCAST Breakpoint Tables v16.0 (2026), WHO 2022
 
 from __future__ import annotations
 from typing import Any, Dict
