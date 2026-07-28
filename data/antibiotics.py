@@ -3,6 +3,7 @@
 # قاعدة بيانات المضادات الحيوية + الأسماء التجارية
 
 from __future__ import annotations
+import re            # normalize_abx_key() uses re.sub
 import os as _os
 from typing import Dict, Any, List
 
@@ -27,7 +28,7 @@ ABX_GUIDELINES = {
     },
     "Ampicillin/Sulbactam": {
         "priority": 2, "class": "Penicillin + Beta-lactamase Inhibitor (IV)",
-        "note": "💉 IV فقط. فعال للموجبات والسالبات. أساس علاج Acinetobacter بجرعات عالية (IDSA AMR 2025).",
+        "note": "💉 IV فقط. فعال للموجبات والسالبات. أساس علاج Acinetobacter بجرعات عالية (IDSA AMR Guidance v4.0 (2024)).",
         "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
@@ -44,7 +45,7 @@ ABX_GUIDELINES = {
     },
     "Piperacillin + Tazobactam": {
         "priority": 4, "class": "Anti-pseudomonal Penicillin + Inhibitor (IV)",
-        "note": "🛑 (مثل Tazocin) IV فقط. واسع الطيف جداً — يُحفظ للحالات الشديدة (IDSA AMR 2025).",
+        "note": "🛑 (مثل Tazocin) IV فقط. واسع الطيف جداً — يُحفظ للحالات الشديدة (IDSA AMR Guidance v4.0 (2024)).",
         "renal_limit": 20, "renal_note": "⚖️ تعديل الجرعة مطلوب.",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",

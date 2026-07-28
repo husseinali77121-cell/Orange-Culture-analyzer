@@ -61,8 +61,12 @@ ORGANISM_PROFILE = {
     },
     "Acinetobacter baumannii": {
         "first_line": ["Ampicillin/Sulbactam","Cefoperazone + Sulbactam"],
+        # EUCAST Intrinsic Resistance v3.3 Table 2 fn.2 -- Acinetobacter is
+        # intrinsically resistant to tetracycline and doxycycline but NOT to
+        # minocycline. This row was corrected in organism_profile.py and never
+        # ported here, so the modular build still recommended a dead drug.
         "second_line": ["Meropenem","Imipenem/Cilastatin","Amikacin",
-                        "Trimethoprim/Sulfamethoxazole","Doxycycline"],
+                        "Trimethoprim/Sulfamethoxazole","Minocycline"],
         "third_line":  ["Colistin"],
         "avoid": ["Ertapenem","Cephalexin","Cefuroxime","Ceftriaxone",
                   "Azithromycin","Clarithromycin","Nitrofurantoin","Fosfomycin"],
@@ -72,7 +76,7 @@ ORGANISM_PROFILE = {
             "Wound Swab": "🔴 عدوى الحروق والجروح الكبيرة.",
         },
         "note": ("🔴 MDR — Ampicillin/Sulbactam أو Cefoperazone/Sulbactam "
-                 "بجرعات عالية هو الأساس (IDSA AMR 2025)."),
+                 "بجرعات عالية هو الأساس (IDSA AMR Guidance v4.0 (2024))."),
     },
     "Staphylococcus aureus": {
         "first_line": ["Cephalexin","Cefadroxil","Amoxicillin + Clavulanic acid"],
