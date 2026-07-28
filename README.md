@@ -1,19 +1,95 @@
-# :earth_americas: GDP dashboard template
+# Orange Culture Analyzer
 
-A simple Streamlit app showing the GDP of different countries in the world.
+نظام دعم قرار سريري (CDSS) لتفسير مزارع الميكروبيولوجي واختبارات الحساسية،
+مبني على Streamlit. يقرأ لوحة الحساسية، يستنتج آلية المقاومة، يصنّف
+MDR/XDR/PDR، ويُخرج قائمة أدوية مفلترة حسب الكائن والعيّنة وحالة المريض.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://gdp-dashboard-template.streamlit.app/)
+> **تنبيه:** أداة مساعدة للقرار. لا تُغني عن حكم أخصائي الميكروبيولوجي أو
+> الطبيب المعالج، ولا تُستخدم كمصدر وحيد لقرار علاجي.
 
-### How to run it on your own machine
+## القدرات
 
-1. Install the requirements
+| | |
+|---|---|
+| **المقاومة الجوهرية** | 34 كائن، مصدر واحد للحقيقة في `clinical_data.py` |
+| **استنتاج الآلية** | ESBL · AmpC · carbapenemase · DTR · MRSA · VRE |
+| **التصنيف** | MDR/XDR/PDR بجداول Magiorakos منفصلة لكل مجموعة كائنات |
+| **بوابات الأمان** | حمل · أطفال · حديثو ولادة (بالشهور) · كلوي · كبدي (Child-Pugh) |
+| **QC اللوحة** | تناقضات · تسلسل · فئات مكافئة · أنماط ظاهرية استثنائية · قابلية التبليغ |
+| **التتبّع** | ~38 قاعدة مربوطة بمصادر مؤرَّخة في `guideline_registry.py` |
 
-   ```
-   $ pip install -r requirements.txt
-   ```
+## المصادر
 
-2. Run the app
+EUCAST Breakpoint Tables v16.0 · EUCAST Intrinsic Resistance v3.3 ·
+EUCAST Expert Rules v3.1 · CLSI M100 Ed36 · CLSI M39 ·
+IDSA AMR Guidance v4.0 (2024) · WHO AWaRe 2025 ·
+Magiorakos et al., *Clin Microbiol Infect* 2012;18:268-281
 
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+## التشغيل
+
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+## الإعداد — `.streamlit/secrets.toml`
+
+```toml
+# هوية البائع (تظهر في صفحة الدخول ورسائل التجديد)
+vendor_name  = "Orange Lab"
+vendor_phone = "+20 ..."
+vendor_email = "support@example.com"
+
+# المشتركون: البريد -> تاريخ الانتهاء
+subscribers = '{"lab@example.com": "2026-12-31"}'
+
+# كلمات المرور (اختياري لكن موصى به بشدة)
+# من غيرها الدخول بالبريد وحده، والتطبيق هيعرض تحذير عند البدء
+subscriber_hashes = '{"lab@example.com": "pbkdf2_sha256$240000$...$..."}'
+```
+
+توليد الـ hash:
+
+```bash
+python -c "import streamlit_app as a; print(a.make_password_hash('كلمة-السر'))"
+```
+
+## الاختبارات
+
+```bash
+python test_intrinsic_invariant.py   # المقاومة الجوهرية تُحترم دائماً
+python test_intrinsic_sync.py        # المحرك العلاجي و QC متفقان
+python test_scenarios.py             # 803 سيناريو + golden snapshot
+python test_comprehensive.py         # فضاء المزارع الكامل
+python test_guidelines.py            # تتبّع الاستشهادات
+python test_clinical_matrix.py       # خريطة القيود السريرية
+python test_safety_invariants.py     # ثوابت بوابات الأمان
+```
+
+الـ CI (9 guards) بيشغّل السبعة + `compileall` + **import حقيقي لكل module**.
+
+`test_scenarios.py` بيقارن بـ golden snapshot. أي تغيّر في إجابة سريرية بيكسر
+البناء عن قصد — راجع الـ diff، وبعدين:
+
+```bash
+python test_scenarios.py --update
+```
+
+## البنية
+
+```
+streamlit_app.py        الواجهة + المحركات السريرية
+clinical_data.py        المقاومة الجوهرية — مصدر الحقيقة الوحيد
+abx_guidelines.py       الدستور الدوائي (51 دواء)
+organism_profile.py     خطوط العلاج لكل كائن
+specimen_organism_map.py أي كائن يُتوقَّع في أي عيّنة
+ast_reportability.py    قواعد «هل يجوز تبليغ هذه النتيجة؟»
+ast_consistency.py      تناقضات اللوحة + الأنماط الاستثنائية
+ast_qa_engine.py        فحوص QA مستوى 1
+clinical_matrix.py      خريطة القيود المفصولة
+safety_gate.py          بوابة الأمان
+guideline_registry.py   ربط كل قاعدة بمصدرها المؤرَّخ
+```
+
+> `ui/` و `modules/` و `data/` بقايا إعادة هيكلة سابقة. بتـ import بنجاح لكن
+> **مش موصولة بالتطبيق** — إما تُحذف أو تُوصَّل قبل الاعتماد عليها.

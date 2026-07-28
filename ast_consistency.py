@@ -106,6 +106,34 @@ _INHIBITORS = ["clav", "sulbactam", "tazobactam", "avibactam", "vaborbactam",
 # ── 1. EQUIVALENCE ───────────────────────────────────────────────────────────
 EQUIVALENCE_RULES: List[Dict[str, Any]] = [
     {
+        # Oxacillin and cefoxitin are two readings of ONE mechanism, mecA/mecC.
+        # A panel that disagrees with itself about methicillin resistance is the
+        # single most consequential discrepancy a staphylococcal report can
+        # carry: it decides whether every beta-lactam on the sheet is usable.
+        # Nothing checked it -- the two markers were read independently and a
+        # split result went out with no comment at all.
+        "id": "equiv_oxa_fox",
+        "organisms": ["staphylococc", "staph"],
+        "a": "oxacillin", "a_exclude": [],
+        "b": "cefoxitin", "b_exclude": [],
+        "reason_ar": ("Oxacillin و Cefoxitin قراءتان لآلية واحدة (mecA/mecC). "
+                      "اختلافهما على نفس العزلة يعني أن أحد القرصين خاطئ — "
+                      "ولا يمكن معرفة أيهما من التقرير. Cefoxitin هو المؤشّر "
+                      "الأدق لـ mecA ويُقدَّم عند التعارض."),
+        "reason_en": ("Oxacillin and cefoxitin are two readings of one mechanism "
+                      "(mecA/mecC). Disagreement on the same isolate means one "
+                      "disk is wrong, and the report gives no way to tell which. "
+                      "Cefoxitin is the more reliable mecA surrogate and takes "
+                      "precedence."),
+        "fix_ar": ("أعِد القرصين. عند استمرار التعارض اعتمد Cefoxitin، أو أكِّد "
+                   "بـ PBP2a latex agglutination أو mecA PCR. بلِّغ كل "
+                   "البيتا-لاكتام كمقاوم حتى الحسم."),
+        "fix_en": ("Repeat both disks. If the split persists, follow cefoxitin, "
+                   "or confirm with PBP2a latex agglutination or mecA PCR. "
+                   "Report all beta-lactams as resistant until resolved."),
+        "reference": "CLSI M100 Ed36 — cefoxitin as the mecA surrogate",
+    },
+    {
         "id": "equiv_ctx_cro",
         "organisms": ENTEROBACTERALES,
         "a": "cefotaxime", "a_exclude": _INHIBITORS,
@@ -227,6 +255,116 @@ HIERARCHY_RULES: List[Dict[str, Any]] = [
 _RANK = {"S": 0, "I": 1, "R": 2}
 
 
+
+# ═══════════════════════════════════════════════════════════════════════
+# EXCEPTIONAL PHENOTYPE RULES
+# ----------------------------------------------------------------------
+# The hierarchy and equivalence rules above catch results that contradict ONE
+# ANOTHER. They cannot catch a result that is internally consistent but
+# contradicts the world -- a vancomycin-resistant Staphylococcus aureus, a
+# penicillin-resistant Streptococcus pyogenes. Nothing in the panel is
+# self-contradictory, so every existing rule stayed silent and the report went
+# out unchallenged.
+#
+# These are the phenotypes that, in a routine diagnostic laboratory, are far
+# more likely to be a mixed culture, a misidentification, a contaminated disk or
+# a transcription slip than a genuine finding. A true one is a notifiable public
+# health event and still needs reference-laboratory confirmation before it is
+# acted on -- so flagging costs nothing and missing it costs a great deal.
+#
+# `max_status` = the worst result that is UNREMARKABLE. Anything worse fires.
+# ═══════════════════════════════════════════════════════════════════════
+EXCEPTIONAL_PHENOTYPES: List[Dict[str, Any]] = [
+    {
+        "id": "rare_vrsa",
+        "organisms": ["staphylococcus aureus", "staph aureus", "mrsa", "mssa"],
+        "drug": "vancomycin", "exclude": [], "max_status": "I",
+        "reason_ar": ("مقاومة الفانكومايسين في المكوّرات العنقودية الذهبية "
+                      "(VRSA) وُثِّقت في حالات معدودة عالمياً منذ 2002. "
+                      "الاحتمال الأرجح بفارق كبير: مزرعة مختلطة، أو خطأ تعريف، "
+                      "أو قرص/شريط تالف."),
+        "reason_en": ("Vancomycin resistance in S. aureus (VRSA) has been "
+                      "documented in a very small number of cases worldwide "
+                      "since 2002. A mixed culture, a misidentification or a "
+                      "degraded disk is far more likely."),
+        "fix_ar": ("أكِّد بـ MIC (broth microdilution أو gradient strip) على "
+                   "مستعمرة نقية، وأعِد تعريف الكائن. لا تُصدِر النتيجة قبل "
+                   "التأكيد، وأبلِغ المعمل المرجعي عند الثبوت."),
+        "fix_en": ("Confirm by MIC (broth microdilution or gradient strip) on a "
+                   "pure colony and re-identify. Do not release before "
+                   "confirmation; notify the reference laboratory if confirmed."),
+        "reference": "CLSI M100 Ed36 — S. aureus vancomycin MIC confirmation",
+    },
+    {
+        "id": "rare_van_pneumococcus",
+        "organisms": ["streptococcus pneumoniae", "pneumococc"],
+        "drug": "vancomycin", "exclude": [], "max_status": "S",
+        "reason_ar": ("لم تُوصَف مكوّرات رئوية مقاومة للفانكومايسين في الأدبيات. "
+                      "النتيجة تشير على الأرجح إلى خطأ في التعريف — غالباً "
+                      "Enterococcus أو Leuconostoc أو Lactobacillus."),
+        "reason_en": ("Vancomycin-resistant S. pneumoniae has not been described. "
+                      "This most likely indicates a misidentification -- "
+                      "Enterococcus, Leuconostoc or Lactobacillus."),
+        "fix_ar": ("أعِد تعريف الكائن (optochin، bile solubility). راجع نقاء "
+                   "المستعمرة قبل إعادة الاختبار."),
+        "fix_en": ("Re-identify (optochin, bile solubility) and check colony "
+                   "purity before repeating."),
+        "reference": "CLSI M100 Ed36 — S. pneumoniae identification",
+    },
+    {
+        "id": "rare_pen_gas",
+        "organisms": ["streptococcus pyogenes", "group a strep", "gas"],
+        "drug": "penicillin", "exclude": ["combination"], "max_status": "S",
+        "reason_ar": ("Streptococcus pyogenes لا يزال حسّاساً للبنسلين عالمياً — "
+                      "لم تُوثَّق مقاومة سريرية. النتيجة تعني خطأ تعريف أو "
+                      "خطأ قراءة."),
+        "reason_en": ("S. pyogenes remains universally penicillin-susceptible; "
+                      "clinical resistance has not been documented. This "
+                      "indicates a misidentification or a reading error."),
+        "fix_ar": ("أعِد التعريف (Lancefield grouping، bacitracin، PYR) وأعِد "
+                   "قراءة القرص."),
+        "fix_en": ("Re-identify (Lancefield grouping, bacitracin, PYR) and "
+                   "re-read the disk.",),
+        "reference": "CLSI M100 Ed36 — beta-haemolytic streptococci",
+    },
+    {
+        "id": "rare_linezolid_gram_pos",
+        "organisms": ["staphylococc", "enterococc", "streptococc", "mrsa", "vre"],
+        "drug": "linezolid", "exclude": [], "max_status": "I",
+        "reason_ar": ("مقاومة اللينيزوليد في الإيجابيات الجرام نادرة جداً وتستلزم "
+                      "تأكيداً. تظهر عادةً بعد علاج مطوّل فقط."),
+        "reason_en": ("Linezolid resistance in Gram-positives is very rare and "
+                      "requires confirmation; it usually emerges only after "
+                      "prolonged therapy."),
+        "fix_ar": "أكِّد بـ MIC وراجع تاريخ علاج المريض باللينيزوليد.",
+        "fix_en": "Confirm by MIC and review prior linezolid exposure.",
+        "reference": "EUCAST Breakpoint Tables v16.0 (2026)",
+    },
+    {
+        "id": "rare_colistin_disc",
+        "organisms": ["escherichia", "e. coli", "klebsiella", "enterobacter",
+                      "pseudomonas", "acinetobacter"],
+        "drug": "colistin", "exclude": [], "max_status": "S",
+        "reason_ar": ("مقاومة الكوليستين تستلزم تأكيداً بـ broth microdilution. "
+                      "EUCAST و CLSI يرفضان قياس الكوليستين بالأقراص أو بالـ "
+                      "gradient strip — الجزيء لا ينتشر في الآجار، فالنتيجة "
+                      "بالقرص غير صالحة أياً كانت."),
+        "reason_en": ("Colistin resistance requires broth microdilution "
+                      "confirmation. EUCAST and CLSI both reject disk diffusion "
+                      "and gradient strips for colistin -- the molecule does not "
+                      "diffuse in agar, so a disk result is invalid whatever it "
+                      "shows."),
+        "fix_ar": ("أكِّد بـ BMD. إذا كانت اللوحة تقيس الكوليستين بالقرص، "
+                   "احذف النتيجة من التقرير نهائياً."),
+        "fix_en": ("Confirm by BMD. If the panel measured colistin by disk, "
+                   "remove the result from the report entirely."),
+        "reference": "EUCAST-CLSI Polymyxin Breakpoints Working Group (2016)",
+    },
+]
+
+_RANK = {"S": 0, "I": 1, "R": 2}
+
+
 def _worse_than(a: Optional[str], b: Optional[str]) -> bool:
     """True when result `a` is categorically worse than result `b`."""
     if a not in _RANK or b not in _RANK:
@@ -299,6 +437,29 @@ def check_consistency(organism: str, sir_map: Dict[str, str]) -> List[Dict[str, 
                 "fix_ar": rule["fix_ar"], "fix_en": rule["fix_en"],
                 "reference": rule["reference"],
             })
+
+    # ── exceptional phenotypes ────────────────────────────────────────────
+    for rule in EXCEPTIONAL_PHENOTYPES:
+        if rule["organisms"] and not _org_in(organism, rule["organisms"]):
+            continue
+        drug = _find(sir_map, rule["drug"], rule.get("exclude"))
+        if not drug:
+            continue
+        status = str(sir_map.get(drug, "")).strip().upper()
+        if _RANK.get(status, -1) <= _RANK.get(rule["max_status"], 2):
+            continue
+        _fix_ar = rule["fix_ar"]
+        _fix_en = rule["fix_en"]
+        issues.append({
+            "id": f'{rule["id"]}:{drug}',
+            "kind": "exceptional_phenotype",
+            "drugs": [drug],
+            "results": {drug: sir_map[drug]},
+            "reason_ar": rule["reason_ar"], "reason_en": rule["reason_en"],
+            "fix_ar": _fix_ar[0] if isinstance(_fix_ar, tuple) else _fix_ar,
+            "fix_en": _fix_en[0] if isinstance(_fix_en, tuple) else _fix_en,
+            "reference": rule["reference"],
+        })
 
     return issues
 

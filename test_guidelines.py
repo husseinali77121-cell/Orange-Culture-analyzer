@@ -54,7 +54,13 @@ def engine_rule_ids() -> set:
         for r in getattr(RP, group, []):
             if isinstance(r, dict) and r.get("id"):
                 ids.add(r["id"])
+    # EXCEPTIONAL_PHENOTYPES added 2026-07: plausibility rules for results that
+    # are internally consistent but contradict the published record (VRSA,
+    # vancomycin-resistant pneumococcus, penicillin-resistant GAS). They carry
+    # citations like every other rule and must be discovered here, or the
+    # registry reports them as dead rows.
     for group in ("EQUIVALENCE_RULES", "HIERARCHY_RULES", "PREDICTIVE_RULES",
+                  "EXCEPTIONAL_PHENOTYPES",
                   "CORRECTION_RULES"):
         for r in getattr(CN, group, []):
             if isinstance(r, dict) and r.get("id"):

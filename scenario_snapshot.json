@@ -216,7 +216,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -1095,7 +1096,8 @@
    "SPEC-URN:Fosfomycin",
    "SPEC-URN:Nitrofurantoin",
    "SPEC-URN:Norfloxacin",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -1563,7 +1565,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -2032,7 +2035,8 @@
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -2292,7 +2296,8 @@
   "preg_warn": [],
   "qc_ids": [
    "SPEC-URN:Fosfomycin",
-   "SPEC-URN:Nitrofurantoin"
+   "SPEC-URN:Nitrofurantoin",
+   "rare_linezolid_gram_pos:Linezolid"
   ],
   "warned": []
  },
@@ -2534,7 +2539,9 @@
    "VRE"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
   "warned": []
  },
  "Blood|Enterococcus faecium|thin_panel": {
@@ -3024,7 +3031,8 @@
   "preg_warn": [],
   "qc_ids": [
    "SPEC-URN:Norfloxacin",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -3312,7 +3320,9 @@
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
-   "QC005"
+   "QC005",
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -3422,7 +3432,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_vrsa:Vancomycin"
+  ],
   "warned": []
  },
  "Blood|Proteus mirabilis|ampc": {
@@ -4137,7 +4149,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -5178,7 +5191,9 @@
   "preg_warn": [],
   "qc_ids": [
    "QC005",
-   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -5319,7 +5334,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -5664,7 +5680,10 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_van_pneumococcus:Vancomycin"
+  ],
   "warned": []
  },
  "Blood|Streptococcus pneumoniae|thin_panel": {
@@ -5793,7 +5812,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_van_pneumococcus:Vancomycin"
+  ],
   "warned": []
  },
  "Blood|VRE|intrinsic_violation": {
@@ -5874,7 +5895,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
   "warned": []
  },
  "Blood|VRE|thin_panel": {
@@ -6384,7 +6407,8 @@
    "SPEC-URN:Fosfomycin",
    "SPEC-URN:Nitrofurantoin",
    "SPEC-URN:Norfloxacin",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -6892,7 +6916,8 @@
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -7844,7 +7869,8 @@
   "preg_warn": [],
   "qc_ids": [
    "SPEC-URN:Norfloxacin",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -8348,7 +8374,9 @@
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
-   "QC005"
+   "QC005",
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -8458,7 +8486,9 @@
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_vrsa:Vancomycin"
+  ],
   "warned": []
  },
  "CSF|Staphylococcus aureus|intrinsic_violation": {
@@ -8626,7 +8656,9 @@
   "preg_warn": [],
   "qc_ids": [
    "QC005",
-   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -8767,7 +8799,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -8882,7 +8915,10 @@
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_van_pneumococcus:Vancomycin"
+  ],
   "warned": []
  },
  "CSF|Streptococcus pneumoniae|thin_panel": {
@@ -9011,7 +9047,9 @@
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_van_pneumococcus:Vancomycin"
+  ],
   "warned": []
  },
  "Pus|Acinetobacter baumannii|ampc": {
@@ -9231,7 +9269,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -10110,7 +10149,8 @@
    "SPEC-URN:Fosfomycin",
    "SPEC-URN:Nitrofurantoin",
    "SPEC-URN:Norfloxacin",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -10618,7 +10658,8 @@
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -10878,7 +10919,8 @@
   "preg_warn": [],
   "qc_ids": [
    "SPEC-URN:Fosfomycin",
-   "SPEC-URN:Nitrofurantoin"
+   "SPEC-URN:Nitrofurantoin",
+   "rare_linezolid_gram_pos:Linezolid"
   ],
   "warned": []
  },
@@ -11391,7 +11433,8 @@
   "preg_warn": [],
   "qc_ids": [
    "SPEC-URN:Norfloxacin",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -11679,7 +11722,9 @@
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
-   "QC005"
+   "QC005",
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -11789,7 +11834,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_vrsa:Vancomycin"
+  ],
   "warned": []
  },
  "Pus|Proteus mirabilis|ampc": {
@@ -12504,7 +12551,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -12758,7 +12806,9 @@
   "preg_warn": [],
   "qc_ids": [
    "QC005",
-   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -12899,7 +12949,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -12981,7 +13032,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
   "warned": []
  },
  "Pus|VRE|thin_panel": {
@@ -13323,7 +13376,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -13806,7 +13860,8 @@
    "SPEC-URN:Fosfomycin",
    "SPEC-URN:Nitrofurantoin",
    "SPEC-URN:Norfloxacin",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -14268,7 +14323,8 @@
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -14735,7 +14791,8 @@
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -15659,7 +15716,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -16173,7 +16231,8 @@
   "preg_warn": [],
   "qc_ids": [
    "SPEC-URN:Norfloxacin",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -16866,7 +16925,9 @@
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
-   "QC005"
+   "QC005",
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -16976,7 +17037,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_vrsa:Vancomycin"
+  ],
   "warned": []
  },
  "Sputum|Mycoplasma spp.|ampc": {
@@ -17507,7 +17570,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -17761,7 +17825,9 @@
   "preg_warn": [],
   "qc_ids": [
    "QC005",
-   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -17902,7 +17968,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -18247,7 +18314,10 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_van_pneumococcus:Vancomycin"
+  ],
   "warned": []
  },
  "Sputum|Streptococcus pneumoniae|thin_panel": {
@@ -18376,7 +18446,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_van_pneumococcus:Vancomycin"
+  ],
   "warned": []
  },
  "Stool|Campylobacter jejuni|ampc": {
@@ -19201,7 +19273,8 @@
    "SPEC-URN:Fosfomycin",
    "SPEC-URN:Nitrofurantoin",
    "SPEC-URN:Norfloxacin",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -20447,7 +20520,8 @@
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
-   "nobp_nonfermenter_narrow_spectrum:Norfloxacin"
+   "nobp_nonfermenter_narrow_spectrum:Norfloxacin",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -21825,7 +21899,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -22315,7 +22390,8 @@
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
    "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
-   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -22539,7 +22615,9 @@
    "VRE"
   ],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
   "warned": []
  },
  "Urine|Enterococcus faecalis|thin_panel": {
@@ -23009,7 +23087,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -23492,7 +23571,8 @@
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
    "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
-   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -23996,7 +24076,8 @@
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
    "nobp_fosfomycin_oral_non_ecoli:Fosfomycin",
-   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin"
+   "nobp_nitrofurantoin_non_ecoli:Nitrofurantoin",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -24257,7 +24338,9 @@
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
-   "QC005"
+   "QC005",
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -24345,7 +24428,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_vrsa:Vancomycin"
+  ],
   "warned": []
  },
  "Urine|Morganella morganii|ampc": {
@@ -25836,7 +25921,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -26109,7 +26195,9 @@
   "preg_warn": [],
   "qc_ids": [
    "QC005",
-   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -26219,7 +26307,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -26334,7 +26423,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
   "warned": []
  },
  "Urine|Streptococcus agalactiae|thin_panel": {
@@ -26517,7 +26608,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
   "warned": []
  },
  "Urine|VRE|thin_panel": {
@@ -26841,7 +26934,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -27720,7 +27814,8 @@
    "SPEC-URN:Fosfomycin",
    "SPEC-URN:Nitrofurantoin",
    "SPEC-URN:Norfloxacin",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -28228,7 +28323,8 @@
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -28488,7 +28584,8 @@
   "preg_warn": [],
   "qc_ids": [
    "SPEC-URN:Fosfomycin",
-   "SPEC-URN:Nitrofurantoin"
+   "SPEC-URN:Nitrofurantoin",
+   "rare_linezolid_gram_pos:Linezolid"
   ],
   "warned": []
  },
@@ -29445,7 +29542,8 @@
   "preg_warn": [],
   "qc_ids": [
    "SPEC-URN:Norfloxacin",
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -29733,7 +29831,9 @@
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
-   "QC005"
+   "QC005",
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -29843,7 +29943,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_vrsa:Vancomycin"
+  ],
   "warned": []
  },
  "Wound Swab|Proteus mirabilis|ampc": {
@@ -30908,7 +31010,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "nobp_cefoperazone:Cefoperazone + Sulbactam"
+   "nobp_cefoperazone:Cefoperazone + Sulbactam",
+   "rare_colistin_disc:Colistin"
   ],
   "warned": []
  },
@@ -31162,7 +31265,9 @@
   "preg_warn": [],
   "qc_ids": [
    "QC005",
-   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -31303,7 +31408,8 @@
   ],
   "preg_warn": [],
   "qc_ids": [
-   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin"
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
+   "rare_vrsa:Vancomycin"
   ],
   "warned": []
  },
@@ -31409,7 +31515,10 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_pen_gas:Penicillin"
+  ],
   "warned": []
  },
  "Wound Swab|Streptococcus pyogenes|thin_panel": {
@@ -31428,7 +31537,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_pen_gas:Penicillin"
+  ],
   "warned": []
  },
  "Wound Swab|Streptococcus pyogenes|urine_agent_offsite": {
@@ -31529,7 +31640,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_pen_gas:Penicillin"
+  ],
   "warned": []
  },
  "Wound Swab|VRE|intrinsic_violation": {
@@ -31610,7 +31723,9 @@
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
   "preg_warn": [],
-  "qc_ids": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
   "warned": []
  },
  "Wound Swab|VRE|thin_panel": {

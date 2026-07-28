@@ -71,8 +71,17 @@ SOURCES: Dict[str, Dict[str, str]] = {
     "EUCAST_BP": {
         "title": "EUCAST Clinical Breakpoint Tables",
         "version": "v16.1",
-        "dated": "2026",   # v16.0 valid from 2026-01-01; v16.1 adds anaerobe species
-        "note": "Re-validate agent tables against v16.1 before the next release.",
+        "dated": "2026-06-24",   # v16.0 valid 2026-01-01; v16.1 published 2026-06-24
+        # Verified 2026-07-27. v16.1 adds clinical breakpoints for further
+        # ANAEROBIC species including Fusobacterium. Two live consequences:
+        #  * EUCAST has an ONGOING review of ertapenem, imipenem,
+        #    imipenem-relebactam, meropenem, meropenem-vaborbactam and
+        #    ceftazidime-avibactam breakpoints after a second consultation
+        #  * the "When there are no breakpoints" guidance has been reissued
+        "note": ("v16.1 (2026-06-24). Carbapenem breakpoints are under active "
+                 "EUCAST review and the no-breakpoints guidance was reissued -- "
+                 "re-read the carbapenem-hierarchy, anaerobe and no-breakpoint "
+                 "rules against v16.1 before the next release."),
         "url": "https://www.eucast.org/clinical_breakpoints",
     },
     "EUCAST_DETECT": {
@@ -92,8 +101,18 @@ SOURCES: Dict[str, Dict[str, str]] = {
     "IDSA_AMR": {
         "title": "IDSA Guidance on the Treatment of Antimicrobial-Resistant "
                  "Gram-Negative Infections (Tamma et al., Clin Infect Dis)",
-        "version": "v4.0 — ciae403",
+        # SUPERSEDED — verified 2026-07-27. IDSA published an updated AMR Guidance
+        # in 2026 covering ESBL-E, AmpC-E, CRE, DTR P. aeruginosa, CRAB and
+        # S. maltophilia, which explicitly replaces earlier versions. IDSA has
+        # stated the guidance is now revised ANNUALLY, so a pinned 2024 citation
+        # will go stale every year by design.
+        "version": "SUPERSEDED: v4.0 (ciae403, 2024) — a 2026 update exists",
         "dated": "2024-08-07",
+        "superseded_on": "2026",
+        "note": ("Every rule citing IDSA_AMR must be re-read against the 2026 "
+                 "document before the next release. The exact citation details "
+                 "of the 2026 update were NOT verified here and must be filled "
+                 "in from the published text, not assumed."),
         "url": "https://www.idsociety.org/practice-guideline/amr-guidance/",
     },
     "WHO_AWARE": {
@@ -331,6 +350,7 @@ RULES: Dict[str, Dict[str, Any]] = {
 
     # ── No breakpoints (ast_reportability.NO_BREAKPOINT_RULES) ───────────────
     "nobp_nonfermenter_narrow_spectrum": {
+        "recheck": "EUCAST reissued the 'When there are no breakpoints' guidance in 2026; re-read.",
         "assertion": "Neither EUCAST nor CLSI publishes breakpoints for narrow-spectrum "
                      "cephalosporins, nitrofurantoin or norfloxacin against "
                      "Acinetobacter / Stenotrophomonas / Burkholderia.",
@@ -346,6 +366,7 @@ RULES: Dict[str, Dict[str, Any]] = {
         "note": "CLSI M100 azithromycin footnote p verbatim: 'For reporting against Salmonella enterica ser. Typhi and Shigella spp. only.' Confirms non-typhoidal Salmonella has no azithromycin reporting criterion.",
     },
     "nobp_cefoperazone": {
+        "recheck": "EUCAST reissued the 'When there are no breakpoints' guidance in 2026; re-read.",
         "assertion": "Cefoperazone alone or with sulbactam has no EUCAST breakpoints; "
                      "CLSI withdrew the cefoperazone breakpoints. Widely used in Egypt, "
                      "but the result is uncalibrated.",
@@ -399,6 +420,56 @@ RULES: Dict[str, Dict[str, Any]] = {
     },
 
     # ── Internal consistency (ast_consistency) ───────────────────────────────
+    "equiv_oxa_fox": {
+        "assertion": "Oxacillin and cefoxitin are surrogate readings of the same "
+                     "mecA/mecC mechanism in staphylococci; discordance between "
+                     "them means one disk is wrong, and cefoxitin is the more "
+                     "reliable predictor.",
+        "source": "CLSI_M100", "locus": "M100 Ed36 Table 2C — cefoxitin as mecA surrogate",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-27",
+        "countersigned_by": "",
+        "note": 'Cefoxitin is the recommended surrogate for mecA-mediated resistance in S. aureus and CoNS. Raised as an error, not a verify flag, because the split decides whether every beta-lactam on the panel is reportable.',
+    },
+    "rare_vrsa": {
+        "assertion": "Vancomycin-resistant S. aureus is exceptional and requires "
+                     "MIC confirmation on a pure colony before release.",
+        "source": "CLSI_M100", "locus": "M100 Ed36 — S. aureus vancomycin MIC only",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-27",
+        "countersigned_by": "",
+        "note": 'CLSI requires an MIC method for S. aureus vancomycin; disk diffusion cannot detect VISA/VRSA. A resistant result is far more often a mixed culture or misidentification.',
+    },
+    "rare_van_pneumococcus": {
+        "assertion": "Vancomycin-resistant S. pneumoniae has not been described; "
+                     "such a result indicates misidentification.",
+        "source": "CLSI_M100", "locus": "M100 Ed36 — S. pneumoniae identification",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-27",
+        "countersigned_by": "",
+        "note": 'Most often Enterococcus, Leuconostoc or Lactobacillus mistaken for pneumococcus. Confirm with optochin and bile solubility.',
+    },
+    "rare_pen_gas": {
+        "assertion": "Streptococcus pyogenes remains universally penicillin-"
+                     "susceptible; clinical resistance has not been documented.",
+        "source": "CLSI_M100", "locus": "M100 Ed36 — beta-haemolytic streptococci",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-27",
+        "countersigned_by": "",
+        "note": 'Both CLSI and EUCAST allow penicillin susceptibility in group A streptococci to be inferred without testing. A resistant result is an identification or reading error.',
+    },
+    "rare_linezolid_gram_pos": {
+        "assertion": "Linezolid resistance in staphylococci, enterococci and "
+                     "streptococci is very rare and requires MIC confirmation.",
+        "source": "EUCAST_BP", "locus": "v16.1 — oxazolidinones",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-27",
+        "countersigned_by": "",
+        "note": 'Usually emerges only after prolonged linezolid exposure (cfr / 23S rRNA mutations). Confirm before reporting and review the treatment history.',
+    },
+    "rare_colistin_disc": {
+        "assertion": "Colistin cannot be tested by disk diffusion or gradient "
+                     "strip; only broth microdilution gives a valid result.",
+        "source": "EUCAST_BP", "locus": "EUCAST-CLSI Polymyxin Breakpoints Working Group (2016)",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-27",
+        "countersigned_by": "",
+        "note": 'Polymyxins diffuse poorly in agar, so any disk or strip result is invalid regardless of what it shows. A resistant colistin result must be confirmed by BMD before it changes therapy.',
+    },
     "equiv_ctx_cro": {
         "assertion": "Cefotaxime and ceftriaxone share MIC breakpoints against "
                      "Enterobacterales and are hydrolysed near-identically by common "
@@ -434,6 +505,7 @@ RULES: Dict[str, Dict[str, Any]] = {
         "note": 'Same logic as hier_amp_vs_amc. Rare tazobactam inoculum effects are described, so verify rather than declare impossible.',
     },
     "hier_mem_vs_etp": {
+        "recheck": "EUCAST v16.1 -- carbapenem breakpoints under active review after a second consultation; re-read when it closes.",
         "assertion": "Meropenem R with ertapenem S is the wrong way round; ertapenem "
                      "is the most labile carbapenem, so the usual pattern is the "
                      "reverse (ertapenem-R with meropenem-S = OXA-48 or porin loss).",

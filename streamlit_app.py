@@ -326,6 +326,27 @@ def load_subscribers() -> Dict[str, str]:
     except Exception:
         return {}
 
+# ── Vendor identity — configurable for resale ───────────────────────────────
+# Support phone and e-mail were hard-coded in four places. Every lab that buys
+# this build shipped with the original developer's personal mobile number and
+# private Gmail address on the login page, the renewal banner and the expiry
+# logout message. Override per deployment in .streamlit/secrets.toml:
+#
+#   vendor_name  = "Orange Lab"
+#   vendor_phone = "+20 …"
+#   vendor_email = "support@…"
+def _vendor(key: str, default: str) -> str:
+    try:
+        return str(st.secrets.get(key, default) or default)
+    except Exception:
+        return default
+
+
+VENDOR_NAME  = _vendor("vendor_name",  "Orange Lab")
+VENDOR_PHONE = _vendor("vendor_phone", "01016872801")
+VENDOR_EMAIL = _vendor("vendor_email", "Hussein.ali77121@gmail.com")
+
+
 SUBSCRIBERS = load_subscribers()
 
 
@@ -663,13 +684,31 @@ def show_login_page():
         if login_btn:
             return email.strip().lower(), password
         st.markdown("---")
-        st.markdown("""
-        <div style='text-align:center; font-size:0.9rem; color:gray'>
-        للحصول على نسخة تجريبية أو اشتراك:<br>
-        📞 01016872801 &nbsp;|&nbsp; ✉️ Hussein.ali77121@gmail.com<br><br>
-        🔹 تجريبي مجاني: <b>15 يوم</b><br>
-        🔹 شهري: <b>200 جنيه</b><br>
-        🔹 سنوي: <b>2000 جنيه</b> <span style='color:green'>(توفير 400 ج)</span>
+        st.markdown(f"""
+        <div style='text-align:center; border:1px solid #E8A33D; border-radius:10px;
+                    padding:14px 12px; background:rgba(232,163,61,0.07)'>
+          <div style='font-size:1.02rem; font-weight:700; color:#C2410C;
+                      margin-bottom:6px'>
+            ⏳ الفترة التجريبية المجانية تقترب من نهايتها
+          </div>
+          <div style='font-size:0.9rem; line-height:1.85'>
+            برجاء سرعة التواصل معنا لتسجيل اشتراكك قبل انتهاء المدة، حفاظًا على
+            استمرار عملك دون انقطاع والاحتفاظ ببياناتك وإعداداتك.<br>
+            <span style='color:#B45309; font-weight:600'>
+              بعد انتهاء الفترة التجريبية يتوقف الدخول إلى النظام تلقائيًا.
+            </span>
+          </div>
+          <div style='margin:12px 0 8px; font-size:1.05rem; font-weight:700'>
+            📞 <a href='tel:{VENDOR_PHONE}' style='text-decoration:none'>{VENDOR_PHONE}</a>
+            &nbsp;·&nbsp;
+            ✉️ <a href='mailto:{VENDOR_EMAIL}' style='text-decoration:none'>{VENDOR_EMAIL}</a>
+          </div>
+          <div style='font-size:0.88rem; color:#555; line-height:1.8'>
+            🔹 تجريبي مجاني: <b>15 يوم</b><br>
+            🔹 شهري: <b>200 جنيه</b><br>
+            🔹 سنوي: <b>2000 جنيه</b>
+            <span style='color:#15803D; font-weight:600'>(توفير 400 جنيه)</span>
+          </div>
         </div>
         """, unsafe_allow_html=True)
     return None
@@ -683,7 +722,7 @@ def check_subscription(email: str, password: str = "") -> bool:
         st.error("❌ هذا البريد غير مسجل في النظام")
         st.info(
             "**للحصول على نسخة تجريبية مجانية (15 يوم) أو اشتراك:**\n\n"
-            "📞 01016872801\n\n✉️ Hussein.ali77121@gmail.com\n\n---\n"
+            f"📞 {VENDOR_PHONE}\n\n✉️ {VENDOR_EMAIL}\n\n---\n"
             "🔹 تجريبي: **مجاناً - 15 يوم**\n"
             "🔹 شهري: **200 جنيه**\n"
             "🔹 سنوي: **2000 جنيه** *(توفير 400 ج)*"
@@ -708,7 +747,7 @@ def check_subscription(email: str, password: str = "") -> bool:
     st.session_state.days_left = days_left
     if days_left < 0:
         st.error(f"⏳ انتهى اشتراكك منذ {abs(days_left)} يوم")
-        st.info("📞 للتجديد: 01016872801 | ✉️ Hussein.ali77121@gmail.com")
+        st.info(f"📞 للتجديد: {VENDOR_PHONE} | ✉️ {VENDOR_EMAIL}")
         return False
     if days_left <= 3:
         st.warning(f"⚠️ اشتراكك ينتهي خلال **{days_left} يوم فقط**")
@@ -744,7 +783,7 @@ def render_top_bar() -> None:
             # check_subscription() only runs at LOGIN. Without this branch an
             # expired subscription kept full access until the 30-minute idle
             # timeout happened to fire.
-            logout(f"⏳ انتهى اشتراكك منذ {abs(days)} يوم. للتجديد: 01016872801")
+            logout(f"⏳ انتهى اشتراكك منذ {abs(days)} يوم. للتجديد: {VENDOR_PHONE}")
         if days is not None:
             if days <= 3:
                 st.warning(
@@ -1341,6 +1380,37 @@ _PREG_ALIASES = {
     "WARN": "Warn", "CAUTION": "Warn", "WARNING": "Warn", "MONITOR": "Warn",
     "BANNED": "Banned", "CONTRAINDICATED": "Banned", "AVOID": "Banned",
 }
+
+
+def validate_patient_context(age: int, sex: str, is_preg: bool,
+                             cl_cr: float, age_months: Optional[int] = None
+                             ) -> List[str]:
+    """Contradictions in the patient inputs themselves.
+
+    Nothing checked these. A pregnancy flag on a male patient, a negative age or
+    an impossible creatinine clearance all ran to completion and silently
+    reshaped the entire recommendation list -- the pregnancy flag alone bans
+    thirteen agents. A clinical tool should say when its inputs cannot all be
+    true at once.
+    """
+    problems: List[str] = []
+    if is_preg and str(sex).strip().lower() in ("male", "ذكر", "m"):
+        problems.append("⚠️ عُلِّم الحمل مع جنس «ذكر» — راجع بيانات المريض "
+                        "(علامة الحمل وحدها تحظر 13 دواءً).")
+    if is_preg and age is not None and 0 <= age < 10:
+        problems.append(f"⚠️ عُلِّم الحمل مع عمر {age} سنة — راجع بيانات المريض.")
+    if age is not None and age < 0:
+        problems.append(f"⚠️ العمر المُدخَل سالب ({age}).")
+    if age is not None and age > 120:
+        problems.append(f"⚠️ العمر المُدخَل غير معقول ({age} سنة).")
+    if age_months is not None and not (0 <= age_months <= 11):
+        problems.append(f"⚠️ العمر بالشهور خارج النطاق 0–11 ({age_months}).")
+    if cl_cr is not None and cl_cr < 0:
+        problems.append(f"⚠️ تصفية الكرياتينين سالبة ({cl_cr:.0f}).")
+    if cl_cr is not None and cl_cr > 250:
+        problems.append(f"⚠️ تصفية الكرياتينين غير معقولة ({cl_cr:.0f} mL/min) — "
+                        "راجع الوزن والكرياتينين المُدخَلين.")
+    return problems
 
 
 def preg_status_of(info: Dict[str, Any]) -> str:
@@ -2068,8 +2138,18 @@ MDR_CATEGORIES = {
     "Aminoglycosides":         ["Gentamicin","Amikacin","Tobramycin","Netilmicin"],
     "Antipseudomonal Penics":  ["Piperacillin + Tazobactam"],
     # Magiorakos Table 1 counts 3rd AND 4th generation as ONE category. Splitting
-    # them across three entries scored a plain ESBL at 3 resistant categories and
-    # labelled it MDR, when the correct count is 1 and the answer is NOT MDR.
+    # them across three entries double-counted ONE cephalosporin mechanism.
+    #
+    # CORRECTION (2026-07): an earlier revision of this comment claimed a plain
+    # ESBL should score 1 category and come back NOT MDR. That is wrong, and the
+    # code below is right. Magiorakos Table 3 lists Penicillins, Penicillins +
+    # BLI, Non-extended-spectrum cephalosporins and Extended-spectrum
+    # cephalosporins as FOUR SEPARATE categories, so an ESBL E. coli that is
+    # non-susceptible to ampicillin, amoxicillin-clavulanate, cefuroxime and
+    # ceftriaxone is non-susceptible in four -- MDR, which is also how ESBL-E are
+    # reported throughout the literature. Do not "fix" the code to match the old
+    # comment; merging 3rd and 4th generation agents into one entry is the whole
+    # of the intended change.
     "Extended-Sp Cephalosporins": ["Ceftriaxone","Cefotaxime","Cefixime",
                                    "Ceftazidime","Cefoperazone",
                                    "Cefoperazone + Sulbactam","Cefepime"],
@@ -2421,6 +2501,13 @@ def classify_mdr(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
     # is NOT the same as PDR, because a category can be non-susceptible while
     # still holding one S agent. PDR requires the conservative count (no S in any
     # category) to cover every evaluable category.
+    # NOTE on "I". Magiorakos counts non-susceptible = I or R, and this engine
+    # follows it. The paper predates the 2019 EUCAST redefinition of I as
+    # "susceptible, increased exposure" -- a USABLE result at a higher dose, not
+    # a failing one. Consequence: a panel reported entirely as I is classified
+    # MDR here. That is faithful to the published criteria and errs toward
+    # flagging, but it is a real divergence from current EUCAST language and is
+    # recorded so nobody mistakes it for an oversight.
     _no_susceptible_anywhere = (len(conservative_resistant_cats) == total_cats)
 
     # Magiorakos Table 1, criterion (i): "an MRSA is always considered MDR by
@@ -7756,6 +7843,8 @@ if uploaded:
         # فأي تغيير في أي widget يُعيد تشغيل Streamlit -> تحديث فوري
         _child_pugh_now = st.session_state.get("child_pugh_class", "C") if is_hepatic else "A"
 
+        for _pp in validate_patient_context(age, sex, is_preg, cl_cr, age_months):
+            st.warning(_pp)
         allowed, warned, banned, preg_warn_items, interactions_alerts = analyze_antibiotics(
             final_drugs=final_drugs,
             organism_type=organism_type,
