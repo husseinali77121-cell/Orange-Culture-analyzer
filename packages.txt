@@ -4,10 +4,12 @@ tesseract-ocr-eng
 libpango-1.0-0
 libpangocairo-1.0-0
 libpangoft2-1.0-0
+libharfbuzz0b
 libffi-dev
 libcairo2
 libgdk-pixbuf-2.0-0
 fonts-noto-core
 fonts-hosny-amiri
 fonts-dejavu-core
+fonts-dejavu-extra
 fonts-liberation
