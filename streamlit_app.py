@@ -245,7 +245,57 @@ COMMON_MEDS = [
     "NSAIDs (مسكنات الألم)",
     "SSRI (أدوية الاكتئاب)",
     "Valproic acid (مضادات الصرع)",
+    # Added on re-review. abx_guidelines.py declares interactions against these
+    # classes, but none of them could be SELECTED, so the entries were dead: the
+    # rhabdomyolysis warning on fusidic acid + statin, the QT warning on
+    # moxifloxacin, the ototoxicity warning on tobramycin + loop diuretic and the
+    # methotrexate warning on penicillin could never once have fired in the app.
+    "Statins (أدوية الكوليسترول)",
+    "QT-prolonging drugs (أدوية تطيل QT)",
+    "Methotrexate (ميثوتريكسات)",
+    "Iron supplements (مكملات الحديد)",
+    "Loop diuretics (Furosemide)",
+    "Theophylline (ثيوفيلين)",
+    "Neuromuscular blocking agents (مرخيات العضلات)",
 ]
+
+# ── Interaction matching ────────────────────────────────────────────────────
+# Matching was exact string equality, and the formulary spells the same class
+# two ways -- "Warfarin" on gatifloxacin/moxifloxacin but
+# "Warfarin (مضادات التخثر)" on TMP-SMX, metronidazole and ciprofloxacin. Only
+# one spelling could ever match the dropdown, so selecting warfarin silently
+# missed whichever half of the formulary used the other form. Eleven declared
+# interactions were unreachable in total. Compare on a canonical key instead.
+_MED_CANON = {
+    "antacid": "antacids", "antacids": "antacids",
+    "warfarin": "warfarin", "anticoagulant": "warfarin",
+    "nsaid": "nsaids", "nsaids": "nsaids",
+    "ssri": "ssri", "snri": "ssri", "antidepressant": "ssri",
+    "valproic acid": "valproate", "valproate": "valproate",
+    "statin": "statins", "statins": "statins",
+    "qt-prolonging drugs": "qt", "qt prolonging drugs": "qt",
+    "methotrexate": "methotrexate",
+    "iron supplements": "iron", "iron": "iron",
+    "loop diuretics": "loop_diuretic", "furosemide": "loop_diuretic",
+    "theophylline": "theophylline",
+    "neuromuscular blocking agents": "nmba",
+    "vancomycin": "vancomycin",
+}
+
+
+def _canon_med(name: str) -> str:
+    """Canonical key for one medication / drug-class label.
+
+    Strips any parenthetical gloss (Arabic or English) and matches the leading
+    class name, so "Warfarin" and "Warfarin (مضادات التخثر)" collapse together.
+    """
+    base = re.split(r"[(\uFF08]", str(name or ""), 1)[0].strip().lower()
+    if base in _MED_CANON:
+        return _MED_CANON[base]
+    for key, canon in _MED_CANON.items():
+        if base.startswith(key) or key in base:
+            return canon
+    return base
 
 RENAL_BAN_REASONS = {
     "nitrofurantoin": (
@@ -1359,9 +1409,16 @@ def normalize_sir_map(sir_map: Optional[Dict[str, Any]]) -> Dict[str, str]:
     """Canonicalise a whole panel, dropping entries that cannot be read."""
     out: Dict[str, str] = {}
     for drug, value in (sir_map or {}).items():
+        # Keys are trimmed too. OCR routinely emits " Ciprofloxacin " with
+        # padding; the padded key matched no formulary entry, so the drug was
+        # dropped from the report in complete silence -- neither recommended nor
+        # banned, simply gone.
+        key = str(drug or "").strip()
+        if not key:
+            continue
         v = normalize_sir_value(value)
         if v is not None:
-            out[str(drug)] = v
+            out[key] = v
         elif value not in (None, ""):
             logger.warning("unreadable AST value %r for %r -- dropped from the "
                            "panel rather than assumed susceptible", value, drug)
@@ -1445,9 +1502,17 @@ def analyze_antibiotics(
     # Drugs that WERE on the panel but whose result could not be read. They must
     # not fall through to the untested-drug path, which would present them as
     # ordinary options.
-    _unreadable = {str(d) for d, v in (sir_map or {}).items()
-                   if normalize_sir_value(v) is None}
+    _unreadable = {str(d or "").strip() for d, v in (sir_map or {}).items()
+                   if normalize_sir_value(v) is None and str(d or "").strip()}
     sir_map = normalize_sir_map(sir_map)
+    # final_drugs is built from the RAW panel keys upstream, so it carries the
+    # same OCR padding the map does. Trim here as well, or a drug whose name
+    # arrived as " Ciprofloxacin " matches no formulary entry and disappears from
+    # the report entirely -- neither recommended nor banned.
+    current_meds = list(current_meds or [])
+    _seen = set()
+    final_drugs = [d for d in (str(x or "").strip() for x in (final_drugs or []))
+                   if d and not (d in _seen or _seen.add(d))]
     allowed:            List[Dict] = []
     warned:             List[Dict] = []
     banned:             List[Dict] = []
@@ -1544,8 +1609,9 @@ def analyze_antibiotics(
             ))
             continue
 
+        _declared = {_canon_med(x) for x in (info.get("interacts_with") or [])}
         for med in current_meds:
-            if med in info.get("interacts_with", []):
+            if _canon_med(med) in _declared:
                 interactions_alerts.append(f"⚡ تعارض: {drug} مع {med}")
         if is_hepatic and info.get("hepatic_caution"):
             interactions_alerts.append(f"🏥 تحذير كبدي: {drug} — يحتاج متابعة أو تعديل حسب الحالة.")
@@ -1789,7 +1855,13 @@ def analyze_antibiotics(
         if age < 1 and drug in NEONATAL_RESTRICTIONS:
             _neo = NEONATAL_RESTRICTIONS[drug]
             _alt = f" البديل: {_neo['alt']}." if _neo.get("alt") else ""
-            if age_months is None:
+            # A months value outside 0-11 is not a patient, it is a data error.
+            # Treating 99 as "older than the threshold" silently switched the
+            # whole neonatal gate off; treat it as UNKNOWN instead, which warns.
+            _m = age_months
+            if _m is not None and not (0 <= _m <= 11):
+                _m = None
+            if _m is None:
                 warned.append({
                     "name": drug, "category": "neonate",
                     "reason_short": f"عمر غير محدد بالشهور — تحقق من حد الـ {_neo['months']} شهور.",
@@ -1798,11 +1870,11 @@ def analyze_antibiotics(
                                       "ليطبّق النظام الحد العمري بدقة."),
                 })
                 continue
-            if age_months < _neo["months"]:
+            if _m < _neo["months"]:
                 if _neo["action"] == "ban":
                     banned.append(build_banned_item(
                         drug, "neonate",
-                        f"يُمنع تحت {_neo['months']} شهر (العمر {age_months} شهر).",
+                        f"يُمنع تحت {_neo['months']} شهر (العمر {_m} شهر).",
                         f"{_neo['reason']}{_alt}",
                     ))
                 else:
@@ -2290,6 +2362,16 @@ MDR_NOT_APPLICABLE = (
     "anaerobe", "لاهوائي", "bacteroides", "clostrid", "fusobacterium",
     "peptostreptococcus", "prevotella", "veillonella", "actinomyces",
     "mycobacter",
+    # Fungi. Found on re-review: "Candida albicans" matched no Gram-positive key,
+    # fell through to the GRAM-NEGATIVE branch and was returned as MDR with the
+    # basis "Magiorakos 2012, Tables 3-5" -- a bacterial framework applied to a
+    # yeast, citing a paper that never mentions it. Antifungal susceptibility has
+    # its own categories (CLSI M27/M60, EUCAST antifungal tables) and no
+    # MDR/XDR/PDR definition at all.
+    "candida", "aspergillus", "cryptococc", "fungus", "fungal", "yeast",
+    "mucor", "rhizopus", "fusarium", "trichosporon", "malassezia",
+    "histoplasma", "blastomyces", "coccidioides", "pneumocystis",
+    "فطر", "خميرة",
 )
 
 # Aerobic organisms that ARE routinely classified in the literature but sit
@@ -2433,8 +2515,17 @@ def classify_mdr(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
         applicable, _group, _basis = (MDR_CATEGORIES_STREP, "streptococcus",
                                       "MDRSP convention — outside Magiorakos scope")
     elif any(k in org_l for k in ("staphylococc", "staph", "mrsa", "mssa")):
-        applicable, _group, _basis = (MDR_CATEGORIES_STAPH, "staphylococcus",
-                                      "Magiorakos 2012, Table 1")
+        # Magiorakos Table 1 is S. AUREUS. Coagulase-negative staphylococci
+        # (epidermidis, saprophyticus, haemolyticus, "CoNS") are not in the paper
+        # at all, so labelling their result "Magiorakos 2012, Table 1" overstates
+        # the authority behind it. The category set is the closest reasonable fit
+        # and is kept; only the citation is corrected.
+        _is_aureus = ("aureus" in org_l or org_l in ("mrsa", "mssa")
+                      or "mrsa" in org_l or "mssa" in org_l)
+        applicable, _group, _basis = (
+            MDR_CATEGORIES_STAPH, "staphylococcus",
+            "Magiorakos 2012, Table 1" if _is_aureus
+            else "S. aureus categories applied to CoNS — outside Magiorakos scope")
     elif any(g in org_l for g in GRAM_POSITIVE_ORGANISMS):
         applicable, _group, _basis = (MDR_CATEGORIES_GRAM_POS, "gram-positive (other)",
                                       "outside Magiorakos scope")
@@ -3083,11 +3174,48 @@ def assess_pathogenicity(
         "MRSA", "H. influenzae", "VRE", "Anaerobes (لاهوائيات)",
         "Stenotrophomonas maltophilia", "Proteus mirabilis",
     ]
+    # ══════════════════════════════════════════════════════════════════
+    # ORGANISMS THAT ARE NEVER A CONTAMINANT IN BLOOD
+    # ------------------------------------------------------------------
+    # Found on re-review. A Staphylococcus aureus blood culture with fever
+    # scored 35 and was reported as "🟠 LIKELY CONTAMINANT -- Repeat
+    # Recommended". S. aureus is in TRUE_BLOOD_PATHOGENS and did earn its +25,
+    # but the missing-SIRS and single-bottle deductions pulled the total back
+    # under the threshold -- so an additive score alone could never protect it.
+    #
+    # S. aureus bacteraemia carries roughly 20-30% mortality. It mandates
+    # echocardiography, source control and 2-6 weeks of intravenous therapy.
+    # Telling a clinician to repeat the sample instead is the most dangerous
+    # single output this engine can produce, and no combination of missing
+    # metadata should be able to generate it.
+    #
+    # This list is deliberately NARROWER than TRUE_BLOOD_PATHOGENS: E. coli or
+    # Enterococcus in one bottle can occasionally be contamination, so they keep
+    # the ordinary scoring. The organisms below cannot.
+    NEVER_CONTAMINANT_IN_BLOOD = [
+        "Staphylococcus aureus", "MRSA", "MSSA",
+        "Streptococcus pneumoniae", "Streptococcus pyogenes",
+        "Neisseria meningitidis", "Haemophilus influenzae", "H. influenzae",
+        "Listeria monocytogenes", "Salmonella spp.", "Salmonella typhi",
+        "Candida albicans", "Candida spp.", "Streptococcus agalactiae",
+        "Brucella spp.", "Neisseria gonorrhoeae",
+    ]
+
     BLOOD_CONTAMINANTS = [
         "Staphylococcus epidermidis", "Corynebacterium spp.",
         "Bacillus spp.", "Propionibacterium spp.", "Micrococcus spp.",
     ]
 
+    # Re-review found four hard crashes on None: symptoms, specimen, age and
+    # host_factors. They arrive from widgets today, but a cleared number_input or
+    # a restored session can deliver None, and a traceback in place of a
+    # pathogenicity verdict is not an acceptable failure mode.
+    specimen      = specimen or ""
+    organism      = organism or ""
+    symptoms      = list(symptoms or [])
+    host_factors  = list(host_factors or [])
+    if not isinstance(age, (int, float)):
+        age = 40
     spec_lower = specimen.lower()
 
     # ══════════════════════════════════════════════════════════════════
@@ -3274,7 +3402,13 @@ def assess_pathogenicity(
             factors_neg.append("⚠️ No SIRS criteria -- consider contaminant especially for CoNS")
 
         # Organism type
-        if _org_in(organism, TRUE_BLOOD_PATHOGENS):
+        if _org_in(organism, NEVER_CONTAMINANT_IN_BLOOD):
+            score += 25
+            special_flags.append("NEVER_CONTAMINANT")
+            factors_pos.append(
+                f"🔴 {organism} في الدم لا يُعد ملوِّثاً أبداً — عزلة واحدة كافية. "
+                "ابدأ العلاج فوراً ولا تنتظر إعادة المزرعة.")
+        elif _org_in(organism, TRUE_BLOOD_PATHOGENS):
             score += 25
             factors_pos.append(f"✅ {organism} -- true bloodstream pathogen; single positive = significant")
         elif _org_in(organism, BLOOD_CONTAMINANTS):
@@ -3445,6 +3579,11 @@ def assess_pathogenicity(
     score = max(0, min(100, score))
 
     # ── Verdict ──────────────────────────────────────────────────────
+    # HARD FLOOR: a never-contaminant sterile-site isolate cannot be downgraded
+    # to "contaminant" by missing metadata, whatever the additive score says.
+    if "NEVER_CONTAMINANT" in special_flags and score < 75:
+        score = 75
+
     if "CSF_ALWAYS_SIGNIFICANT" in special_flags:
         verdict = "🔴 ALWAYS SIGNIFICANT -- Treat Immediately"
         color   = "error"
@@ -3586,40 +3725,47 @@ def _parse_cfu(text: str) -> int:
     if any(k in low for k in ("no growth", "sterile", "no organism", "لا يوجد نمو")):
         return 0
 
-    # Direction: does the report say the count is BELOW a threshold?
-    _below = bool(re.search(r"[<\u2264]|less than|below|أقل من", low))
+    # Candidate counts. The number pattern is deliberately STRICT:
+    #   10^n            power-of-ten notation
+    #   1,234,567       thousands-separated
+    #   12345           a plain run of digits
+    # An earlier draft of this rewrite used `\d[\d, ]{2,}`, which greedily ate
+    # across a clause boundary: "pus cells 20-25, 100000 CFU/mL" matched
+    # "25, 100000" and returned 25,100,000. A comma or space may only appear
+    # INSIDE a thousands group, never as a separator between two readings.
+    pat = re.compile(
+        r"(?:10\s*\^\s*(?P<exp>\d+))"
+        r"|(?P<grp>\d{1,3}(?:,\d{3})+)"
+        r"|(?P<num>\d+)"
+    )
 
-    def _mag(m):
-        """Value of one power-of-ten or plain-integer match."""
+    cands = []
+    for m in pat.finditer(t):
         if m.group("exp"):
-            return 10 ** int(m.group("exp"))
-        return int(m.group("num").replace(",", "").replace(" ", ""))
-
-    # Every candidate count in the string, in order.
-    pat = re.compile(r"(?:10\s*\^\s*(?P<exp>\d+))|(?P<num>\d[\d, ]{2,})")
-    cands = [(m.start(), _mag(m)) for m in pat.finditer(t)]
+            val = 10 ** int(m.group("exp"))
+        elif m.group("grp"):
+            val = int(m.group("grp").replace(",", ""))
+        else:
+            val = int(m.group("num"))
+        cands.append((m.start(), m.end(), val))
     if not cands:
-        # Last resort: a lone small integer, but ONLY if a CFU keyword is present,
-        # so "(specimen 2)" on its own can never become a colony count.
-        if re.search(r"cfu|colon|count|/ml", low):
-            lone = re.findall(r"\b\d+\b", t)
-            if lone:
-                return int(lone[-1])
         return 0
 
-    # Prefer a candidate that sits next to a CFU / count keyword; otherwise take
-    # the LARGEST candidate rather than the last one, because report suffixes
-    # ("sample #3", "(specimen 2)", "2 organisms") are always small integers.
-    anchored = []
-    for pos, val in cands:
-        window = low[max(0, pos - 22): pos + 26]
-        if re.search(r"cfu|colon|count|/ml|/cc|بكتير|مستعمر", window):
-            anchored.append(val)
-    value = max(anchored) if anchored else max(v for _, v in cands)
+    # Prefer a candidate sitting next to a CFU / count keyword. Report suffixes
+    # ("sample #3", "(specimen 2)") and unrelated clauses ("pus cells 20-25")
+    # carry no such keyword, so they drop out.
+    anchored = [(a, b, v) for a, b, v in cands
+                if re.search(r"cfu|colon|count|/ml|/cc|بكتير|مستعمر",
+                             low[max(0, a - 24): b + 26])]
+    pool = anchored or cands
+    start, end, value = max(pool, key=lambda c: c[2])
 
-    # "< 10^4" means the count did NOT reach 10^4. Returning 10^4 flips a
-    # sub-threshold report into a significant one at every downstream >= test.
-    if _below and value > 0:
+    # "<" applies only when it sits IMMEDIATELY BEFORE the count we chose. The
+    # first draft searched the whole string, so a "pus cells < 5" clause silently
+    # decremented an unrelated colony count.
+    prefix = low[max(0, start - 14): start]
+    if re.search(r"[<\u2264]\s*(?:10\s*\^\s*)?$|less than\s*$|below\s*$|أقل من\s*$",
+                 prefix) and value > 0:
         value -= 1
     return value
 

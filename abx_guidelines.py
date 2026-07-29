@@ -297,7 +297,7 @@ ABX_GUIDELINES = {
             "  >>> القرار النهائي للطبيب المعالج حصراً. <<<"
         ),
         "child_safe": False,
-        "interacts_with": ["Antacids (مضادات الحموضة)","Warfarin (مضادات التخثر)"],
+        "interacts_with": ["Antacids (مضادات الحموضة)","Warfarin (مضادات التخثر)", "Theophylline (ثيوفيلين)", "Iron supplements (مكملات الحديد)"],
         "aliases": ["ciprofar","cipro","ciproflox"],
         "organisms": ["E. coli","Klebsiella spp.","Pseudomonas aeruginosa",
                       "Proteus mirabilis","Staphylococcus aureus",

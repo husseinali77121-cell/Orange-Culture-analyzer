@@ -72,6 +72,7 @@ _WANT = [
     # Shared helpers the engines now call. They must be extracted BEFORE the
     # functions that use them, or the re-exec'd copy raises NameError.
     "_SIR_ALIASES", "normalize_sir_value", "normalize_sir_map",
+    "_MED_CANON", "_canon_med",
     "_PREG_ALIASES", "preg_status_of", "_ACQUIRED_NOT_INTRINSIC",
     "MDR_CATEGORIES_STAPH", "MDR_CATEGORIES_ENTEROCOCCUS",
     "MDR_CATEGORIES_STREP", "MDR_NOT_APPLICABLE", "MDR_OUTSIDE_MAGIORAKOS",

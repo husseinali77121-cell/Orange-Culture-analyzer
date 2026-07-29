@@ -3225,7 +3225,7 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -3256,7 +3256,7 @@
    "Aminoglycosides",
    "Fluoroquinolones"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [],
@@ -3281,7 +3281,7 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [],
@@ -3316,7 +3316,7 @@
    "Oxazolidinones",
    "Tetracyclines"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -3340,7 +3340,7 @@
    "Aminoglycosides",
    "Fluoroquinolones"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [],
@@ -3367,7 +3367,7 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -3394,7 +3394,7 @@
   "esbl_conf": 0,
   "mdr": "MDR",
   "mdr_cats": [],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [],
@@ -3429,7 +3429,7 @@
    "Macrolides",
    "Tetracyclines"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -4275,7 +4275,7 @@
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -4321,7 +4321,7 @@
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -4365,7 +4365,7 @@
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -4407,7 +4407,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -4451,7 +4451,7 @@
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -4495,7 +4495,7 @@
    "Carbapenems",
    "Extended-Sp Cephalosporins"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -4545,7 +4545,7 @@
    "Polymyxins",
    "Tetracyclines"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -4568,7 +4568,7 @@
   "mdr_cats": [
    "Penicillins+BLI"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [],
@@ -4605,7 +4605,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -4655,7 +4655,7 @@
    "Penicillins+BLI",
    "Tetracyclines"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -5056,7 +5056,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -5096,7 +5096,7 @@
    "Aminoglycosides",
    "Fluoroquinolones"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [
    "Possible MRSA"
   ],
@@ -5135,7 +5135,7 @@
   "mdr_cats": [
    "Anti-staphylococcal Beta-lactams"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [
    "MRSA"
   ],
@@ -5184,7 +5184,7 @@
    "Oxazolidinones",
    "Tetracyclines"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [
    "MRSA"
   ],
@@ -5211,7 +5211,7 @@
    "Aminoglycosides",
    "Fluoroquinolones"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [],
@@ -5247,7 +5247,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -5283,7 +5283,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [],
@@ -5328,7 +5328,7 @@
    "Macrolides",
    "Tetracyclines"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [
    "MRSA"
   ],
@@ -5597,7 +5597,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -5635,7 +5635,7 @@
    "Cephalosporins (pneumococcal)",
    "Fluoroquinolones"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [],
@@ -5677,7 +5677,7 @@
    "Penicillins",
    "Tetracyclines"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -5699,7 +5699,7 @@
   "mdr_cats": [
    "Penicillins"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [],
@@ -5733,7 +5733,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
@@ -5767,7 +5767,7 @@
   "esbl_conf": 0,
   "mdr": null,
   "mdr_cats": [],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [],
@@ -5809,7 +5809,7 @@
    "Penicillins",
    "Tetracyclines"
   ],
-  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
   "phenotypes": [],
   "preg_warn": [],
   "qc_ids": [
