@@ -1,52 +1,33 @@
-# modules/qc.py
-# © Dr. Hussein Ali — Orange Lab
-# AST QC Checker + Startup Validation (EUCAST Expert Rules)
+# -*- coding: utf-8 -*-
+# © Dr. Hussein Ali — Orange Lab, 6 October City, Egypt
+# Microbiology CDSS — All Rights Reserved
+r"""qc.py — legacy import path. Contains no logic of its own.
 
+This file used to be a near-copy of modules/qc.py, and the copies had diverged in
+the worst possible direction: the guard that stops run_ast_qc() raising NameError
+on AST_QC_RULES existed HERE, in the copy nothing imported, and had never been
+carried across to modules/qc.py, which ui/dashboard.py calls on every analysis.
+The dead file was correct and the live one crashed on every call.
+
+Kept as a redirect for the same reason as antibiotics.py — a zip cannot express a
+deletion and this repository is deployed by extracting archives, so a file that
+has to be removed by hand tends to survive. There is nothing here to diverge now.
+
+AST_QC_RULES is deliberately NOT re-exported: modules/qc.py no longer keeps a
+rule list of its own, it delegates to ast_qa_engine.run_ast_qa_engine (13 check
+families). Anything that imported the old name wanted the rules, and the rules
+now live in ast_qa_engine.
+
+    grep -rn "^import qc$" --include=*.py .          # expect no hits
+    grep -rn "^from qc import" --include=*.py .      # expect no hits
+    git rm qc.py
+"""
 from __future__ import annotations
-from typing import Any, Dict, List
-from data.antibiotics import ABX_GUIDELINES, normalize_abx_key
-from data.organisms import ORGANISM_PROFILE, SPECIMEN_ORGANISM_MAP
 
-# FIX: this module called AST_QC_RULES without ever defining it -- the file was
-# truncated when the monolith was split, so run_ast_qc() raised NameError on the
-# first call. The commercial build does not use this module (streamlit_app.py
-# ships its own run_ast_qc); the canonical rules live in ast_qa_engine.py +
-# ast_reportability.py. Import them if present, otherwise degrade to an empty
-# rule set rather than crashing the caller.
-try:
-    from ast_qa_engine import _QC_RULES as AST_QC_RULES      # type: ignore
-except Exception:
-    AST_QC_RULES: list = []
+from modules.qc import (  # noqa: F401
+    QA_ENGINE_AVAILABLE,
+    get_startup_validation_issues,
+    run_ast_qc,
+)
 
-def run_ast_qc(organism: str, sir_map: Dict[str, str]) -> List[Dict[str, Any]]:
-    if not sir_map:
-        return []
-    issues = []
-    org_lower = organism.lower()
-    for rule in AST_QC_RULES:
-        if rule["organisms"]:
-            if not any(o.lower() in org_lower or org_lower in o.lower() for o in rule["organisms"]):
-                continue
-        try:
-            if rule["condition"](sir_map):
-                issues.append({"id":rule["id"],"severity":rule["severity"],
-                               "message":rule["message"],"fix":rule["fix"]})
-        except Exception:
-            continue
-    return issues
-
-
-def get_startup_validation_issues() -> List[str]:
-    issues: List[str] = []
-    known_organisms = list(ORGANISM_PROFILE.keys())
-    known_abx       = list(ABX_GUIDELINES.keys())
-    # تحقق أن first_line/second_line/third_line في ABX_GUIDELINES
-    for org, profile in ORGANISM_PROFILE.items():
-        for tier in ["first_line","second_line","third_line"]:
-            for drug in profile.get(tier, []):
-                if drug not in ABX_GUIDELINES:
-                    issues.append(f"[organism_profile] {org} → {tier} → '{drug}' not in ABX_GUIDELINES")
-    # إزالة المكررات
-    return list(dict.fromkeys(issues))
-
-# =========================================================
+__all__ = ["run_ast_qc", "get_startup_validation_issues", "QA_ENGINE_AVAILABLE"]

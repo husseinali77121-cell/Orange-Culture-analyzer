@@ -437,6 +437,7 @@ print("\n[8] ONE FORMULARY — no second copy of the drug table may exist")
 # class override. A tetracycline therefore reached a pregnant patient as a
 # caution in that build. Two files holding the same clinical facts drift by
 # construction; the copies are gone and this check keeps them gone.
+import importlib                                                     # noqa: E402
 import pathlib                                                       # noqa: E402
 
 _ROOT = pathlib.Path(HERE)
@@ -461,12 +462,23 @@ check("exactly one ABX_GUIDELINES table literal in the repository",
       "found " + str(len(_literals)) + ":\n" + "\n".join(_literals) +
       "\nA second copy will drift from the first. Import it, do not restate it.")
 
-check("no dead duplicate of the formulary at the repo root",
-      not (_ROOT / "antibiotics.py").exists(),
-      "antibiotics.py is a byte-identical copy that nothing imports — delete it")
+# antibiotics.py at the root may exist ONLY as a redirect. It used to be a
+# byte-identical 893-line copy of the formulary; it is now a 51-line re-export.
+# Deleting it is still the tidiest end state, but a redirect is safe: it holds no
+# clinical facts, so there is nothing in it to fall out of step.
+if (_ROOT / "antibiotics.py").exists():
+    try:
+        _legacy = importlib.import_module("antibiotics")
+        check("legacy antibiotics.py is a redirect, not a second copy",
+              _legacy.ABX_GUIDELINES is G,
+              "it serves its own table again — re-export, do not restate")
+        check("legacy antibiotics.py holds no table literal of its own",
+              "antibiotics.py:" not in "\n".join(_literals),
+              "\n".join(_literals))
+    except Exception as _exc:
+        check("legacy antibiotics.py imports cleanly", False, str(_exc))
 
 try:
-    import importlib
     _mod_tbl = importlib.import_module("data.antibiotics").ABX_GUIDELINES
     check("data/antibiotics.py serves the SAME object, not a copy",
           _mod_tbl is G,
@@ -533,9 +545,18 @@ except Exception as _exc:                                            # pragma: n
 # modules/qc.py iterated an undefined AST_QC_RULES, so the modular build's AST QC
 # raised NameError on every call. It must be wired to the canonical engine, not
 # left to degrade to an empty rule set that silently finds nothing.
-check("no dead duplicate of the QC module at the repo root",
-      not (_ROOT / "qc.py").exists(),
-      "qc.py duplicates modules/qc.py; the fix landed in the dead copy")
+# Same for qc.py. This one mattered more than it looked: the NameError guard
+# lived in the DEAD copy and never reached modules/qc.py, so the copy that ran
+# was the broken one.
+if (_ROOT / "qc.py").exists():
+    try:
+        _legacy_qc = importlib.import_module("qc")
+        _live_qc = importlib.import_module("modules.qc")
+        check("legacy qc.py is a redirect, not a second implementation",
+              _legacy_qc.run_ast_qc is _live_qc.run_ast_qc,
+              "it defines its own run_ast_qc again — re-export, do not restate")
+    except Exception as _exc:
+        check("legacy qc.py imports cleanly", False, str(_exc))
 try:
     _mq = importlib.import_module("modules.qc")
     check("modules.qc no longer references an undefined rule table",
