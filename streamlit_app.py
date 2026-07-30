@@ -298,9 +298,12 @@ def _canon_med(name: str) -> str:
     return base
 
 RENAL_BAN_REASONS = {
+    # The threshold in this text said 30 while the engine enforced 45 (EMA/BNF
+    # 2025), so the explanation shown to the clinician contradicted the ban that
+    # had just fired. Corrected 2026-07-30.
     "nitrofurantoin": (
         "Nitrofurantoin يحتاج وظيفة كلى سليمة ليتركز في البول.\n"
-        "عند CrCl < 30 مل/د:\n"
+        "عند CrCl < 45 مل/د (EMA/BNF 2025):\n"
         "- لا يصل لتركيز علاجي في البول -> لا يقتل الجرثومة.\n"
         "- يتراكم في الدم -> خطر سُمية رئوية وعصبية.\n"
         "السبب: الدواء يُطرح كلياً عبر الترشيح الكبيبي."
@@ -498,7 +501,18 @@ def init_session_state() -> None:
         # ─── Clinical Engines v4 ──────────────────────────────────────────
         "severity_level":          "moderate",  # overwritten by auto-suggest
         "last_patho_specimen":     "",   # tracks specimen that generated patho_result
-        "child_pugh_class":        "A",
+        # Seeded to "C", not "A". analyze_antibiotics() documents that it
+        # fail-closes to the worst grade when the caller does not know it, but
+        # this seed was the caller, and it asserted the mildest grade. Because
+        # the Child-Pugh selectbox renders BELOW the analysis call in script
+        # order, the first run after ticking "Hepatic Impairment" always
+        # evaluated as Child-Pugh A -- which is 0 hepatic bans instead of 7
+        # (Amox-Clav/DILI, Azithromycin, Clarithromycin, Metronidazole, TMP-SMX,
+        # Nitrofurantoin, Doxycycline). clinical_matrix also downgrades its
+        # hepatic DENY to CAUTION on grade A, so both layers failed together and
+        # there was no independent backstop. The grade is now asked for in the
+        # sidebar, next to the flag, before anything is evaluated.
+        "child_pugh_class":        "C",
         "days_on_iv":              3,
         "clinical_improving_48h":  True,
         "tolerating_oral":         True,
@@ -573,14 +587,69 @@ def calc_creatinine_clearance(age: int, weight: float, scr: float, sex: str) -> 
     crcl = ((140 - age) * weight) / (72 * scr)
     if sex == "Female":
         crcl *= 0.85
-    return crcl
+    # Cockcroft-Gault goes negative past age 140. The widget caps age at 120 so
+    # this cannot fire today, but a negative clearance would satisfy every
+    # `cl_cr <= renal_limit` test at once and print "CrCl -14 ml/min" in the
+    # report, so clamp at the source rather than trusting the caller.
+    return max(0.0, crcl)
 
-def get_renal_severity(crcl: float) -> str:
+
+# ── UNKNOWN vs NORMAL CLEARANCE ──────────────────────────────────────────────
+# The defect this replaces: the sidebar set `cl_cr = 100.0` whenever serum
+# creatinine was left at 0, and 100 ml/min is not "unknown", it is a normal
+# clearance. So a clinician who TICKED "Renal Impairment" but did not have the
+# creatinine to hand got:
+#   * no renal dose-adjustment note on any agent (no renal_limit reaches 100),
+#   * Nitrofurantoin RECOMMENDED rather than refused,
+#   * and a report line reading "Renal: IMPAIRED  CrCl: 100" — an asserted
+#     normal number, which is worse than printing nothing.
+# Measured against a real CrCl of 25 the same panel went from 19 recommended
+# agents to 6. The flag did nothing at all except add a reassuring caption.
+#
+# `None` now means "not measured". When the impairment flag is set we substitute
+# ASSUMED_CRCL_UNKNOWN, which is the same 30 ml/min convention clinical_matrix
+# already used, so the two layers agree instead of one assuming 30 and the other
+# 100. Every string that quotes a substituted number says it was ASSUMED.
+ASSUMED_CRCL_UNKNOWN: float = 30.0
+
+
+def resolve_crcl(cl_cr: Optional[float], is_renal: bool) -> Tuple[Optional[float], bool]:
+    """(effective CrCl, was_measured). None means no renal branch applies."""
+    if cl_cr is not None:
+        return float(cl_cr), True
+    return (ASSUMED_CRCL_UNKNOWN, False) if is_renal else (None, False)
+
+
+def crcl_label(cl_cr: Optional[float], is_renal: bool = False,
+               lang: str = "en") -> str:
+    """CrCl for display. Never presents an assumed value as a measured one."""
+    eff, measured = resolve_crcl(cl_cr, is_renal)
+    if eff is None:
+        return "غير مطلوب" if lang == "ar" else "not applicable"
+    if measured:
+        return f"{eff:.1f} ml/min"
+    if lang == "ar":
+        return (f"غير مقيسة (لم يُدخل الكرياتينين) — الجرعات محسوبة على "
+                f"افتراض CrCl ≈ {eff:.0f} مل/د")
+    return (f"not measured (no creatinine entered) — dosing assumes "
+            f"CrCl ≈ {eff:.0f} ml/min")
+
+
+def get_renal_severity(crcl: Optional[float]) -> str:
+    # KDIGO G-stages rather than three home-made bands. The old table called
+    # CrCl 200 "Mild" and lumped G4 (15-29) together with dialysis-dependent G5,
+    # which are not the same dosing problem.
+    if crcl is None:
+        return "Unknown"
+    if crcl >= 90:
+        return "Normal (G1)"
     if crcl >= 60:
-        return "Mild"
+        return "Mild (G2)"
     if crcl >= 30:
-        return "Moderate"
-    return "Severe"
+        return "Moderate (G3)"
+    if crcl >= 15:
+        return "Severe (G4)"
+    return "Kidney failure (G5)"
 
 def get_route_label(item: Dict[str, Any]) -> str:
     return "🟢 Oral preferred / PO-friendly" if item.get("high_po") else "💉 IV/IM only"
@@ -1608,7 +1677,7 @@ def analyze_antibiotics(
     age: int,
     sex: str,
     is_renal: bool,
-    cl_cr: float,
+    cl_cr: Optional[float],
     is_preg: bool,
     is_hepatic: bool,
     current_meds: List[str],
@@ -1620,6 +1689,15 @@ def analyze_antibiotics(
     # grade it passes it; if it does not, the engine must not silently assume the
     # mildest liver disease and hand back agents that are contraindicated in
     # decompensated cirrhosis. Fail-closed, never fail-permissive.
+    #
+    # cl_cr is Optional. None means "no creatinine was measured", NOT "normal".
+    # resolve_crcl() substitutes ASSUMED_CRCL_UNKNOWN (30 ml/min) when the renal
+    # flag is set, and every message below that quotes the number says whether it
+    # was measured or assumed. Passing 100.0 for "unknown" — which is what the
+    # sidebar used to do — silently disabled the entire renal pathway.
+    _crcl, _crcl_measured = resolve_crcl(cl_cr, is_renal)
+    _crcl_src = ("" if _crcl_measured else
+                 " (CrCl مفترضة — لم يُقَس الكرياتينين؛ أدخِله لضبط الجرعة)")
     # Drugs that WERE on the panel but whose result could not be read. They must
     # not fall through to the untested-drug path, which would present them as
     # ordinary options.
@@ -2077,12 +2155,12 @@ def analyze_antibiotics(
             continue
 
         _nf_limit = info.get("renal_limit", 45)
-        if is_renal and "nitrofurantoin" in d_low and cl_cr < _nf_limit:
+        if is_renal and "nitrofurantoin" in d_low and _crcl is not None and _crcl < _nf_limit:
             banned.append(build_banned_item(
                 drug, "renal",
-                f"ممنوع -- CrCl {cl_cr:.1f} < {_nf_limit} ml/min",
-                f"CrCl = {cl_cr:.1f} مل/د -- أقل من الحد المطلوب ({_nf_limit} مل/د). "
-                f"خطر عدم كفاءة علاجية + تراكم سمي (EMA/BNF 2025).",
+                f"ممنوع -- CrCl {_crcl:.1f} < {_nf_limit} ml/min",
+                f"CrCl = {_crcl:.1f} مل/د -- أقل من الحد المطلوب ({_nf_limit} مل/د). "
+                f"خطر عدم كفاءة علاجية + تراكم سمي (EMA/BNF 2025).{_crcl_src}",
             ))
             continue
 
@@ -2261,8 +2339,16 @@ def analyze_antibiotics(
         # exits the loop, and anything that exits the loop must not be able to
         # pre-empt a hard ban. See the ordering note in the pregnancy block.
         renal_limit = info.get("renal_limit", 0)
-        if is_renal and renal_limit > 0 and cl_cr <= renal_limit:
-            warned.append({"name": drug, **info, "warning_reason": "renal_adjustment"})
+        if (is_renal and renal_limit > 0 and _crcl is not None
+                and _crcl <= renal_limit):
+            warned.append({"name": drug, **info,
+                           "warning_reason": "renal_adjustment",
+                           # Carried on the item so the renderers do not each
+                           # have to re-derive them. The PDF, the text report and
+                           # the on-screen panel previously printed three
+                           # different amounts of renal detail.
+                           "crcl_used": _crcl,
+                           "crcl_measured": _crcl_measured})
             continue
 
         if culture_result == "I":
@@ -4090,8 +4176,11 @@ def suggest_severity(
             reasons_moderate.append("Pregnancy -> complicated UTI")
         if age >= 65:
             reasons_moderate.append("Age ≥ 65 -> complicated UTI")
-        if is_renal and cl_cr < 60:
-            reasons_moderate.append(f"Renal impairment (CrCl {cl_cr:.0f}) -> complicated")
+        _eff, _meas = resolve_crcl(cl_cr, is_renal)
+        if is_renal and _eff is not None and _eff < 60:
+            reasons_moderate.append(
+                f"Renal impairment (CrCl {_eff:.0f}"
+                f"{'' if _meas else ', assumed'}) -> complicated")
         if any(k in " ".join(hf) for k in ["catheter", "urologic", "diabetes"]):
             reasons_moderate.append("Host risk factor (DM / catheter / urologic anomaly)")
         if any(k in " ".join(syms) for k in ["fever", "flank pain", "costovertebral"]):
@@ -5831,10 +5920,16 @@ def generate_pdf_html_report(
         EN reports must never fall back to the Arabic renal_note: the
         downstream Arabic strip would delete words like "تجنّب" (avoid) and
         "بعد" (after) mid-sentence, turning "(avoid 875mg)" into "(875mg)"
-        and "+ dose after dialysis" into "+ dose dialysis". Two entries have
-        renal_note_en deliberately blank pending clinical review of confirmed
-        copy-paste corruption -- those must show an explicit hold, not a
-        silent gap and not the wrong drug's dosing.
+        and "+ dose after dialysis" into "+ dose dialysis".
+
+        The two entries this used to hold back (Cefotaxime, Norfloxacin) held
+        another drug's dose band and had renal_note_en blanked as a stopgap.
+        That protected the English report only -- the ARABIC report, which is
+        the one this lab issues, kept printing pip-tazo doses under Cefotaxime
+        and co-amoxiclav doses under Norfloxacin. Both bands are now corrected
+        at source, so the hold below is dormant. It stays as a net: any future
+        entry with a deliberately blank renal_note_en shows an explicit hold
+        rather than a silent gap or the wrong drug's dosing.
         """
         if not _EN:
             return d.get("renal_note", "") or ""
@@ -6172,7 +6267,7 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:0.6mm 0; }
         # repeating under every single drug below.
         _sub_notes = []
         if is_renal:
-            _sub_notes.append(f'Patient CrCl = {cl_cr:.1f} ml/min')
+            _sub_notes.append(f'Patient CrCl = {crcl_label(cl_cr, is_renal)}')
         if any(_wd.get("warning_reason") == "intermediate_culture" for _wd in warned):
             _sub_notes.append('⚠ Intermediate (I) in culture -- use only if no better option')
         if _sub_notes:
@@ -6843,7 +6938,11 @@ def generate_decision_tree_image(
     if referring_physician:
         p_lines.append(f"Referred by:   Dr/ {referring_physician}")
     if is_renal:
-        p_lines.append(f"Renal:         IMPAIRED  CrCl:{cl_cr:.0f}")
+        _eff, _meas = resolve_crcl(cl_cr, is_renal)
+        p_lines.append(
+            f"Renal:         IMPAIRED  CrCl:{_eff:.0f}"
+            f"{'' if _meas else ' (assumed)'}" if _eff is not None
+            else "Renal:         IMPAIRED  CrCl:not measured")
     else:
         p_lines.append("Renal:         Normal")
     p_lines.append("Hepatic:       Normal")
@@ -6955,7 +7054,10 @@ def generate_decision_tree_image(
             alerts = ["Verify sensitivity results."]
 
     if is_renal:
-        alerts.append(f"Renal adj. (CrCl {cl_cr:.0f} ml/min)")
+        _eff, _meas = resolve_crcl(cl_cr, is_renal)
+        alerts.append(f"Renal adj. (CrCl {_eff:.0f} ml/min"
+                      f"{'' if _meas else ', assumed'})" if _eff is not None
+                      else "Renal adj. (CrCl not measured)")
     if is_preg and age >= 18:
         alerts.append("Pregnancy: verify fetal safety")
 
@@ -7142,7 +7244,9 @@ def generate_report(
           f"Weight   : {weight} kg",
           f"Renal    : {'IMPAIRED' if is_renal else 'Normal'}"]
     if is_renal:
-        L.append(f"CrCl     : {cl_cr:.1f} ml/min ({get_renal_severity(cl_cr)})")
+        _eff, _ = resolve_crcl(cl_cr, is_renal)
+        L.append(f"CrCl     : {crcl_label(cl_cr, is_renal)} "
+                 f"({get_renal_severity(_eff)})")
     L.append(f"Hepatic  : {'IMPAIRED' if is_hepatic else 'Normal'}")
     if sex == "Female" and age >= 18:
         L.append(f"Pregnant : {'Yes' if is_preg else 'No'}")
@@ -7242,7 +7346,7 @@ def generate_report(
     if warned:
         L += ["\nDOSE ADJUSTMENT / USE WITH CAUTION", sep]
         if is_renal:
-            L.append(f"Patient CrCl = {cl_cr:.1f} ml/min\n")
+            L.append(f"Patient CrCl = {crcl_label(cl_cr, is_renal)}\n")
         for item in warned:
             sir_tag = f" [Culture: {sir_map[item['name']]}]" if sir_map and item['name'] in sir_map else ""
             L += [f"{item['name']}{sir_tag}", sep2, f"WHO AWaRe : {item.get('aware','-')}"]
@@ -7689,21 +7793,53 @@ if uploaded:
             min_value=0.0, max_value=20.0, value=0.0, step=0.1,
             help="If entered, CrCl is calculated (Cockcroft-Gault) and a CrCl "
                  "below 60 ml/min engages renal dosing on its own.")
+        # cl_cr is None when nothing was measured. It used to be set to 100.0,
+        # which is a NORMAL clearance, so ticking the impairment box without a
+        # creatinine produced exactly the same recommendations as a patient with
+        # healthy kidneys: no dose-adjustment note on any agent (no renal_limit
+        # reaches 100) and Nitrofurantoin recommended rather than refused.
         if s_cr > 0:
             cl_cr = calc_creatinine_clearance(age, weight, s_cr, sex)
             st.metric("CrCl (Cockcroft-Gault)", f"{cl_cr:.1f} ml/min",
                       delta=get_renal_severity(cl_cr),
                       delta_color="normal" if cl_cr >= 60 else ("off" if cl_cr >= 30 else "inverse"))
         else:
-            cl_cr = 100.0
+            cl_cr = None
         # Engage renal handling if EITHER the clinician flagged it OR the measured
         # clearance is impaired.
-        is_renal = bool(_renal_flag) or (s_cr > 0 and cl_cr < 60)
-        if is_renal and not _renal_flag:
+        is_renal = bool(_renal_flag) or (cl_cr is not None and cl_cr < 60)
+        if is_renal and cl_cr is None:
+            st.warning(
+                f"⚠️ Renal impairment flagged with no creatinine. Dosing will "
+                f"assume **CrCl ≈ {ASSUMED_CRCL_UNKNOWN:.0f} ml/min** (the "
+                f"conservative direction) and every renal note will say so. "
+                f"Enter the creatinine for patient-specific doses.")
+        elif is_renal and not _renal_flag:
             st.warning(f"⚠️ CrCl {cl_cr:.0f} ml/min — renal dose adjustment applied "
                        "automatically (the impairment box was not ticked).")
 
         is_hepatic = st.checkbox("🚩 Hepatic Impairment")
+        # ── Child-Pugh is captured HERE, next to the flag that needs it ────────
+        # It used to be asked for inside an expander further down the page, which
+        # in Streamlit's top-to-bottom execution runs AFTER analyze_antibiotics().
+        # So on the run where the clinician ticked hepatic impairment the engine
+        # was still evaluating the seeded grade, and the hepatic contraindications
+        # never fired on the screen that mattered. Asking here removes the
+        # ordering dependency permanently rather than papering over it.
+        if is_hepatic:
+            child_pugh_class = st.selectbox(
+                "Child-Pugh Class", ["C", "B", "A"],
+                index=["C", "B", "A"].index(
+                    st.session_state.get("child_pugh_class", "C")),
+                format_func=lambda x: {"A": "A — Mild (5-6 pts)",
+                                       "B": "B — Moderate (7-9 pts)",
+                                       "C": "C — Severe (10-15 pts)"}[x],
+                key="cp_sel_sidebar",
+                help="Starts at C (most conservative) until graded. Grade the "
+                     "patient — C refuses agents that are acceptable in A.")
+            st.session_state.child_pugh_class = child_pugh_class
+            if child_pugh_class == "C":
+                st.caption("⚠️ Assuming Child-Pugh C until graded.")
         is_preg    = False
         if sex == "Female":
             is_preg = st.checkbox(
@@ -8315,6 +8451,10 @@ if uploaded:
         # ── تحليل المضادات ────────────────────────────────────────────────────
         # النقطة ٤: analyze_antibiotics يُستدعى مباشرة بقيم اللحظة
         # فأي تغيير في أي widget يُعيد تشغيل Streamlit -> تحديث فوري
+        # The grade now comes from the sidebar widget, which runs BEFORE this
+        # point, so it reflects what the clinician actually selected on this run.
+        # The default is "C" in both places: an ungraded liver must not be read as
+        # the mildest one.
         _child_pugh_now = st.session_state.get("child_pugh_class", "C") if is_hepatic else "A"
 
         for _pp in validate_patient_context(age, sex, is_preg, cl_cr, age_months):
@@ -8710,7 +8850,8 @@ if uploaded:
 
             notes: List[str] = []
             if is_renal:
-                notes.append(f"Renal impairment: CrCl {cl_cr:.1f} ml/min -- dose adjustment required.")
+                notes.append(f"Renal impairment: CrCl {crcl_label(cl_cr, is_renal)} "
+                             f"-- dose adjustment required.")
             if is_preg:
                 notes.append("Pregnancy: use with caution; consult specialist.")
             if age < 18:
@@ -8859,11 +9000,15 @@ if uploaded:
             if is_hepatic:
                 with st.expander("🟡 Hepatic Dosing -- Child-Pugh", expanded=True):
                     st.caption("Dose adjustments in hepatic impairment -- BNF 2025 | Lexicomp 2025")
-                    _cp = st.selectbox("Child-Pugh Class", ["A","B","C"],
-                        index=["A","B","C"].index(st.session_state.get("child_pugh_class","A")),
-                        format_func=lambda x:{"A":"A -- Mild (5-6pts)","B":"B -- Moderate (7-9pts)","C":"C -- Severe (10-15pts)"}[x],
-                        key="cp_sel")
-                    st.session_state.child_pugh_class = _cp
+                    # The grade is read, not asked for again. A second selectbox
+                    # writing the same session key from below the analysis call is
+                    # the stale-state race that made this panel and the engine
+                    # disagree on the same screen: the panel showed grade A advice
+                    # while the engine had already banned on grade C, or the
+                    # reverse. One widget, in the sidebar, before the analysis.
+                    _cp = st.session_state.get("child_pugh_class", "C")
+                    st.info(f"Evaluated as **Child-Pugh {_cp}** — change it in the "
+                            f"sidebar, next to the Hepatic Impairment flag.")
                     _hr = get_hepatic_recommendations(allowed, _cp)
                     _act = [r for r in _hr if r["requires_action"]]
                     _nrm = [r for r in _hr if not r["requires_action"]]

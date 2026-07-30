@@ -565,6 +565,13 @@ LACTATION_CAUTION = {"Ciprofloxacin", "Levofloxacin", "Doxycycline", "Tetracycli
                      "Minocycline", "Metronidazole", "Trimethoprim/Sulfamethoxazole",
                      "Chloramphenicol"}
 
+# CrCl assumed when the clinician flags renal impairment but no creatinine is
+# available. Deliberately conservative: 30 mL/min sits in KDIGO G4, which
+# triggers dose adjustment for every renally-cleared agent in the table and
+# refuses nitrofurantoin — the fail-closed direction. Any message that quotes a
+# CrCl derived from this constant MUST label it as assumed, never measured.
+ASSUMED_CRCL_UNKNOWN: float = 30.0
+
 # Renal: (CrCl below which a dose change is mandatory, CrCl below which the drug is refused)
 RENAL_RULES: Dict[str, Tuple[Optional[float], Optional[float], str, str]] = {
     "Nitrofurantoin": (60, 45, "ineffective (inadequate urinary levels) and neuropathy risk below CrCl 45",
@@ -581,24 +588,24 @@ RENAL_RULES: Dict[str, Tuple[Optional[float], Optional[float], str, str]] = {
                  "نافذة علاجية ضيقة — السمية الكلوية تحدّ من الجرعة"),
     "Trimethoprim/Sulfamethoxazole": (30, 15, "hyperkalaemia and crystalluria risk",
                                       "خطر ارتفاع البوتاسيوم وتبلور البول"),
-    "Fosfomycin": (None, 10, "inadequate urinary concentration below CrCl 10",
-                   "تركيز بولي غير كافٍ تحت CrCl 10"),
+    "Fosfomycin": (40, 10, "single 3 g oral dose stays adequate to CrCl 10; avoid repeated IV dosing below 40",
+                   "الجرعة الفموية الواحدة 3 جم تبقى كافية حتى CrCl 10؛ تُتجنب الجرعات الوريدية المتكررة تحت 40"),
     "Levofloxacin": (50, None, "renally cleared — halve the dose", "يُطرح كلوياً — تُنصّف الجرعة"),
     "Ciprofloxacin": (30, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Ofloxacin": (50, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Norfloxacin": (30, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Meropenem": (50, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
-    "Imipenem/Cilastatin": (60, None, "accumulation lowers the seizure threshold",
+    "Imipenem/Cilastatin": (70, None, "accumulation lowers the seizure threshold",
                             "التراكم يخفض عتبة التشنجات"),
     "Ertapenem": (30, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Cefepime": (60, None, "accumulation causes neurotoxicity/encephalopathy",
                  "التراكم يسبب سمية عصبية/اعتلال دماغي"),
     "Ceftazidime": (50, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
-    "Cefotaxime": (20, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
-    "Cefazolin": (55, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
+    "Cefotaxime": (50, None, "renally cleared — extend the interval to q12h", "يُطرح كلوياً — تُمدد الفترة إلى q12h"),
+    "Cefazolin": (35, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Cefuroxime sodium": (20, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Cefuroxime": (30, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
-    "Cephalexin": (50, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
+    "Cephalexin": (30, None, "renally cleared — extend the interval", "يُطرح كلوياً — تُمدد الفترة"),
     "Cephradine": (50, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Cefadroxil": (50, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Cefaclor": (30, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
@@ -614,6 +621,14 @@ RENAL_RULES: Dict[str, Tuple[Optional[float], Optional[float], str, str]] = {
     "Cefoxitin": (50, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Linezolid": (None, None, "no renal adjustment; metabolites accumulate in dialysis",
                   "لا تعديل كلوي؛ المستقلبات تتراكم في الغسيل"),
+    # ADDED 2026-07-30. Both carry a renal_limit in abx_guidelines.py but had no
+    # row here, so the terminal gate — the layer that exists precisely to give a
+    # second opinion — was blind to them. test_dose_adjustment.py now fails the
+    # build if the two tables diverge again.
+    "Clarithromycin": (30, None, "halve the dose below CrCl 30; do not exceed 14 days",
+                       "تُنصّف الجرعة تحت CrCl 30؛ ولا تتجاوز 14 يوماً"),
+    "Gatifloxacin": (40, None, "renally cleared — 400 mg loading then 200 mg q24h",
+                     "يُطرح كلوياً — 400 مجم تحميل ثم 200 مجم كل 24 ساعة"),
 }
 
 # Hepatic: Child-Pugh C verdict. This layer was previously INERT — the flag
@@ -789,7 +804,13 @@ def evaluate(
     # ---- Layer 6: renal ---------------------------------------------------
     if drug in RENAL_RULES:
         adjust_below, refuse_below, en, ar = RENAL_RULES[drug]
-        crcl = cl_cr if cl_cr is not None else (30.0 if is_renal else None)
+        # An UNKNOWN clearance on a patient flagged as renally impaired must not
+        # read as a normal one. `None` means "not measured"; when the impairment
+        # flag is set we substitute ASSUMED_CRCL_UNKNOWN and every message that
+        # quotes the number says it was assumed. streamlit_app.py now passes
+        # None (not 100.0) when no creatinine was entered, so this branch is
+        # live rather than unreachable.
+        crcl = cl_cr if cl_cr is not None else (ASSUMED_CRCL_UNKNOWN if is_renal else None)
         if crcl is not None:
             if refuse_below is not None and crcl < refuse_below:
                 v.add(DENY, "renal", f"CrCl {crcl:.0f} mL/min — {en}",

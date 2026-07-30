@@ -73,6 +73,10 @@ _WANT = [
     # functions that use them, or the re-exec'd copy raises NameError.
     "_SIR_ALIASES", "normalize_sir_value", "normalize_sir_map",
     "_MED_CANON", "_canon_med",
+    # Added 2026-07-30 with the unknown-CrCl fix. analyze_antibiotics now calls
+    # resolve_crcl() on entry, so omitting these from the extraction list makes
+    # the whole suite die on NameError rather than fail a check.
+    "ASSUMED_CRCL_UNKNOWN", "resolve_crcl", "crcl_label", "get_renal_severity",
     "_PREG_ALIASES", "preg_status_of", "_ACQUIRED_NOT_INTRINSIC",
     "MDR_CATEGORIES_STAPH", "MDR_CATEGORIES_ENTEROCOCCUS",
     "MDR_CATEGORIES_STREP", "MDR_NOT_APPLICABLE", "MDR_OUTSIDE_MAGIORAKOS",

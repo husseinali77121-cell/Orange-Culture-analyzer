@@ -38,7 +38,12 @@ ABX_GUIDELINES = {
     "Ampicillin/Sulbactam": {
         "priority": 2, "class": "Penicillin + Beta-lactamase Inhibitor (IV)",
         "note": "💉 IV فقط. فعال للموجبات والسالبات. أساس علاج Acinetobacter بجرعات عالية (IDSA AMR Guidance v4.0 (2024)).",
-        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "renal_note_en": "⚖️ dose adjustment required.",
+        # DOSE DETAIL 2026-07-30: was a bare "dose adjustment required" with no
+        # dose, interval or band — the clinician was told to adjust but not how.
+        "renal_limit": 30,
+        "renal_note": "Normal: 1.5-3g q6h IV. CrCl 15-29: 1.5-3g q12h. CrCl 5-14: 1.5-3g q24h. HD: جرعة بعد dialysis. BNF 2025.",
+        "renal_note_en": "Normal: 1.5-3g q6h IV. CrCl 15-29: 1.5-3g q12h. CrCl 5-14: 1.5-3g q24h. HD: dose after dialysis. BNF 2025.",
+        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -61,7 +66,9 @@ ABX_GUIDELINES = {
     "Piperacillin + Tazobactam": {
         "priority": 4, "class": "Anti-pseudomonal Penicillin + Inhibitor (IV)",
         "note": "🛑 (مثل Tazocin) IV فقط. واسع الطيف جداً — يُحفظ للحالات الشديدة (IDSA AMR Guidance v4.0 (2024)).",
-        "renal_limit": 20, "renal_note": "CrCl 20-40: 3.375g q6h. CrCl <20: 2.25g q6h. HD: 2.25g q8h + dose بعد dialysis. BNF 2025.", "renal_note_en": "CrCl 20-40: 3.375g q6h. CrCl <20: 2.25g q6h. HD: 2.25g q8h + dose after dialysis. BNF 2025.",
+        # renal_limit 20 -> 40: own band starts at 40
+        "renal_limit": 40,
+        "renal_note": "CrCl 20-40: 3.375g q6h. CrCl <20: 2.25g q6h. HD: 2.25g q8h + dose بعد dialysis. BNF 2025.", "renal_note_en": "CrCl 20-40: 3.375g q6h. CrCl <20: 2.25g q6h. HD: 2.25g q8h + dose after dialysis. BNF 2025.",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -93,7 +100,13 @@ ABX_GUIDELINES = {
     "Cefadroxil": {
         "priority": 1, "class": "1st Gen Cephalosporin (Oral)",
         "note": "✅ (مثل Duricef) Oral. Bioavailability ~90%. فعال لالتهابات الحلق والجلد.",
-        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "renal_note_en": "⚖️ dose adjustment required.",
+        # DOSE DETAIL 2026-07-30: was a bare "dose adjustment required" with no
+        # dose, interval or band — the clinician was told to adjust but not how.
+  # limit 30 -> 50: reconciled with clinical_matrix.RENAL_RULES
+        "renal_limit": 50,
+        "renal_note": "Normal: 500mg-1g q12h. جرعة تحميل 1g ثم: CrCl 25-50: 500mg q12h. CrCl 10-25: 500mg q24h. CrCl <10: 500mg q36h. BNF 2025.",
+        "renal_note_en": "Normal: 500mg-1g q12h. Loading 1g then: CrCl 25-50: 500mg q12h. CrCl 10-25: 500mg q24h. CrCl <10: 500mg q36h. BNF 2025.",
+        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": False, "aware": "Access", "high_po": True,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -107,7 +120,13 @@ ABX_GUIDELINES = {
     "Cefaclor": {
         "priority": 2, "class": "2nd Gen Cephalosporin (Oral)",
         "note": "✅ (مثل Ceclor) Oral. Bioavailability ~95%. فعال للأذن الوسطى والمسالك.",
-        "renal_limit": 10, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "renal_note_en": "⚖️ dose adjustment required.",
+        # DOSE DETAIL 2026-07-30: was a bare "dose adjustment required" with no
+        # dose, interval or band — the clinician was told to adjust but not how.
+  # limit 10 -> 30: reconciled with clinical_matrix.RENAL_RULES
+        "renal_limit": 30,
+        "renal_note": "Normal: 250-500mg q8h. CrCl 10-30: 50-100% من الجرعة المعتادة. CrCl <10: 50% من الجرعة. BNF 2025.",
+        "renal_note_en": "Normal: 250-500mg q8h. CrCl 10-30: 50-100% of the usual dose. CrCl <10: 50% of the dose. BNF 2025.",
+        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": False, "aware": "Watch", "high_po": True,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True,
@@ -123,7 +142,12 @@ ABX_GUIDELINES = {
     "Cefuroxime": {
         "priority": 2, "class": "2nd Gen Cephalosporin (Oral)",
         "note": "✅ (مثل Zinnat) Oral. Bioavailability ~52%. واسع المدى للجهاز التنفسي والمسالك.",
-        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "renal_note_en": "⚖️ dose adjustment required.",
+        # DOSE DETAIL 2026-07-30: was a bare "dose adjustment required" with no
+        # dose, interval or band — the clinician was told to adjust but not how.
+        "renal_limit": 30,
+        "renal_note": "Normal: 250-500mg q12h فموي. CrCl 10-30: نفس الجرعة q24h. CrCl <10: نفس الجرعة q48h. HD: جرعة بعد dialysis. BNF 2025.",
+        "renal_note_en": "Normal: 250-500mg q12h PO. CrCl 10-30: same dose q24h. CrCl <10: same dose q48h. HD: dose after dialysis. BNF 2025.",
+        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": False, "aware": "Watch", "high_po": True,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True,
@@ -141,7 +165,13 @@ ABX_GUIDELINES = {
     "Cefuroxime sodium": {
         "priority": 2, "class": "2nd Gen Cephalosporin (IV)",
         "note": "💉 (مثل Zinacef) IV فقط — نفس Cefuroxime لكن للحالات التي تحتاج حقن.",
-        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "renal_note_en": "⚖️ dose adjustment required.",
+        # DOSE DETAIL 2026-07-30: was a bare "dose adjustment required" with no
+        # dose, interval or band — the clinician was told to adjust but not how.
+  # limit 30 -> 20: reconciled with clinical_matrix.RENAL_RULES
+        "renal_limit": 20,
+        "renal_note": "Normal: 750mg-1.5g q8h IV. CrCl 10-20: 750mg-1.5g q12h. CrCl <10: 750mg-1.5g q24h. HD: جرعة بعد dialysis. BNF 2025.",
+        "renal_note_en": "Normal: 750mg-1.5g q8h IV. CrCl 10-20: 750mg-1.5g q12h. CrCl <10: 750mg-1.5g q24h. HD: dose after dialysis. BNF 2025.",
+        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -177,7 +207,13 @@ ABX_GUIDELINES = {
     "Cefixime": {
         "priority": 2, "class": "3rd Gen Cephalosporin (Oral)",
         "note": "✅ (مثل Suprax) Oral. Bioavailability ~40-50%. خيار فموي قوي للمسالك.",
-        "renal_limit": 20, "renal_note": "⚖️ خفض الجرعة مطلوب.", "renal_note_en": "⚖️ dose reduction required.",
+        # DOSE DETAIL 2026-07-30: was a bare "dose adjustment required" with no
+        # dose, interval or band — the clinician was told to adjust but not how.
+  # limit 20 -> 60: reconciled with clinical_matrix.RENAL_RULES
+        "renal_limit": 60,
+        "renal_note": "Normal: 400mg q24h (أو 200mg q12h). CrCl 21-60 أو HD: 300mg q24h (75%). CrCl ≤20 أو CAPD: 200mg q24h (50%). FDA label / BNF 2025.",
+        "renal_note_en": "Normal: 400mg q24h (or 200mg q12h). CrCl 21-60 or HD: 300mg q24h (75%). CrCl ≤20 or CAPD: 200mg q24h (50%). FDA label / BNF 2025.",
+        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": False, "aware": "Watch", "high_po": True,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -193,7 +229,16 @@ ABX_GUIDELINES = {
     "Cefotaxime": {
         "priority": 3, "class": "3rd Gen Cephalosporin (IV)",
         "note": "💉 (مثل Cefotax) IV فقط — bioavailability فموي = صفر. يستخدم في العدوى الشديدة.",
-        "renal_limit": 20, "renal_note": "CrCl 20-40: 3.375g q6h. CrCl <20: 2.25g q6h. HD: 2.25g q8h + dose بعد dialysis. BNF 2025.", "renal_note_en": "",
+        # DOSE CORRECTION 2026-07-30: this row carried the Piperacillin-Tazobactam
+        # band verbatim (3.375 g / 2.25 g are pip-tazo vial strengths; cefotaxime is
+        # not presented at 3.375 g at all). renal_note_en had been blanked as a hold;
+        # the ARABIC report still printed the wrong drug's dose, which is the report
+        # this lab actually issues. Replaced with the cefotaxime band and the limit
+        # raised 20 -> 50, the CrCl at which interval extension actually begins.
+        "renal_limit": 50,
+        "renal_note": "Normal: 1-2g q8h (شديد: 2g q6-8h). CrCl 10-50: نفس الجرعة q12h. CrCl <10: نفس الجرعة q24h (BNF: خفض 50%). HD: 1-2g q24h + جرعة بعد dialysis. BNF 2025.",
+        "renal_note_en": "Normal: 1-2g q8h (severe: 2g q6-8h). CrCl 10-50: same dose q12h. CrCl <10: same dose q24h (BNF: reduce 50%). HD: 1-2g q24h + dose after dialysis. BNF 2025.",
+        "dose_review": "renal band rewritten 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -264,7 +309,9 @@ ABX_GUIDELINES = {
     "Cefepime": {
         "priority": 5, "class": "4th Gen Cephalosporin (IV)",
         "note": "🛑 (مثل Maxipime) IV فقط — للحالات الحرجة. Bioavailability فموي = صفر.",
-        "renal_limit": 50, "renal_note": "CrCl 30-60: 1-2g q12h. CrCl 11-29: 500mg-1g q12h. CrCl <11: 250-500mg q24h. ⚠️ خطر encephalopathy عند تراكم الدواء — راقب الأعراض العصبية.", "renal_note_en": "CrCl 30-60: 1-2g q12h. CrCl 11-29: 500mg-1g q12h. CrCl <11: 250-500mg q24h. ⚠️ risk of encephalopathy with drug accumulation — monitor for neurological symptoms.",
+        # renal_limit 50 -> 60: own band starts at 60
+        "renal_limit": 60,
+        "renal_note": "CrCl 30-60: 1-2g q12h. CrCl 11-29: 500mg-1g q12h. CrCl <11: 250-500mg q24h. ⚠️ خطر encephalopathy عند تراكم الدواء — راقب الأعراض العصبية.", "renal_note_en": "CrCl 30-60: 1-2g q12h. CrCl 11-29: 500mg-1g q12h. CrCl <11: 250-500mg q24h. ⚠️ risk of encephalopathy with drug accumulation — monitor for neurological symptoms.",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -341,7 +388,12 @@ ABX_GUIDELINES = {
     "Ofloxacin": {
         "priority": 2, "class": "Fluoroquinolone",
         "note": "⚠️ (مثل Tarivid) Oral وIV. Bioavailability فموي ~98%.",
-        "renal_limit": 50, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "renal_note_en": "⚖️ dose adjustment required.",
+        # DOSE DETAIL 2026-07-30: was a bare "dose adjustment required" with no
+        # dose, interval or band — the clinician was told to adjust but not how.
+        "renal_limit": 50,
+        "renal_note": "Normal: 200-400mg q12h. CrCl 20-50: نفس الجرعة q24h. CrCl <20: نصف الجرعة q24h. BNF 2025.",
+        "renal_note_en": "Normal: 200-400mg q12h. CrCl 20-50: same dose q24h. CrCl <20: half the dose q24h. BNF 2025.",
+        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": True, "aware": "Watch", "high_po": True,
         "preg_status": "Warn",
         "preg_note": (
@@ -366,7 +418,15 @@ ABX_GUIDELINES = {
             "⚠️ (مثل Noroxin) Oral فقط — متخصص في المسالك البولية. "
             "Bioavailability ~35% لكن يتركز في البول."
         ),
-        "renal_limit": 30, "renal_note": "CrCl 10-30: 500/125mg q12h (تجنّب 875mg). CrCl <10: 500/125mg q24h. BNF 2025.", "renal_note_en": "",
+        # DOSE CORRECTION 2026-07-30: this row carried the Amoxicillin-Clavulanate
+        # band verbatim (500/125mg and 875mg are co-amoxiclav tablet strengths;
+        # norfloxacin is only presented as a 400mg tablet). renal_note_en had been
+        # blanked as a hold, so only the English report was protected — the Arabic
+        # report kept printing co-amoxiclav doses under a fluoroquinolone heading.
+        "renal_limit": 30,
+        "renal_note": "Normal: 400mg q12h. CrCl ≤30: 400mg q24h. BNF 2025.",
+        "renal_note_en": "Normal: 400mg q12h. CrCl ≤30: 400mg q24h. BNF 2025.",
+        "dose_review": "renal band rewritten 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": True, "aware": "Watch", "high_po": True,
         "preg_status": "Warn",
         "preg_note": (
@@ -392,8 +452,13 @@ ABX_GUIDELINES = {
             "🎯 (مثل Macrofuran) Oral فقط — الخيار الأول للمسالك البسيطة. "
             "Bioavailability ~90% لكن يتركز في البول فقط."
         ),
-        "renal_limit": 45, "renal_note": "🚫 ممنوع إذا CrCl < 45 مل/د (EMA/BNF 2025). عند CrCl 30-45: عدم كفاءة علاجية + تراكم سمي.", "renal_note_en": "🚫 contraindicated if CrCl < 45 mL/min (EMA/BNF 2025). at CrCl 30-45: therapeutic failure + toxic accumulation.",
-        "hepatic_caution": False, "aware": "Access", "high_po": True,
+        "renal_limit": 45, "renal_note": "Normal: 100mg q12h (MR) أو 50mg q6h. 🚫 ممنوع إذا CrCl < 45 مل/د (EMA/BNF 2025) — لا جرعة مخفضة، الدواء يُستبدل. عند CrCl 30-45: عدم كفاءة علاجية (تركيز بولي غير كافٍ) + تراكم سمي (اعتلال أعصاب محيطي).",
+        "renal_note_en": "Normal: 100mg q12h (MR) or 50mg q6h. 🚫 Contraindicated if CrCl < 45 mL/min (EMA/BNF 2025) — there is no reduced dose, the agent is replaced. At CrCl 30-45: therapeutic failure (inadequate urinary concentration) + toxic accumulation (peripheral neuropathy).",
+        # hepatic_caution False -> True (2026-07-30): chronic active hepatitis and cholestatic injury are label warnings.
+        # HEPATIC_DOSING already recorded Child-Pugh C = "Avoid" and
+        # clinical_matrix.HEPATIC_RULES records DENY, so this flag
+        # contradicted both and the side-channel hepatic alert stayed silent.
+        "hepatic_caution": True, "aware": "Access", "high_po": True,
         "preg_status": "Warn",
         "preg_note": (
             "تحذير حمل — Nitrofurantoin:\n"
@@ -407,7 +472,10 @@ ABX_GUIDELINES = {
         "child_safe": True,
         "child_note": "⚠️ ممنوع <1 شهر (خطر hemolytic anemia في نقص G6PD). مقبول بعد شهر. AAP 2024.",
         "interacts_with": ["Antacids (مضادات الحموضة)"],
-        "aliases": ["macrofuran","macrobid","nitrofur"],
+        # "furadantin" added 2026-07-30: data/antibiotics.py carried Furadantin as a
+        # SEPARATE formulary entry. Collapsing the two tables onto this one would
+        # have dropped the brand from the OCR alias index entirely.
+        "aliases": ["macrofuran","macrobid","nitrofur","furadantin","furantoin"],
         "organisms": ["E. coli","Staphylococcus aureus","Enterococcus faecalis","Klebsiella spp."],
         "specimen_notes": {
             "Urine": "🎯 مخصص للمسالك البولية البسيطة فقط — لا يُستخدم خارج البول أبداً.",
@@ -464,7 +532,12 @@ ABX_GUIDELINES = {
     "Amikacin": {
         "priority": 4, "class": "Aminoglycoside (IV/IM)",
         "note": "💉 (مثل Amikin) IV/IM فقط — لا bioavailability فموي. فعال ضد السالبات المقاومة.",
-        "renal_limit": 60, "renal_note": "15-20mg/kg q24h. CrCl 40-60: q36h. CrCl 20-40: q48h. CrCl <20: monitoring-based dosing. KDIGO 2024.", "renal_note_en": "15-20mg/kg q24h. CrCl 40-60: q36h. CrCl 20-40: q48h. CrCl <20: monitoring-based dosing. KDIGO 2024.",
+        # TDM FIX 2026-07-30: Gentamicin and Tobramycin both state a trough target
+        # in this table; Amikacin did not, so the one aminoglycoside whose target
+        # differs from the others was the one left unstated.
+        "renal_limit": 60,
+        "renal_note": "15-20mg/kg q24h. CrCl 40-60: q36h. CrCl 20-40: q48h. CrCl <20: الجرعة حسب المستويات. قياس المستويات إلزامي: trough < 5 mcg/mL (extended-interval: < 2-3) + كرياتينين يومي. KDIGO 2024.",
+        "renal_note_en": "15-20mg/kg q24h. CrCl 40-60: q36h. CrCl 20-40: q48h. CrCl <20: level-guided dosing. Level monitoring mandatory: trough < 5 mcg/mL (extended-interval: < 2-3) + daily creatinine. KDIGO 2024.",
         # AWaRe FIX: amikacin is an Access agent in WHO AWaRe 2023, not Watch.
         "hepatic_caution": False, "aware": "Access", "high_po": False,
         "preg_status": "Banned",
@@ -510,7 +583,12 @@ ABX_GUIDELINES = {
         "priority": 2, "class": "Macrolide (Oral/IV)",
         "cross_resistance": ["Erythromycin"],
         "note": "✅ (مثل Klacid) Oral وIV. Bioavailability فموي ~55%. فعال للصدر. ⚠️ Cross-resistance مع Erythromycin (MLSB): إذا Erythromycin=R → Clarithromycin مقاوم على الأرجح.",
-        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "renal_note_en": "⚖️ dose adjustment required.",
+        # DOSE DETAIL 2026-07-30: was a bare "dose adjustment required" with no
+        # dose, interval or band — the clinician was told to adjust but not how.
+        "renal_limit": 30,
+        "renal_note": "Normal: 250-500mg q12h. CrCl <30: خفض الجرعة 50% أو مضاعفة الفترة، ولا تتجاوز 14 يوماً. FDA label / BNF 2025.",
+        "renal_note_en": "Normal: 250-500mg q12h. CrCl <30: reduce the dose by 50% or double the interval; do not exceed 14 days. FDA label / BNF 2025.",
+        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": True, "aware": "Watch", "high_po": True,
         "preg_status": "Banned",
         "preg_note": (
@@ -533,8 +611,17 @@ ABX_GUIDELINES = {
             "✅ (مثل Sutrim/Bactrim) Oral وIV. Bioavailability فموي ~100%. "
             "ممتاز للمسالك والجهاز التنفسي."
         ),
-        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "renal_note_en": "⚖️ dose adjustment required.",
-        "hepatic_caution": False, "aware": "Access", "high_po": True,
+        # DOSE DETAIL 2026-07-30: was a bare "dose adjustment required" with no
+        # dose, interval or band — the clinician was told to adjust but not how.
+        "renal_limit": 30,
+        "renal_note": "Normal: 160/800mg q12h. CrCl 15-30: نصف الجرعة (80/400mg q12h). CrCl <15: يُتجنّب إلا مع غسيل ومراقبة مستوى السلفا. راقب البوتاسيوم والكرياتينين. BNF 2025.",
+        "renal_note_en": "Normal: 160/800mg q12h. CrCl 15-30: half dose (80/400mg q12h). CrCl <15: avoid unless on dialysis with sulfamethoxazole level monitoring. Monitor potassium and creatinine. BNF 2025.",
+        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
+        # hepatic_caution False -> True (2026-07-30): sulfonamide hepatotoxicity and hypersensitivity hepatitis.
+        # HEPATIC_DOSING already recorded Child-Pugh C = "Avoid" and
+        # clinical_matrix.HEPATIC_RULES records DENY, so this flag
+        # contradicted both and the side-channel hepatic alert stayed silent.
+        "hepatic_caution": True, "aware": "Access", "high_po": True,
         "preg_status": "Banned",
         "preg_note": (
             "ممنوع في الحمل — TMP/SMX:\n"
@@ -668,7 +755,7 @@ ABX_GUIDELINES = {
             "⚠️ خطر نوبات صرع عند الجرعات العالية أو القصور الكلوي. "
             "Cilastatin يمنع تكسره كلوياً."
         ),
-        "renal_limit": 50,
+        "renal_limit": 70,  # 50 -> 70: own band starts at 70
         "renal_note": "CrCl 41-70: 500mg q8h. CrCl 21-40: 250-500mg q8h. CrCl 6-20: 250mg q6-12h. ⚠️ خطر seizures يرتفع عند تراكم الدواء. BNF 2025.", "renal_note_en": "CrCl 41-70: 500mg q8h. CrCl 21-40: 250-500mg q8h. CrCl 6-20: 250mg q6-12h. ⚠️ risk of seizures rises with drug accumulation. BNF 2025.",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Warn",
@@ -744,7 +831,10 @@ ABX_GUIDELINES = {
             "Bioavailability فموي < 5% جهازياً — IV فقط للعدوى الجهازية. "
             "مراقبة الـ Trough أو AUC/MIC حتمية."
         ),
-        "renal_limit": 50, "renal_note": "AUC/MIC target 400-600 mg·h/L. CrCl <50: تمديد الفترة. HD: supplement بعد dialysis. ASHP/IDSA/SIDP Consensus 2020.", "renal_note_en": "AUC/MIC target 400-600 mg·h/L. CrCl <50: extend the interval. HD: supplement after dialysis. ASHP/IDSA/SIDP Consensus 2020.",
+        # renal_limit 50 -> 60: clinical_matrix.RENAL_RULES says 60
+        "renal_limit": 60,
+        "renal_note": "AUC/MIC target 400-600 mg·h/L (trough 10-20 mcg/mL إن لم يتوفر AUC). CrCl <60: تمديد الفترة بتوجيه المستويات. HD: supplement بعد dialysis. ASHP/IDSA/SIDP Consensus 2020.",
+        "renal_note_en": "AUC/MIC target 400-600 mg·h/L (trough 10-20 mcg/mL if AUC unavailable). CrCl <60: level-guided interval extension. HD: supplement after dialysis. ASHP/IDSA/SIDP Consensus 2020.",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Warn",
         "preg_note": (
@@ -800,7 +890,10 @@ ABX_GUIDELINES = {
             "🔴 IV فقط — الملاذ الأخير للـ MDR gram-negatives. "
             "Bioavailability فموي = صفر."
         ),
-        "renal_limit": 50, "renal_note": "CrCl <50: تعديل جرعة إلزامي. CrCl <30: خفض كبير. HD: dose بعد dialysis. إيقاف فوري عند Cr↑ >0.5 عن baseline. BNF 2025.", "renal_note_en": "CrCl <50: dose adjustment mandatory. CrCl <30: substantial reduction. HD: dose after dialysis. stop immediately if Cr↑ >0.5 of baseline. BNF 2025.",
+        # renal_limit 50 -> 60: clinical_matrix.RENAL_RULES says 60
+        "renal_limit": 60,
+        "renal_note": "Loading: 300mg CBA (9 MIU) مرة واحدة — لا يُخفض مع القصور الكلوي. Maintenance: تُحسب من CrCl بمعادلة الإجماع الدولي 2019 (لا يوجد شريط جرعات ثابت)، تبدأ بعد 12 ساعة. CrCl <60: تعديل إلزامي. CrCl <30: خفض كبير. HD: الجرعة بعد dialysis. راقب الكرياتينين يومياً وأوقف فوراً عند ارتفاعه >0.5 عن baseline. BNF 2025.",
+        "renal_note_en": "Loading: 300mg CBA (9 MIU) once — NOT reduced for renal impairment. Maintenance: calculated from CrCl using the 2019 international consensus equation (there is no fixed dose band), starting 12h later. CrCl <60: adjustment mandatory. CrCl <30: substantial reduction. HD: dose after dialysis. Monitor creatinine daily and stop immediately on a rise >0.5 above baseline. BNF 2025.",
         "hepatic_caution": False, "aware": "Reserve", "high_po": False,
         "preg_status": "Warn",
         "preg_note": (
@@ -904,7 +997,12 @@ _EXTRA_ENTRIES = {
     "Ampicillin": {
         "priority": 2, "class": "Penicillin (IV/Oral)",
         "note": "⚠️ مقاومة عالية (>80%) في معظم الكائنات بدون مثبط. يُستخدم غالباً بمثبط (Ampicillin/Sulbactam).",
-        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "renal_note_en": "⚖️ dose adjustment required.",
+        # DOSE DETAIL 2026-07-30: was a bare "dose adjustment required" with no
+        # dose, interval or band — the clinician was told to adjust but not how.
+        "renal_limit": 30,
+        "renal_note": "Normal: 250mg-2g q6h. CrCl 10-30: نفس الجرعة q6-12h. CrCl <10: نفس الجرعة q12-24h. HD: جرعة بعد dialysis. BNF 2025.",
+        "renal_note_en": "Normal: 250mg-2g q6h. CrCl 10-30: same dose q6-12h. CrCl <10: same dose q12-24h. HD: dose after dialysis. BNF 2025.",
+        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
         # BIOAVAILABILITY FIX: oral ampicillin is only ~30-40% absorbed (food
         # reduces it further). It is NOT an IV->PO switch candidate -- amoxicillin
         # (~90%) is the oral equivalent. high_po was True and drove a wrong switch.
@@ -921,7 +1019,12 @@ _EXTRA_ENTRIES = {
     "Amoxicillin": {
         "priority": 1, "class": "Penicillin (Oral)",
         "note": "✅ (مثل Amoxil) Oral. Bioavailability ~90%. بدون مثبط — مقاومة عالية لكثير من الكائنات.",
-        "renal_limit": 30, "renal_note": "⚖️ تعديل الجرعة مطلوب.", "renal_note_en": "⚖️ dose adjustment required.",
+        # DOSE DETAIL 2026-07-30: was a bare "dose adjustment required" with no
+        # dose, interval or band — the clinician was told to adjust but not how.
+        "renal_limit": 30,
+        "renal_note": "Normal: 250-500mg q8h (أو 875mg q12h). CrCl 10-30: 250-500mg q12h. CrCl <10: 250-500mg q24h. ⚠️ يُتجنّب تركيز 875mg تحت CrCl 30. BNF 2025.",
+        "renal_note_en": "Normal: 250-500mg q8h (or 875mg q12h). CrCl 10-30: 250-500mg q12h. CrCl <10: 250-500mg q24h. ⚠️ avoid the 875mg strength below CrCl 30. BNF 2025.",
+        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": False, "aware": "Access", "high_po": True,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -959,7 +1062,11 @@ _EXTRA_ENTRIES = {
             "✅ (مثل Velosef/Sefril) Oral. 1st-gen cephalosporin — فعال ضد Gram+ (Staph/Strep). "
             "مكافئ فموي لـ Cefazolin. للجلد والمسالك والجهاز التنفسي العلوي."
         ),
-        "renal_limit": 30, "renal_note": "CrCl 20-50: 250mg q8h | CrCl <20: 250mg q12h", "renal_note_en": "CrCl 20-50: 250mg q8h| CrCl <20: 250mg q12h",
+        # renal_limit 30 -> 50: own band starts at 50
+        "renal_limit": 50,
+        "renal_note": "Normal: 250-500mg q6h. CrCl 20-50: 250mg q8h. CrCl <20: 250mg q12h. BNF 2025.",
+        "renal_note_en": "Normal: 250-500mg q6h. CrCl 20-50: 250mg q8h. CrCl <20: 250mg q12h. BNF 2025.",
+        "dose_review": "normal-dose anchor added 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": False, "aware": "Access", "high_po": True,
         "preg_status": "Safe",
         "preg_note": "مقبول في الحمل — Category B (ACOG).",
@@ -1012,7 +1119,14 @@ _EXTRA_ENTRIES_2 = {
             "مفيد في حالة الحساسية من البنسيلين. لا cross-reactivity مع carbapenems. "
             "لا يُستخدم وحده لعدوى البطن (لا يغطي اللاهوائيات)."
         ),
-        "renal_limit": 30, "renal_note": "CrCl 10-30: نصف الجرعة | CrCl <10: 12.5% الجرعة", "renal_note_en": "CrCl 10-30: half the dose| CrCl <10: 12.5% the dose",
+        # DOSE CORRECTION 2026-07-30: the 12.5% figure is the post-dialysis
+        # SUPPLEMENT in the Azactam label, not the CrCl<10 maintenance dose — it was
+        # mislabelled, and a quarter-strength maintenance dose was being read as
+        # one-eighth. Loading dose is given in full regardless of CrCl.
+        "renal_limit": 30,
+        "renal_note": "Normal: 1-2g q8h. أعطِ جرعة التحميل كاملة أولاً، ثم: CrCl 10-30: 50% من الجرعة. CrCl <10: 25% من الجرعة. HD: أضف 12.5% من الجرعة الأولية بعد كل غسيل (العدوى الشديدة). Azactam label / BNF 2025.",
+        "renal_note_en": "Normal: 1-2g q8h. Give the full loading dose first, then: CrCl 10-30: 50% of the dose. CrCl <10: 25% of the dose. HD: add 12.5% of the initial dose after each session (serious infection). Azactam label / BNF 2025.",
+        "dose_review": "renal band corrected 2026-07-30 — countersign vs Azactam label",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Caution",
         "preg_note": (
@@ -1122,7 +1236,9 @@ _EXTRA_ENTRIES_2 = {
             "مقاوم لـ penicillinase. يُستخدم marker لـ AmpC (Cefoxitin R → AmpC). "
             "مفيد لعدوى البطن المختلطة وجروح العضة."
         ),
-        "renal_limit": 30, "renal_note": "Normal: 1-2g q6-8h. CrCl 30-50: q8-12h. CrCl 10-29: q12-24h. CrCl <10: q24-48h. BNF 2025.", "renal_note_en": "Normal: 1-2g q6-8h. CrCl 30-50: q8-12h. CrCl 10-29: q12-24h. CrCl <10: q24-48h. BNF 2025.",
+        # renal_limit 30 -> 50: own band starts at 50
+        "renal_limit": 50,
+        "renal_note": "Normal: 1-2g q6-8h. CrCl 30-50: q8-12h. CrCl 10-29: q12-24h. CrCl <10: q24-48h. BNF 2025.", "renal_note_en": "Normal: 1-2g q6-8h. CrCl 30-50: q8-12h. CrCl 10-29: q12-24h. CrCl <10: q24-48h. BNF 2025.",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe",
         "preg_note": "مقبول في الحمل — Category B. آمن في كل الثلاثة أشهر.",
@@ -1261,7 +1377,13 @@ _EXTRA_ENTRIES_3 = {
             "⛔ لا تُستخدم لـ S. aureus إلا عند تأكيد عدم إنتاج Penicillinase."
         ),
         "renal_limit": 30,
-        "renal_note": "CrCl <30: تمديد الفترة بين الجرعات. CrCl <10: تقليل الجرعة بنسبة 50%.", "renal_note_en": "CrCl <30: extend the dosing interval. CrCl <10: reduce the dose by 50%.",
+        # DOSE DETAIL 2026-07-30: the note told the prescriber to "extend the
+        # interval" without ever naming a starting dose, so there was nothing to
+        # extend FROM. High-dose benzylpenicillin accumulates and lowers the
+        # seizure threshold, which is the reason this row exists at all.
+        "renal_note": "Benzylpenicillin normal: 1.2-2.4g q4-6h IV. CrCl 10-30: نفس الجرعة q6-8h. CrCl <10: 25-50% من الجرعة. ⚠️ الجرعات العالية تتراكم → تشنجات. BNF 2025.",
+        "renal_note_en": "Benzylpenicillin normal: 1.2-2.4g q4-6h IV. CrCl 10-30: same dose q6-8h. CrCl <10: 25-50% of the dose. ⚠️ high doses accumulate -> seizures. BNF 2025.",
+        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
         "hepatic_caution": False, "aware": "Access", "high_po": True,
         "preg_status": "Safe",
         "preg_note": "آمن في الحمل — الأكثر استخداماً لـ GBS prophylaxis وStreptococcal infections. ACOG 2023.",
