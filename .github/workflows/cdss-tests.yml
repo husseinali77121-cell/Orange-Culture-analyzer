@@ -73,7 +73,17 @@ jobs:
         env:
           N_FUZZ: "20000"   # heavier fuzzing in CI; bump anytime
 
+      # The dosing audit of 2026-07-30. Every other guard proves the engine
+      # matches its tables; none of them looked at whether the DOSE handed to the
+      # clinician is a real dose. This one fails the build if an unknown
+      # creatinine is treated as a normal one, if an ungraded liver is read as
+      # Child-Pugh A, if a dose band belongs to a different drug, if a
+      # renally-adjusted agent says only "adjust the dose", or if the two renal
+      # threshold tables drift apart again.
+      - name: "Guard 5 — renal & hepatic dose adjustment"
+        run: python test_dose_adjustment.py
+
       # Byte-compile everything so a syntax error in a file no suite imports
       # (modules/, ui/, data/) still turns the run red.
-      - name: "Guard 5 — every .py file compiles"
+      - name: "Guard 6 — every .py file compiles"
         run: python -m compileall -q . && echo "all modules compile"
