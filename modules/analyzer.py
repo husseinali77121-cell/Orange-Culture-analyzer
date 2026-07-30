@@ -199,6 +199,13 @@ def analyze_antibiotics(
 
         if is_preg and info.get("preg_status") == "Warn":
             preg_warn_items.append({"name": drug, **info})
+            # MISSING `continue` — fixed 2026-07-30. Without it the drug was
+            # appended to preg_warn_items and then fell through to the bottom of
+            # the loop into `allowed`, so a pregnancy-cautioned agent appeared in
+            # the RECOMMENDED list and in the pregnancy-warning list on the same
+            # screen. The monolith's copy of this branch has always had the
+            # `continue`; this build never received it.
+            continue
 
         if age < 18 and not info.get("child_safe", True):
             if "fluoroquinolone" in cls:
@@ -217,11 +224,16 @@ def analyze_antibiotics(
             ))
             continue
 
-        if is_renal and "nitrofurantoin" in d_low and cl_cr < 30:
+        # The threshold is read from the table, not hardcoded. It was pinned at 30
+        # here while the table said 45, so whichever number a reviewer looked at,
+        # the other one was the one that ran. EMA/BNF 2025 = 45.
+        _nf_limit = info.get("renal_limit", 45)
+        if is_renal and "nitrofurantoin" in d_low and cl_cr < _nf_limit:
             banned.append(build_banned_item(
                 drug, "renal",
-                f"ممنوع — CrCl {cl_cr:.1f} < 30 ml/min",
-                f"CrCl = {cl_cr:.1f} مل/د — أقل من الحد المطلوب.",
+                f"ممنوع — CrCl {cl_cr:.1f} < {_nf_limit} ml/min",
+                f"CrCl = {cl_cr:.1f} مل/د — أقل من الحد المطلوب ({_nf_limit} مل/د). "
+                f"خطر عدم كفاءة علاجية + تراكم سمي (EMA/BNF 2025).",
             ))
             continue
 
