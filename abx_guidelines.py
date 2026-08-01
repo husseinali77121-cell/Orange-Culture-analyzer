@@ -596,7 +596,21 @@ ABX_GUIDELINES = {
             "  ارتبط بتشوهات خلقية في الدراسات الحيوانية والبشرية.\n"
             "  البديل الآمن: Azithromycin."
         ),
-        "child_safe": True, "interacts_with": [],
+        "child_safe": True,
+        # FIX 2026-08-01: this list was EMPTY. Clarithromycin is the strongest
+        # CYP3A4 inhibitor in this formulary — stronger than erythromycin, which
+        # already carried the statin entry. The colchicine pairing has caused
+        # fatal toxicity in renal impairment and carries an absolute
+        # contraindication in the EU label.
+        "interacts_with": [
+            "Colchicine (كولشيسين — تسمم قاتل، ممنوع مع كلاريثرومايسين)",
+            "Statins (سيمفاستاتين/لوفاستاتين — رابدوميوليسيس)",
+            "Warfarin (مضادات التخثر)",
+            "Digoxin (ديجوكسين — ارتفاع المستوى)",
+            "Calcium channel blockers (هبوط ضغط حاد)",
+            "QT-prolonging drugs (إطالة QT — أميودارون/سوتالول/مضادات ذهان)",
+            "Ergot alkaloids (إرجوتامين — نقص تروية طرفية)",
+        ],
         "aliases": ["klacid","biaxin"],
         "organisms": ["Staphylococcus aureus","Streptococcus pneumoniae",
                       "H. influenzae","Mycoplasma spp.","Legionella pneumophila"],
@@ -629,7 +643,22 @@ ABX_GUIDELINES = {
             "  يسبب kernicterus للجنين في الـ 3rd trimester."
         ),
         "child_safe": True,
-        "interacts_with": ["Warfarin (مضادات التخثر)"],
+        # FIX 2026-08-01: Warfarin alone. The three additions below are the
+        # pairings that actually kill: methotrexate (both are antifolates ->
+        # pancytopenia) and the potassium-sparing combinations, where the
+        # trimethoprim component blocks the distal tubular Na channel like
+        # amiloride and causes hyperkalaemia — a documented cause of sudden
+        # death in elderly patients on an ACE inhibitor or ARB.
+        "interacts_with": [
+            "Warfarin (مضادات التخثر)",
+            "Methotrexate (ميثوتريكسيت — تثبيط نخاع/قلة كريات شاملة)",
+            "ACE inhibitors (مثبطات الإنزيم المحول — فرط بوتاسيوم)",
+            "ARBs (حاصرات مستقبل الأنجيوتنسين — فرط بوتاسيوم)",
+            "Spironolactone (سبيرونولاكتون — فرط بوتاسيوم)",
+            "Phenytoin (فينيتوين — ارتفاع المستوى)",
+            "Sulfonylureas (خافضات السكر — هبوط سكر)",
+            "Azathioprine (آزاثيوبرين — تثبيط نخاع)",
+        ],
         "aliases": ["septra","sutrim","bactrim","co-trimoxazole","tmp-smx"],
         "organisms": ["E. coli","Klebsiella spp.","Proteus mirabilis","Staphylococcus aureus",
                       "Stenotrophomonas maltophilia","Shigella spp.","Salmonella spp."],
@@ -872,7 +901,16 @@ ABX_GUIDELINES = {
             "  >>> القرار النهائي للطبيب المعالج حصراً — الفائدة مقابل الخطر. <<<"
         ),
         "child_safe": True,
-        "interacts_with": ["SSRI (أدوية الاكتئاب)"],
+        # FIX 2026-08-01: linezolid is a reversible non-selective MAO inhibitor.
+        # SSRIs were listed; the MAOI, sympathomimetic and pethidine pairings
+        # were not, and neither was the tyramine dietary warning.
+        "interacts_with": [
+            "SSRI / SNRI (أدوية الاكتئاب — متلازمة السيروتونين)",
+            "MAOI (مثبطات المونوأمين أوكسيديز — ممنوع)",
+            "Pethidine / Tramadol (متلازمة السيروتونين)",
+            "Sympathomimetics (سودوإيفيدرين/دوبامين — أزمة ضغط)",
+            "Tyramine-rich foods (أجبان معتّقة/مخللات — أزمة ضغط)",
+        ],
         "aliases": ["averozolid","zyvox"],
         "organisms": ["MRSA","Staphylococcus aureus","Enterococcus faecalis",
                       "VRE","Streptococcus pneumoniae"],

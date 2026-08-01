@@ -170,6 +170,19 @@ _ORG_CANON: Dict[str, str] = {
     "rickettsia spp.": "Rickettsia spp.", "rickettsia": "Rickettsia spp.",
     "enterobacterales (unspeciated)": "Enterobacterales (unspeciated)",
     "enterobacterales": "Enterobacterales (unspeciated)",
+    # Added 2026-08-01 alongside the new ORGANISM_PROFILE entries. Without these
+    # canonical_organism() returned None for them and the gate's organism layer
+    # (Layer C) silently sat out — fail-closed, but it also means the isolate got
+    # no organism-specific check at all.
+    "enterobacter cloacae": "Enterobacter cloacae",
+    "enterobacter": "Enterobacter cloacae",
+    "klebsiella aerogenes": "Enterobacter cloacae",
+    "enterobacter aerogenes": "Enterobacter cloacae",
+    "serratia marcescens": "Serratia marcescens", "serratia": "Serratia marcescens",
+    "citrobacter freundii": "Citrobacter freundii", "citrobacter": "Citrobacter freundii",
+    "morganella morganii": "Morganella morganii", "morganella": "Morganella morganii",
+    "providencia spp.": "Providencia spp.", "providencia": "Providencia spp.",
+    "hafnia alvei": "Hafnia alvei", "hafnia": "Hafnia alvei",
     "anaerobes (لاهوائيات)": "Anaerobes (لاهوائيات)", "anaerobes": "Anaerobes (لاهوائيات)",
 }
 

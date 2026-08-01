@@ -73,7 +73,7 @@ _WANT = [
     "build_banned_item", "_SIR_ALIASES", "normalize_sir_value",
     "normalize_sir_map", "_MED_CANON", "_canon_med", "_PREG_ALIASES",
     "preg_status_of", "ESBL_PRODUCERS", "AMPC_PRODUCERS", "ESBL_MARKERS",
-    "CARBAPENEMS", "is_esbl_producer", "_ACQUIRED_NOT_INTRINSIC",
+    "CARBAPENEMS", "_ORG_NON_INFORMATIVE", "_org_matches", "is_esbl_producer", "_ACQUIRED_NOT_INTRINSIC",
     "_remove_intrinsic_resistance", "predict_esbl",
     "NEONATAL_RESTRICTIONS", "RENAL_BAN_REASONS", "CHILD_BAN_REASONS",
     "ORGANISM_AVOID_CLASS_MAP", "analyze_antibiotics",

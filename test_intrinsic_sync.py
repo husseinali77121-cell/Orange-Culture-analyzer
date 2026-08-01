@@ -155,7 +155,17 @@ try:
     _ns: dict = {
         "ABX_ALIAS_INDEX": ABX_ALIAS_INDEX, "ABX_GUIDELINES": ABX_GUIDELINES,
         "normalize_abx_key": normalize_abx_key, "List": list, "Tuple": tuple,
-        "Optional": type(None), "fuzzy_match": lambda a, b: 0.0,
+        "Dict": dict, "Optional": type(None), "re": re,
+        "fuzzy_match": lambda a, b: 0.0,
+        # The disk-code path added 2026-08-01 asks whether a line carries an
+        # S/I/R verdict before it will honour a two-letter code. Mirror the
+        # app's vocabulary rather than inventing a second one here.
+        "normalize_sir_value": lambda v: {
+            "S": "S", "I": "I", "R": "R", "SDD": "I", "NS": "R",
+            "SENSITIVE": "S", "SUSCEPTIBLE": "S", "SENS": "S",
+            "INTERMEDIATE": "I", "INTER": "I", "INT": "I",
+            "RESISTANT": "R", "RESIST": "R", "RES": "R",
+        }.get(str(v).strip().upper()),
     }
     exec(compile(_src[_start:_end], "scanner", "exec"), _ns)
     scan = _ns["extract_detected_drugs"]

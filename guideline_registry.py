@@ -147,6 +147,50 @@ _AI = "AI-assisted review (Claude, code-review session 2026-07-23)"
 RULES: Dict[str, Dict[str, Any]] = {
 
     # ── Intrinsic resistance (ast_reportability.INTRINSIC_RULES) ─────────────
+    "intr_vre_vancomycin_contradiction": {
+        "assertion": "An isolate identified as VRE and reported "
+                     "vancomycin-susceptible is self-contradictory; one of the "
+                     "two results is wrong. VanB isolates are genuinely "
+                     "teicoplanin-susceptible, but never vancomycin-susceptible.",
+        "source": "CLSI_M100", "locus": "Table 2D · EUCAST Expert Rules v3.1",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-08-01",
+        "countersigned_by": "",
+        "note": "The engine refused vancomycin here via the intrinsic table "
+                "while the QC panel stayed silent — a split verdict between two "
+                "panels on the same screen. Found by the engine-agreement "
+                "suite, not by any existing guard.",
+    },
+    "intr_anaerobes_aminoglycosides_polymyxins": {
+        "assertion": "Anaerobes are intrinsically resistant to aminoglycosides "
+                     "(uptake across the cytoplasmic membrane requires an "
+                     "oxygen-dependent proton-motive force), and to polymyxins, "
+                     "aztreonam and trimethoprim. No breakpoints are published "
+                     "for any of these against anaerobes.",
+        "source": "EUCAST_INTRINSIC", "locus": "Table 5 (anaerobes)",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-08-01",
+        "countersigned_by": "",
+        "note": "Added with the taxonomic-inheritance fix. Anaerobes were "
+                "selectable in the UI with NO row in clinical_data at all, so "
+                "Gentamicin=S and Colistin=S reached the RECOMMENDED bucket and "
+                "the QC panel said nothing. Aminoglycoside uptake is the "
+                "textbook mechanism; CLSI M11 does not publish anaerobe "
+                "breakpoints for aminoglycosides or polymyxins.",
+    },
+    "intr_haemophilus_gram_pos_agents": {
+        "assertion": "Haemophilus influenzae, being Gram-negative, is "
+                     "intrinsically resistant to glycopeptides, oxazolidinones, "
+                     "daptomycin, fusidic acid and clindamycin. Macrolides are "
+                     "NOT included: azithromycin and clarithromycin are "
+                     "indicated agents.",
+        "source": "EUCAST_INTRINSIC", "locus": "Table 3",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-08-01",
+        "countersigned_by": "",
+        "note": "H. influenzae was selectable in the UI but had no row in "
+                "clinical_data, so Vancomycin/Linezolid=S were unflagged by QC "
+                "and RECOMMENDED by the engine. The macrolide exclusion is "
+                "deliberate and is the reason the family-level Enterobacterales "
+                "row was NOT reused here.",
+    },
     "intr_entero_gram_pos_agents": {
         "assertion": "Enterobacterales are intrinsically resistant to macrolides, "
                      "lincosamides, glycopeptides, oxazolidinones, daptomycin, "

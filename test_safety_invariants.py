@@ -82,7 +82,7 @@ _WANT = [
     "MDR_CATEGORIES_STREP", "MDR_NOT_APPLICABLE", "MDR_OUTSIDE_MAGIORAKOS",
     "NEONATAL_RESTRICTIONS",
     "ESBL_PRODUCERS", "AMPC_PRODUCERS", "ESBL_MARKERS", "CARBAPENEMS",
-    "is_esbl_producer", "predict_esbl", "MDR_CATEGORIES",
+    "_ORG_NON_INFORMATIVE", "_org_matches", "is_esbl_producer", "predict_esbl", "MDR_CATEGORIES",
     "MDR_CATEGORIES_GRAM_NEG", "MDR_CATEGORIES_GRAM_POS",
     "GRAM_POSITIVE_ORGANISMS", "_remove_intrinsic_resistance", "classify_mdr",
     "MDR_INFO", "HEPATIC_DOSING", "analyze_antibiotics", "_hide_urine_only",

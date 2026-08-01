@@ -280,6 +280,40 @@ _MED_CANON = {
     "theophylline": "theophylline",
     "neuromuscular blocking agents": "nmba",
     "vancomycin": "vancomycin",
+    # ── Added 2026-08-01 with the interaction-table fix ───────────────────────
+    # A class label in interacts_with only ever fires if the medication the
+    # clinician actually typed canonicalises to the same key. "ACE inhibitors"
+    # was declared on TMP-SMX and matched nothing, because nobody types "ACE
+    # inhibitors" -- they type Lisinopril. The individual generics are what
+    # reaches this function, so the class has to be reachable from them.
+    "ace inhibitor": "acei", "ace inhibitors": "acei",
+    "lisinopril": "acei", "enalapril": "acei", "ramipril": "acei",
+    "captopril": "acei", "perindopril": "acei", "quinapril": "acei",
+    "arb": "arb", "arbs": "arb",
+    "losartan": "arb", "valsartan": "arb", "candesartan": "arb",
+    "irbesartan": "arb", "telmisartan": "arb", "olmesartan": "arb",
+    "spironolactone": "k_sparing", "eplerenone": "k_sparing",
+    "amiloride": "k_sparing", "potassium": "k_sparing",
+    "colchicine": "colchicine",
+    "digoxin": "digoxin",
+    "phenytoin": "phenytoin",
+    "azathioprine": "azathioprine", "6-mercaptopurine": "azathioprine",
+    "sulfonylurea": "sulfonylurea", "sulfonylureas": "sulfonylurea",
+    "glibenclamide": "sulfonylurea", "gliclazide": "sulfonylurea",
+    "glimepiride": "sulfonylurea", "glipizide": "sulfonylurea",
+    "maoi": "maoi", "monoamine oxidase": "maoi",
+    "selegiline": "maoi", "rasagiline": "maoi", "linezolid": "maoi",
+    "pethidine": "serotonergic_opioid", "meperidine": "serotonergic_opioid",
+    "tramadol": "serotonergic_opioid", "fentanyl": "serotonergic_opioid",
+    "sympathomimetics": "sympathomimetic", "pseudoephedrine": "sympathomimetic",
+    "dopamine": "sympathomimetic", "adrenaline": "sympathomimetic",
+    "epinephrine": "sympathomimetic",
+    "tyramine-rich foods": "tyramine", "tyramine": "tyramine",
+    "ergot alkaloids": "ergot", "ergotamine": "ergot",
+    "calcium channel blockers": "ccb", "amlodipine": "ccb",
+    "verapamil": "ccb", "diltiazem": "ccb", "nifedipine": "ccb",
+    "atorvastatin": "statins", "simvastatin": "statins",
+    "rosuvastatin": "statins", "lovastatin": "statins",
 }
 
 
@@ -422,6 +456,11 @@ SUBSCRIBERS = load_subscribers()
 #                                   print(a.make_password_hash('the-password'))"
 # ═══════════════════════════════════════════════════════════════════════
 _PBKDF2_ITERATIONS = 240_000
+# Login throttle. Session-scoped, so it stops an ordinary brute-force loop
+# rather than a distributed one -- but before 2026-08-01 there was no limit
+# of any kind, only a log line.
+_LOGIN_MAX_ATTEMPTS: int = 5
+_LOGIN_LOCKOUT_SECONDS: int = 300
 
 
 def make_password_hash(password: str, iterations: int = _PBKDF2_ITERATIONS) -> str:
@@ -837,6 +876,20 @@ def check_subscription(email: str, password: str = "") -> bool:
     if not email or "@" not in email:
         st.warning("⚠️ أدخل بريدًا إلكترونيًا صحيحًا")
         return False
+    # ── Throttle (added 2026-08-01) ──────────────────────────────────────────
+    # There was no limit of any kind on password attempts -- only a
+    # logger.warning that nobody reads -- so a subscriber address plus an
+    # unattended script was enough to grind through a weak password. The counter
+    # lives in session_state, which is per-browser-session and therefore not a
+    # defence against a distributed attacker; it is a defence against the
+    # realistic case, an ordinary brute-force loop, and it costs nothing.
+    _now = time.time()
+    _fails = st.session_state.get("login_failures", 0)
+    _until = st.session_state.get("login_locked_until", 0.0)
+    if _until > _now:
+        st.error(f"⛔ محاولات كثيرة خاطئة. حاول بعد "
+                 f"{int(_until - _now)} ثانية.")
+        return False
     if email not in SUBSCRIBERS:
         st.error("❌ هذا البريد غير مسجل في النظام")
         st.info(
@@ -850,13 +903,39 @@ def check_subscription(email: str, password: str = "") -> bool:
     _stored = SUBSCRIBER_HASHES.get(email)
     if _stored:
         if not verify_password(password, _stored):
-            st.error("❌ كلمة المرور غير صحيحة")
-            logger.warning("failed login attempt for %s", email)
+            _fails += 1
+            st.session_state["login_failures"] = _fails
+            if _fails >= _LOGIN_MAX_ATTEMPTS:
+                st.session_state["login_locked_until"] = _now + _LOGIN_LOCKOUT_SECONDS
+                st.error(f"⛔ تم قفل المحاولات {_LOGIN_LOCKOUT_SECONDS // 60} دقيقة "
+                         f"بعد {_fails} محاولات خاطئة.")
+                logger.error("login lockout triggered for %s after %d failures",
+                             email, _fails)
+            else:
+                st.error(f"❌ كلمة المرور غير صحيحة "
+                         f"({_LOGIN_MAX_ATTEMPTS - _fails} محاولة متبقية)")
+                logger.warning("failed login attempt %d for %s", _fails, email)
             return False
     elif SUBSCRIBER_HASHES:
-        # Hashes are configured for other accounts but not this one -- do not
-        # silently accept a bare email while the rest of the estate is protected.
-        st.warning("⚠️ هذا الحساب بدون كلمة مرور. تواصل مع الدعم لتفعيلها.")
+        # FIX 2026-08-01: this branch printed a warning and then FELL THROUGH,
+        # returning True. The comment beneath it said "do not silently accept a
+        # bare email while the rest of the estate is protected" -- which is
+        # exactly what the code then did, minus the silence. Any account added
+        # to `subscribers` without a matching entry in `subscriber_hashes` was a
+        # password-free door into a paid product, and adding a subscriber
+        # without a hash is the easy mistake to make.
+        # Fail closed: once ANY account is protected, an unprotected one cannot
+        # log in at all.
+        st.error(
+            "⛔ هذا الحساب غير مفعّل بكلمة مرور، والنظام يعمل بوضع "
+            "الحماية الكاملة.\n\n"
+            f"تواصل مع الدعم لتفعيله: 📞 {VENDOR_PHONE} | ✉️ {VENDOR_EMAIL}"
+        )
+        logger.error("login refused: %s exists in `subscribers` but has no "
+                     "entry in `subscriber_hashes` while %d other account(s) "
+                     "do. Add a hash for it with make_password_hash().",
+                     email, len(SUBSCRIBER_HASHES))
+        return False
 
     days_left = get_subscription_days_left(email)
     if days_left is None:
@@ -864,6 +943,10 @@ def check_subscription(email: str, password: str = "") -> bool:
         return False
     st.session_state.email     = email
     st.session_state.days_left = days_left
+    # Credentials accepted -- clear the throttle so a user who mistyped once is
+    # not still one attempt from a lockout on their next session action.
+    st.session_state["login_failures"] = 0
+    st.session_state["login_locked_until"] = 0.0
     if days_left < 0:
         st.error(f"⏳ انتهى اشتراكك منذ {abs(days_left)} يوم")
         st.info(f"📞 للتجديد: {VENDOR_PHONE} | ✉️ {VENDOR_EMAIL}")
@@ -1089,7 +1172,14 @@ ORGANISM_OCR_ALIASES: Dict[str, str] = {
     "ps. aeruginosa": "Pseudomonas aeruginosa",
     "acinetobacter": "Acinetobacter baumannii", "a. baumannii": "Acinetobacter baumannii",
     "proteus": "Proteus mirabilis", "p. mirabilis": "Proteus mirabilis",
-    "enterococcus faecium": "Enterococcus faecium",
+    # FIX 2026-08-01: this mapped to "Enterococcus faecium", which is not a key
+    # in ORGANISM_PROFILE. best_default_index() returns 0 for a name the widget
+    # does not offer, so an OCR'd E. faecium report silently defaulted to the
+    # first organism in the filtered list. E. faecalis is the correct nearest
+    # selectable profile and carries the same intrinsic row; the species
+    # difference (ampicillin resistance) is ACQUIRED and comes from the AST.
+    "enterococcus faecium": "Enterococcus faecalis",
+    "e. faecium": "Enterococcus faecalis",
     "e. faecalis": "Enterococcus faecalis", "enterococcus": "Enterococcus faecalis",
     "vancomycin resistant enterococcus": "VRE",
     "vancomycin-resistant enterococcus": "VRE",
@@ -1097,8 +1187,23 @@ ORGANISM_OCR_ALIASES: Dict[str, str] = {
     "s. pneumoniae": "Streptococcus pneumoniae", "pneumococcus": "Streptococcus pneumoniae",
     "stenotrophomonas": "Stenotrophomonas maltophilia",
     "s. maltophilia": "Stenotrophomonas maltophilia",
+    # These three targets did not exist in ORGANISM_PROFILE until 2026-08-01, so
+    # an OCR'd Serratia or Enterobacter report fell through to index 0 -- E. coli
+    # on Urine and Blood -- losing the whole chromosomal-AmpC derepression rule
+    # on the organisms it matters most for. The profiles now exist.
     "enterobacter cloacae": "Enterobacter cloacae", "enterobacter": "Enterobacter cloacae",
+    "e. cloacae": "Enterobacter cloacae",
+    "klebsiella aerogenes": "Enterobacter cloacae",     # renamed from E. aerogenes
+    "enterobacter aerogenes": "Enterobacter cloacae",
     "serratia": "Serratia marcescens", "s. marcescens": "Serratia marcescens",
+    "serratia marcescens": "Serratia marcescens",
+    "citrobacter freundii": "Citrobacter freundii", "c. freundii": "Citrobacter freundii",
+    "citrobacter": "Citrobacter freundii",
+    "morganella morganii": "Morganella morganii", "morganella": "Morganella morganii",
+    "m. morganii": "Morganella morganii",
+    "providencia": "Providencia spp.", "providencia stuartii": "Providencia spp.",
+    "providencia rettgeri": "Providencia spp.",
+    "hafnia alvei": "Hafnia alvei", "hafnia": "Hafnia alvei",
     "salmonella": "Salmonella spp.", "shigella": "Shigella spp.",
     "haemophilus influenzae": "H. influenzae", "h. influenzae": "H. influenzae",
     "campylobacter": "Campylobacter jejuni",
@@ -1184,6 +1289,119 @@ _ABX_ALIAS_SORTED = sorted(
     key=lambda item: len(item[0]), reverse=True,
 )
 
+# ═══════════════════════════════════════════════════════════════════════════
+# CLSI / EUCAST DISK CODES  (added 2026-08-01)
+# ---------------------------------------------------------------------------
+# DEFECT THIS FIXES
+# ABX_ALIAS_INDEX held 176 aliases, rich in Egyptian brand names (Augmentin,
+# Curam, Unictam, Sigmaclav, Unasyn, Tazocin) and containing ZERO disk codes.
+# VITEK, Phoenix and hand-read disk plates all label by code, so a report
+# printed as "AMC  R / CIP  R / SXT  R / MEM  R" produced an EMPTY panel and
+# nothing said so. Measured on a Pseudomonas isolate the same AST went from
+# MDR (4/5 categories) to level=None -- the MDR alert disappeared entirely
+# because half the panel was never parsed.
+#
+# WHY THIS IS NOT JUST MORE ALIASES
+# Several codes are one or two letters: P (benzylpenicillin), E (erythromycin),
+# DO (doxycycline), CN (gentamicin), TE (tetracycline), VA (vancomycin), AK
+# (amikacin). Dropping those into ABX_ALIAS_INDEX would make them match inside
+# ordinary words -- normalize_abx_key strips punctuation, so "Patient" contains
+# "p" and "Date" contains "te". Every one of them would fire on the report
+# header.
+#
+# So a code is honoured ONLY when it stands alone as a whole token AND the line
+# also carries an S/I/R verdict. That is the shape of a result row and nothing
+# else. A code appearing in prose has no verdict beside it and is ignored.
+# ═══════════════════════════════════════════════════════════════════════════
+ABX_DISK_CODES: Dict[str, str] = {
+    # Penicillins & BLI combinations
+    "P": "Penicillin", "PEN": "Penicillin",
+    "AMP": "Ampicillin", "AM": "Ampicillin",
+    "AMX": "Amoxicillin", "AML": "Amoxicillin",
+    "AMC": "Amoxicillin + Clavulanic acid",
+    "SAM": "Ampicillin/Sulbactam", "AMS": "Ampicillin/Sulbactam",
+    "TZP": "Piperacillin + Tazobactam", "PTZ": "Piperacillin + Tazobactam",
+    "OX": "Oxacillin", "OXA": "Oxacillin",
+    # Cephalosporins
+    "CZ": "Cefazolin", "KZ": "Cefazolin", "CFZ": "Cefazolin",
+    "CL": "Cephalexin", "LEX": "Cephalexin", "CN30": "Cephalexin",
+    "CXM": "Cefuroxime", "CRM": "Cefuroxime",
+    "FOX": "Cefoxitin", "CX": "Cefoxitin",
+    "CRO": "Ceftriaxone", "CTR": "Ceftriaxone",
+    "CTX": "Cefotaxime",
+    "CAZ": "Ceftazidime",
+    "FEP": "Cefepime", "CPM": "Cefepime",
+    "CFM": "Cefixime", "CE": "Cefixime",
+    "CFP": "Cefoperazone", "CES": "Cefoperazone + Sulbactam",
+    # Carbapenems & monobactam
+    "IPM": "Imipenem/Cilastatin", "IMP": "Imipenem/Cilastatin",
+    "MEM": "Meropenem", "MRP": "Meropenem",
+    "ETP": "Ertapenem", "ERT": "Ertapenem",
+    "ATM": "Aztreonam", "AZT": "Aztreonam",
+    # Aminoglycosides  (CN = gentamicin in the EUCAST/Oxoid convention)
+    "CN": "Gentamicin", "GEN": "Gentamicin", "GM": "Gentamicin",
+    "AK": "Amikacin", "AN": "Amikacin", "AMK": "Amikacin",
+    "TOB": "Tobramycin", "TM": "Tobramycin", "NN": "Tobramycin",
+    # Quinolones
+    "CIP": "Ciprofloxacin",
+    "LEV": "Levofloxacin", "LVX": "Levofloxacin",
+    "MXF": "Moxifloxacin", "MFX": "Moxifloxacin",
+    "OFX": "Ofloxacin", "OF": "Ofloxacin",
+    "NOR": "Norfloxacin", "NX": "Norfloxacin",
+    # Others
+    "SXT": "Trimethoprim/Sulfamethoxazole", "TS": "Trimethoprim/Sulfamethoxazole",
+    "COT": "Trimethoprim/Sulfamethoxazole",
+    "TE": "Tetracycline", "TET": "Tetracycline",
+    "DO": "Doxycycline", "DOX": "Doxycycline",
+    "MH": "Minocycline", "MI": "Minocycline", "MIN": "Minocycline",
+    "VA": "Vancomycin", "VAN": "Vancomycin",
+    "LZD": "Linezolid", "LNZ": "Linezolid",
+    "DA": "Clindamycin", "CD": "Clindamycin", "CLI": "Clindamycin",
+    "E": "Erythromycin", "ERY": "Erythromycin",
+    "AZM": "Azithromycin", "AZI": "Azithromycin",
+    "CLR": "Clarithromycin",
+    "FD": "Fusidic acid", "FA": "Fusidic acid",
+    "F": "Nitrofurantoin", "NIT": "Nitrofurantoin", "FT": "Nitrofurantoin",
+    "FOS": "Fosfomycin", "FOT": "Fosfomycin",
+    "CT": "Colistin", "CST": "Colistin", "COL": "Colistin",
+    "MTZ": "Metronidazole", "MET": "Metronidazole",
+    "RD": "Rifampicin", "RA": "Rifampicin",
+}
+
+# A result row must carry a verdict. Reuse the same vocabulary the value parser
+# accepts so the two cannot drift.
+_DISK_CODE_TOKEN = re.compile(r"[A-Za-z]{1,4}\d{0,3}")
+
+
+def _scan_line_for_disk_codes(line: str) -> List[str]:
+    """Antibiotics named by CLSI/EUCAST disk code on ONE result row.
+
+    Returns [] unless the line also carries an S/I/R verdict — a bare code in
+    prose is not a result and must not create a panel entry.
+    """
+    if not line:
+        return []
+    tokens = re.split(r"[^\w./+-]+", line.strip())
+    tokens = [t for t in tokens if t]
+    if not tokens:
+        return []
+    # Does this line look like a result row at all?
+    if not any(normalize_sir_value(t) is not None for t in tokens):
+        return []
+    found: List[str] = []
+    for tok in tokens:
+        # A verdict token is never also a drug code (S / I / R would otherwise
+        # collide with nothing here, but NS and RES would).
+        if normalize_sir_value(tok) is not None:
+            continue
+        if not _DISK_CODE_TOKEN.fullmatch(tok):
+            continue
+        name = ABX_DISK_CODES.get(tok.upper())
+        if name and name in ABX_GUIDELINES and name not in found:
+            found.append(name)
+    return found
+
+
 def _scan_line_for_drugs(line: str) -> List[str]:
     """Every distinct antibiotic named in ONE line, longest-name-wins."""
     norm = normalize_abx_key(line)
@@ -1204,6 +1422,11 @@ def _scan_line_for_drugs(line: str) -> List[str]:
                 if abx_name not in found:
                     found.append(abx_name)
             start = i + 1
+    # Full names win. Only when the line named nothing spelled out do we fall
+    # back to disk codes, so "Ciprofloxacin  CIP  R" cannot double-count and a
+    # stray two-letter token on a named row cannot invent a second agent.
+    if not found:
+        found = _scan_line_for_disk_codes(line)
     return found
 
 def match_antibiotic_from_text(snippet: str) -> Optional[str]:
@@ -1768,13 +1991,26 @@ def analyze_antibiotics(
                    "relebactam", "vaborbactam", "inhibitor")
 
     def _is_penicillin_or_ceph(info_dict: Dict, drug_name: str = "") -> bool:
+        """True for the beta-lactams an ESBL / AmpC hydrolyses.
+
+        FIX 2026-08-01: the token list was penicillin / cephalosporin / cillin /
+        cef / ceph. Aztreonam's class string is "Monobactam (IV)" and its name
+        contains none of those substrings, so it matched NOTHING -- while the
+        docstring of this very function's caller states that an ESBL is
+        "resistant to ALL penicillins + cephalosporins (+ aztreonam)". A
+        confirmed-ESBL Klebsiella bacteraemia therefore came back with
+        Aztreonam in the RECOMMENDED bucket, and the terminal safety gate did
+        not catch it either. Aztreonam is an oxyimino beta-lactam -- it is the
+        classic ESBL substrate and CLSI uses it as an ESBL screening agent.
+        """
         t = _cls_and_name(info_dict, drug_name)
         if "carbapenem" in t or "penem" in t:
             return False
         if any(k in t for k in _BLI_TOKENS):
             return False   # BLI combos handled separately (UTI-only caution)
         return any(k in t for k in ("penicillin", "cephalosporin", "cephalosporins",
-                                    "cillin", "cef", "ceph"))
+                                    "cillin", "cef", "ceph",
+                                    "monobactam", "aztreonam"))
 
     def _is_bli_combo(info_dict: Dict, drug_name: str = "") -> bool:
         t = _cls_and_name(info_dict, drug_name)
@@ -1826,8 +2062,24 @@ def analyze_antibiotics(
         # ── MRSA: ALL beta-lactams (penicillins + cephalosporins) fail ────────
         # Detected from AST (Oxacillin/Cefoxitin R) OR organism name = MRSA.
         # Exception: carbapenems also fail for MRSA but are caught here too.
-        if _is_mrsa and any(k in info.get("class", "").lower()
-                            for k in ("penicillin", "cephalosporin", "carbapenem")):
+        #
+        # FIX 2026-08-01: the filter read ONLY the class string, for the tokens
+        # penicillin / cephalosporin / carbapenem. Amoxicillin + Clavulanic acid
+        # is classed "Beta-lactamase Inhibitor Combination" -- none of the three
+        # -- so it escaped and reached the CAUTION bucket, while every other BLI
+        # combo (Amp-Sulbactam, Pip-Tazo, Cefoperazone-Sulbactam) was caught
+        # only because its class text happens to spell out "Penicillin" or
+        # "Cephalosporin". Worse, the same isolate typed as "MRSA" rather than
+        # "Staphylococcus aureus + Oxacillin-R" got Amox-Clav BANNED by the
+        # intrinsic table -- two different verdicts for one organism, decided by
+        # how the technologist spelled the name.
+        # mecA/PBP2a is an ALTERED TARGET, not a beta-lactamase: no inhibitor
+        # rescues any beta-lactam. Match on class AND name, and include the
+        # inhibitor tokens.
+        if _is_mrsa and any(k in _cls_and_name(info, drug)
+                            for k in ("penicillin", "cephalosporin", "carbapenem",
+                                      "cillin", "cef", "ceph", "penem",
+                                      "monobactam", "aztreonam", *_BLI_TOKENS)):
             banned.append(build_banned_item(
                 drug, "organism", "بيتا-لاكتام -- لا يعمل على MRSA.",
                 "MRSA يحمل جين mecA (PBP2a) -> مقاوم لكل البيتا-لاكتام (البنسلينات، "
@@ -2356,6 +2608,29 @@ def analyze_antibiotics(
             continue
 
         allowed.append({"name": drug, **info})
+
+    # ── The Intermediate fact is INDEPENDENT of warning_reason ───────────────
+    # DEFECT 2026-08-01: `warning_reason` is a single slot and the branches above
+    # are ordered hard-ban -> hepatic -> renal -> intermediate, each ending in
+    # `continue`. So for a patient with renal impairment an Intermediate result
+    # was relabelled "renal_adjustment" and the I vanished from the report: the
+    # dedicated "⚠ Intermediate (I) on culture — use only if no better option"
+    # banner filters on warning_reason == "intermediate_culture" and no longer
+    # matched.
+    #
+    # The two facts are not merely both true, they pull OPPOSITE WAYS. EUCAST
+    # redefined I as "Susceptible, Increased exposure" — the agent works only at
+    # a HIGHER dose or longer infusion — while the renal note instructs the
+    # clinician to REDUCE the dose. Showing one and hiding the other is the
+    # worst of the three possible outputs.
+    #
+    # Reordering the branches was rejected: the ordering is load-bearing (see
+    # the pregnancy block) and moving it risks letting a caution pre-empt a hard
+    # ban. A separate key costs nothing and cannot be overwritten.
+    for _item in warned:
+        _item["culture_intermediate"] = (sir_map.get(_item.get("name")) == "I")
+    for _item in allowed:
+        _item["culture_intermediate"] = False   # an I never reaches allowed
 
     allowed         = sorted(allowed,         key=lambda x: x.get("priority", 999))
     warned          = sorted(warned,          key=lambda x: x.get("priority", 999))
@@ -2915,13 +3190,40 @@ ESBL_PRODUCERS = frozenset([
     "enterobacterales", "hafnia alvei",
 ])
 
+# Tokens that clear the four-character floor but name no organism. "spp." is a
+# substring of "klebsiella spp." and matched every key that carried it.
+_ORG_NON_INFORMATIVE = frozenset({
+    "spp.", "spp", "sp.", "species", "gram", "n/a", "na", "none", "nil",
+    "unknown", "unspeciated", "isolate", "organism", "culture", "growth",
+})
+
+
+def _org_matches(org_l: str, keys) -> bool:
+    """Substring match with the same length guard the intrinsic matchers use.
+
+    FIX 2026-08-01. The predicate below was `any(p in org_l or org_l in p ...)`
+    with no floor on len(org_l). `"" in "escherichia coli"` is True, so a blank
+    or one-character organism matched the FIRST key and every mechanism gate
+    opened: is_esbl_producer("") returned True and predict_esbl("") came back
+    "Possible AmpC β-lactamase (Predicted)", confidence 75 — a fabricated
+    mechanism call on an isolate with no name.
+
+    _remove_intrinsic_resistance() and is_intrinsically_avoided() both already
+    carry `len(org_l) >= 4` for exactly this reason and document it. The guard
+    was written twice and forgotten on the third matcher. A genus fragment is
+    never shorter than four characters.
+    """
+    if not org_l or org_l in _ORG_NON_INFORMATIVE:
+        return False
+    return any(p in org_l or (len(org_l) >= 4 and org_l in p) for p in keys)
+
+
 def is_esbl_producer(organism: str) -> bool:
     """True only for organisms KNOWN to produce ESBL (Enterobacterales).
     ESBL is a mechanism defined for Enterobacterales — this is the single gate
     that keeps the ESBL prediction/alert off non-Enterobacterales (P. aeruginosa,
     Acinetobacter, Stenotrophomonas, Gram-positives)."""
-    org_l = (organism or "").lower().strip()
-    return any(p in org_l or org_l in p for p in ESBL_PRODUCERS)
+    return _org_matches((organism or "").lower().strip(), ESBL_PRODUCERS)
 
 # Chromosomal inducible AmpC ("SPICE/SPACE") + P. aeruginosa + Hafnia.
 AMPC_PRODUCERS = frozenset([
@@ -2959,9 +3261,11 @@ def predict_esbl(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
     if not sir_map:
         return {"probability": None, "confidence": 0}
 
-    org_l = organism.lower().strip()
+    # `(organism or "")`: every other entry point in this file coerces None, this
+    # one did not and raised AttributeError instead of failing closed.
+    org_l = (organism or "").lower().strip()
     is_producer = is_esbl_producer(organism)   # ESBL prediction/alert: producers only
-    is_ampc_prone = any(p in org_l or org_l in p for p in AMPC_PRODUCERS)
+    is_ampc_prone = _org_matches(org_l, AMPC_PRODUCERS)
     if not is_producer and not is_ampc_prone:
         return {"probability": None, "confidence": 0}
 
@@ -7350,6 +7654,15 @@ def generate_report(
         for item in warned:
             sir_tag = f" [Culture: {sir_map[item['name']]}]" if sir_map and item['name'] in sir_map else ""
             L += [f"{item['name']}{sir_tag}", sep2, f"WHO AWaRe : {item.get('aware','-')}"]
+            # Printed BEFORE the reason branch, not inside it: an Intermediate
+            # agent that also needs a renal or hepatic adjustment carries the
+            # other reason in warning_reason, and the I used to disappear from
+            # this report entirely.
+            if (item.get("culture_intermediate")
+                    and item.get("warning_reason") != "intermediate_culture"):
+                L.append("!! CONFLICT : culture is INTERMEDIATE (EUCAST: susceptible at "
+                         "INCREASED exposure) while the host requires a REDUCED dose. "
+                         "Prefer a fully susceptible agent; if unavoidable, dose with TDM.")
             if item.get("warning_reason") == "intermediate_culture":
                 L.append("Reason    : Intermediate (I) on culture result")
             elif item.get("esbl_note") or item.get("esbl_note_en"):
@@ -8723,7 +9036,13 @@ if uploaded:
 
         if warned:
             with st.expander("🟡 Warnings / Dose Adjustment Required", expanded=True):
-                _interm = [w for w in warned if w.get("warning_reason") == "intermediate_culture"]
+                # `culture_intermediate` rather than warning_reason: an I that
+                # also needs a renal or hepatic adjustment carries the OTHER
+                # reason in that slot, and used to drop out of this banner
+                # entirely. Both facts are now shown for the same agent.
+                _interm = [w for w in warned
+                           if w.get("warning_reason") == "intermediate_culture"
+                           or w.get("culture_intermediate")]
                 _others = [w for w in warned if w.get("warning_reason") != "intermediate_culture"]
                 if _interm:
                     _names = ", ".join(
@@ -8743,6 +9062,22 @@ if uploaded:
                         )
                     else:
                         st.warning(f"**{item['name']}{sir_tag}** -- {item.get('renal_note','')}")
+                    # An I result that also needs a dose adjustment gives the
+                    # clinician two instructions pointing opposite ways. Say so
+                    # explicitly rather than printing only the one that happened
+                    # to win the warning_reason slot.
+                    if (item.get("culture_intermediate")
+                            and item.get("warning_reason") in ("renal_adjustment",
+                                                               "hepatic_adjustment")):
+                        st.error(
+                            f"⚠️ **{item['name']}: تعارض في اتجاه الجرعة.** "
+                            "النتيجة **I** — وتعريف EUCAST لها *Susceptible, "
+                            "Increased exposure*: الدواء يعمل فقط بجرعة أعلى أو "
+                            "تسريب ممتد. لكن حالة المريض تفرض **خفض** الجرعة. "
+                            "لا تُعدّل الجرعة بناءً على أحد العاملين وحده — "
+                            "اختر بديلاً حسّاساً (S) إن وُجد، أو استشر "
+                            "الصيدلة الإكلينيكية لضبط الجرعة بمتابعة TDM."
+                        )
 
         if allowed:
             st.success(f"🟢 {len(allowed)} Recommended Option(s)")

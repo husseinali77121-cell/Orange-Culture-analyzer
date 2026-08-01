@@ -291,3 +291,123 @@ INTRINSIC_RESISTANCE["ureaplasma"] = list(INTRINSIC_RESISTANCE["mycoplasma"])
 
 # Family-level fallback for an unspeciated Enterobacterales report.
 INTRINSIC_RESISTANCE["enterobacterales"] = list(_GP_ONLY)
+
+
+# ============================================================================
+#  TAXONOMIC INHERITANCE  (added 2026-08-01)
+#  --------------------------------------------------------------------------
+#  DEFECT THIS FIXES
+#  The row above is correct and complete, and it reached NOBODY. Both consumers
+#  match by literal substring:
+#        org_key in org_l  or  (len(org_l) >= 4 and org_l in org_key)
+#  `"enterobacterales" in "escherichia coli"` is False in both directions, so
+#  the family row was inherited only by the literal string "Enterobacterales
+#  (unspeciated)". Every named species -- E. coli, Klebsiella, Proteus,
+#  Salmonella, Shigella -- inherited nothing, and Vancomycin or Linezolid
+#  reported S on a Gram-negative panel went straight to the RECOMMENDED bucket
+#  while ast_qa_engine printed "[CRITICAL] biologically impossible" beside it.
+#
+#  WHY IT IS DONE HERE AND NOT IN THE MATCHERS
+#  Expanding the rows at import time keeps ONE table with ONE lookup rule, so
+#  streamlit_app.py, ast_qa_engine.py, ast_reportability.py and every test go on
+#  reading INTRINSIC_RESISTANCE unchanged and cannot drift. Teaching two
+#  matchers about a taxonomy would have created exactly the second source of
+#  truth this file exists to prevent.
+#
+#  Group membership is deliberately NARROW. A macrolide is useless against
+#  E. coli but azithromycin is first-line for typhoid, shigellosis and
+#  campylobacteriosis -- so the macrolide/lincosamide block is applied to the
+#  enteric and non-fermenting genera ONLY, never to Salmonella, Shigella,
+#  Campylobacter or H. influenzae. Applying the family row wholesale would have
+#  banned the drug of choice for three of them.
+# ============================================================================
+
+# Agents with NO activity against any Gram-negative, at any site, ever.
+_GRAM_POS_ONLY_CORE = ["Vancomycin", "Teicoplanin", "Linezolid", "Daptomycin",
+                       "Fusidic acid", "Oxacillin", "Penicillin"]
+
+# Additionally inactive against the enteric / non-fermenting Gram-negatives.
+# EXCLUDED for Salmonella / Shigella / Campylobacter / Haemophilus, where
+# azithromycin and clarithromycin are indicated agents.
+_GRAM_POS_ONLY_ENTERIC = ["Erythromycin", "Clarithromycin", "Azithromycin",
+                          "Clindamycin", "Rifampicin"]
+
+# Agents with NO activity against any Gram-positive. The staphylococcal and
+# streptococcal rows already carried these; the three enterococcal rows and VRE
+# carried Aztreonam alone, so Colistin reported S on an Enterococcus faecalis
+# blood isolate was RECOMMENDED.
+_GRAM_NEG_ONLY_CORE = ["Colistin", "Polymyxin B", "Aztreonam", "Nalidixic acid"]
+
+_ENTERIC_AND_NONFERMENTER = [
+    "escherichia coli", "e. coli",
+    "klebsiella pneumoniae", "klebsiella oxytoca", "klebsiella spp.",
+    "proteus mirabilis", "proteus spp.", "proteus vulgaris",
+    "morganella morganii", "providencia spp.",
+    "serratia marcescens", "serratia spp.",
+    "enterobacter cloacae", "enterobacter aerogenes", "enterobacter spp.",
+    "hafnia alvei",
+    "citrobacter freundii", "citrobacter koseri", "citrobacter spp.",
+    "pseudomonas aeruginosa", "acinetobacter baumannii",
+    "stenotrophomonas maltophilia",
+]
+
+# Gram-negatives where a macrolide IS a legitimate choice -> core block only.
+_GRAM_NEG_MACROLIDE_OK = ["salmonella", "shigella",
+                          "campylobacter jejuni", "campylobacter",
+                          "haemophilus influenzae", "h. influenzae"]
+
+_GRAM_POSITIVE_ROWS = [
+    "enterococcus faecalis", "enterococcus faecium", "enterococcus spp.", "vre",
+    "staphylococcus aureus", "staphylococcus", "mrsa",
+    "streptococcus pneumoniae", "streptococcus pyogenes",
+    "streptococcus agalactiae", "listeria monocytogenes",
+]
+
+# Enterococci are intrinsically resistant to fusidic acid; the staphylococcal
+# rows must NOT inherit it (fusidic acid is an anti-staphylococcal agent).
+_ENTEROCOCCAL_ROWS = ["enterococcus faecalis", "enterococcus faecium",
+                      "enterococcus spp.", "vre"]
+
+
+def _merge_row(key: str, drugs: List[str]) -> None:
+    """Union `drugs` into a row, creating it when absent. Order-preserving."""
+    INTRINSIC_RESISTANCE[key] = list(dict.fromkeys(
+        INTRINSIC_RESISTANCE.get(key, []) + list(drugs)))
+
+
+# Two genera the UI can select but the table never covered at all: a Vancomycin
+# or Linezolid reported S on either of them was previously unflagged by every
+# layer, because there was no row to flag it against.
+INTRINSIC_RESISTANCE.setdefault("haemophilus influenzae", [])
+INTRINSIC_RESISTANCE.setdefault("h. influenzae", [])
+INTRINSIC_RESISTANCE.setdefault("campylobacter jejuni", [])
+INTRINSIC_RESISTANCE.setdefault("campylobacter", [])
+# EUCAST v3.3 Table 2: trimethoprim is intrinsically inactive against
+# Campylobacter. Azithromycin (drug of choice) and the fluoroquinolones are
+# deliberately NOT listed.
+for _k in ("campylobacter jejuni", "campylobacter"):
+    _merge_row(_k, ["Trimethoprim", "Trimethoprim/Sulfamethoxazole"])
+
+for _k in _ENTERIC_AND_NONFERMENTER:
+    _merge_row(_k, _GRAM_POS_ONLY_CORE + _GRAM_POS_ONLY_ENTERIC)
+
+for _k in _GRAM_NEG_MACROLIDE_OK:
+    _merge_row(_k, _GRAM_POS_ONLY_CORE)
+
+for _k in _GRAM_POSITIVE_ROWS:
+    _merge_row(_k, _GRAM_NEG_ONLY_CORE)
+
+for _k in _ENTEROCOCCAL_ROWS:
+    _merge_row(_k, ["Fusidic acid"])
+
+# Anaerobes: selectable in the UI, absent from the table entirely, so Colistin
+# and Gentamicin reported S came back RECOMMENDED. Aminoglycoside uptake is
+# oxygen-dependent and polymyxins need an aerobic outer membrane -- both are
+# inactive in an anaerobic environment regardless of what the disk shows.
+# (Aztreonam and TMP-SMX were already covered by clinical_matrix.INTRINSIC_
+# ADDENDA; they are repeated here so the QA engine sees them too.)
+_merge_row("anaerobes", ["Colistin", "Polymyxin B", "Aztreonam",
+                         "Gentamicin", "Amikacin", "Tobramycin",
+                         "Trimethoprim", "Trimethoprim/Sulfamethoxazole"])
+
+del _k

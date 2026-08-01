@@ -363,6 +363,148 @@ ORGANISM_PROFILE.update({
     },
 })
 
+# ════════════════════════════════════════════════════════════════════════════
+#  CHROMOSOMAL-AmpC GENERA — added 2026-08-01
+#  --------------------------------------------------------------------------
+#  DEFECT THIS FIXES
+#  streamlit_app.AMPC_PRODUCERS listed eleven genera. Ten of them were NOT in
+#  this file, so the organism dropdown could never reach them and the inducible-
+#  AmpC pathway was dead code from the user's side; only P. aeruginosa remained
+#  reachable. (The plasmid-AmpC pathway for E. coli / Klebsiella / Proteus was
+#  working and is untouched.)
+#
+#  Worse, streamlit_app.ORGANISM_OCR_ALIASES already mapped "serratia",
+#  "s. marcescens", "enterobacter" and "enterobacter cloacae" to profile keys
+#  that did not exist here. best_default_index() falls back to index 0 when the
+#  detected name is not in the list, so an OCR'd Serratia marcescens blood
+#  report silently became E. coli -- and E. coli carries no derepression rule,
+#  so Ceftriaxone-S came back RECOMMENDED for the one group of organisms where
+#  a susceptible 3rd-generation cephalosporin is the classic trap.
+#
+#  clinical_data.INTRINSIC_RESISTANCE already held complete, correct rows for
+#  all of these; nothing could reach them. This block adds the reachability.
+#
+#  CLINICAL BASIS: Enterobacter, Klebsiella aerogenes, Citrobacter freundii and
+#  Serratia marcescens carry an inducible chromosomal AmpC. Stable derepression
+#  emerges on 3rd-generation cephalosporin therapy in roughly 8-40% of cases
+#  (higher for Enterobacter), so an in-vitro "S" does not predict clinical
+#  success. IDSA AMR Guidance v4.0 (2024) recommends cefepime or a carbapenem
+#  for invasive infection, reserving TMP-SMX / fluoroquinolone for step-down.
+# ════════════════════════════════════════════════════════════════════════════
+_AMPC_DEREPRESSION_NOTE = (
+    "⚠️ **AmpC كروموسومي قابل للتحفيز (مجموعة SPICE/SPACE).**\n"
+    "السيفالوسبورينات من الجيل الثالث (Ceftriaxone · Cefotaxime · Ceftazidime) "
+    "قد تظهر **حسّاسة في المعمل** ثم تفشل سريرياً: العلاج بها ينتقي طفرات "
+    "*ampD* فيصبح إنتاج الإنزيم دائماً (stable derepression) خلال أيام. "
+    "المعدّل المُبلَّغ 8–40% حسب النوع، والأعلى في Enterobacter.\n"
+    "**للعدوى الغازية:** Cefepime (ثابت أمام AmpC) أو Carbapenem. "
+    "**التنزيل الفموي:** TMP-SMX أو Fluoroquinolone حسب الحساسية.\n"
+    "المصدر: IDSA AMR Guidance v4.0 (2024) · EUCAST Expert Rules v3.1."
+)
+_AMPC_3GC_AVOID = ["Ceftriaxone", "Cefotaxime", "Ceftazidime", "Cefixime",
+                   "Cefoperazone"]
+_AMPC_SPECIMEN_CONTEXT = {
+    "Blood":      "🔴 تجرثم دم بكائن AmpC — لا تستخدم جيل ثالث حتى لو S. Cefepime أو Carbapenem.",
+    "Urine":      "🔬 في التهاب المثانة البسيط الخطر أقل؛ في pyelonephritis عامله كعدوى غازية.",
+    "Sputum":     "⚠️ شائع كـ colonizer على أنابيب التنفس — افصل الاستعمار عن العدوى قبل العلاج.",
+    "Pus":        "🔬 خراج — الصرف الجراحي أهم من اختيار الدواء؛ تجنّب الجيل الثالث.",
+    "Wound Swab": "🔬 عدوى جروح/حروق — شائع في وحدات الحروق؛ تجنّب الجيل الثالث.",
+}
+
+ORGANISM_PROFILE.update({
+    "Enterobacter cloacae": {
+        "first_line":  ["Cefepime", "Trimethoprim/Sulfamethoxazole", "Ciprofloxacin"],
+        "second_line": ["Piperacillin + Tazobactam", "Amikacin", "Levofloxacin"],
+        "third_line":  ["Meropenem", "Imipenem/Cilastatin"],
+        # Ampicillin / amox-clav / 1st-2nd gen cephalosporins are handled by
+        # clinical_data.INTRINSIC_RESISTANCE["enterobacter cloacae"]. Listed
+        # here are the agents that are NOT intrinsic but must still be avoided:
+        # a susceptible 3rd-gen result that will not hold under therapy.
+        "avoid": list(_AMPC_3GC_AVOID),
+        "urine_note": ("Enterobacter في البول: في التهاب مثانة غير معقّد يمكن "
+                       "الاعتماد على Nitrofurantoin/Fosfomycin حسب الحساسية؛ "
+                       "في pyelonephritis عامله كعدوى غازية."),
+        "specimen_context": dict(_AMPC_SPECIMEN_CONTEXT),
+        "note": "🦠 **Enterobacter cloacae complex.**\n" + _AMPC_DEREPRESSION_NOTE,
+    },
+    "Serratia marcescens": {
+        "first_line":  ["Cefepime", "Ciprofloxacin", "Trimethoprim/Sulfamethoxazole"],
+        "second_line": ["Piperacillin + Tazobactam", "Amikacin", "Levofloxacin"],
+        "third_line":  ["Meropenem", "Imipenem/Cilastatin"],
+        "avoid": list(_AMPC_3GC_AVOID),
+        "urine_note": ("⚠️ Serratia مقاومة جوهرياً لـ Nitrofurantoin و Colistin "
+                       "و Tetracycline/Doxycycline — لا تُطرح كخيار بولي. "
+                       "(Minocycline و Tigecycline تعملان — عكس Proteae.)"),
+        "specimen_context": dict(_AMPC_SPECIMEN_CONTEXT),
+        "note": ("🦠 **Serratia marcescens.**\n" + _AMPC_DEREPRESSION_NOTE +
+                 "\n\n📋 مقاومة جوهرية إضافية: Colistin · Nitrofurantoin · "
+                 "Tetracycline · Doxycycline. لكن **Minocycline و Tigecycline "
+                 "فعّالتان** — وهو ما يميّزها عن Proteus/Morganella/Providencia "
+                 "(EUCAST v3.3 Table 2, fn.5)."),
+    },
+    "Citrobacter freundii": {
+        "first_line":  ["Cefepime", "Ciprofloxacin", "Trimethoprim/Sulfamethoxazole"],
+        "second_line": ["Piperacillin + Tazobactam", "Amikacin", "Levofloxacin"],
+        "third_line":  ["Meropenem", "Imipenem/Cilastatin"],
+        "avoid": list(_AMPC_3GC_AVOID),
+        "urine_note": ("Citrobacter freundii في البول: وجّه العلاج بالحساسية "
+                       "وتجنّب الجيل الثالث في العدوى الغازية."),
+        "specimen_context": dict(_AMPC_SPECIMEN_CONTEXT),
+        "note": ("🦠 **Citrobacter freundii.**\n" + _AMPC_DEREPRESSION_NOTE +
+                 "\n\n📋 ملاحظة: *C. koseri* كائن مختلف — لا يحمل AmpC قابلاً "
+                 "للتحفيز، ومقاومته الجوهرية تقتصر على الأمينوبنسلينات."),
+    },
+    # ── Proteae (Morganella / Providencia) ──────────────────────────────────
+    # Also chromosomal-AmpC and also absent from this file until 2026-08-01.
+    # Both are ordinary catheter-associated urinary isolates, and both carry a
+    # distinctive intrinsic profile that clinical_data already held and nothing
+    # could reach: tetracyclines AND tigecycline AND colistin AND nitrofurantoin
+    # are all out — the exact opposite of Serratia, where minocycline and
+    # tigecycline work. Offering "Nitrofurantoin, S" for a Morganella UTI is the
+    # error this prevents.
+    "Morganella morganii": {
+        "first_line":  ["Cefepime", "Ciprofloxacin", "Trimethoprim/Sulfamethoxazole"],
+        "second_line": ["Piperacillin + Tazobactam", "Amikacin", "Levofloxacin"],
+        "third_line":  ["Meropenem", "Imipenem/Cilastatin"],
+        "avoid": list(_AMPC_3GC_AVOID),
+        "urine_note": ("⚠️ Morganella مقاومة جوهرياً لـ Nitrofurantoin و Colistin "
+                       "وكل التتراسيكلينات (بما فيها Tigecycline) — لا تُطرح "
+                       "كخيارات بولية مهما كانت نتيجة القرص."),
+        "specimen_context": dict(_AMPC_SPECIMEN_CONTEXT),
+        "note": ("🦠 **Morganella morganii** (مجموعة Proteae).\n"
+                 + _AMPC_DEREPRESSION_NOTE +
+                 "\n\n📋 مقاومة جوهرية إضافية: Colistin · Nitrofurantoin · "
+                 "Tetracycline · Doxycycline · Minocycline · Tigecycline "
+                 "(EUCAST v3.3 Table 2, fn.3). شائعة في التهابات المسالك "
+                 "المرتبطة بالقسطرة."),
+    },
+    "Providencia spp.": {
+        "first_line":  ["Cefepime", "Ciprofloxacin", "Trimethoprim/Sulfamethoxazole"],
+        "second_line": ["Piperacillin + Tazobactam", "Amikacin", "Levofloxacin"],
+        "third_line":  ["Meropenem", "Imipenem/Cilastatin"],
+        "avoid": list(_AMPC_3GC_AVOID),
+        "urine_note": ("⚠️ Providencia مقاومة جوهرياً لـ Nitrofurantoin و Colistin "
+                       "وكل التتراسيكلينات، **و كذلك Gentamicin و Tobramycin** — "
+                       "الأميكاسين هو الأمينوجليكوزيد الوحيد الذي قد يعمل."),
+        "specimen_context": dict(_AMPC_SPECIMEN_CONTEXT),
+        "note": ("🦠 **Providencia spp.** (مجموعة Proteae).\n"
+                 + _AMPC_DEREPRESSION_NOTE +
+                 "\n\n📋 مقاومة جوهرية إضافية: Gentamicin · Tobramycin · "
+                 "Colistin · Nitrofurantoin · كل التتراسيكلينات و Tigecycline "
+                 "(EUCAST v3.3 Table 2). **Amikacin مستثنى** — قد يبقى فعّالاً."),
+    },
+    "Hafnia alvei": {
+        "first_line":  ["Cefepime", "Ciprofloxacin", "Trimethoprim/Sulfamethoxazole"],
+        "second_line": ["Piperacillin + Tazobactam", "Amikacin"],
+        "third_line":  ["Meropenem", "Imipenem/Cilastatin"],
+        "avoid": list(_AMPC_3GC_AVOID),
+        "urine_note": "Hafnia alvei نادرة — أكِّد التعريف قبل بناء قرار علاجي عليها.",
+        "specimen_context": dict(_AMPC_SPECIMEN_CONTEXT),
+        "note": ("🦠 **Hafnia alvei** — عزلة نادرة، غالباً استعمار أو تلوث. "
+                 "أكِّد التعريف أولاً.\n" + _AMPC_DEREPRESSION_NOTE),
+    },
+})
+
 # Guarantee a complete schema across all organism records.
 for _payload in ORGANISM_PROFILE.values():
     _payload.setdefault("first_line", [])

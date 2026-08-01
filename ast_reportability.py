@@ -103,6 +103,87 @@ def _drug_matches(drug: str, needles: List[str], excludes: List[str]) -> bool:
 # condemn amox-clav and be wrong in the direction that removes a working drug.
 INTRINSIC_RULES: List[Dict[str, Any]] = [
     {
+        # Added 2026-08-01 with the taxonomic-inheritance fix in clinical_data.
+        # Anaerobes had NO row in clinical_data at all, so nothing anywhere
+        # objected to "Gentamicin S" or "Colistin S" on an anaerobic isolate and
+        # both reached the RECOMMENDED bucket. Aminoglycoside uptake across the
+        # cytoplasmic membrane is driven by an oxygen-dependent proton-motive
+        # force; with no terminal electron acceptor the drug never gets in,
+        # whatever zone the disk produced. Polymyxins likewise have no useful
+        # activity here. Neither has a breakpoint against anaerobes in any
+        # edition of EUCAST or CLSI.
+        "id": "intr_anaerobes_aminoglycosides_polymyxins",
+        "organisms": ["anaerob", "bacteroides", "clostridi", "prevotella",
+                      "fusobacterium", "peptostreptococc", "veillonella",
+                      "لاهوائي"],
+        "drugs": ["gentamicin", "amikacin", "tobramycin", "kanamycin",
+                  "netilmicin", "streptomycin", "neomycin",
+                  "colistin", "polymyxin", "aztreonam",
+                  "trimethoprim", "co-trimoxazole", "cotrimoxazole"],
+        "exclude": [],
+        "reason_ar": ("اللاهوائيات مقاومة جوهرياً للأمينوجليكوزيدات "
+                      "(دخول الدواء يعتمد على قوة دافعة بروتونية هوائية) "
+                      "وللبوليميكسينات و aztreonam و trimethoprim. "
+                      "لا توجد breakpoints لأي منها ضد اللاهوائيات — "
+                      "أي S/I/R مطبوع هنا غير قابل للتفسير."),
+        "reason_en": ("Anaerobes are intrinsically resistant to aminoglycosides "
+                      "(uptake requires an aerobic proton-motive force), to "
+                      "polymyxins, aztreonam and trimethoprim. No edition of "
+                      "EUCAST or CLSI publishes breakpoints for any of these "
+                      "against anaerobes — an S/I/R printed here is "
+                      "uninterpretable."),
+        "reference": "EUCAST Intrinsic Resistance v3.3, Table 5 · CLSI M11 Ed10",
+    },
+    {
+        # Added 2026-08-01. H. influenzae was selectable in the UI but had no
+        # row in clinical_data, so Vancomycin / Linezolid / Daptomycin reported
+        # S were unflagged by QC and RECOMMENDED by the engine. Macrolides are
+        # deliberately NOT listed: azithromycin and clarithromycin are indicated
+        # agents for H. influenzae and banning them would remove a first-line
+        # option -- the mistake this rule exists to avoid making in reverse.
+        "id": "intr_haemophilus_gram_pos_agents",
+        "organisms": ["haemophilus", "h. influenzae", "h.influenzae"],
+        "drugs": ["vancomycin", "teicoplanin", "linezolid", "daptomycin",
+                  "fusidic acid", "clindamycin", "lincomycin",
+                  "oxacillin", "cloxacillin", "methicillin",
+                  "benzylpenicillin", "penicillin g"],
+        "exclude": [],
+        "reason_ar": ("Haemophilus influenzae سالب جرام — الجلايكوببتيدات "
+                      "والأوكسازوليدينونات و daptomycin و fusidic acid "
+                      "و clindamycin لا تنفذ الغشاء الخارجي. "
+                      "(الماكروليدات مستثناة: أزيثرومايسين فعّال ومُعتمد.)"),
+        "reason_en": ("Haemophilus influenzae is Gram-negative: glycopeptides, "
+                      "oxazolidinones, daptomycin, fusidic acid and clindamycin "
+                      "cannot cross the outer membrane. (Macrolides are "
+                      "deliberately excluded -- azithromycin is an indicated "
+                      "agent.)"),
+        "reference": "EUCAST Intrinsic Resistance v3.3, Table 3 · CLSI M100 App. B",
+    },
+    {
+        # Added 2026-08-01. The identification says vancomycin-RESISTANT
+        # enterococcus and the AST says vancomycin-SUSCEPTIBLE. One of the two
+        # is wrong and there is no way to tell which from the report, so the
+        # engine refused the drug while the QC panel said nothing — the split
+        # verdict that makes a reviewer distrust both panels.
+        "id": "intr_vre_vancomycin_contradiction",
+        "organisms": ["vre", "vancomycin resistant enterococc",
+                      "vancomycin-resistant enterococc"],
+        "drugs": ["vancomycin", "teicoplanin"],
+        "exclude": [],
+        "reason_ar": ("تناقض مباشر: التعريف يقول **VRE** (مقاوم للفانكومايسين) "
+                      "والـ AST يقول حسّاس. أحدهما خطأ ولا يمكن الحكم من التقرير. "
+                      "أعِد التعريف وأعِد اختبار الفانكومايسين بـ MIC (وليس قرصاً) "
+                      "قبل أي قرار علاجي. لاحظ أن VanB يعطي teicoplanin حسّاساً "
+                      "بشكل حقيقي — لكن الفانكومايسين لا."),
+        "reason_en": ("Direct contradiction: the identification says VRE "
+                      "(vancomycin-resistant) and the AST says susceptible. One "
+                      "of the two is wrong and the report cannot say which. "
+                      "Re-identify and repeat vancomycin by MIC, not disk, "
+                      "before any therapeutic decision. Note that a genuine VanB "
+                      "phenotype IS teicoplanin-susceptible — vancomycin is not."),
+        "reference": "CLSI M100 Ed36 Table 2D · EUCAST Expert Rules v3.1",
+    },
+    {
         "id": "intr_entero_gram_pos_agents",
         "organisms": ENTEROBACTERALES,
         "drugs": ["erythromycin", "clarithromycin", "clindamycin", "lincomycin",
