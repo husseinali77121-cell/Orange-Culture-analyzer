@@ -81,11 +81,23 @@ _WANT = [
     "MDR_CATEGORIES_STREP", "MDR_NOT_APPLICABLE", "MDR_OUTSIDE_MAGIORAKOS",
     "NEONATAL_RESTRICTIONS",
     "ESBL_PRODUCERS", "AMPC_PRODUCERS", "ESBL_MARKERS", "CARBAPENEMS",
-    "_ORG_NON_INFORMATIVE", "_org_matches", "is_esbl_producer", "predict_esbl", "MDR_CATEGORIES",
+    "_ORG_NON_INFORMATIVE", "_org_matches", "is_esbl_producer", "predict_esbl",
+    "MDR_CATEGORIES",
     "MDR_CATEGORIES_GRAM_NEG", "MDR_CATEGORIES_GRAM_POS",
     "GRAM_POSITIVE_ORGANISMS", "_remove_intrinsic_resistance", "classify_mdr",
     "MDR_INFO", "HEPATIC_DOSING", "analyze_antibiotics", "_hide_urine_only",
     "ORGANISM_OCR_ALIASES",
+    "PHENOTYPE_RULES", "detect_resistance_phenotypes",
+    "COMBINATION_THERAPY", "_COMBO_HOST_FLAGS", "get_combination_therapy",
+    "_CFU_SUPERSCRIPTS", "_CFU_VERBAL", "_PUS_VERBAL", "_parse_cfu", "_parse_pus",
+    "_cfu_report_state", "_score_colony_count",
+    # Transitive closure of assess_pathogenicity(), computed rather than
+    # guessed -- the extraction loader has no import machinery, so a missing
+    # dependency surfaces as NameError deep inside a re-exec'd function.
+    "_ORG_CANON_MAP", "_canon_org", "_org_in",
+    "TYPICAL_UROPATHOGENS", "ATYPICAL_UROPATHOGENS",
+    "SIRS_CRITERIA", "BLOOD_CONTAMINANTS", "GI_TRUE_PATHOGENS",
+    "assess_pathogenicity",
 ]
 
 if not os.path.exists(APP):
@@ -455,6 +467,220 @@ if _RP and INTRINSIC_RESISTANCE:
           "ast_reportability says nothing", not _silent, "\n".join(_silent[:10]))
 else:
     print("  SKIP  ast_reportability.py not importable")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[10] predict_esbl() and detect_resistance_phenotypes() must agree.")
+print("    DEFECT: PHENOTYPE_RULES is a FOURTH organism table, independent of")
+print("    clinical_data, ORGANISM_PROFILE and clinical_matrix._ORG_CANON. Its")
+print("    CRE list omitted Citrobacter freundii, Morganella, Providencia,")
+print("    Hafnia, Salmonella, Shigella and the unspeciated fallback — so on a")
+print("    carbapenem-resistant isolate predict_esbl raised the red banner")
+print("    while the phenotype list stayed empty, which means NO isolation")
+print("    alert and NO combination-therapy panel for a CRE bacteraemia. Four")
+print("    of the seven were introduced by the very audit that was fixing this")
+print("    class of bug: a row added in one table, forgotten in a sibling.")
+# ═══════════════════════════════════════════════════════════════════════════
+detect_phenotypes = NS["detect_resistance_phenotypes"]
+get_combos = NS["get_combination_therapy"]
+
+_CARBAPENEMASE_PH = {"CRE", "CRPA", "CRAB"}
+_mismatch = []
+_sir_carba = {"Meropenem": "R", "Imipenem/Cilastatin": "R", "Ertapenem": "R",
+              "Ceftriaxone": "R", "Amikacin": "S", "Colistin": "S"}
+for org in ORGS:
+    verdict = predict_esbl(org, _sir_carba).get("probability")
+    if verdict not in ("carbapenemase", "crpa"):
+        continue
+    phen = detect_phenotypes(org, _sir_carba)
+    names = {p.get("phenotype") for p in phen}
+    if not (names & _CARBAPENEMASE_PH):
+        _mismatch.append(
+            f"{org}: predict_esbl={verdict!r} but phenotypes={sorted(names) or 'NONE'} "
+            f"-> no isolation alert, no combination panel")
+check("a carbapenemase verdict always produces a matching phenotype",
+      not _mismatch, "\n".join(_mismatch[:10]))
+
+_iso = []
+for org in ORGS:
+    if predict_esbl(org, _sir_carba).get("probability") not in ("carbapenemase", "crpa"):
+        continue
+    phen = detect_phenotypes(org, _sir_carba)
+    if not any(p.get("isolation") for p in phen):
+        _iso.append(f"{org}: carbapenem-resistant, no isolation flag")
+    if not get_combos(phen):
+        _iso.append(f"{org}: carbapenem-resistant, empty combination panel")
+check("a carbapenem-resistant isolate always triggers isolation + a combination panel",
+      not _iso, "\n".join(_iso[:10]))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[11] The combination-therapy panel is the only place in the app that")
+print("    proposes agents WITHOUT passing through analyze_antibiotics() or")
+print("    apply_safety_gate(). DEFECT: get_combination_therapy() took only")
+print("    `phenotypes` — no pregnancy, no age, no CrCl — and renders in an")
+print("    expander that is open by default under a CRITICAL header. A pregnant")
+print("    CRPA patient was shown 'Ceftolozane-Tazobactam + Amikacin' with an")
+print("    empty caution field while the main engine refused amikacin for that")
+print("    same patient three panels above.")
+# ═══════════════════════════════════════════════════════════════════════════
+_HOST_RISK_DRUGS = {
+    "pregnancy": ["amikacin", "gentamicin", "tobramycin", "tigecycline",
+                  "minocycline", "doxycycline", "ciprofloxacin", "levofloxacin"],
+}
+_unflagged = []
+_sir_crpa = {"Meropenem": "R", "Imipenem/Cilastatin": "R", "Ceftazidime": "R",
+             "Ciprofloxacin": "R", "Amikacin": "S", "Colistin": "S"}
+for org in ("Pseudomonas aeruginosa", "Acinetobacter baumannii", "E. coli"):
+    if org not in OP:
+        continue
+    phen = detect_phenotypes(org, _sir_crpa)
+    for combo in get_combos(phen, is_pregnant=True, age_years=28):
+        for opt in combo["data"]["options"]:
+            low = opt["combo"].lower()
+            risky = [d for d in _HOST_RISK_DRUGS["pregnancy"] if d in low]
+            if risky and not opt.get("host_flagged"):
+                _unflagged.append(
+                    f"{org} pregnant: '{opt['combo'][:44]}' contains {risky} "
+                    f"— caution={opt.get('caution','')[:30]!r}")
+check("a combination option contraindicated in pregnancy is flagged as such",
+      not _unflagged, "\n".join(_unflagged[:8]))
+
+# The table is module-level and Streamlit reruns on every interaction; if
+# get_combination_therapy annotated in place, one pregnant patient would leave
+# pregnancy warnings on the next patient's screen.
+_before = [o.get("caution", "") for o in NS["COMBINATION_THERAPY"]["CRPA"]["options"]]
+get_combos(detect_phenotypes("Pseudomonas aeruginosa", _sir_crpa),
+           is_pregnant=True, age_years=28, is_renal=True, cl_cr=15)
+_after = [o.get("caution", "") for o in NS["COMBINATION_THERAPY"]["CRPA"]["options"]]
+check("annotating host warnings does not mutate COMBINATION_THERAPY",
+      _before == _after, f"before={_before}\nafter ={_after}")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[12] Colony-count and pyuria parsers. DEFECT: _parse_cfu understood")
+print("    only the caret form. '10*5', '10**5', '10E5' and '10e5' all")
+print("    collapsed to 10 — for an adult male urine that turns +25")
+print("    'significant bacteriuria' into -15 'likely insignificant', a")
+print("    40-point swing in the direction that dismisses a real infection.")
+print("    Separately, every verbal report ('heavy growth', 'TNTC', 'full")
+print("    field') returned 0 or None — the same value as 'no growth' — so the")
+print("    strongest reading on the form scored as the weakest.")
+# ═══════════════════════════════════════════════════════════════════════════
+parse_cfu, parse_pus = NS["_parse_cfu"], NS["_parse_pus"]
+
+_EXPECT_CFU = [
+    ("10^5", 100000), ("10*5", 100000), ("10**5", 100000),
+    ("10E5", 100000), ("10e5", 100000), ("10 5", 100000),
+    ("5x10^4", 50000), ("2 x 10^5", 200000),
+    ("100000", 100000), (">100,000", 100000),
+    ("No growth", 0), ("No significant growth", 0), ("", 0),
+]
+_bad = [f"{t!r} -> {parse_cfu(t)}, expected {e}"
+        for t, e in _EXPECT_CFU if parse_cfu(t) != e]
+check("_parse_cfu reads every common exponent notation", not _bad, "\n".join(_bad))
+
+# Verbal reports must be distinguishable from "no growth" and must land in the
+# right significance band, not on a threshold.
+_bad = []
+for t in ("heavy growth", "TNTC", "too numerous to count", "confluent growth", "+++"):
+    if parse_cfu(t) < 100000:
+        _bad.append(f"{t!r} -> {parse_cfu(t)}, should reach the 10^5 band")
+for t in ("moderate growth", "++"):
+    if not 10000 <= parse_cfu(t) < 100000:
+        _bad.append(f"{t!r} -> {parse_cfu(t)}, should sit in the 10^4 band")
+for t in ("scanty growth", "few colonies"):
+    if not 1000 <= parse_cfu(t) < 10000:
+        _bad.append(f"{t!r} -> {parse_cfu(t)}, should sit in the 10^3 band")
+check("a verbal colony report is never scored as 'no growth'", not _bad,
+      "\n".join(_bad))
+
+_bad = [f"{t!r} -> {parse_pus(t)}" for t in
+        ("full field", "loaded", "TNTC", "plenty", "many")
+        if parse_pus(t) is None]
+check("a verbal pyuria report is not silently dropped", not _bad, "\n".join(_bad))
+check("_parse_pus still returns None when nothing is stated",
+      parse_pus("") is None and parse_pus("not done") is None,
+      f"'' -> {parse_pus('')}, 'not done' -> {parse_pus('not done')}")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[13] Every organism in ORGANISM_PROFILE must be selectable somewhere.")
+print("    DEFECT: 'Rickettsia spp.' carried a full profile — first_line, avoid,")
+print("    specimen_context, note — and appeared in NO specimen list, so")
+print("    get_organisms_for_specimen() never offered it and not one of those")
+print("    fields could ever reach a user. A profile that cannot be selected")
+print("    still has to be maintained and audited forever, and can never fire.")
+# ═══════════════════════════════════════════════════════════════════════════
+_orphan = [o for o in ORGS
+           if not any(o in get_organisms_for_specimen(s) for s in SPECS)]
+check("no ORGANISM_PROFILE entry is unreachable from every specimen",
+      not _orphan, f"unreachable: {_orphan}")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[14] The pathogenicity score must not run BACKWARDS at the bottom of")
+print("    the colony-count range. DEFECT: all three age/sex branches ended at")
+print("    `elif cfu_val > 0: score -= PENALTY`, so a zero — which meant both")
+print("    'no growth' AND 'field blank / unparseable' — hit no branch at all")
+print("    and escaped the penalty a real low count pays:")
+print("        male 35, dysuria, pyuria 20-25:")
+print("            'No growth' -> 45   but   '10^3 CFU/mL' -> 30")
+print("        infant, colony-count field left blank:")
+print("            -> 85 -> 'Likely TRUE INFECTION -- Treat'")
+print("    Sterile urine outranking scanty growth is the wrong direction; a")
+print("    verdict built from an unread field is worse — an opinion assembled")
+print("    out of missing data.")
+# ═══════════════════════════════════════════════════════════════════════════
+assess = NS.get("assess_pathogenicity")
+cfu_state = NS.get("_cfu_report_state")
+if assess is None or cfu_state is None:
+    print("  SKIP  assess_pathogenicity / _cfu_report_state not extracted")
+else:
+    _SYM = ["Dysuria / Frequency / Urgency"]
+
+    def _score(colony, age, sex):
+        return assess("Urine", "E. coli", colony, "Pure growth", _SYM,
+                      "20-25", "", "", age, sex, [])
+
+    _LADDER = ["10^2", "10^3", "10^4", "10^5", "heavy growth"]
+    _mono = []
+    for label, age, sex in (("male 35", 35, "Male"),
+                            ("female 30", 30, "Female"),
+                            ("infant", 0, "Male")):
+        none_score = _score("No growth", age, sex)["score"]
+        prev = None
+        for c in _LADDER:
+            s = _score(c, age, sex)["score"]
+            if prev is not None and s < prev:
+                _mono.append(f"{label}: score fell from {prev} to {s} going up "
+                             f"the colony ladder at {c!r}")
+            prev = s
+        lowest_counted = _score("10^2", age, sex)["score"]
+        if none_score >= lowest_counted:
+            _mono.append(f"{label}: 'No growth' scores {none_score}, "
+                         f"'10^2' scores {lowest_counted} — sterile urine must "
+                         f"score BELOW any real count")
+    check("the pathogenicity score rises monotonically with colony count",
+          not _mono, "\n".join(_mono[:8]))
+
+    # An unread field must contribute nothing AND say so.
+    _states = {t: cfu_state(t) for t in
+               ("", "   ", "???", "No growth", "لا يوجد نمو",
+                "No significant growth", "10^5", "heavy growth")}
+    _want = {"": "unreported", "   ": "unreported", "???": "unreported",
+             "No growth": "none", "لا يوجد نمو": "none",
+             "No significant growth": "none",
+             "10^5": "counted", "heavy growth": "counted"}
+    _wrong = [f"{t!r} -> {_states[t]!r}, expected {_want[t]!r}"
+              for t in _want if _states[t] != _want[t]]
+    check("'no growth', 'not reported' and a real count are three distinct states",
+          not _wrong, "\n".join(_wrong))
+
+    _blank = _score("", 35, "Male")
+    _flagged = "CFU_NOT_REPORTED" in (_blank.get("special_flags") or [])
+    check("an unreadable colony count is flagged to the user, not scored silently",
+          _flagged, f"special_flags={_blank.get('special_flags')}")
 
 
 # ═══════════════════════════════════════════════════════════════════════════

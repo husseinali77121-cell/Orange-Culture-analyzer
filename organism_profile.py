@@ -6,7 +6,8 @@
 
 Enhancements in this revision:
 - added helper lookup/validation utilities
-- added clinically relevant missing profiles (VRE, Rickettsia spp.)
+- added clinically relevant missing profiles (VRE)
+  [Rickettsia spp. added here, then removed 2026-08-01 as unreachable — see below]
 - exported normalization helpers for cross-module consistency checks
 """
 
@@ -320,17 +321,19 @@ ORGANISM_PROFILE.update({
         "note": "🔴 VRE يعني مقاومة للفانكومايسين؛ يجب الاعتماد على علاج موجّه ونتيجة الحساسية.",
     },
 
-    "Rickettsia spp.": {
-        "first_line": ["Doxycycline"],
-        "second_line": [],
-        "third_line": [],
-        "avoid": ["Beta-lactams", "Cephalosporins (كل الجيل)", "Aminoglycosides"],
-        "urine_note": "ليس مسببًا شائعًا في مزارع البول أو المزارع الروتينية.",
-        "specimen_context": {
-            "Blood": "⚠️ لا تُشخّص عادةً بالمزرعة الروتينية؛ التشخيص غالباً سريري/سيرولوجي/PCR.",
-        },
-        "note": "⚠️ Rickettsia ليست جرثومة مزرعية روتينية في هذا السياق، لكن أضيفت للحفاظ على اتساق البيانات العلاجية.",
-    },
+    # REMOVED 2026-08-01. "Rickettsia spp." carried a full profile here and
+    # appeared in NO specimen list in specimen_organism_map.py, so
+    # get_organisms_for_specimen() never offered it and not one of its
+    # first_line / avoid / note fields could ever reach a user. Its own note
+    # conceded the point -- "ليست جرثومة مزرعية روتينية" -- which is correct:
+    # rickettsial disease is diagnosed by serology or PCR, never by the
+    # culture-and-sensitivity workflow this tool exists to support. A profile
+    # that cannot be selected is not "data consistency", it is a table entry
+    # that has to be maintained and audited forever and can never fire.
+    # The clinical_matrix.py DENY rules (sulfonamides worsen outcome,
+    # vancomycin cannot reach an obligate intracellular organism) are kept:
+    # they cost nothing and would apply immediately if the organism is ever
+    # added back to a specimen list.
 
     # Generic fallback for reports that read "Gram Negative Bacilli" with no
     # species identification (very common locally). Lets the Enterobacterales

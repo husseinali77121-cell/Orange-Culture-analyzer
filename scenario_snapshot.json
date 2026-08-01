@@ -786,7 +786,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -941,7 +943,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -989,7 +993,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -1128,7 +1134,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -2222,7 +2230,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -2394,7 +2404,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -2456,7 +2468,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -2613,7 +2627,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -3179,7 +3195,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -3341,7 +3359,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -3392,7 +3412,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -3538,7 +3560,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -4373,7 +4397,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -4516,7 +4542,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -4558,7 +4586,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -4650,7 +4680,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -5171,7 +5203,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -5310,7 +5344,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -5351,7 +5387,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -5441,7 +5479,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -5885,7 +5925,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🔴 Likely TRUE INFECTION -- Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "invivo_salmonella_shigella_aminoglycoside_ceph12:Cefoxitin",
@@ -6059,7 +6101,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 Likely TRUE INFECTION -- Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "invivo_salmonella_shigella_aminoglycoside_ceph12:Cefoxitin",
@@ -6109,7 +6153,9 @@
    "Tetracyclines"
   ],
   "patho": "🔴 Likely TRUE INFECTION -- Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "invivo_salmonella_shigella_aminoglycoside_ceph12:Cefoxitin",
@@ -6219,7 +6265,9 @@
    "Tetracyclines"
   ],
   "patho": "🔴 Likely TRUE INFECTION -- Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "invivo_salmonella_shigella_aminoglycoside_ceph12:Cefoxitin",
@@ -7659,7 +7707,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -7814,7 +7864,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -7862,7 +7914,9 @@
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -8001,7 +8055,9 @@
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -9095,7 +9151,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -9267,7 +9325,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -9329,7 +9389,9 @@
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -9486,7 +9548,9 @@
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -10051,7 +10115,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -10213,7 +10279,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -10264,7 +10332,9 @@
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -10410,7 +10480,9 @@
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -11461,7 +11533,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -11604,7 +11678,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -11646,7 +11722,9 @@
    "Folate PI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -11738,7 +11816,9 @@
    "Folate PI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -11810,7 +11890,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -11949,7 +12031,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -11990,7 +12074,9 @@
    "Folate PI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -12080,7 +12166,9 @@
    "Folate PI"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -13798,7 +13886,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -13953,7 +14043,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -14001,7 +14093,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -14140,7 +14234,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -15234,7 +15330,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -15406,7 +15504,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -15468,7 +15568,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -15625,7 +15727,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -15970,7 +16074,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -16132,7 +16238,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -16183,7 +16291,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -16329,7 +16439,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -17164,7 +17276,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -17307,7 +17421,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -17349,7 +17465,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -17441,7 +17559,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -17962,7 +18082,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -18101,7 +18223,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -18142,7 +18266,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -18232,7 +18358,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -19862,7 +19990,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -20017,7 +20147,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -20065,7 +20197,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -20204,7 +20338,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -21720,7 +21856,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -21892,7 +22030,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -21954,7 +22094,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -22111,7 +22253,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -22676,7 +22820,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -22838,7 +22984,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -22889,7 +23037,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -23035,7 +23185,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -24762,7 +24914,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -24905,7 +25059,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -24947,7 +25103,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -25039,7 +25197,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -25376,7 +25536,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -25515,7 +25677,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -25556,7 +25720,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -25646,7 +25812,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -28277,7 +28445,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "invivo_salmonella_shigella_aminoglycoside_ceph12:Cefoxitin",
@@ -28451,7 +28621,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "invivo_salmonella_shigella_aminoglycoside_ceph12:Cefoxitin",
@@ -28501,7 +28673,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "invivo_salmonella_shigella_aminoglycoside_ceph12:Cefoxitin",
@@ -28611,7 +28785,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "invivo_salmonella_shigella_aminoglycoside_ceph12:Cefoxitin",
@@ -28700,7 +28876,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "invivo_salmonella_shigella_aminoglycoside_ceph12:Cefoxitin",
@@ -28866,7 +29044,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "invivo_salmonella_shigella_aminoglycoside_ceph12:Cefoxitin",
@@ -28914,7 +29094,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "invivo_salmonella_shigella_aminoglycoside_ceph12:Cefoxitin",
@@ -29020,7 +29202,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "invivo_salmonella_shigella_aminoglycoside_ceph12:Cefoxitin",
@@ -29441,7 +29625,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -29616,7 +29802,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -29671,7 +29859,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -29783,7 +29973,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -29886,7 +30078,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -30074,7 +30268,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -30142,7 +30338,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -30264,7 +30462,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -31302,7 +31502,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -31494,7 +31696,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -31563,7 +31767,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -31688,7 +31894,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -32477,7 +32685,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -32659,7 +32869,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -32717,7 +32929,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -32834,7 +33048,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -34136,7 +34352,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -34291,7 +34509,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -34337,7 +34557,9 @@
    "Fosfomycins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -34436,7 +34658,9 @@
    "Fosfomycins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -34973,7 +35197,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -35124,7 +35350,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -35169,7 +35397,9 @@
    "Fosfomycins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -35266,7 +35496,9 @@
    "Fosfomycins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -37529,7 +37761,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -37684,7 +37918,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -37732,7 +37968,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -37871,7 +38109,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -38965,7 +39205,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -39137,7 +39379,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "QC004",
@@ -39199,7 +39443,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -39356,7 +39602,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Amoxicillin + Clavulanic acid|Ampicillin/Sulbactam|Cefoxitin|Cefuroxime",
@@ -39701,7 +39949,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -39863,7 +40113,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -39914,7 +40166,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -40060,7 +40314,9 @@
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "intr_enterobacter_citrobacter_ampc:Ampicillin/Sulbactam",
@@ -40895,7 +41151,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -41038,7 +41296,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -41080,7 +41340,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -41172,7 +41434,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -42043,7 +42307,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -42182,7 +42448,9 @@
    "Extended-Sp Cephalosporins"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -42223,7 +42491,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",
@@ -42313,7 +42583,9 @@
    "Folate PI"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "CRE"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam",

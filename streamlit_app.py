@@ -789,6 +789,15 @@ def best_default_index(options: List[str], preferred: Optional[str]) -> int:
 # اكتشاف اسم المريض من OCR
 # =========================================================
 def clean_patient_name(name: str) -> str:
+    """Strip form labels and stray glyphs out of an OCR'd patient-name field.
+
+    NOT CURRENTLY CALLED. Kept deliberately: the OCR pipeline populates the name
+    field via extract_all_data(), and whether that path routes through here has
+    changed more than once. Deleting it would mean rewriting the blacklist the
+    next time the OCR field mapping moves, and the blacklist is the part that
+    took the tuning. If it is still uncalled at the next review, delete it then
+    -- but check `extract_all_data` first.
+    """
     if not name:
         return ""
     name = normalize_ocr_text(name)
@@ -1208,7 +1217,11 @@ ORGANISM_OCR_ALIASES: Dict[str, str] = {
     "haemophilus influenzae": "H. influenzae", "h. influenzae": "H. influenzae",
     "campylobacter": "Campylobacter jejuni",
     "legionella": "Legionella pneumophila",
-    "mycoplasma": "Mycoplasma spp.", "rickettsia": "Rickettsia spp.",
+    "mycoplasma": "Mycoplasma spp.",
+    # "rickettsia" alias removed 2026-08-01 with the profile: it resolved to
+    # a key that no longer exists, and best_default_index() falls back to
+    # index 0 for an unknown name -- the silent-misidentification bug this
+    # audit already fixed for Serratia and Enterobacter.
 }
 
 
@@ -3752,37 +3765,21 @@ def assess_pathogenicity(
             factors_pos.append(f"➕ {organism} -- occasional uropathogen")
 
         # Colony count
-        cfu_val = _parse_cfu(colony_count_text)
-        if age < 2:
-            # Pediatric: ≥ 10⁴ = significant
-            if cfu_val >= 10000:
-                score += 20
-                factors_pos.append(f"✅ Colony count ≥ 10⁴ CFU/mL (significant for age < 2)")
-            elif cfu_val > 0:
-                score += 5
-                factors_pos.append(f"➕ Colony count {cfu_val:,} -- borderline (pediatric)")
-        elif sex == "Female" and age >= 12:
-            # IDSA: ≥ 10³ symptomatic, ≥ 10⁵ asymptomatic
-            if cfu_val >= 100000:
-                score += 25
-                factors_pos.append("✅ Colony count ≥ 10⁵ CFU/mL -- significant bacteriuria")
-            elif cfu_val >= 1000:
-                score += 12
-                factors_pos.append("➕ Colony count 10³–10⁵ -- significant if symptomatic (female)")
-            elif cfu_val > 0:
-                score -= 10
-                factors_neg.append(f"⚠️ Colony count {cfu_val:,} < 10³ -- likely insignificant")
-        else:
-            # Male / general
-            if cfu_val >= 100000:
-                score += 25
-                factors_pos.append("✅ Colony count ≥ 10⁵ CFU/mL -- significant bacteriuria")
-            elif cfu_val >= 10000:
-                score += 10
-                factors_pos.append("➕ Colony count 10⁴–10⁵ CFU/mL -- borderline")
-            elif cfu_val > 0:
-                score -= 15
-                factors_neg.append(f"⚠️ Colony count {cfu_val:,} < 10⁴ -- likely insignificant")
+        # FIX 2026-08-01 (third pass): the three branches below used to be
+        # written out inline, and all three ended at `elif cfu_val > 0`, so a
+        # zero -- whether "no growth" or an unread field -- fell through with no
+        # adjustment and scored HIGHER than a genuine low count. See
+        # _cfu_report_state() for the measurements.
+        cfu_val   = _parse_cfu(colony_count_text)
+        cfu_state = _cfu_report_state(colony_count_text)
+        _d, _pos, _neg = _score_colony_count(cfu_state, cfu_val, age, sex)
+        score += _d
+        if _pos:
+            factors_pos.append(_pos)
+        if _neg:
+            factors_neg.append(_neg)
+        if cfu_state == "unreported":
+            special_flags.append("CFU_NOT_REPORTED")
 
         # Pyuria / Urinalysis
         pus_val = _parse_pus(pus_cells_text)
@@ -4199,6 +4196,70 @@ def assess_pathogenicity(
 
 _CFU_SUPERSCRIPTS = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
 
+# Semi-quantitative and verbal colony reports, mapped to a representative count.
+# ORDER MATTERS: scanned top-down and the first hit wins, so the more specific
+# phrase must precede the substring it contains ("no significant growth" before
+# "significant growth", "scanty" before "growth").
+#
+# Values sit in the MIDDLE of the band each phrase denotes, never on a
+# threshold, so a rounding argument can never flip the score:
+#   heavy / TNTC / confluent  -> 10^5 band  (significant at every age and sex)
+#   moderate                  -> 10^4 band  (borderline for males, significant <2y)
+#   scanty / few / light      -> 10^3 band  (significant only if symptomatic)
+_CFU_VERBAL: List[Tuple[str, int]] = [
+    ("no significant growth", 0),
+    ("insignificant growth", 0),
+    ("no bacterial growth", 0),
+    ("لا يوجد نمو", 0),
+    ("نمو غير معنوي", 0),
+    ("too numerous to count", 300000),
+    ("tntc", 300000),
+    ("confluent growth", 300000),
+    ("innumerable", 300000),
+    ("heavy growth", 300000),
+    ("heavy mixed growth", 300000),
+    ("profuse growth", 300000),
+    ("+++", 300000),
+    ("نمو كثيف", 300000),
+    ("نمو غزير", 300000),
+    ("significant growth", 300000),
+    ("moderate growth", 30000),
+    ("moderate mixed growth", 30000),
+    ("++", 30000),
+    ("نمو متوسط", 30000),
+    ("scanty growth", 3000),
+    ("scant growth", 3000),
+    ("light growth", 3000),
+    ("few colonies", 3000),
+    ("occasional colonies", 3000),
+    ("نمو ضئيل", 3000),
+    ("نمو قليل", 3000),
+]
+
+# Verbal pyuria estimates. _parse_pus() returns None for "not stated", and the
+# caller skips the whole pyuria block on None -- so "full field", the strongest
+# reading on the form, used to contribute nothing at all.
+_PUS_VERBAL: List[Tuple[str, int]] = [
+    ("full field", 100),
+    ("packed", 100),
+    ("loaded", 100),
+    ("innumerable", 100),
+    ("too numerous", 100),
+    ("tntc", 100),
+    ("plenty", 50),
+    ("numerous", 50),
+    ("many", 30),
+    ("moderate", 15),
+    ("مليء", 100),
+    ("كثير", 30),
+    ("متوسط", 15),
+    ("few", 3),
+    ("occasional", 3),
+    ("rare", 1),
+    ("قليل", 3),
+    ("نادر", 1),
+]
+
 
 def _parse_cfu(text: str) -> int:
     """Numeric CFU/mL from a free-text colony-count field.
@@ -4230,11 +4291,36 @@ def _parse_cfu(text: str) -> int:
     # lost. A bare "10" followed by a single digit 2-9 is a lost exponent, never
     # a real count of "5 CFU/mL".
     t = re.sub(r"\b10\s*[\-\u2013 ]\s*([2-9])\b", r"10^\1", t)
+    # FIX 2026-08-01 (second pass): the caret was the ONLY exponent form this
+    # function understood. Analysers and technologists routinely type the ASCII
+    # alternatives, and every one of them collapsed to the mantissa:
+    #     "10*5" -> 10   "10**5" -> 10   "10E5" -> 10   "10e5" -> 10
+    # For an adult male urine that turns +25 "significant bacteriuria" into
+    # -15 "likely insignificant" -- a 40-point swing in the direction that
+    # dismisses a real infection. Normalise them all to the caret form first.
+    t = re.sub(r"\b10\s*(?:\*\*|\*|[eE]|\^)\s*(\d+)", r"10^\1", t)
+    # A coefficient in front of a power of ten was silently dropped:
+    # "5x10^4" returned 10 000, not 50 000. Fold it in before the scan.
+    t = re.sub(
+        r"(\d+(?:\.\d+)?)\s*[x\u00d7\u2715*]\s*10\s*\^\s*(\d+)",
+        lambda m: str(int(float(m.group(1)) * (10 ** int(m.group(2))))), t)
     t = t.replace("\u2009", " ")
 
     low = t.lower()
     if any(k in low for k in ("no growth", "sterile", "no organism", "لا يوجد نمو")):
         return 0
+
+    # ── Semi-quantitative and verbal reports ─────────────────────────────────
+    # FIX 2026-08-01 (second pass): "heavy growth", "TNTC" and "significant
+    # growth" all returned 0 -- the SAME value as "no growth". Callers cannot
+    # distinguish "nothing grew" from "the parser gave up", and 0 is scored as
+    # absence of infection, so the strongest possible signal on the form was
+    # read as the weakest. These phrasings are what Egyptian lab report forms
+    # actually print. Mapped to the midpoint of the band each phrase denotes,
+    # so the existing thresholds (10^3 / 10^4 / 10^5) keep working unchanged.
+    for _kw, _val in _CFU_VERBAL:
+        if _kw in low:
+            return _val
 
     # Candidate counts. The number pattern is deliberately STRICT:
     #   10^n            power-of-ten notation
@@ -4281,10 +4367,105 @@ def _parse_cfu(text: str) -> int:
     return value
 
 
+def _cfu_report_state(text: str) -> str:
+    """Classify WHAT the colony-count field says, not just its numeric value.
+
+    _parse_cfu() returns an int, and 0 is overloaded: it means both "the lab
+    reported no growth" and "the field is blank or the parser could not read
+    it". assess_pathogenicity() consumed only that int, and every one of its
+    three age/sex branches was written as
+
+        if   cfu_val >= HIGH: score += ...
+        elif cfu_val >= MID:  score += ...
+        elif cfu_val > 0:     score -= PENALTY      # small count is penalised
+        #    cfu_val == 0  ->  no branch at all     # zero is NOT
+
+    so zero escaped the penalty a small count pays, and the score went
+    BACKWARDS at the bottom of the range:
+
+        male 35, dysuria, pyuria 20-25
+            "No growth"  -> 45      "10^3 CFU/mL" -> 30
+        infant, field left blank
+            -> 85  ->  "Likely TRUE INFECTION -- Treat"
+
+    Sterile urine scoring higher than scanty growth is the wrong direction, and
+    an unread field scoring at all is worse: it is an opinion manufactured from
+    an absence of data.
+
+    Returns one of:
+        "none"       -- the lab explicitly reported no growth. Strong evidence
+                        AGAINST infection; must outweigh a low-but-real count.
+        "unreported" -- blank, or present but unparseable. Contributes NOTHING
+                        to the score and is surfaced to the user instead.
+        "counted"    -- a real reading; use _parse_cfu()'s value.
+    """
+    raw = (text or "").strip()
+    if not raw:
+        return "unreported"
+    low = raw.lower()
+    if any(k in low for k in ("no growth", "sterile", "no organism",
+                              "no significant growth", "insignificant growth",
+                              "no bacterial growth", "لا يوجد نمو",
+                              "نمو غير معنوي")):
+        return "none"
+    # A reading the parser could not resolve to a number is NOT a zero count.
+    # _parse_cfu returns 0 for both, which is exactly the conflation above.
+    return "counted" if _parse_cfu(raw) > 0 else "unreported"
+
+
+def _score_colony_count(state: str, cfu_val: int, age: int, sex: str):
+    """(delta, positive_factor, negative_factor) for the colony-count field.
+
+    Split out of assess_pathogenicity so the three age/sex branches share one
+    treatment of the "none" and "unreported" states — the original had the
+    thresholds written out three times and the zero case missing from all three.
+    """
+    if state == "unreported":
+        return 0, None, ("ℹ️ Colony count not reported / unreadable — this field "
+                         "contributed nothing to the score. Enter it for a "
+                         "reliable assessment.")
+    if state == "none":
+        # Must be a HARDER penalty than any low-count penalty below, otherwise
+        # sterile urine outranks scanty growth. Explicit no-growth with an
+        # organism named on the form is itself a contradiction worth flagging.
+        return -30, None, ("❌ No growth reported — strong evidence against "
+                           "infection. If an organism was isolated, the colony "
+                           "count and the culture result disagree; re-check the "
+                           "report before treating.")
+
+    if age < 2:
+        if cfu_val >= 10000:
+            return 20, "✅ Colony count ≥ 10⁴ CFU/mL (significant for age < 2)", None
+        return 5, f"➕ Colony count {cfu_val:,} -- borderline (pediatric)", None
+    if sex == "Female" and age >= 12:
+        if cfu_val >= 100000:
+            return 25, "✅ Colony count ≥ 10⁵ CFU/mL -- significant bacteriuria", None
+        if cfu_val >= 1000:
+            return 12, "➕ Colony count 10³–10⁵ -- significant if symptomatic (female)", None
+        return -10, None, f"⚠️ Colony count {cfu_val:,} < 10³ -- likely insignificant"
+    if cfu_val >= 100000:
+        return 25, "✅ Colony count ≥ 10⁵ CFU/mL -- significant bacteriuria", None
+    if cfu_val >= 10000:
+        return 10, "➕ Colony count 10⁴–10⁵ CFU/mL -- borderline", None
+    return -15, None, f"⚠️ Colony count {cfu_val:,} < 10⁴ -- likely insignificant"
+
+
 def _parse_pus(text: str):
-    """استخرج أقصى قيمة WBC/HPF من النص، أو None إذا لم يوجد"""
+    """Highest WBC/HPF reading in the text, or None when none is stated.
+
+    Returning None is meaningful: assess_pathogenicity() skips its entire pyuria
+    block on None. That is correct for "not done", and was WRONG for "full
+    field" / "loaded" / "TNTC" -- the strongest pyuria a microscopist can report
+    -- which contributed nothing because the string holds no digit. The verbal
+    forms are resolved first so a stray digit elsewhere in the field cannot
+    outrank them.
+    """
     if not text:
         return None
+    low = str(text).lower()
+    for _kw, _val in _PUS_VERBAL:
+        if _kw in low:
+            return _val
     nums = re.findall(r'[\d]+', text)
     if not nums:
         return None
@@ -4863,13 +5044,108 @@ COMBINATION_THERAPY: Dict[str, Dict] = {
     },
 }
 
-def get_combination_therapy(phenotypes: List[Dict]) -> List[Dict]:
-    """Combination therapy suggestions based on detected phenotypes -- IDSA AMR Guidance v4.0 (2024)"""
-    results  = []
+# Agents inside COMBINATION_THERAPY option strings that carry a host-state
+# contraindication. Matched as case-insensitive substrings of the combo text,
+# because the strings are prose ("Ampicillin-Sulbactam (high-dose 9g q8h) +
+# Colistin"), not formulary keys.
+_COMBO_HOST_FLAGS: List[Tuple[str, List[str], str, str]] = [
+    ("pregnancy", ["amikacin", "gentamicin", "tobramycin", "plazomicin"],
+     "⚠️ حمل: أمينوجليكوزيد — سمّية أذنية جنينية. لا يُستخدم إلا لعدوى مهددة "
+     "للحياة بلا بديل، وبموافقة استشاري وTDM.",
+     "PREGNANCY: aminoglycoside — fetal ototoxicity. Life-threatening infection "
+     "with no alternative only, with consultant sign-off and TDM."),
+    ("pregnancy", ["tigecycline", "minocycline", "doxycycline", "eravacycline"],
+     "⛔ حمل: تتراسيكلين — مضاد استطباب مطلق (تلوّن الأسنان، تثبيط نمو العظم).",
+     "PREGNANCY: tetracycline — absolute contraindication."),
+    ("pregnancy", ["ciprofloxacin", "levofloxacin", "moxifloxacin",
+                   "fluoroquinolone"],
+     "⚠️ حمل: فلوروكينولون — يُتجنّب (سمّية غضروفية في الدراسات الحيوانية).",
+     "PREGNANCY: fluoroquinolone — avoid (animal arthropathy)."),
+    ("pregnancy", ["rifampicin", "rifampin"],
+     "⚠️ حمل: ريفامبيسين — خطر نزف وليدي، أعطِ فيتامين K للأم والوليد.",
+     "PREGNANCY: rifampicin — neonatal haemorrhage risk; give vitamin K."),
+    ("neonate", ["ceftriaxone"],
+     "⛔ وليد: سيفترياكسون — يزيح البيليروبين ويترسّب مع الكالسيوم. استخدم "
+     "cefotaxime بدلاً منه.",
+     "NEONATE: ceftriaxone — bilirubin displacement / calcium precipitation. "
+     "Use cefotaxime."),
+    ("neonate", ["tigecycline", "minocycline", "doxycycline",
+                 "ciprofloxacin", "levofloxacin", "moxifloxacin"],
+     "⛔ وليد/طفل: غير مناسب لهذه الفئة العمرية إلا باستثناء مبرَّر.",
+     "NEONATE/CHILD: not appropriate for this age band without justification."),
+    ("renal", ["colistin", "polymyxin", "amikacin", "gentamicin", "tobramycin",
+               "vancomycin"],
+     "⚠️ قصور كلوي: يحتاج تعديل جرعة ومتابعة CrCl/TDM — الجرعات المكتوبة هنا "
+     "للوظيفة الكلوية الطبيعية.",
+     "RENAL IMPAIRMENT: dose adjustment plus CrCl/TDM monitoring required — the "
+     "doses quoted here assume normal renal function."),
+    ("hepatic", ["tigecycline", "rifampicin", "rifampin"],
+     "⚠️ قصور كبدي: يحتاج تعديل جرعة ومتابعة إنزيمات الكبد.",
+     "HEPATIC IMPAIRMENT: dose adjustment and LFT monitoring required."),
+]
+
+
+def get_combination_therapy(
+    phenotypes: List[Dict],
+    *,
+    is_pregnant: bool = False,
+    age_years: Optional[float] = None,
+    is_renal: bool = False,
+    cl_cr: Optional[float] = None,
+    is_hepatic: bool = False,
+) -> List[Dict]:
+    """Combination therapy suggestions -- IDSA AMR Guidance v4.0 (2024).
+
+    FIX 2026-08-01 (second pass): this took `phenotypes` and nothing else. It
+    was the ONLY panel in the app that proposed agents without passing through
+    analyze_antibiotics() or apply_safety_gate(), and it renders in an expander
+    that is open by default under a CRITICAL header. A pregnant patient with
+    CRPA was shown "Ceftolozane-Tazobactam + Amikacin" with an empty caution
+    field, while the main engine was refusing amikacin for that same patient
+    three panels above.
+
+    These are XDR salvage regimens from the literature, so they are NOT removed
+    -- withholding the only option for a pan-resistant isolate is its own harm.
+    The host contraindication is attached to the option instead, in the
+    `caution` slot the renderer already displays.
+    """
+    results: List[Dict] = []
     ph_names = [p.get("phenotype", "") for p in phenotypes]
+
+    states = set()
+    if is_pregnant:
+        states.add("pregnancy")
+    if age_years is not None and age_years < 1:
+        states.add("neonate")
+    if is_renal or (cl_cr is not None and cl_cr < 60):
+        states.add("renal")
+    if is_hepatic:
+        states.add("hepatic")
+
     for ph in ["CRAB", "CRPA", "CRE", "MRSA", "VRE", "ESBL", "MDR"]:
-        if ph in ph_names and ph in COMBINATION_THERAPY:
-            results.append({"phenotype": ph, "data": COMBINATION_THERAPY[ph]})
+        if ph not in ph_names or ph not in COMBINATION_THERAPY:
+            continue
+        data = COMBINATION_THERAPY[ph]
+        if not states:
+            results.append({"phenotype": ph, "data": data})
+            continue
+        # Copy before annotating: COMBINATION_THERAPY is module-level and
+        # Streamlit reruns this on every interaction, so mutating it in place
+        # would accumulate host warnings from previous patients.
+        opts = []
+        for opt in data["options"]:
+            combo_low = opt["combo"].lower()
+            extra = [ar for state, drugs, ar, _en in _COMBO_HOST_FLAGS
+                     if state in states and any(d in combo_low for d in drugs)]
+            if extra:
+                new_opt = dict(opt)
+                new_opt["caution"] = "  ".join(
+                    x for x in [opt.get("caution", ""), *extra] if x)
+                new_opt["host_flagged"] = True
+                opts.append(new_opt)
+            else:
+                opts.append(opt)
+        results.append({"phenotype": ph, "data": {**data, "options": opts}})
     return results
 
 
@@ -4949,10 +5225,31 @@ PHENOTYPE_RULES = {
         "isolation": True,
     },
     "CRE": {
-        "organisms": ["Klebsiella spp.","E. coli","Escherichia coli",
-                      "Enterobacter cloacae","Enterobacter spp.",
-                      "Proteus mirabilis","Klebsiella pneumoniae",
-                      "Serratia marcescens","Citrobacter spp."],
+        # FIX 2026-08-01 (second pass). This list is a FOURTH organism table,
+        # independent of clinical_data.INTRINSIC_RESISTANCE, ORGANISM_PROFILE
+        # and clinical_matrix._ORG_CANON — and it was not updated when the
+        # AmpC genera were added, nor did it ever cover Salmonella, Shigella or
+        # the unspeciated fallback.
+        #
+        # The failure was silent and severe: predict_esbl() returned
+        # "carbapenemase" and the red banner appeared, but because no phenotype
+        # was detected the isolate got NO "🚨 عزل فوري مطلوب" isolation alert,
+        # NO combination-therapy panel (so Ceftazidime-Avibactam and
+        # Meropenem-Vaborbactam were never suggested), and evaluate_deescalation
+        # did not treat it as a Reserve organism. A carbapenem-resistant isolate
+        # that nobody is told to isolate is the one that spreads through a ward.
+        #
+        # "Citrobacter freundii" is spelled out because the entry here was
+        # "Citrobacter spp." and neither string is a substring of the other, so
+        # the species profile added earlier that day matched nothing.
+        "organisms": ["Klebsiella spp.", "E. coli", "Escherichia coli",
+                      "Enterobacter cloacae", "Enterobacter spp.",
+                      "Proteus mirabilis", "Klebsiella pneumoniae",
+                      "Serratia marcescens", "Citrobacter spp.",
+                      "Citrobacter freundii", "Citrobacter koseri",
+                      "Morganella morganii", "Providencia spp.",
+                      "Hafnia alvei", "Salmonella spp.", "Shigella spp.",
+                      "Enterobacterales (unspeciated)", "Enterobacterales"],
         "markers":   [("Imipenem/Cilastatin","R"),("Meropenem","R"),("Ertapenem","R")],
         "require_any": 1,  # واحد كافٍ
         "icon":  "🚨",
@@ -5773,42 +6070,6 @@ def _render_patho_result(patho_result: dict) -> None:
 # =========================================================
 # أدوات رسم الصورة
 # =========================================================
-def _draw_rbox(draw: Any, box: tuple, bg: tuple, bd: tuple,
-               radius: int = 14, width: int = 3) -> None:
-    draw.rounded_rectangle(box, radius=radius, fill=bg, outline=bd, width=width)
-
-def _tw(draw: Any, text: str, font: Any) -> float:
-    try:
-        return draw.textlength(text, font=font)
-    except Exception:
-        return len(text) * (font.size if hasattr(font, "size") else 8)
-
-def _fh(font: Any) -> int:
-    return font.size if hasattr(font, "size") else 14
-
-def _draw_text_wrap(draw: Any, x: float, y: float, text: str,
-                    font: Any, fill: tuple, max_w: float,
-                    line_gap: int = 5) -> float:
-    words = text.split()
-    lines: List[str] = []
-    cur   = ""
-    for w in words:
-        trial = (cur + " " + w).strip()
-        if _tw(draw, trial, font) <= max_w:
-            cur = trial
-        else:
-            if cur:
-                lines.append(cur)
-            cur = w
-    if cur:
-        lines.append(cur)
-    lh = _fh(font) + line_gap
-    for line in lines:
-        draw.text((x, y), line, fill=fill, font=font)
-        y += lh
-    return y
-
-
 def _score_color(score: int) -> str:
     if score >= 75: return "#922b21"
     if score >= 50: return "#b7770d"
@@ -6701,6 +6962,13 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:0.6mm 0; }
             "MW_ADEQUATE":   ("al-info",   "Murray-Washington: Adequate"),
             "SIRS_HIGH":     ("al-danger", "SIRS ≥3 -- Sepsis Probable"),
             "PEDIATRIC_UTI": ("al-info",   "Pediatric threshold applied"),
+            # Added 2026-08-01: an unread colony count used to contribute a
+            # silent zero. It now contributes nothing AND says so, because a
+            # verdict built on a field nobody filled in should not look the
+            # same as one built on a real reading.
+            "CFU_NOT_REPORTED": ("al-warn",
+                                 "Colony count not reported / unreadable -- "
+                                 "excluded from the score"),
         }
         for fl, (cls, msg) in flag_msgs.items():
             if fl in flags:
@@ -7954,7 +8222,7 @@ if uploaded:
         # Legionella / Mycoplasma / Rickettsia are diagnosed by PCR / serology /
         # urine antigen — any S/I/R entered for them is not meaningful. Surface
         # empiric therapy from the profile and tell the user to ignore the AST panel.
-        _ATYPICAL_NO_AST = {"Legionella pneumophila", "Mycoplasma spp.", "Rickettsia spp."}
+        _ATYPICAL_NO_AST = {"Legionella pneumophila", "Mycoplasma spp."}
         if organism_type in _ATYPICAL_NO_AST:
             _emp = _drop_intrinsic(
                 (ORGANISM_PROFILE.get(organism_type) or {}).get("first_line", []),
@@ -9271,7 +9539,11 @@ if uploaded:
                 st.caption(f"📚 {_dur.get('ref','')}")
 
             # ── ② Combination Therapy (auto if MDR phenotype) ────────
-            _combos = get_combination_therapy(phenotypes)
+            _combos = get_combination_therapy(
+                phenotypes,
+                is_pregnant=is_preg, age_years=age,
+                is_renal=is_renal, cl_cr=cl_cr, is_hepatic=is_hepatic,
+            )
             if _combos:
                 with st.expander(f"🔬 Combination Therapy ({len(_combos)} phenotype)", expanded=True):
                     st.caption("MDR/XDR combination therapy -- IDSA AMR Guidance v4.0 (2024)")
@@ -9287,9 +9559,19 @@ if uploaded:
                                 with st.container(border=True):
                                     _ca, _cb = st.columns([3,1])
                                     with _ca:
-                                        st.markdown(f"**{_op['combo']}** -- {_op['evidence']}")
+                                        _hf = "  ⚠️" if _op.get("host_flagged") else ""
+                                        st.markdown(f"**{_op['combo']}** -- {_op['evidence']}{_hf}")
                                         st.caption(_op["indication"])
-                                        if _op.get("caution"): st.warning(_op["caution"])
+                                        # A host contraindication is an error,
+                                        # not a caption: these are the only
+                                        # agents in the app that reach the
+                                        # screen without passing the safety
+                                        # gate, so the warning has to carry the
+                                        # weight the gate would have.
+                                        if _op.get("host_flagged"):
+                                            st.error(_op.get("caution",""))
+                                        elif _op.get("caution"):
+                                            st.warning(_op["caution"])
                                     with _cb:
                                         st.caption(_op["ref"])
 
@@ -9515,7 +9797,11 @@ if uploaded:
                         age=age, sex=sex, is_renal=is_renal,
                         phenotypes=phenotypes, severity=_sev_pdf,
                     ) if _pdf_dur else None
-                    _combo_for_pdf = get_combination_therapy(phenotypes) if _pdf_combo else None
+                    _combo_for_pdf = get_combination_therapy(
+                        phenotypes,
+                        is_pregnant=is_preg, age_years=age,
+                        is_renal=is_renal, cl_cr=cl_cr, is_hepatic=is_hepatic,
+                    ) if _pdf_combo else None
                     _hep_for_pdf   = (get_hepatic_recommendations(allowed, _cp_pdf)
                                       if is_hepatic else None)
                     with st.spinner("جاري توليد التقرير PDF..."):

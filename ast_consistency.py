@@ -362,7 +362,6 @@ EXCEPTIONAL_PHENOTYPES: List[Dict[str, Any]] = [
     },
 ]
 
-_RANK = {"S": 0, "I": 1, "R": 2}
 
 
 def _worse_than(a: Optional[str], b: Optional[str]) -> bool:
