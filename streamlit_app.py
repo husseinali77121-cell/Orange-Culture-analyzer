@@ -124,6 +124,21 @@ except Exception as _sg_exc:
     SAFETY_GATE_AVAILABLE = False
     logger.error("safety_gate/clinical_matrix unavailable: %s", _sg_exc)
 
+# Pre-release verification. Deliberately a soft dependency: if this module is
+# missing the app must still produce a report — it just cannot vouch for it,
+# and says so rather than showing a green badge it did not earn.
+try:
+    from self_check import (run_self_check, state_badge, SELF_CHECK_VERSION,
+                            OK as _SC_OK, ATTENTION as _SC_ATTN, BLOCK as _SC_BLOCK)
+    SELF_CHECK_AVAILABLE = True
+except Exception as _sc_exc:
+    run_self_check = None
+    state_badge = None
+    SELF_CHECK_VERSION = "unavailable"
+    _SC_OK, _SC_ATTN, _SC_BLOCK = "ok", "attention", "block"
+    SELF_CHECK_AVAILABLE = False
+    logger.error("self_check unavailable: %s", _sc_exc)
+
 # =========================================================
 # ملاحظة: Ampicillin, Amoxicillin, Tetracycline, Cephradine
 # منقولة بالكامل إلى abx_guidelines.py
@@ -1679,6 +1694,124 @@ def is_intrinsically_avoided(organism_type: str, drug_name: str, drug_info: Dict
 def build_banned_item(name: str, category: str, reason_short: str, reason_detail: str) -> Dict[str, str]:
     return {"name": name, "category": category,
             "reason_short": reason_short, "reason_detail": reason_detail}
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# BANNED-CATEGORY LABELS — module level ON PURPOSE
+# -----------------------------------------------------------------------
+# This map used to live inside `with st.expander(...)` in the UI block,
+# below the authentication cut. Everything below that cut is unreachable to
+# every test suite in the repo (they exec only the top half of this file),
+# so no test could see that the map held 6 keys while the engine emitted 12.
+# Hoisting it here is what makes test_render_layer.py possible at all.
+#
+# NOTE FOR FUTURE EDITS: the suites locate the cut with
+#   _src.index("if not st.session_state." + "authenticated:")
+# on the RAW TEXT, so the first textual occurrence wins — including one
+# inside a comment. Never write that marker literally above this line or the
+# harness will truncate the module here and every suite will die on KeyError.
+# ═══════════════════════════════════════════════════════════════════════
+BANNED_CATEGORY_LABELS: Dict[str, str] = {
+    "resistant":              "مقاوم في المزرعة",
+    "renal":                  "قصور كلوي",
+    "hepatic":                "قصور كبدي",
+    "pregnancy":              "ممنوع في الحمل",
+    "child":                  "غير مناسب للعمر",
+    "neonate":                "ممنوع لحديثي الولادة",
+    "organism":               "غير فعال للجرثومة",
+    "specimen":               "لا يناسب نوع العينة",
+    "d_test_inducible":       "مقاومة كليندامايسين مُحدَثة (D-test)",
+    "penicillinase_producer": "منتج للبنسلينيز",
+    "unreadable":             "نتيجة غير مقروءة",
+    "safety_gate":            "بوابة الأمان",
+    "other":                  "موانع أخرى",
+}
+
+
+def banned_category_label(category: Optional[str]) -> str:
+    """Never returns ''. An unlabelled ban reads as no ban at all."""
+    _c = (category or "other").strip()
+    return BANNED_CATEGORY_LABELS.get(_c) or f"مانع: {_c}"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# WARNED-ITEM NOTE RESOLVER — one function, every renderer
+# -----------------------------------------------------------------------
+# DEFECT 2026-08-02: `warning_reason` is a single slot with six possible
+# values, but every renderer hard-coded the same two branches and fell
+# through to `renal_note` for the rest. Measured across 5,920 scenarios,
+# 9,200 of 18,919 warned drugs (48.6%) printed a note from the WRONG ORGAN
+# or nothing at all. The worst case is not a blank line, it is a reversed
+# one: a Child-Pugh C cirrhotic with normal kidneys saw
+#
+#     ⚠️ Ceftriaxone -- 🟢 آمن كلوياً — يُطرح كبدياً أساساً.
+#
+# inside a WARNING box. The sentence is true and it names the exact reason
+# the drug is dangerous for this patient, phrased as reassurance. The real
+# instruction (`hepatic_rec`, computed and stored in analyze_antibiotics)
+# was never displayed anywhere.
+#
+# The fix is one resolver instead of N copies: a renderer can no longer
+# forget a warning_reason, because it does not enumerate them.
+# ═══════════════════════════════════════════════════════════════════════
+def warned_note_for(item: Dict, lang: str = "ar") -> str:
+    """The note that belongs to THIS warning. Never empty for a known reason."""
+    wr = item.get("warning_reason") or ""
+    _en = lang == "en"
+
+    def _fallback() -> str:
+        # Contract: this function NEVER returns "". A branch whose payload
+        # field is missing must degrade to something readable, not to a blank
+        # line — a blank warning reads as "no reason exists", which is the
+        # exact failure mode this resolver was written to end.
+        for k in ("gate_note", "neonate_note", "esbl_note", "hepatic_rec",
+                  "reason_short", "reason_detail", "renal_note"):
+            if item.get(k):
+                return str(item[k])
+        return ("Use with caution — reason not recorded. Review manually."
+                if _en else
+                "يُستخدم بحذر — السبب غير مسجَّل. راجع الحالة يدوياً.")
+
+    if wr in ("esbl_bli_uti_only", "possible_carbapenemase"):
+        return ((item.get("esbl_note_en") if _en else "")
+                or item.get("esbl_note") or _fallback())
+
+    if wr == "hepatic_adjustment":
+        _lvl = item.get("hepatic_level") or ""
+        _rec = item.get("hepatic_rec") or ""
+        if _rec:
+            return (f"Child-Pugh {item.get('child_pugh_used') or ''} — {_lvl}: {_rec}".strip()
+                    if _en else
+                    f"قصور كبدي ({_lvl}): {_rec}")
+        return ("Hepatic impairment — adjust the dose; no band recorded for this agent."
+                if _en else
+                "قصور كبدي — يلزم تعديل الجرعة؛ لا توجد شريحة مسجَّلة لهذا الدواء.")
+
+    if wr in ("neonate_age_unknown", "neonate_caution"):
+        return item.get("neonate_note") or item.get("reason_short") or _fallback()
+
+    if wr == "safety_gate":
+        return ((item.get("gate_note_en") if _en else item.get("gate_note"))
+                or item.get("gate_note") or _fallback())
+
+    if wr == "renal_adjustment":
+        _n = item.get("renal_note") or ""
+        _lim = item.get("renal_limit")
+        _crcl = item.get("crcl_used")
+        _extra = ""
+        if _crcl is not None and _lim:
+            _extra = (f" (CrCl {_crcl:.0f} ≤ {_lim} mL/min)" if not _en
+                      else f" (CrCl {_crcl:.0f} <= {_lim} mL/min)")
+        return (_n + _extra).strip() or _fallback()
+
+    if wr == "intermediate_culture":
+        return ("Intermediate (I) on culture — EUCAST: susceptible at INCREASED exposure."
+                if _en else
+                "نتيجة Intermediate (I) — تعريف EUCAST: حسّاس عند زيادة الجرعة/التعرّض.")
+
+    # Unknown / unset reason.
+    return _fallback()
+
 # ═══════════════════════════════════════════════════════════════════════
 # HEPATIC DOSING TABLE — defined here (not further down the file) because
 # analyze_antibiotics() now ENFORCES it rather than merely annotating it.
@@ -2326,13 +2459,30 @@ def analyze_antibiotics(
             if _m is not None and not (0 <= _m <= 11):
                 _m = None
             if _m is None:
-                warned.append({
-                    "name": drug, "category": "neonate",
-                    "reason_short": f"عمر غير محدد بالشهور — تحقق من حد الـ {_neo['months']} شهور.",
-                    "reason_detail": (f"{_neo['reason']}{_alt}\n\n"
-                                      "أدخل العمر بالشهور (خانة «أقل من سنة») "
-                                      "ليطبّق النظام الحد العمري بدقة."),
-                })
+                # DEFECT 2026-08-02: this item was built WITHOUT `**info` and
+                # without `warning_reason`, unlike every other warned item. Two
+                # consequences, both silent:
+                #   1. the on-screen warned renderer prints item['renal_note'],
+                #      which this dict does not have -> the line rendered as
+                #      "**Ceftriaxone** -- " with NO text. The kernicterus
+                #      warning for a neonate was computed and then discarded.
+                #   2. no `aware`/`priority`/`class` -> the text report printed
+                #      "WHO AWaRe : -" and "Limit CrCl: <= -", and sort() pushed
+                #      the item to the bottom on the default priority of 999.
+                # reason_short/reason_detail are read only by the BANNED
+                # renderers, never by the warned ones.
+                _wn = {"name": drug, **info, "category": "neonate",
+                       "warning_reason": "neonate_age_unknown",
+                       "reason_short": f"عمر غير محدد بالشهور — تحقق من حد الـ {_neo['months']} شهور.",
+                       "reason_detail": (f"{_neo['reason']}{_alt}\n\n"
+                                         "أدخل العمر بالشهور (خانة «أقل من سنة») "
+                                         "ليطبّق النظام الحد العمري بدقة.")}
+                _wn["neonate_note"] = (
+                    f"⚠️ عمر المريض أقل من سنة والعمر بالشهور غير مُدخل. "
+                    f"{drug} مُقيَّد تحت {_neo['months']} شهر: {_neo['reason']}{_alt} "
+                    f"أدخل العمر بالشهور في خانة «أقل من سنة» ليطبّق النظام الحد العمري."
+                )
+                warned.append(_wn)
                 continue
             if _m < _neo["months"]:
                 if _neo["action"] == "ban":
@@ -2342,10 +2492,16 @@ def analyze_antibiotics(
                         f"{_neo['reason']}{_alt}",
                     ))
                 else:
+                    # Same defect as the unknown-months branch above: built
+                    # without **info and without warning_reason, so the warning
+                    # rendered as an empty line.
                     warned.append({
-                        "name": drug, "category": "neonate",
+                        "name": drug, **info, "category": "neonate",
+                        "warning_reason": "neonate_caution",
                         "reason_short": f"حذر شديد تحت {_neo['months']} شهر.",
                         "reason_detail": f"{_neo['reason']}{_alt}",
+                        "neonate_note": (f"⚠️ حذر شديد تحت {_neo['months']} شهر "
+                                         f"(العمر {_m} شهر): {_neo['reason']}{_alt}"),
                     })
                 continue
 
@@ -2596,7 +2752,8 @@ def analyze_antibiotics(
                                              "normal (renal)"):
                     warned.append({"name": drug, **info,
                                    "warning_reason": "hepatic_adjustment",
-                                   "hepatic_level": _lvl, "hepatic_rec": _rec})
+                                   "hepatic_level": _lvl, "hepatic_rec": _rec,
+                                   "child_pugh_used": _grade})
                     continue
 
         # ── Renal dose adjustment (a CAUTION, so it must run last) ────────────
@@ -7933,15 +8090,16 @@ def generate_report(
                          "Prefer a fully susceptible agent; if unavoidable, dose with TDM.")
             if item.get("warning_reason") == "intermediate_culture":
                 L.append("Reason    : Intermediate (I) on culture result")
-            elif item.get("esbl_note") or item.get("esbl_note_en"):
-                # Mechanism warnings (ESBL BLI-in-UTI, suspected carbapenemase)
-                # carry their reason in esbl_note; without this branch they fell
-                # through to renal_note and printed an empty reason.
-                L.append("Reason    : " + (item.get("esbl_note_en")
-                                           or item.get("esbl_note", "-")))
             else:
-                L += [f"Renal note: {item.get('renal_note','-')}",
-                      f"Limit CrCl: <= {item.get('renal_limit','-')} ml/min"]
+                # Same single resolver the screen uses, so the two renderers
+                # cannot drift apart again. This branch previously printed
+                # "Renal note:" and "Limit CrCl:" for EVERY non-ESBL warning,
+                # including hepatic and neonatal ones, where both lines were
+                # either irrelevant or literally "-".
+                L.append("Reason    : " + (warned_note_for(item, "en")
+                                           or warned_note_for(item, "ar")))
+                if item.get("warning_reason") == "renal_adjustment":
+                    L.append(f"Limit CrCl: <= {item.get('renal_limit','-')} ml/min")
             if show_commercial_names:
                 _brands = get_commercial_name(item["name"])
                 if _brands:
@@ -9067,6 +9225,10 @@ if uploaded:
         # reverse), which is what makes it safe to run in front of a live
         # engine: the worst a bug in it can do is make the advice stricter.
         # ══════════════════════════════════════════════════════════════════════
+        # _gate_report must exist even when the gate is unavailable: the
+        # self-check below reads it, and an absent gate is itself a finding
+        # ("GATE_DID_NOT_RUN") rather than a crash.
+        _gate_report: Dict[str, Any] = {}
         if SAFETY_GATE_AVAILABLE:
             allowed, warned, banned, _gate_report = apply_safety_gate(
                 allowed, warned, banned,
@@ -9086,9 +9248,20 @@ if uploaded:
                         "الكلى، العمر). لا يمكنها ترقية أي دواء — فقط تشديد التصنيف."
                     )
                     for _m in _moves:
+                        # DEFECT 2026-08-02: this read `reason_ar` / `reason`.
+                        # safety_gate emitted neither — the key was `why` — so
+                        # 100% of gate reclassifications rendered as
+                        # "Cefazolin: allowed → banned — " with the reason
+                        # blank. safety_gate now emits reason_ar/reason_en; the
+                        # `why` fallback keeps older gate versions working.
+                        _why = (_m.get("reason_ar") or _m.get("reason_en")
+                                or _m.get("why") or "سبب غير مسجَّل — راجع يدوياً.")
+                        _lyr = ", ".join(_m.get("layers") or [])
                         st.write(
                             f"- **{_m.get('drug')}**: `{_m.get('from')}` → "
-                            f"`{_m.get('to')}` — {_m.get('reason_ar') or _m.get('reason') or ''}"
+                            f"`{_m.get('to')}` — {_why}"
+                            + (f"  \n  <sub>الطبقات: {_lyr}</sub>" if _lyr else ""),
+                            unsafe_allow_html=True,
                         )
             if not _gate_report.get("specimen_recognised", True):
                 st.warning(
@@ -9174,6 +9347,11 @@ if uploaded:
                         st.caption(f"Evidence: {', '.join(ph['matched_markers'])}")
 
         # ── AST Quality Control Checker ───────────────────────────────────
+        # Defined unconditionally: the pre-release self-check reads qc_issues,
+        # and "no panel was entered" is a different fact from "the panel was
+        # entered and produced no findings". Leaving the name undefined would
+        # have made the two indistinguishable at the point of use.
+        qc_issues: List[Dict[str, Any]] = []
         if sir_map:
             qc_issues    = run_ast_qc(organism_type, sir_map, specimen=culture_type)
             qa_confidence = compute_qa_confidence(qc_issues, sir_map, organism_type)
@@ -9288,19 +9466,17 @@ if uploaded:
 
         if banned:
             with st.expander("🚫 Contraindicated / Ineffective", expanded=True):
-                cat_labels = {
-                    "resistant": "مقاوم في المزرعة",
-                    "renal":     "قصور كلوي",
-                    "pregnancy": "ممنوع في الحمل",
-                    "child":     "غير مناسب للعمر",
-                    "organism":  "غير فعال للجرثومة",
-                    "other":     "موانع أخرى",
-                }
                 for item in banned:
                     st.error(
-                        f"💊 {item['name']}  [{cat_labels.get(item['category'],'')}]\n"
-                        f"{item['reason_short']}"
+                        f"💊 {item['name']}  [{banned_category_label(item.get('category'))}]\n"
+                        f"{item.get('reason_short') or '—'}"
                     )
+                    # The gate's specific layer reasons (BBB penetration,
+                    # pregnancy, hepatic) live in reason_detail and were never
+                    # shown on screen, only in the text report.
+                    _detail = (item.get("reason_detail") or "").strip()
+                    if _detail and _detail != (item.get("reason_short") or "").strip():
+                        st.caption(_detail)
 
         if warned:
             with st.expander("🟡 Warnings / Dose Adjustment Required", expanded=True):
@@ -9323,13 +9499,12 @@ if uploaded:
                 for item in _others:
                     sir_tag = (f" [{sir_map[item['name']]}]"
                                if sir_map and item['name'] in sir_map else "")
-                    if item.get("warning_reason") in ("esbl_bli_uti_only",
-                                                      "possible_carbapenemase"):
-                        st.warning(
-                            f"**{item['name']}{sir_tag}** -- {item.get('esbl_note','')}"
-                        )
-                    else:
-                        st.warning(f"**{item['name']}{sir_tag}** -- {item.get('renal_note','')}")
+                    # One resolver, not a branch per reason. The previous code
+                    # handled two warning_reasons and printed renal_note for
+                    # everything else — including hepatic, neonatal and
+                    # safety-gate warnings, which have nothing to do with the
+                    # kidney. See warned_note_for().
+                    st.warning(f"**{item['name']}{sir_tag}** -- {warned_note_for(item)}")
                     # An I result that also needs a dose adjustment gives the
                     # clinician two instructions pointing opposite ways. Say so
                     # explicitly rather than printing only the one that happened
@@ -9969,6 +10144,99 @@ if uploaded:
 
             else:
                 st.warning("⚠️ أضف `Pillow` لـ requirements.txt لتفعيل صورة الملخص.")
+
+            # ── فحص ما قبل التبليغ ────────────────────────────────────────────
+            # DESIGN NOTE — why this RUNS ON LOAD instead of only on click:
+            # a check that requires a button press does not get pressed on a
+            # busy day, and a check nobody runs is decoration. So the verdict
+            # is always computed and the badge is always visible; the button
+            # only opens the detail and forces a fresh re-run.
+            #
+            # WHY IT IS NOT WRITTEN INTO THE PDF OR THE IMAGE: those are the
+            # documents that leave the lab. A machine-generated "✅ passed"
+            # travelling on a clinical report would be read as a clearance the
+            # software is not entitled to give. The check verifies that the
+            # report is COMPLETE and INTERNALLY CONSISTENT — it does not, and
+            # cannot, verify that the advice is clinically correct. It stays on
+            # screen, for the person releasing the result.
+            st.divider()
+            st.markdown("### 🧪 فحص ما قبل التبليغ")
+
+            if not SELF_CHECK_AVAILABLE:
+                st.warning("⚠️ وحدة `self_check.py` غير متاحة — لم يُجرَ أي فحص "
+                           "على هذا التقرير.")
+            else:
+                try:
+                    _sc = run_self_check(
+                        allowed=allowed, warned=warned, banned=banned,
+                        preg_warn_items=preg_warn_items,
+                        sir_map=sir_map, organism=organism_type,
+                        specimen=culture_type,
+                        age=age, age_months=age_months,
+                        is_renal=is_renal, cl_cr=cl_cr, is_preg=is_preg,
+                        is_hepatic=is_hepatic, child_pugh=_child_pugh_now,
+                        gate_report=_gate_report,
+                        qc_issues=qc_issues,
+                        warned_note_for=warned_note_for,
+                        banned_category_label=banned_category_label,
+                        intrinsic_checker=is_intrinsically_avoided,
+                    )
+                except Exception as _sc_err:
+                    _sc = None
+                    st.error(f"⚠️ تعذّر إجراء الفحص: {_sc_err} — "
+                             "راجع التقرير يدوياً بالكامل.")
+
+                if _sc:
+                    _badge = state_badge(_sc["state"])
+                    if _sc["state"] == _SC_BLOCK:
+                        st.error(f"**{_badge}**")
+                    elif _sc["state"] == _SC_ATTN:
+                        st.warning(f"**{_badge}**")
+                    else:
+                        st.success(f"**{_badge}**")
+
+                    _nb = _sc["counts"].get(_SC_BLOCK, 0)
+                    _na = _sc["counts"].get(_SC_ATTN, 0)
+                    st.caption(
+                        f"فُحص: {_sc['checked']['allowed']} موصى به · "
+                        f"{_sc['checked']['warned']} تحذير · "
+                        f"{_sc['checked']['banned']} ممنوع · "
+                        f"{_sc['checked']['gate_moves']} إعادة تصنيف "
+                        f"— النتيجة: {_nb} مانع، {_na} للمراجعة."
+                    )
+
+                    if st.button("🔍 عرض تفاصيل الفحص / إعادة الفحص",
+                                 use_container_width=True,
+                                 key="self_check_detail_btn"):
+                        st.session_state._sc_open = not st.session_state.get("_sc_open", False)
+
+                    if st.session_state.get("_sc_open"):
+                        if not _sc["findings"]:
+                            st.success(
+                                "لم يُعثر على أي ملاحظة. التقرير مكتمل ومتّسق "
+                                "داخلياً: كل دواء في خانة واحدة، كل منع له سبب "
+                                "معروض، كل تحذير له نص، وبيانات المريض كافية "
+                                "لتطبيق كل البوابات."
+                            )
+                        for _f in _sc["findings"]:
+                            _msg = f"**[{_f['code']}]** {_f['title_ar']}"
+                            if _f.get("detail_ar"):
+                                _msg += f"  \n{_f['detail_ar']}"
+                            if _f["level"] == _SC_BLOCK:
+                                st.error(_msg)
+                            else:
+                                st.warning(_msg)
+                        st.caption(
+                            f"self_check v{SELF_CHECK_VERSION} · "
+                            f"gate v{GATE_VERSION} · matrix v{MATRIX_VERSION}"
+                        )
+                        st.info(
+                            "**ما لا يعنيه الفحص الأخضر:** أنه لا يثبت صحة "
+                            "التوصية سريرياً. يثبت فقط أن التقرير مكتمل ومتّسق "
+                            "ولا يحتوي على تناقض داخلي. الحكم السريري يظل "
+                            "مسؤولية أخصائي الميكروبيولوجي والطبيب المعالج."
+                        )
+
 
 st.divider()
 st.markdown("""

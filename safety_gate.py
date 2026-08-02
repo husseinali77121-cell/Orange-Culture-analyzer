@@ -145,6 +145,8 @@ def apply_safety_gate(
             new_banned.append(enriched)
             report["moves"].append({"drug": drug, "from": "allowed", "to": "banned",
                                     "layers": enriched["gate_layers"],
+                                    "reason_ar": _reason_block(v, "ar"),
+                                    "reason_en": _reason_block(v, "en"),
                                     "why": _reason_block(v, "en")})
         elif v.level == CAUTION:
             enriched = dict(item) if isinstance(item, dict) else {"name": drug}
@@ -158,6 +160,8 @@ def apply_safety_gate(
             new_warned.append(enriched)
             report["moves"].append({"drug": drug, "from": "allowed", "to": "warned",
                                     "layers": enriched["gate_layers"],
+                                    "reason_ar": _reason_block(v, "ar"),
+                                    "reason_en": _reason_block(v, "en"),
                                     "why": _reason_block(v, "en")})
         else:
             new_allowed.append(item)
@@ -170,7 +174,9 @@ def apply_safety_gate(
             continue
         try:
             v = evaluate(drug, organism, specimen, strict_unknown=False, **host)
-        except Exception:
+        except Exception as exc:                      # pass 1 logs; this did not
+            logger.warning("safety_gate pass-2 failed on %s: %s", drug, exc,
+                           exc_info=True)
             continue
         if v.level == DENY:
             enriched = dict(item) if isinstance(item, dict) else {"name": drug}
@@ -186,6 +192,8 @@ def apply_safety_gate(
             promoted_out.append(item)
             report["moves"].append({"drug": drug, "from": "warned", "to": "banned",
                                     "layers": enriched["gate_layers"],
+                                    "reason_ar": _reason_block(v, "ar"),
+                                    "reason_en": _reason_block(v, "en"),
                                     "why": _reason_block(v, "en")})
     for it in promoted_out:
         try:
