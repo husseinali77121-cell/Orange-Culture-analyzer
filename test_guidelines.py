@@ -81,9 +81,24 @@ unregistered = sorted(ENGINE_IDS - set(RULES))
 for rid in unregistered:
     fail(f"rule '{rid}' is active in the engine but has no citation row")
 
-dead = sorted(set(RULES) - ENGINE_IDS)
+# SYSTEM_CITATIONS are rows describing a classification system applied across
+# the whole formulary (WHO AWaRe, Magiorakos MDR/XDR/PDR, the CRPA definition)
+# rather than a rule with an ID. They are exempt from the dead-citation check
+# and ONLY they are: the exemption is a named literal in the registry, so
+# adding to it is a deliberate act rather than a pattern that quietly widens.
+try:
+    from guideline_registry import SYSTEM_CITATIONS
+except ImportError:
+    SYSTEM_CITATIONS = frozenset()
+
+dead = sorted(set(RULES) - ENGINE_IDS - set(SYSTEM_CITATIONS))
 for rid in dead:
     fail(f"citation row '{rid}' has no matching rule in the engine (dead citation)")
+
+# The exemption must not become a dumping ground: every member has to exist.
+for rid in sorted(SYSTEM_CITATIONS):
+    if rid not in RULES:
+        fail(f"SYSTEM_CITATIONS names '{rid}' but the registry has no such row")
 
 # ── 3. Sources are complete ──────────────────────────────────────────────────
 for key, src in SOURCES.items():

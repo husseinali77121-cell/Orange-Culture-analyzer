@@ -1,7 +1,7 @@
 # Orange Lab Microbiology CDSS — سجل المراجعة والتثبيت
 ### Audit & Hardening Log — commercial build (`streamlit_app.py`)
 
-**تاريخ المراجعة:** 2026-07-22 · **الإصدار المرجعي:** EUCAST v16.0/16.1 · CLSI M100 Ed36 · IDSA AMR v4.0 (2024) · WHO AWaRe 2025 · WHO BPPL 2024
+**تاريخ المراجعة:** 2026-07-22 · **الإصدار المرجعي:** EUCAST v16.1/16.1 · CLSI M100 Ed36 · IDSA AMR v4.0 (2024) · WHO AWaRe 2025 · WHO BPPL 2024
 
 **الحجم:** 7 ملفات جديدة · 15 ملف معدّل · 1,024 سطر متغيّر
 
@@ -59,11 +59,11 @@
 
 | القاعدة | المصدر | الحالة قبل |
 |---|---|---|
-| `nobp_imipenem_proteae` | EUCAST v16.0 note 2 | مفيش — `Imipenem S` على Proteus كان بيعدّي |
+| `nobp_imipenem_proteae` | EUCAST v16.1 note 2 | مفيش — `Imipenem S` على Proteus كان بيعدّي |
 | `intr_strep_enterococcus_aminoglycosides` | EUCAST Table 4 + CLSI HLAR | مفيش — `Gentamicin S` على Enterococcus كان بيعدّي |
 | `intr_citrobacter_koseri_klebsiella_oxytoca_classA` | EUCAST v3.3 Table 2 | *C. koseri* مكانش عليه أي قاعدة |
 | `intr_nonfermenter_narrow_spectrum` | EUCAST v3.3 Table 3 header | كانت "no breakpoints" الأضعف |
-| Serratia في `nobp_tigecycline_proteae` | EUCAST v16.0 note 3/A | ناقصة |
+| Serratia في `nobp_tigecycline_proteae` | EUCAST v16.1 note 3/A | ناقصة |
 
 ---
 
@@ -72,7 +72,7 @@
 - `data/antibiotics.py` — `re.sub` بدون `import re` → NameError
 - `modules/qc.py` — `AST_QC_RULES` غير معرّف → NameError
 - ~~`fuzzy_match` بيرجّع 100.0 لمجرد الاحتواء~~ **متصلّح** (مراجعة 2026-07): الاحتواء بقى بيرجّع درجة متناسبة مع طول التطابق، مش 100.0 ثابتة.
-- 132 استشهاد مبهم أو غلط اتصلّحوا (`IDSA AMR 2025` → `v4.0 (2024)` · `EUCAST 2026` → `Breakpoint Tables v16.0` · `CLSI M100 2026` → `Ed36`)
+- 132 استشهاد مبهم أو غلط اتصلّحوا (`IDSA AMR 2025` → `v4.0 (2024)` · `EUCAST 2026` → `Breakpoint Tables v16.1` · `CLSI M100 2026` → `Ed36`)
 
 ---
 

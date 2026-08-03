@@ -37,14 +37,15 @@ ABX_GUIDELINES = {
     },
     "Ampicillin/Sulbactam": {
         "priority": 2, "class": "Penicillin + Beta-lactamase Inhibitor (IV)",
-        "note": "💉 IV فقط. فعال للموجبات والسالبات. أساس علاج Acinetobacter بجرعات عالية (IDSA AMR Guidance v4.0 (2024)).",
+        "note": "💉 IV فقط. فعال للموجبات والسالبات. أساس علاج Acinetobacter بجرعات عالية (IDSA AMR Guidance 2026).",
         # DOSE DETAIL 2026-07-30: was a bare "dose adjustment required" with no
         # dose, interval or band — the clinician was told to adjust but not how.
         "renal_limit": 30,
         "renal_note": "Normal: 1.5-3g q6h IV. CrCl 15-29: 1.5-3g q12h. CrCl 5-14: 1.5-3g q24h. HD: جرعة بعد dialysis. BNF 2025.",
         "renal_note_en": "Normal: 1.5-3g q6h IV. CrCl 15-29: 1.5-3g q12h. CrCl 5-14: 1.5-3g q24h. HD: dose after dialysis. BNF 2025.",
-        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
-        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
+        "hepatic_caution": False, # AWaRe CORRECTED 2026-08-03 vs WHO AWaRe 2025 (B09489): was Watch
+        "aware": "Access", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
         "aliases": ["unictam","sigmaclav","unasyn",
@@ -65,7 +66,7 @@ ABX_GUIDELINES = {
     },
     "Piperacillin + Tazobactam": {
         "priority": 4, "class": "Anti-pseudomonal Penicillin + Inhibitor (IV)",
-        "note": "🛑 (مثل Tazocin) IV فقط. واسع الطيف جداً — يُحفظ للحالات الشديدة (IDSA AMR Guidance v4.0 (2024)).",
+        "note": "🛑 (مثل Tazocin) IV فقط. واسع الطيف جداً — يُحفظ للحالات الشديدة (IDSA AMR Guidance 2026).",
         # renal_limit 20 -> 40: own band starts at 40
         "renal_limit": 40,
         "renal_note": "CrCl 20-40: 3.375g q6h. CrCl <20: 2.25g q6h. HD: 2.25g q8h + dose بعد dialysis. BNF 2025.", "renal_note_en": "CrCl 20-40: 3.375g q6h. CrCl <20: 2.25g q6h. HD: 2.25g q8h + dose after dialysis. BNF 2025.",
@@ -106,7 +107,7 @@ ABX_GUIDELINES = {
         "renal_limit": 50,
         "renal_note": "Normal: 500mg-1g q12h. جرعة تحميل 1g ثم: CrCl 25-50: 500mg q12h. CrCl 10-25: 500mg q24h. CrCl <10: 500mg q36h. BNF 2025.",
         "renal_note_en": "Normal: 500mg-1g q12h. Loading 1g then: CrCl 25-50: 500mg q12h. CrCl 10-25: 500mg q24h. CrCl <10: 500mg q36h. BNF 2025.",
-        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
         "hepatic_caution": False, "aware": "Access", "high_po": True,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -126,7 +127,7 @@ ABX_GUIDELINES = {
         "renal_limit": 30,
         "renal_note": "Normal: 250-500mg q8h. CrCl 10-30: 50-100% من الجرعة المعتادة. CrCl <10: 50% من الجرعة. BNF 2025.",
         "renal_note_en": "Normal: 250-500mg q8h. CrCl 10-30: 50-100% of the usual dose. CrCl <10: 50% of the dose. BNF 2025.",
-        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
         "hepatic_caution": False, "aware": "Watch", "high_po": True,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True,
@@ -147,7 +148,7 @@ ABX_GUIDELINES = {
         "renal_limit": 30,
         "renal_note": "Normal: 250-500mg q12h فموي. CrCl 10-30: نفس الجرعة q24h. CrCl <10: نفس الجرعة q48h. HD: جرعة بعد dialysis. BNF 2025.",
         "renal_note_en": "Normal: 250-500mg q12h PO. CrCl 10-30: same dose q24h. CrCl <10: same dose q48h. HD: dose after dialysis. BNF 2025.",
-        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
         "hepatic_caution": False, "aware": "Watch", "high_po": True,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True,
@@ -171,7 +172,7 @@ ABX_GUIDELINES = {
         "renal_limit": 20,
         "renal_note": "Normal: 750mg-1.5g q8h IV. CrCl 10-20: 750mg-1.5g q12h. CrCl <10: 750mg-1.5g q24h. HD: جرعة بعد dialysis. BNF 2025.",
         "renal_note_en": "Normal: 750mg-1.5g q8h IV. CrCl 10-20: 750mg-1.5g q12h. CrCl <10: 750mg-1.5g q24h. HD: dose after dialysis. BNF 2025.",
-        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -213,7 +214,7 @@ ABX_GUIDELINES = {
         "renal_limit": 60,
         "renal_note": "Normal: 400mg q24h (أو 200mg q12h). CrCl 21-60 أو HD: 300mg q24h (75%). CrCl ≤20 أو CAPD: 200mg q24h (50%). FDA label / BNF 2025.",
         "renal_note_en": "Normal: 400mg q24h (or 200mg q12h). CrCl 21-60 or HD: 300mg q24h (75%). CrCl ≤20 or CAPD: 200mg q24h (50%). FDA label / BNF 2025.",
-        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
         "hepatic_caution": False, "aware": "Watch", "high_po": True,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -238,7 +239,7 @@ ABX_GUIDELINES = {
         "renal_limit": 50,
         "renal_note": "Normal: 1-2g q8h (شديد: 2g q6-8h). CrCl 10-50: نفس الجرعة q12h. CrCl <10: نفس الجرعة q24h (BNF: خفض 50%). HD: 1-2g q24h + جرعة بعد dialysis. BNF 2025.",
         "renal_note_en": "Normal: 1-2g q8h (severe: 2g q6-8h). CrCl 10-50: same dose q12h. CrCl <10: same dose q24h (BNF: reduce 50%). HD: 1-2g q24h + dose after dialysis. BNF 2025.",
-        "dose_review": "renal band rewritten 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band rewritten 2026-07-30)",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -393,7 +394,7 @@ ABX_GUIDELINES = {
         "renal_limit": 50,
         "renal_note": "Normal: 200-400mg q12h. CrCl 20-50: نفس الجرعة q24h. CrCl <20: نصف الجرعة q24h. BNF 2025.",
         "renal_note_en": "Normal: 200-400mg q12h. CrCl 20-50: same dose q24h. CrCl <20: half the dose q24h. BNF 2025.",
-        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
         "hepatic_caution": True, "aware": "Watch", "high_po": True,
         "preg_status": "Warn",
         "preg_note": (
@@ -426,7 +427,7 @@ ABX_GUIDELINES = {
         "renal_limit": 30,
         "renal_note": "Normal: 400mg q12h. CrCl ≤30: 400mg q24h. BNF 2025.",
         "renal_note_en": "Normal: 400mg q12h. CrCl ≤30: 400mg q24h. BNF 2025.",
-        "dose_review": "renal band rewritten 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band rewritten 2026-07-30)",
         "hepatic_caution": True, "aware": "Watch", "high_po": True,
         "preg_status": "Warn",
         "preg_note": (
@@ -488,7 +489,8 @@ ABX_GUIDELINES = {
             "Bioavailability ~34-58% لكن تركيزه في البول عالٍ جداً."
         ),
         "renal_limit": 40, "renal_note": "CrCl <40: تجنّب الجرعات المتكررة (IV). جرعة واحدة فموية (3g) مقبولة حتى CrCl >10. BNF 2025.", "renal_note_en": "CrCl <40: avoid repeated doses (IV). single oral dose (3g) acceptable down to CrCl >10. BNF 2025.",
-        "hepatic_caution": False, "aware": "Access", "high_po": True,
+        "hepatic_caution": False, # AWaRe CORRECTED 2026-08-03: WHO AWaRe 2025: fosfomycin ORAL = Watch (IV = Reserve). This formulary carries the oral trometamol salt, so Watch. Previously coded Access.
+        "aware": "Watch", "high_po": True,
         "preg_status": "Warn",
         "preg_note": (
             "تحذير حمل — Fosfomycin:\n"
@@ -538,7 +540,7 @@ ABX_GUIDELINES = {
         "renal_limit": 60,
         "renal_note": "15-20mg/kg q24h. CrCl 40-60: q36h. CrCl 20-40: q48h. CrCl <20: الجرعة حسب المستويات. قياس المستويات إلزامي: trough < 5 mcg/mL (extended-interval: < 2-3) + كرياتينين يومي. KDIGO 2024.",
         "renal_note_en": "15-20mg/kg q24h. CrCl 40-60: q36h. CrCl 20-40: q48h. CrCl <20: level-guided dosing. Level monitoring mandatory: trough < 5 mcg/mL (extended-interval: < 2-3) + daily creatinine. KDIGO 2024.",
-        # AWaRe FIX: amikacin is an Access agent in WHO AWaRe 2023, not Watch.
+        # AWaRe FIX: amikacin is an Access agent in WHO AWaRe 2025, not Watch.
         "hepatic_caution": False, "aware": "Access", "high_po": False,
         "preg_status": "Banned",
         "preg_note": (
@@ -588,7 +590,7 @@ ABX_GUIDELINES = {
         "renal_limit": 30,
         "renal_note": "Normal: 250-500mg q12h. CrCl <30: خفض الجرعة 50% أو مضاعفة الفترة، ولا تتجاوز 14 يوماً. FDA label / BNF 2025.",
         "renal_note_en": "Normal: 250-500mg q12h. CrCl <30: reduce the dose by 50% or double the interval; do not exceed 14 days. FDA label / BNF 2025.",
-        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
         "hepatic_caution": True, "aware": "Watch", "high_po": True,
         "preg_status": "Banned",
         "preg_note": (
@@ -630,7 +632,7 @@ ABX_GUIDELINES = {
         "renal_limit": 30,
         "renal_note": "Normal: 160/800mg q12h. CrCl 15-30: نصف الجرعة (80/400mg q12h). CrCl <15: يُتجنّب إلا مع غسيل ومراقبة مستوى السلفا. راقب البوتاسيوم والكرياتينين. BNF 2025.",
         "renal_note_en": "Normal: 160/800mg q12h. CrCl 15-30: half dose (80/400mg q12h). CrCl <15: avoid unless on dialysis with sulfamethoxazole level monitoring. Monitor potassium and creatinine. BNF 2025.",
-        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
         # hepatic_caution False -> True (2026-07-30): sulfonamide hepatotoxicity and hypersensitivity hepatitis.
         # HEPATIC_DOSING already recorded Child-Pugh C = "Avoid" and
         # clinical_matrix.HEPATIC_RULES records DENY, so this flag
@@ -724,7 +726,7 @@ ABX_GUIDELINES = {
             "فعال للكلاميديا والمايكوبلازما."
         ),
         "renal_limit": 0, "renal_note": "🟢 آمن كلوياً نسبياً.", "renal_note_en": "🟢 relatively renally safe.",
-        # AWaRe FIX: doxycycline is Access in WHO AWaRe 2023 (minocycline stays Watch).
+        # AWaRe FIX: doxycycline is Access in WHO AWaRe 2025 (minocycline stays Watch).
         "hepatic_caution": True, "aware": "Access", "high_po": True,
         "preg_status": "Banned",
         "preg_note": (
@@ -1040,7 +1042,7 @@ _EXTRA_ENTRIES = {
         "renal_limit": 30,
         "renal_note": "Normal: 250mg-2g q6h. CrCl 10-30: نفس الجرعة q6-12h. CrCl <10: نفس الجرعة q12-24h. HD: جرعة بعد dialysis. BNF 2025.",
         "renal_note_en": "Normal: 250mg-2g q6h. CrCl 10-30: same dose q6-12h. CrCl <10: same dose q12-24h. HD: dose after dialysis. BNF 2025.",
-        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
         # BIOAVAILABILITY FIX: oral ampicillin is only ~30-40% absorbed (food
         # reduces it further). It is NOT an IV->PO switch candidate -- amoxicillin
         # (~90%) is the oral equivalent. high_po was True and drove a wrong switch.
@@ -1062,7 +1064,7 @@ _EXTRA_ENTRIES = {
         "renal_limit": 30,
         "renal_note": "Normal: 250-500mg q8h (أو 875mg q12h). CrCl 10-30: 250-500mg q12h. CrCl <10: 250-500mg q24h. ⚠️ يُتجنّب تركيز 875mg تحت CrCl 30. BNF 2025.",
         "renal_note_en": "Normal: 250-500mg q8h (or 875mg q12h). CrCl 10-30: 250-500mg q12h. CrCl <10: 250-500mg q24h. ⚠️ avoid the 875mg strength below CrCl 30. BNF 2025.",
-        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
         "hepatic_caution": False, "aware": "Access", "high_po": True,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -1104,7 +1106,7 @@ _EXTRA_ENTRIES = {
         "renal_limit": 50,
         "renal_note": "Normal: 250-500mg q6h. CrCl 20-50: 250mg q8h. CrCl <20: 250mg q12h. BNF 2025.",
         "renal_note_en": "Normal: 250-500mg q6h. CrCl 20-50: 250mg q8h. CrCl <20: 250mg q12h. BNF 2025.",
-        "dose_review": "normal-dose anchor added 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (normal-dose anchor added 2026-07-30)",
         "hepatic_caution": False, "aware": "Access", "high_po": True,
         "preg_status": "Safe",
         "preg_note": "مقبول في الحمل — Category B (ACOG).",
@@ -1164,8 +1166,9 @@ _EXTRA_ENTRIES_2 = {
         "renal_limit": 30,
         "renal_note": "Normal: 1-2g q8h. أعطِ جرعة التحميل كاملة أولاً، ثم: CrCl 10-30: 50% من الجرعة. CrCl <10: 25% من الجرعة. HD: أضف 12.5% من الجرعة الأولية بعد كل غسيل (العدوى الشديدة). Azactam label / BNF 2025.",
         "renal_note_en": "Normal: 1-2g q8h. Give the full loading dose first, then: CrCl 10-30: 50% of the dose. CrCl <10: 25% of the dose. HD: add 12.5% of the initial dose after each session (serious infection). Azactam label / BNF 2025.",
-        "dose_review": "renal band corrected 2026-07-30 — countersign vs Azactam label",
-        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band corrected 2026-07-30)",
+        "hepatic_caution": False, # AWaRe CORRECTED 2026-08-03: WHO AWaRe 2025 (B09489) lists aztreonam as RESERVE, not Watch. Verified against the WHO Antibiotics Portal 2026-08-03.
+        "aware": "Reserve", "high_po": False,
         "preg_status": "Caution",
         "preg_note": (
             "⚠️ Category B — بيانات بشرية محدودة.\n"
@@ -1421,7 +1424,7 @@ _EXTRA_ENTRIES_3 = {
         # seizure threshold, which is the reason this row exists at all.
         "renal_note": "Benzylpenicillin normal: 1.2-2.4g q4-6h IV. CrCl 10-30: نفس الجرعة q6-8h. CrCl <10: 25-50% من الجرعة. ⚠️ الجرعات العالية تتراكم → تشنجات. BNF 2025.",
         "renal_note_en": "Benzylpenicillin normal: 1.2-2.4g q4-6h IV. CrCl 10-30: same dose q6-8h. CrCl <10: 25-50% of the dose. ⚠️ high doses accumulate -> seizures. BNF 2025.",
-        "dose_review": "renal band added 2026-07-30 — countersign vs BNF 2025",
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
         "hepatic_caution": False, "aware": "Access", "high_po": True,
         "preg_status": "Safe",
         "preg_note": "آمن في الحمل — الأكثر استخداماً لـ GBS prophylaxis وStreptococcal infections. ACOG 2023.",

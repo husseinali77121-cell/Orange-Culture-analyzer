@@ -23,7 +23,7 @@
 # so it stays importable from a bare test runner with no dependencies.
 #
 # References: EUCAST Intrinsic Resistance and Unusual Phenotypes v3.3 (2021-10-18)
-#             EUCAST Clinical Breakpoint Tables v16.0 (valid from 2026-01-01)
+#             EUCAST Clinical Breakpoint Tables v16.1 (valid from 2026-01-01)
 #             CLSI M100 Ed36 (2026) Appendix B
 
 from __future__ import annotations

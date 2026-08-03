@@ -41,7 +41,7 @@ WHY THE SOURCE STRINGS ARE CENTRALISED HERE
 Free-text citations drift. An audit of this codebase found "EUCAST 2026" (21
 occurrences — which document? breakpoints? expert rules?), "CLSI M100 2026"
 alongside "CLSI M100 Ed36" for the same standard, and "IDSA AMR 2025" for a
-document published in August 2024. Meanwhile "WHO AWaRe 2025" looked wrong from
+document published in August 2024. Meanwhile "WHO AWaRe 2025 edition (B09489, 5 Sep 2025)" looked wrong from
 memory and turned out to be correct — WHO published the 2025 edition on
 2025-09-05. Memory is not a citation. A dated URL is.
 """
@@ -83,7 +83,8 @@ SOURCES: Dict[str, Dict[str, str]] = {
                  "re-read the carbapenem-hierarchy, anaerobe and no-breakpoint "
                  "rules against v16.1 before the next release."),
         "url": "https://www.eucast.org/clinical_breakpoints",
-    },
+            "version_note": "v16.1 (2026). v16.0 took effect 1 Jan 2026; the v16.1 addendum added breakpoints for further anaerobic species and is the pin used here. Web-verified 2026-08-03. Also under EUCAST review: a proposed lowering of the pneumococcal penicillin meningitis/endocarditis IV breakpoint from 0.5 to 0.06 mg/L — NOT implemented, as it is proposed rather than published.",
+},
     "EUCAST_DETECT": {
         "title": "EUCAST guidelines for detection of resistance mechanisms and "
                  "specific resistances of clinical and/or epidemiological importance",
@@ -144,7 +145,96 @@ SOURCES: Dict[str, Dict[str, str]] = {
 # fails the build if an engine rule has no row here.
 _AI = "AI-assisted review (Claude, code-review session 2026-07-23)"
 
+# ═══════════════════════════════════════════════════════════════════════════
+# SYSTEM_CITATIONS — rows that describe a CLASSIFICATION SYSTEM applied across
+# the whole formulary rather than a single rule with an ID.
+#
+# test_guidelines.py requires every registry row to correspond to a rule the
+# engine actually runs, and fails otherwise ("dead citation"). That check is
+# correct and must stay: a citation for a rule that no longer exists is how a
+# registry rots into decoration. But three clinical claims are not rules —
+# WHO AWaRe categories, the Magiorakos MDR/XDR/PDR criteria and the CRPA
+# definition apply across every agent or every organism at once. Before
+# 2026-08-03 they were simply absent, so the suite reported "every rule traced"
+# while three whole classification systems sat untraced.
+#
+# This set is the narrow, named exemption. Adding to it is a deliberate act and
+# each entry must be a system, not a rule someone could not be bothered to
+# register — that is why it is a hard-coded literal and not a pattern match.
+# ═══════════════════════════════════════════════════════════════════════════
+SYSTEM_CITATIONS = frozenset({
+    "class_who_aware",
+    "class_magiorakos_mdr",
+    "class_crpa_definition",
+})
+
 RULES: Dict[str, Dict[str, Any]] = {
+
+    # ── Classification systems (added 2026-08-03) ───────────────────────────
+    # GAP THIS CLOSES: SOURCES declared WHO_AWARE, MAGIORAKOS and CDC_EIP_CRPA,
+    # and not one rule cited any of them. Three whole classification systems —
+    # 51 AWaRe assignments, the MDR/XDR/PDR criteria, and the CRPA definition —
+    # were live clinical claims with no traceability row, so test_guidelines.py
+    # reported "every rule traced" while these were invisible to it. A registry
+    # that only contains the rules someone remembered to register is a registry
+    # that measures memory, not coverage.
+    "class_who_aware": {
+        "assertion": "Every agent in ABX_GUIDELINES carries a WHO AWaRe "
+                     "category (Access / Watch / Reserve) used for stewardship "
+                     "ranking and for the Reserve penalty in the ranking engine.",
+        "source": "WHO_AWARE", "locus": "AWaRe classification database",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-08-03",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
+        "note": "VERIFIED against the WHO Antibiotics Portal and the 2025 list "
+                "on 2026-08-03. Three assignments were WRONG and are corrected: "
+                "Aztreonam Watch->RESERVE; Fosfomycin(oral) Access->WATCH (IV is "
+                "Reserve); Ampicillin/Sulbactam Watch->ACCESS. Two that looked "
+                "wrong are right and were left alone: Tobramycin is WATCH while "
+                "gentamicin and amikacin are ACCESS -- the three aminoglycosides "
+                "do not share a category -- and Vancomycin is WATCH for both the "
+                "IV and the oral route. The previous note flagged Aztreonam but "
+                "declined to change it without reading the source; the source "
+                "has now been read.",
+    },
+    "class_magiorakos_mdr": {
+        "assertion": "MDR = non-susceptible to >=1 agent in >=3 antimicrobial "
+                     "categories; XDR = non-susceptible to >=1 agent in all but "
+                     "<=2 categories; PDR = non-susceptible to all agents in all "
+                     "categories. Categories are organism-specific.",
+        "source": "MAGIORAKOS", "locus": "Clin Microbiol Infect 2012;18:268-281",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-08-03",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
+        "note": "Implemented in classify_mdr() with 15 Gram-negative and 15 "
+                "Gram-positive category sets. The reliability warnings for thin "
+                "panels (few categories testable, or categories judged on a "
+                "single agent) are a local addition beyond the paper — "
+                "Magiorakos assumes a complete panel and says nothing about "
+                "what to do with an incomplete one.",
+    },
+    "class_crpa_definition": {
+        "assertion": "Carbapenem-resistant P. aeruginosa is defined by "
+                     "resistance to at least ONE carbapenem (imipenem, "
+                     "meropenem or doripenem). Ceftazidime and "
+                     "piperacillin-tazobactam are NOT part of this definition; "
+                     "they belong to difficult-to-treat resistance (DTR).",
+        "source": "CDC_EIP_CRPA", "locus": "CDC EIP CRPA surveillance definition; "
+                                           "IDSA AMR Guidance 2026 update (supersedes v4.0 2024)",
+        "verified": "source", "checked_by": _AI, "checked_on": "2026-08-03",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
+        "note": "Rewritten 2026-08-03, then re-verified against source the same "
+                "day. DTR is non-susceptibility to ALL EIGHT of pip-tazo, "
+                "ceftazidime, cefepime, aztreonam, meropenem, imipenem, "
+                "ciprofloxacin and levofloxacin (Kadri 2018) -- an initial "
+                "6-of-8 threshold over-called it. The engine now requires every "
+                "one of the eight that was TESTED to be R, with a floor of five "
+                "tested agents, which is the faithful reading under a partial "
+                "panel. The previous rule required 2 of 4 markers "
+                "and two of those four were non-carbapenems, so it MISSED a true "
+                "CRPA when meropenem was the only carbapenem on the panel and "
+                "CALLED CRPA on an isolate susceptible to both carbapenems. DTR "
+                "is now a separate phenotype (DTR_PA) with its own panel, per "
+                "Kadri et al. Clin Infect Dis 2018 and IDSA v4.0.",
+    },
 
     # ── Intrinsic resistance (ast_reportability.INTRINSIC_RULES) ─────────────
     "intr_vre_vancomycin_contradiction": {
@@ -154,7 +244,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "teicoplanin-susceptible, but never vancomycin-susceptible.",
         "source": "CLSI_M100", "locus": "Table 2D · EUCAST Expert Rules v3.1",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-08-01",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "The engine refused vancomycin here via the intrinsic table "
                 "while the QC panel stayed silent — a split verdict between two "
                 "panels on the same screen. Found by the engine-agreement "
@@ -168,7 +258,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "for any of these against anaerobes.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 5 (anaerobes)",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-08-01",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "Added with the taxonomic-inheritance fix. Anaerobes were "
                 "selectable in the UI with NO row in clinical_data at all, so "
                 "Gentamicin=S and Colistin=S reached the RECOMMENDED bucket and "
@@ -184,7 +274,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "indicated agents.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 3",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-08-01",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "H. influenzae was selectable in the UI but had no row in "
                 "clinical_data, so Vancomycin/Linezolid=S were unflagged by QC "
                 "and RECOMMENDED by the engine. The macrolide exclusion is "
@@ -197,7 +287,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "fusidic acid, rifampicin and the anti-staphylococcal penicillins.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 2",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'EUCAST Expert Rules names Enterobacterales resistant to glycopeptides and linezolid as a worked example.',
     },
     "intr_klebsiella_ampicillin": {
@@ -205,7 +295,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "aminopenicillin resistance; inhibitor combinations are NOT intrinsic.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 2",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'Chromosomal class-A beta-lactamase; inhibitor combinations remain reportable. Same mechanism class as C. koseri/K. oxytoca.',
     },
     "intr_proteus_mirabilis": {
@@ -213,7 +303,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "colistin/polymyxin and nitrofurantoin.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 2",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'EUCAST Expert Rules paper names P. mirabilis resistant to nitrofurantoin and colistin as a worked example of intrinsic resistance.',
     },
     "intr_morganella_providencia_proteus_vulgaris": {
@@ -223,7 +313,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "tetracyclines, colistin, nitrofurantoin.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 2",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'EUCAST v3.2 changelog moved Providencia cefuroxime/tigecycline out of the intrinsic table into the expert rules — verify the current placement when the v16 tables are read.',
     },
     "intr_serratia": {
@@ -232,7 +322,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "nitrofurantoin.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 2",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'EUCAST v3.3 Table 2 fn.5: intrinsically R to tetracycline and doxycycline but NOT minocycline or tigecycline. The code had both halves wrong — tigecycline was banned, tetracycline/doxycycline were missing. Corrected.',
     },
     "intr_enterobacter_citrobacter_ampc": {
@@ -242,7 +332,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "Sulbactam does not inhibit AmpC, so amp-sulbactam is NOT exempt.",
         "source": "IDSA_AMR", "locus": "AmpC-E section",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "IDSA v4.0 states basal AmpC production confers intrinsic resistance "
                 "to ampicillin, amoxicillin-clavulanate, ampicillin-sulbactam and "
                 "1st/2nd-generation cephalosporins.",
@@ -254,7 +344,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "Ceftazidime and cefepime remain active.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 3",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'EUCAST v3.3 Table 3 header: non-fermenters are intrinsically resistant to benzylpenicillin, 1st/2nd-gen cephalosporins, glycopeptides, lipoglycopeptides, fusidic acid, macrolides, lincosamides, streptogramins, rifampicin and oxazolidinones.',
     },
     "intr_acinetobacter": {
@@ -267,7 +357,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "NOT to minocycline and tigecycline.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 3",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "Two separate defects fixed here. (1) The code EXCLUDED 'clav', "
                 "exempting amox-clav from a restriction EUCAST applies to it -- "
                 "clavulanate has no useful activity against Acinetobacter, "
@@ -290,7 +380,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "-- doxycycline, minocycline and tigecycline stay active.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 3",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'EUCAST Expert Rules names S. maltophilia resistant to carbapenems as a worked example of intrinsic resistance.',
     },
     "intr_mrsa_betalactams": {
@@ -299,7 +389,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "ceftobiprole retain activity.",
         "source": "EUCAST_EXPERT", "locus": "staphylococci; CLSI M100 Ed36 Table 2C",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "Added after an audit found the UI label 'MRSA' shared no substring "
                 "with the table key 'staphylococcus aureus', so MRSA received NO "
                 "intrinsic filtering at all -- aztreonam and colistin were offered "
@@ -311,7 +401,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "inactive.",
         "source": "EUCAST_INTRINSIC", "locus": "organisms without a cell wall",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "Textbook microbiology; the table had no Mycoplasma key so the "
                 "engine could have recommended ampicillin for atypical pneumonia.",
     },
@@ -320,7 +410,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "colistin/polymyxin, nalidixic acid and temocillin.",
         "source": "EUCAST_EXPERT", "locus": "Table 4",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "Table 4 header states Gram-positive bacteria are additionally "
                 "intrinsically resistant to aztreonam, temocillin, polymyxin "
                 "B/colistin and nalidixic acid.",
@@ -330,7 +420,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "clindamycin, fusidic acid and aztreonam.",
         "source": "EUCAST_EXPERT", "locus": "Table 4",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "CLSI M100 Enterococcus WARNING verbatim: 'For Enterococcus spp., aminoglycosides (except for high-level resistance testing), cephalosporins, clindamycin, and trimethoprim-sulfamethoxazole may appear active in vitro, but are not effective clinically and should not be reported as susceptible.' EUCAST v3.3 Table 4 rows 4.7-4.9 carry R in the cephalosporin and clindamycin columns; aztreonam comes from the Table 4 header for all Gram-positives.",
     },
     "intr_strep_enterococcus_aminoglycosides": {
@@ -342,7 +432,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "300 ug). Amikacin and tobramycin have no HLAR screen.",
         "source": "EUCAST_EXPERT", "locus": "Table 4 (+ CLSI M100 Ed36 Table 2D)",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "Added after the scenario matrix (INV-9) found clinical_data banning "
                 "aminoglycosides for these organisms with no matching QC rule. "
                 "EUCAST Table 4 footnote: aminoglycoside + cell-wall-inhibitor "
@@ -356,7 +446,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "bypass the blocked pathway. Do not report.",
         "source": "EUCAST_EXPERT", "locus": "Table 4 / CLSI M100 Appendix B",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "Same CLSI Enterococcus WARNING names trimethoprim-sulfamethoxazole explicitly and says do not report as susceptible. Confirms both the phenomenon and the 'do not report' instruction.",
     },
     "intr_listeria_cephalosporins": {
@@ -365,7 +455,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "Ampicillin is the agent.",
         "source": "EUCAST_EXPERT", "locus": "Table 4",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "CAVEAT: the clinical fact is not in doubt -- cephalosporins fail against Listeria and this drives the 'add ampicillin' rule in empiric meningitis therapy. However EUCAST v3.3 Table 4 row 4.11 shows only two R marks for L. monocytogenes and the column alignment could NOT be resolved from the flattened PDF text, so the exact cell mapping is unconfirmed. Verify against the PDF before countersigning.",
     },
 
@@ -377,7 +467,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "lincosamides, rifampicin and oxazolidinones.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 3 (header)",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "Promoted from a 'no breakpoints' rule: EUCAST states these are "
                 "intrinsically resistant, which is a stronger and more useful claim.",
     },
@@ -387,7 +477,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "inhibitor combinations remain active (unlike the AmpC species).",
         "source": "EUCAST_INTRINSIC", "locus": "Table 2",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "Added after the expanded scenario matrix found C. koseri matched no "
                 "rule at all — the only Citrobacter rule targeted C. freundii's AmpC.",
     },
@@ -400,13 +490,14 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "Acinetobacter / Stenotrophomonas / Burkholderia.",
         "source": "EUCAST_BP", "locus": "non-fermenter tables; CLSI M100 Table 2B-2/2B-3",
         "verified": "pending",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
     },
     "nobp_azithromycin_enterobacterales": {
         "assertion": "Azithromycin breakpoints exist only for Salmonella Typhi/Paratyphi "
                      "and Shigella. Non-typhoidal Salmonella has none.",
         "source": "EUCAST_BP", "locus": "Enterobacterales — azithromycin note",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "CLSI M100 azithromycin footnote p verbatim: 'For reporting against Salmonella enterica ser. Typhi and Shigella spp. only.' Confirms non-typhoidal Salmonella has no azithromycin reporting criterion.",
     },
     "nobp_cefoperazone": {
@@ -416,13 +507,14 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "but the result is uncalibrated.",
         "source": "EUCAST_BP", "locus": "absent from tables; CLSI M100 Ed36",
         "verified": "pending",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
     },
     "nobp_nitrofurantoin_non_ecoli": {
         "assertion": "EUCAST nitrofurantoin breakpoints are for E. coli only "
                      "(uncomplicated UTI) and do not extrapolate to other species.",
         "source": "EUCAST_BP", "locus": "Enterobacterales",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'BSAC clarification of EUCAST guidance: after review the nitrofurantoin breakpoints could NOT be extended beyond E. coli; Proteeae, some Klebsiella and Pseudomonas carry intrinsic resistance.',
     },
     "nobp_fosfomycin_oral_non_ecoli": {
@@ -430,7 +522,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "EUCAST and CLSI.",
         "source": "EUCAST_BP", "locus": "Enterobacterales",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "EUCAST guidance on fosfomycin i.v. breakpoints (May 2024) verbatim: 'The currently revised breakpoint of fosfomycin applies only to E. coli in infections originating from the urinary tract.' Breakpoint tables add: 'Zone diameter breakpoints apply to E. coli only.'",
     },
     "nobp_imipenem_proteae": {
@@ -439,7 +531,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "Susceptible imipenem result -- meropenem is preferred.",
         "source": "EUCAST_BP", "locus": "Enterobacterales note 2",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "NEW RULE added this round; the engine had no equivalent.",
     },
     "nobp_tigecycline_proteae": {
@@ -448,8 +540,8 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "less susceptible via efflux.",
         "source": "EUCAST_BP", "locus": "Enterobacterales — tigecycline note",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
-        "note": 'EUCAST v16.0 Enterobacterales note 3/A verbatim: activity is INSUFFICIENT in Serratia spp., Proteus spp., Morganella morganii and Providencia spp. SERRATIA was missing from the rule and has been added. Breakpoint is validated for E. coli and C. koseri only.',
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
+        "note": 'EUCAST v16.1 Enterobacterales note 3/A verbatim: activity is INSUFFICIENT in Serratia spp., Proteus spp., Morganella morganii and Providencia spp. SERRATIA was missing from the rule and has been added. Breakpoint is validated for E. coli and C. koseri only.',
     },
 
     # ── Ineffective in vivo ──────────────────────────────────────────────────
@@ -459,7 +551,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "ineffective for invasive infection — do not report S.",
         "source": "CLSI_M100", "locus": "Table 2A organism-specific notes",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "CLSI M100 WARNING verbatim: 'For Salmonella and Shigella spp., aminoglycosides, first- and second-generation cephalosporins, and cephamycins may appear active in vitro but are not effective clinically and should not be reported as susceptible.' Carried into Ed36 (2026).",
     },
 
@@ -471,7 +563,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "reliable predictor.",
         "source": "CLSI_M100", "locus": "M100 Ed36 Table 2C — cefoxitin as mecA surrogate",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-27",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'Cefoxitin is the recommended surrogate for mecA-mediated resistance in S. aureus and CoNS. Raised as an error, not a verify flag, because the split decides whether every beta-lactam on the panel is reportable.',
     },
     "rare_vrsa": {
@@ -479,7 +571,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "MIC confirmation on a pure colony before release.",
         "source": "CLSI_M100", "locus": "M100 Ed36 — S. aureus vancomycin MIC only",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-27",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'CLSI requires an MIC method for S. aureus vancomycin; disk diffusion cannot detect VISA/VRSA. A resistant result is far more often a mixed culture or misidentification.',
     },
     "rare_van_pneumococcus": {
@@ -487,7 +579,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "such a result indicates misidentification.",
         "source": "CLSI_M100", "locus": "M100 Ed36 — S. pneumoniae identification",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-27",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'Most often Enterococcus, Leuconostoc or Lactobacillus mistaken for pneumococcus. Confirm with optochin and bile solubility.',
     },
     "rare_pen_gas": {
@@ -495,7 +587,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "susceptible; clinical resistance has not been documented.",
         "source": "CLSI_M100", "locus": "M100 Ed36 — beta-haemolytic streptococci",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-27",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'Both CLSI and EUCAST allow penicillin susceptibility in group A streptococci to be inferred without testing. A resistant result is an identification or reading error.',
     },
     "rare_linezolid_gram_pos": {
@@ -503,7 +595,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "streptococci is very rare and requires MIC confirmation.",
         "source": "EUCAST_BP", "locus": "v16.1 — oxazolidinones",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-27",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'Usually emerges only after prolonged linezolid exposure (cfr / 23S rRNA mutations). Confirm before reporting and review the treatment history.',
     },
     "rare_colistin_disc": {
@@ -511,7 +603,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "strip; only broth microdilution gives a valid result.",
         "source": "EUCAST_BP", "locus": "EUCAST-CLSI Polymyxin Breakpoints Working Group (2016)",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-27",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'Polymyxins diffuse poorly in agar, so any disk or strip result is invalid regardless of what it shows. A resistant colistin result must be confirmed by BMD before it changes therapy.',
     },
     "equiv_ctx_cro": {
@@ -520,7 +612,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "ESBLs; one S and one R on the same isolate is a laboratory error.",
         "source": "EUCAST_BP", "locus": "Enterobacterales; CLSI M100 Table 2A",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'Cefotaxime and ceftriaxone share Enterobacterales breakpoints in both EUCAST and CLSI. Treated as a VERIFY flag rather than a hard error, since rare enzyme-specific discordance exists.',
     },
     "equiv_amc_sam": {
@@ -529,7 +621,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "laboratory error, not a resistance pattern.",
         "source": "EUCAST_EXPERT", "locus": "beta-lactam interpretive rules",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'DOWNGRADED to a verify-flag this round. Sulbactam and clavulanate differ in potency and carry different breakpoints and dosing, so a split result is unusual rather than impossible.',
     },
     "hier_amp_vs_amc": {
@@ -537,7 +629,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "adding a beta-lactamase inhibitor cannot reduce activity.",
         "source": "EUCAST_EXPERT", "locus": "beta-lactam hierarchy",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'Adding a beta-lactamase inhibitor cannot reduce activity, so the pattern indicates a testing error. Kept as a verify-flag.',
     },
     "hier_pip_vs_tzp": {
@@ -545,7 +637,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "for the same reason.",
         "source": "EUCAST_EXPERT", "locus": "beta-lactam hierarchy",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'Same logic as hier_amp_vs_amc. Rare tazobactam inoculum effects are described, so verify rather than declare impossible.',
     },
     "hier_mem_vs_etp": {
@@ -555,7 +647,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "reverse (ertapenem-R with meropenem-S = OXA-48 or porin loss).",
         "source": "EUCAST_EXPERT", "locus": "carbapenem interpretive rules",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'Ertapenem is the most labile carbapenem; the ertapenem-R/meropenem-S direction is the recognised OXA-48 or porin-loss signature. The reverse warrants a repeat.',
     },
     "hier_tet_vs_doxy": {
@@ -563,7 +655,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "combination is a reading error.",
         "source": "EUCAST_EXPERT", "locus": "tetracycline interpretive rules",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "CLSI M100 footnote q VERBATIM: 'Organisms that are susceptible to tetracycline are also considered susceptible to doxycycline and minocycline. However, some organisms that are intermediate or resistant to tetracycline may be susceptible to doxycycline, minocycline, or both.' The code already flags ONLY the safe direction (tet-S + doxy-R) and states the reverse is allowed, so it matches the footnote exactly and does NOT suppress an active minocycline.",
     },
 
@@ -573,6 +665,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "resistance is an atypical pattern; confirm the identification.",
         "source": "EUCAST_EXPERT", "locus": "unusual phenotypes",
         "verified": "pending",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
     },
     "QC004": {
         "assertion": "Carbapenem R with a cephalosporin S in Enterobacterales is "
@@ -580,12 +673,14 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "a carbapenemase assay.",
         "source": "EUCAST_DETECT", "locus": "carbapenemase detection",
         "verified": "pending",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
     },
     "QC005": {
         "assertion": "Linezolid resistance in S. aureus is very rare; confirm by a "
                      "reference method before reporting.",
         "source": "CLSI_M100", "locus": "Table 2C notes",
         "verified": "pending",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
     },
     "QC006": {
         "assertion": "A susceptible cephalosporin in a suspected ESBL producer is "
@@ -597,7 +692,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "not a reporting edit.",
         "source": "EUCAST_BP", "locus": "Enterobacterales — cephalosporin/ESBL note",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
     },
     "SPEC-URN": {
         "assertion": "Nitrofurantoin, oral fosfomycin and norfloxacin reach "
@@ -606,7 +701,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "actionable.",
         "source": "EUCAST_BP", "locus": "agent site-of-infection notes",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "EUCAST breakpoint tables label these agents '(uncomplicated UTI only)' in the Enterobacterales table headers (nitrofurantoin, trimethoprim, oral fosfomycin), which carries the site restriction. The pharmacology claim itself is textbook but was not read from a primary PK document.",
     },
     "REP-GPO-GN": {
@@ -615,7 +710,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "be tested or reported for them.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 2/3",
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "EUCAST Table 1 header verbatim: 'Enterobacterales are also intrinsically resistant to benzylpenicillin, glycopeptides, fusidic acid, macrolides, lincosamides, streptogramins, rifampicin, daptomycin and linezolid.' Table 3 header carries the same for non-fermenters.",
     },
 }
@@ -626,12 +721,12 @@ RULES: Dict[str, Dict[str, Any]] = {
 DEPRECATED_CITATIONS: Dict[str, str] = {
     "IDSA AMR 2025":
         "IDSA_AMR is v4.0, published in Clin Infect Dis on 2024-08-07 (ciae403). "
-        "There is no 2025 edition — use 'IDSA AMR Guidance v4.0 (2024)'.",
+        "There is no 2025 edition — use 'IDSA AMR Guidance 2026 update (supersedes v4.0 2024)'.",
     "IDSA 2025":
         "Ambiguous. Name the specific IDSA document and its year.",
     "EUCAST 2026":
         "Ambiguous — EUCAST publishes several documents. Use 'EUCAST Breakpoint "
-        "Tables v16.0 (2026)' or 'EUCAST Intrinsic Resistance v3.3 (2021)'.",
+        "Tables v16.1 (2026)' or 'EUCAST Intrinsic Resistance v3.3 (2021)'.",
     "CLSI M100 2026":
         "Use the edition, not the year: 'CLSI M100 Ed36'.",
     "EUCAST Expert Rules v3.3":

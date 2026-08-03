@@ -20,9 +20,9 @@ MDR/XDR/PDR، ويُخرج قائمة أدوية مفلترة حسب الكائ�
 
 ## المصادر
 
-EUCAST Breakpoint Tables v16.0 · EUCAST Intrinsic Resistance v3.3 ·
+EUCAST Breakpoint Tables v16.1 · EUCAST Intrinsic Resistance v3.3 ·
 EUCAST Expert Rules v3.1 · CLSI M100 Ed36 · CLSI M39 ·
-IDSA AMR Guidance v4.0 (2024) · WHO AWaRe 2025 ·
+IDSA AMR Guidance 2026 · WHO AWaRe 2025 ·
 Magiorakos et al., *Clin Microbiol Infect* 2012;18:268-281
 
 ## التشغيل

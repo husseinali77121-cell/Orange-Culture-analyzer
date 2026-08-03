@@ -30,7 +30,7 @@ credibility that a QA engine cannot afford to spend.
 
 Primary sources (verify against the current editions before clinical use):
   * EUCAST Intrinsic Resistance and Unusual Phenotypes, v3.3 (2021-10-18)
-  * EUCAST Clinical Breakpoint Tables v16.0, valid from 2026-01-01 — Notes
+  * EUCAST Clinical Breakpoint Tables v16.1, valid from 2026-01-01 — Notes
   * CLSI M100, Ed36 (2026) — Appendix B; Tables 2A-2J organism-specific notes
 """
 
@@ -132,7 +132,7 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
                       "EUCAST or CLSI publishes breakpoints for any of these "
                       "against anaerobes — an S/I/R printed here is "
                       "uninterpretable."),
-        "reference": "EUCAST Intrinsic Resistance v3.3, Table 5 · CLSI M11 Ed10",
+        "reference": "EUCAST Intrinsic Resistance v3.3, Table 5 · CLSI M11-Ed9 (2018, R2025)",
     },
     {
         # Added 2026-08-01. H. influenzae was selectable in the UI but had no
@@ -601,7 +601,7 @@ NO_BREAKPOINT_RULES: List[Dict[str, Any]] = [
                       "Stenotrophomonas, Burkholderia). Any S/I/R printed here was "
                       "read against a table that does not cover the pairing — it "
                       "is uncalibrated and must not guide therapy."),
-        "reference": "EUCAST Breakpoint Tables v16.0 · CLSI M100 Ed36 Table 2B-2 / 2B-3",
+        "reference": "EUCAST Breakpoint Tables v16.1 · CLSI M100 Ed36 Table 2B-2 / 2B-3",
     },
     {
         "id": "nobp_azithromycin_enterobacterales",
@@ -623,7 +623,7 @@ NO_BREAKPOINT_RULES: List[Dict[str, Any]] = [
                       "isolate (non-typhoidal Salmonella included) there is no "
                       "interpretive table — confirm the serovar before relying on "
                       "this result."),
-        "reference": "EUCAST Breakpoint Tables v16.0 — Enterobacterales, azithromycin note",
+        "reference": "EUCAST Breakpoint Tables v16.1 — Enterobacterales, azithromycin note",
     },
     {
         "id": "nobp_cefoperazone",
@@ -639,7 +639,7 @@ NO_BREAKPOINT_RULES: List[Dict[str, Any]] = [
                       "breakpoints and CLSI withdrew the cefoperazone breakpoints. "
                       "The sulbactam combination has none in either. Widely used in "
                       "Egypt, but the result is uncalibrated."),
-        "reference": "EUCAST Breakpoint Tables v16.0 · CLSI M100 Ed36",
+        "reference": "EUCAST Breakpoint Tables v16.1 · CLSI M100 Ed36",
     },
     {
         "id": "nobp_nitrofurantoin_non_ecoli",
@@ -651,7 +651,7 @@ NO_BREAKPOINT_RULES: List[Dict[str, Any]] = [
                       "فقط (عدوى مسالك بولية غير معقّدة). لا تُستقرأ لأنواع أخرى."),
         "reason_en": ("EUCAST nitrofurantoin breakpoints are for E. coli only "
                       "(uncomplicated UTI). They do not extrapolate to other species."),
-        "reference": "EUCAST Breakpoint Tables v16.0 — Enterobacterales",
+        "reference": "EUCAST Breakpoint Tables v16.1 — Enterobacterales",
     },
     {
         "id": "nobp_fosfomycin_oral_non_ecoli",
@@ -666,7 +666,7 @@ NO_BREAKPOINT_RULES: List[Dict[str, Any]] = [
                       "E. coli only. (EUCAST restricted them to E. coli in 2020, "
                       "having previously covered all Enterobacterales.) Extrapolation "
                       "is unsupported."),
-        "reference": "EUCAST Breakpoint Tables v16.0 · CLSI M100 Ed36",
+        "reference": "EUCAST Breakpoint Tables v16.1 · CLSI M100 Ed36",
     },
     {
         "id": "nobp_imipenem_proteae",
@@ -674,21 +674,21 @@ NO_BREAKPOINT_RULES: List[Dict[str, Any]] = [
         "not_organisms": [],
         "drugs": ["imipenem"],
         "exclude": ["relebactam"],
-        "reason_ar": ("EUCAST v16.0 (ملاحظة Enterobacterales رقم 2): نشاط "
+        "reason_ar": ("EUCAST v16.1 (ملاحظة Enterobacterales رقم 2): نشاط "
                       "الإيميبينيم ضد Proteus و Morganella و Providencia منخفض "
                       "جوهرياً — MICs أعلى من باقي الـ Enterobacterales حتى بدون "
                       "أي آلية مقاومة مكتسبة. لا تعتمد على نتيجة S هنا؛ "
                       "الميروبينيم هو الكاربابينيم المفضّل لهذه الأنواع."),
-        "reason_en": ("EUCAST v16.0 Enterobacterales note 2: imipenem has "
+        "reason_en": ("EUCAST v16.1 Enterobacterales note 2: imipenem has "
                       "intrinsically LOW activity against Proteus spp., "
                       "Morganella morganii and Providencia spp. -- MICs run higher "
                       "than for other Enterobacterales even with no acquired "
                       "mechanism. Do not rely on a Susceptible imipenem result "
                       "here; meropenem is the preferred carbapenem."),
-        "reference": "EUCAST Breakpoint Tables v16.0 -- Enterobacterales note 2",
+        "reference": "EUCAST Breakpoint Tables v16.1 -- Enterobacterales note 2",
     },
     {
-        # EUCAST v16.0 note 3/A verbatim: "the activity of tigecycline varies from
+        # EUCAST v16.1 note 3/A verbatim: "the activity of tigecycline varies from
         # INSUFFICIENT in Serratia spp., Proteus spp., Morganella morganii and
         # Providencia spp. to variable in other species." Serratia was missing.
         "id": "nobp_tigecycline_proteae",
@@ -700,7 +700,7 @@ NO_BREAKPOINT_RULES: List[Dict[str, Any]] = [
                       "غير كافٍ — لا breakpoints."),
         "reason_en": ("Tigecycline activity against Proteus, Morganella and "
                       "Providencia is insufficient — no breakpoints."),
-        "reference": "EUCAST Breakpoint Tables v16.0 — Enterobacterales, tigecycline note",
+        "reference": "EUCAST Breakpoint Tables v16.1 — Enterobacterales, tigecycline note",
     },
 ]
 
@@ -815,7 +815,7 @@ def _check_wrong_spectrum(organism: str, sir_map: Dict[str, str]) -> List[Dict[s
                           f"البكتيريا {side_ar} — يجب ألا يظهر على لوحة كائن {side_ar}."),
             "reason_en": (f"{drug} is a {klass} with no activity and no breakpoint against "
                           f"{side_en} bacteria — it must not appear on a {side_en} panel."),
-            "reference": "EUCAST Intrinsic Resistance v3.3 · Breakpoint Tables v16.0",
+            "reference": "EUCAST Intrinsic Resistance v3.3 · Breakpoint Tables v16.1",
         })
     return out
 

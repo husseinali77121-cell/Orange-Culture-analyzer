@@ -32,7 +32,7 @@ function, testable without the clinical_data import wall, and every rule carries
 the document it comes from so a microbiologist can overrule it.
 
 Sources (verify against current editions):
-  * EUCAST Clinical Breakpoint Tables v16.0 (valid 2026-01-01) — Enterobacterales
+  * EUCAST Clinical Breakpoint Tables v16.1 (valid 2026-01-01) — Enterobacterales
   * CLSI M100 Ed36 (2026) — Tables 2A/2B and the tetracycline-class predictive note
   * EUCAST Expert Rules and Intrinsic Resistance v3.3 (2021-10-18)
 """
@@ -153,7 +153,7 @@ EQUIVALENCE_RULES: List[Dict[str, Any]] = [
         "fix_en": ("Repeat both disks from the same inoculum. Check: inoculum "
                    "density (0.5 McFarland), disk potency and storage, zone edge "
                    "reading, colony purity. Do not report until resolved."),
-        "reference": "EUCAST Breakpoint Tables v16.0 — Enterobacterales · CLSI M100 Ed36 Table 2A",
+        "reference": "EUCAST Breakpoint Tables v16.1 — Enterobacterales · CLSI M100 Ed36 Table 2A",
     },
     {
         "id": "equiv_amc_sam",
@@ -176,7 +176,7 @@ EQUIVALENCE_RULES: List[Dict[str, Any]] = [
                    "وقراءة الـ zone قبل الإبلاغ."),
         "fix_en": ("Repeat both combinations from the same inoculum; verify disk "
                    "potency and zone reading before reporting."),
-        "reference": "EUCAST Expert Rules v3.1 (2016) · Breakpoint Tables v16.0 — Enterobacterales",
+        "reference": "EUCAST Expert Rules v3.1 (2016) · Breakpoint Tables v16.1 — Enterobacterales",
     },
 ]
 
@@ -338,7 +338,7 @@ EXCEPTIONAL_PHENOTYPES: List[Dict[str, Any]] = [
                       "prolonged therapy."),
         "fix_ar": "أكِّد بـ MIC وراجع تاريخ علاج المريض باللينيزوليد.",
         "fix_en": "Confirm by MIC and review prior linezolid exposure.",
-        "reference": "EUCAST Breakpoint Tables v16.0 (2026)",
+        "reference": "EUCAST Breakpoint Tables v16.1 (2026)",
     },
     {
         "id": "rare_colistin_disc",
@@ -482,7 +482,7 @@ def format_issue(issue: Dict[str, Any], lang: str = "ar") -> Dict[str, str]:
 # cause becomes a second, invisible source of truth.
 QC_RULE_OVERRIDES: Dict[str, Dict[str, str]] = {
     # QC006 told the user to "avoid ALL cephalosporins even if S in the AST" and
-    # attributed that to EUCAST Breakpoint Tables v16.0. EUCAST says the opposite in the v16.0
+    # attributed that to EUCAST Breakpoint Tables v16.1. EUCAST says the opposite in the v16.1
     # tables: the Enterobacterales cephalosporin breakpoints detect the
     # clinically important mechanisms, isolates that produce a beta-lactamase but
     # test susceptible are REPORTED AS TESTED, and the presence or absence of an
@@ -508,7 +508,7 @@ QC_RULE_OVERRIDES: Dict[str, Dict[str, str]] = {
                     "قد يشير إلى ESBL أو إلى تباين تقني. "
                     "**راجع أولاً وجود تناقض بين سيفالوسبورينات الجيل الثالث** "
                     "(انظر تنبيهات التناقض أعلاه إن وُجدت)."),
-        "fix": ("**الإبلاغ المعملي:** بلِّغ النتائج **كما هي**. EUCAST v16.0: "
+        "fix": ("**الإبلاغ المعملي:** بلِّغ النتائج **كما هي**. EUCAST v16.1: "
                 "الـ breakpoints الحالية تكتشف آليات المقاومة المهمة إكلينيكياً، "
                 "ووجود ESBL من عدمه **لا يغيّر التصنيف** بذاته — اكتشاف الـ ESBL "
                 "لأغراض مكافحة العدوى والترصّد. لا تُحوِّل سيفالوسبورين حسّاس "
@@ -516,7 +516,7 @@ QC_RULE_OVERRIDES: Dict[str, Dict[str, str]] = {
                 "**القرار العلاجي (منفصل — للطبيب):** في تجرثم الدم بـ ESBL "
                 "يُفضَّل الكاربابينيم على السيفالوسبورينات/pip-tazo حتى مع S — "
                 "IDSA AMR 2024 (4th update) · تجربة MERINO (JAMA 2018).  \n"
-                "📖 EUCAST Breakpoint Tables v16.0 — Enterobacterales, note on "
+                "📖 EUCAST Breakpoint Tables v16.1 — Enterobacterales, note on "
                 "cephalosporin breakpoints and ESBL"),
     },
 }

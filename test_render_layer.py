@@ -103,6 +103,7 @@ _WANT = [
     "MDR_CATEGORIES", "MDR_CATEGORIES_GRAM_NEG", "MDR_CATEGORIES_GRAM_POS",
     "GRAM_POSITIVE_ORGANISMS", "_remove_intrinsic_resistance", "classify_mdr",
     "MDR_INFO", "HEPATIC_DOSING", "warned_note_for", "analyze_antibiotics",
+    "COMBINATION_THERAPY", "_COMBO_HOST_FLAGS", "get_combination_therapy",
     "_hide_urine_only",
 ]
 
@@ -352,6 +353,75 @@ _out = note_for(_probe2, "ar")
 check("a hepatic warning renders hepatic text, not renal text",
       "halve the dose" in _out and "CrCl" not in _out, f"rendered {_out!r}")
 
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[7] STATIC — every keyword argument at a call site must exist in the")
+print("    callee's signature. DEFECT 2026-08-03: a global rename that added")
+print("    `age_months=` to the safety-gate calls also matched two")
+print("    get_combination_therapy() calls, which take no such parameter. That")
+print("    is a TypeError on the combination panel and on PDF export — and no")
+print("    suite caught it, because every suite calls these functions directly")
+print("    with correct arguments and never through the Streamlit UI path.")
+print("    A signature check is cheap and covers the whole file.")
+# ═══════════════════════════════════════════════════════════════════════════
+import ast as _ast
+
+_src = open(APP, encoding="utf-8").read()
+_tree = _ast.parse(_src)
+
+# Signatures of every function defined in this module.
+_sig_of = {}
+for _n in _ast.walk(_tree):
+    if isinstance(_n, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
+        _a = _n.args
+        _names = {p.arg for p in _a.posonlyargs + _a.args + _a.kwonlyargs}
+        _sig_of[_n.name] = (_names, _a.kwarg is not None)
+
+# Signatures of the modules the app imports from and calls by bare name.
+try:
+    import safety_gate as _sg
+    import inspect as _insp
+    for _fn in ("apply_safety_gate",):
+        _f = getattr(_sg, _fn, None)
+        if _f:
+            _p = _insp.signature(_f).parameters
+            _sig_of[_fn] = ({k for k in _p},
+                            any(v.kind == v.VAR_KEYWORD for v in _p.values()))
+except Exception:
+    pass
+
+_badkw = []
+for _n in _ast.walk(_tree):
+    if not isinstance(_n, _ast.Call) or not isinstance(_n.func, _ast.Name):
+        continue
+    _target = _n.func.id
+    if _target not in _sig_of:
+        continue
+    _accepted, _has_kwargs = _sig_of[_target]
+    if _has_kwargs:
+        continue
+    for _kw in _n.keywords:
+        if _kw.arg and _kw.arg not in _accepted:
+            _badkw.append(f"line {_n.lineno}: {_target}({_kw.arg}=...) — "
+                          f"not a parameter of {_target}")
+check("no call site passes a keyword the callee does not accept",
+      not _badkw, "\n".join(_badkw[:12]))
+
+# The specific pair that broke, asserted by behaviour rather than by parse.
+try:
+    _gct = NS.get("get_combination_therapy")
+    if _gct:
+        _gct([], is_pregnant=False, age_years=30, age_months=None,
+             is_renal=False, cl_cr=None, is_hepatic=False)
+        _ok = True
+    else:
+        _ok = True
+except TypeError as _e:
+    _ok = False
+    _detail = str(_e)
+check("get_combination_therapy accepts the host context the UI passes it",
+      _ok, locals().get("_detail", ""))
 
 print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")

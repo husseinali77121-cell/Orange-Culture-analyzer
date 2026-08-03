@@ -484,6 +484,68 @@ try:
 except Exception as _e:
     check("age-months gate checks ran", False, repr(_e))
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[PRETERM] The neonatal ceftriaxone contraindication is TWO-PART.")
+print("    Web-verified 2026-08-03: contraindicated in PREMATURE infants up to")
+print("    41 weeks POSTMENSTRUAL age — roughly three chronological months for")
+print("    a 28-weeker — and in TERM neonates (<=28 days) who are")
+print("    hyperbilirubinaemic or receiving IV calcium. A single postnatal")
+print("    cutoff cannot express the first half, and this engine holds no")
+print("    gestational-age field, so months 1-2 carry a caution asking the")
+print("    prescriber to check rather than silently clearing the drug.")
+# ═══════════════════════════════════════════════════════════════════════════
+try:
+    _NR = NS.get("NEONATAL_RESTRICTIONS", {})
+    _cro = _NR.get("Ceftriaxone", {})
+    check("the ceftriaxone rule records a preterm caution window",
+          _cro.get("preterm_caution_months") == 3 and _cro.get("preterm_reason"),
+          f"preterm_caution_months={_cro.get('preterm_caution_months')}")
+
+    def _cro_state(months):
+        a, w, b, p, _i = analyze(["Ceftriaxone", "Cefotaxime", "Meropenem"],
+                                 "E. coli", "Blood", 0, "Male", False, None,
+                                 False, False, [],
+                                 {"Ceftriaxone": "S", "Cefotaxime": "S",
+                                  "Meropenem": "S"}, "A", months)
+        if "Ceftriaxone" in {x.get("name") for x in a}: return "allowed"
+        if "Ceftriaxone" in {x.get("name") for x in w}: return "warned"
+        return "banned"
+
+    _pt = []
+    if _cro_state(0) != "banned":
+        _pt.append("0 mo: term neonate must be BANNED")
+    for _m in (1, 2):
+        if _cro_state(_m) != "warned":
+            _pt.append(f"{_m} mo: expected a preterm caution, got {_cro_state(_m)}")
+    for _m in (3, 6, 11):
+        if _cro_state(_m) != "allowed":
+            _pt.append(f"{_m} mo: past the preterm window, expected allowed, "
+                       f"got {_cro_state(_m)}")
+    check("ceftriaxone: banned at term-neonate, cautioned 1-2 mo, clear from 3 mo",
+          not _pt, "\n".join(_pt))
+except Exception as _e:
+    check("preterm ceftriaxone checks ran", False, repr(_e))
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[SIGNED] Clinical data that carries a countersignature must keep it.")
+# ═══════════════════════════════════════════════════════════════════════════
+try:
+    from abx_guidelines import ABX_GUIDELINES as _AG
+    _signed = [d for d, i in _AG.items() if i.get("dose_countersigned")]
+    _pending = [d for d, i in _AG.items() if i.get("dose_review")]
+    check("no dose band is left in the unsigned review queue",
+          not _pending, f"still pending: {_pending}")
+    check("the 16 audited dose bands carry a recorded countersignature",
+          len(_signed) >= 16, f"signed = {len(_signed)}")
+    import guideline_registry as _GRg
+    _unsigned = [k for k, v in _GRg.RULES.items()
+                 if not str(v.get("countersigned_by", "")).strip()]
+    check("every guideline rule carries a clinician countersignature",
+          not _unsigned, f"unsigned: {_unsigned[:6]}")
+except Exception as _e:
+    check("countersignature checks ran", False, repr(_e))
+
 print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
 if _FAIL:

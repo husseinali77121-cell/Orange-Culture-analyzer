@@ -1707,11 +1707,35 @@ def build_banned_item(name: str, category: str, reason_short: str, reason_detail
 # ═══════════════════════════════════════════════════════════════════════
 NEONATAL_RESTRICTIONS: Dict[str, Dict[str, Any]] = {
     "Ceftriaxone": {
+        # WEB-VERIFIED 2026-08-03. The contraindication is TWO-PART, not one
+        # age cutoff:
+        #   (a) PREMATURE infants — contraindicated up to 41 weeks POSTMENSTRUAL
+        #       age (gestational + chronological), which for a 28-week baby runs
+        #       to roughly THREE months of chronological age;
+        #   (b) TERM neonates (<= 28 days) who are hyperbilirubinaemic or who
+        #       receive / are expected to receive IV calcium-containing fluids.
+        # Mechanism: bilirubin displacement from albumin (kernicterus) and fatal
+        # ceftriaxone-calcium precipitation.
+        #
+        # This engine holds chronological age only — there is no gestational-age
+        # field — so a single postnatal rule cannot express (a). The month ban
+        # covers the term neonate exactly; the preterm case is surfaced as a
+        # caution through 3 months rather than silently missed, because a
+        # 6-week-old ex-28-weeker is still within the contraindication and the
+        # engine has no way to know it. Adding a gestational-age input would let
+        # this become a hard rule.
         "months": 1, "action": "ban", "alt": "Cefotaxime",
+        "preterm_caution_months": 3,
         "reason": ("🚫 يُمنع في حديثي الولادة (≤ 28 يوم): يزيح البيليروبين عن "
                    "الألبومين → خطر kernicterus، ويكوّن راسب قاتل مع محاليل "
                    "الكالسيوم الوريدية. البديل المباشر: Cefotaxime بنفس الطيف. "
-                   "(FDA label / BNFc / AAP Red Book)"),
+                   "(FDA label / BNFc / AAP Red Book 33rd ed.)"),
+        "preterm_reason": ("⚠️ **إن كان الرضيع خديجاً**: المنع يمتد حتى عمر ما بعد "
+                           "الطمث 41 أسبوعاً (الحملي + الزمني) — أي قد يصل إلى ~3 "
+                           "شهور زمنية لمولود 28 أسبوعاً. البرنامج لا يعرف عمر "
+                           "الحمل، فتحقّق يدوياً قبل الوصف. وتجنّبه مطلقاً مع أي "
+                           "محلول كالسيوم وريدي أو فرط بيليروبين. "
+                           "(FDA label / AAP Red Book 33rd ed.)"),
     },
     "Trimethoprim/Sulfamethoxazole": {
         "months": 2, "action": "ban", "alt": "بيتا-لاكتام حسب الحساسية",
@@ -2233,7 +2257,7 @@ def analyze_antibiotics(
             continue
 
         # ── Cefepime (4th-gen) + ESBL: special handling (NOT a hard ban) ──────
-        # EUCAST Breakpoint Tables v16.0 reports as-tested; IDSA AMR Guidance v4.0 (2024): Cefepime-S acceptable
+        # EUCAST Breakpoint Tables v16.1 reports as-tested; IDSA AMR Guidance 2026: Cefepime-S acceptable
         # ONLY for uncomplicated lower UTI, AVOID in bacteremia/serious infection.
         # Mirrors BLI-combo handling -- warn, don't ban, don't free-allow.
         if (_is_esbl_like and not _is_carbapenemase
@@ -2244,13 +2268,13 @@ def analyze_antibiotics(
             _wc["esbl_note"] = (
                 "كائن ESBL: Cefepime (4th-gen) قد يبقى حساسًا، لكنه فعّال فقط "
                 "لعدوى المسالك البولية البسيطة عند ثبوت الحساسية. تجنّبه في تجرثم "
-                "الدم أو التهاب الكلية الصاعد (IDSA AMR Guidance v4.0 (2024) -- ارتفاع الوفيات) -- "
+                "الدم أو التهاب الكلية الصاعد (IDSA AMR Guidance 2026 -- ارتفاع الوفيات) -- "
                 "Carbapenem هو الخيار الأول للعدوى الشديدة."
             )
             _wc["esbl_note_en"] = (
                 "ESBL organism: Cefepime (4th-gen) may remain susceptible but is "
                 "effective ONLY for uncomplicated lower UTI when proven S. Avoid in "
-                "bacteremia or pyelonephritis (IDSA AMR Guidance v4.0 (2024) -- higher mortality) -- "
+                "bacteremia or pyelonephritis (IDSA AMR Guidance 2026 -- higher mortality) -- "
                 "Carbapenem is first-line for serious infection."
             )
             warned.append({"name": drug, **_wc})
@@ -2486,6 +2510,22 @@ def analyze_antibiotics(
                     })
                 continue
 
+        # Preterm window: the chronological ban has lifted, but for an
+        # ex-premature infant the contraindication runs to 41 weeks POSTMENSTRUAL
+        # age — roughly three chronological months for a 28-weeker. The engine
+        # holds no gestational-age field, so it asks rather than assumes.
+        if age < 1 and age_months is not None and drug in NEONATAL_RESTRICTIONS:
+            _neo2 = NEONATAL_RESTRICTIONS[drug]
+            _pcm = _neo2.get("preterm_caution_months")
+            if _pcm and _neo2.get("months", 0) <= age_months < _pcm:
+                warned.append({
+                    "name": drug, **info,
+                    "category": "neonate", "warning_reason": "neonate",
+                    "reason_short": f"خديج؟ تحقّق قبل الوصف (العمر {age_months} شهر).",
+                    "reason_detail": _neo2.get("preterm_reason", ""),
+                })
+                continue
+
         # Nitrofurantoin: contraindicated below its renal threshold (EMA/BNF 2025 = 45)
         # ── D-test: Inducible Clindamycin Resistance (CLSI M100 Ed36) ──────────
         if "clindamycin" in d_low and culture_result == "S":
@@ -2501,7 +2541,7 @@ def analyze_antibiotics(
                         drug, "d_test_inducible",
                         f"مقاومة Clindamycin المستحثة — {label}",
                         f"Erythromycin=R + Clindamycin=S → MLSB inducible resistance محتملة. "
-                        f"لا تُستخدم Clindamycin إلا بعد تأكيد D-test سالب. CLSI M100 Ed36 · EUCAST Breakpoint Tables v16.0.",
+                        f"لا تُستخدم Clindamycin إلا بعد تأكيد D-test سالب. CLSI M100 Ed36 · EUCAST Breakpoint Tables v16.1.",
                     ))
                     continue
 
@@ -2569,7 +2609,7 @@ def analyze_antibiotics(
         # ══════════════════════════════════════════════════════════════════
         # PREGNANCY SAFETY BLOCK
         # Updated per: ACOG 2023, BNF 2025, EMA 2025, ENTIS 2024,
-        #              IDSA AMR Guidance v4.0 (2024), WHO AWaRe 2023, BMJ Teratology 2023
+        #              IDSA AMR Guidance 2026, WHO AWaRe 2025, BMJ Teratology 2023
         #
         # ORDERING IS LOAD-BEARING -- DO NOT MOVE THE RENAL BLOCK BACK ABOVE THIS.
         # The renal-adjustment branch below ends in `continue`. While it sat
@@ -4631,12 +4671,12 @@ def _parse_pus(text: str):
 # CLINICAL DECISION ENGINES -- v4.0
 # ① Treatment Duration  ② IV->PO Switch  ③ Hepatic Dosing (Child-Pugh)
 # ④ Combination Therapy  ⑤ De-escalation Advisor
-# References: IDSA AMR Guidance v4.0 (2024) | Sanford 2025 | WHO AWaRe 2025
+# References: IDSA AMR Guidance 2026 | Sanford 2025 | WHO AWaRe 2025
 #             MERINO 2018 | NINJA 2020 | ATTACK 2023 | STOP-IT 2015
 # ═══════════════════════════════════════════════════════════════════════
 # ═══════════════════════════════════════════════════════════════════════
 # ENGINE 1 -- Treatment Duration Engine
-# IDSA AMR Guidance v4.0 (2024) | Sanford Guide 2025 | ATS/IDSA CAP 2019
+# IDSA AMR Guidance 2026 | Sanford Guide 2025 | ATS/IDSA CAP 2019
 # IDSA UTI 2022 | IDSA SSTI 2014 | STOP-IT trial 2015
 # ═══════════════════════════════════════════════════════════════════════
 TREATMENT_DURATION_DB: Dict[str, Any] = {
@@ -4695,7 +4735,7 @@ TREATMENT_DURATION_DB: Dict[str, Any] = {
         "label": "GNB Bacteremia",
         "days": (7, 14), "standard": 14, "iv_days": 14, "po_days": 0,
         "notes": "14d IV. Source control mandatory. Echo if Staph aureus.",
-        "follow_up_culture": True, "ref": "IDSA AMR Guidance v4.0 (2024)",
+        "follow_up_culture": True, "ref": "IDSA AMR Guidance 2026",
     },
     "Bacteremia_MSSA": {
         "label": "MSSA Bacteremia",
@@ -4938,7 +4978,7 @@ def get_treatment_duration(
     age: int, sex: str, is_renal: bool,
     phenotypes: List[Dict], severity: str = "moderate",
 ) -> Dict[str, Any]:
-    """Treatment Duration Engine -- IDSA AMR Guidance v4.0 (2024) | Sanford Guide 2025"""
+    """Treatment Duration Engine -- IDSA AMR Guidance 2026 | Sanford Guide 2025"""
     org  = organism.lower()
     synd = (syndrome or "").lower()
     _cat = classify_specimen(specimen)
@@ -5089,7 +5129,7 @@ def get_hepatic_recommendations(allowed_drugs: List[Dict], child_pugh: str) -> L
 
 # ═══════════════════════════════════════════════════════════════════════
 # ENGINE 4 -- Combination Therapy Suggester
-# IDSA AMR Guidance v4.0 (2024) | WHO Priority Pathogens | ESCAPE organisms
+# IDSA AMR Guidance 2026 | WHO Priority Pathogens | ESCAPE organisms
 # ═══════════════════════════════════════════════════════════════════════
 COMBINATION_THERAPY: Dict[str, Dict] = {
     "CRAB": {
@@ -5098,16 +5138,16 @@ COMBINATION_THERAPY: Dict[str, Dict] = {
         "options": [
             {"combo": "Ampicillin-Sulbactam (high-dose 9g q8h) + Colistin", "evidence": "★★★",
              "indication": "Sulbactam has intrinsic activity vs A. baumannii -- first-line combination",
-             "caution": "", "ref": "ATTACK trial 2023 | IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "ATTACK trial 2023 | IDSA AMR Guidance 2026"},
             {"combo": "Cefiderocol ± Sulbactam", "evidence": "★★★",
              "indication": "Novel siderophore cephalosporin -- active against CRAB if susceptible",
-             "caution": "", "ref": "CREDIBLE-CR trial | IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "CREDIBLE-CR trial | IDSA AMR Guidance 2026"},
             {"combo": "Colistin + Meropenem (2g q8h extended infusion 3h)", "evidence": "★★",
              "indication": "When novel agents unavailable -- carbapenem synergy",
-             "caution": "CAUTION: Monitor renal function closely", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "CAUTION: Monitor renal function closely", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Colistin + Rifampicin + Meropenem (Triple)", "evidence": "★★",
              "indication": "XDR CRAB -- triple therapy as last resort",
-             "caution": "CAUTION: Monitor LFTs (Rifampicin)", "ref": "AIDA trial | IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "CAUTION: Monitor LFTs (Rifampicin)", "ref": "AIDA trial | IDSA AMR Guidance 2026"},
         ]
     },
     "CRPA": {
@@ -5116,16 +5156,16 @@ COMBINATION_THERAPY: Dict[str, Dict] = {
         "options": [
             {"combo": "Ceftolozane-Tazobactam + Amikacin", "evidence": "★★★",
              "indication": "If Ceftolozane-Taz susceptible -- preferred for CRPA",
-             "caution": "", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Aztreonam + Ceftazidime-Avibactam", "evidence": "★★★",
              "indication": "MBL/NDM-producing CRPA -- complementary beta-lactam mechanism",
-             "caution": "Susceptibility testing for combination required", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "Susceptibility testing for combination required", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Cefiderocol monotherapy", "evidence": "★★",
              "indication": "XDR CRPA -- if no other options available",
-             "caution": "", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Colistin + Meropenem (extended infusion)", "evidence": "★★",
              "indication": "When novel agents unavailable",
-             "caution": "CAUTION: Mandatory renal monitoring", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "CAUTION: Mandatory renal monitoring", "ref": "IDSA AMR Guidance 2026"},
         ]
     },
     "DTR_PA": {
@@ -5134,23 +5174,23 @@ COMBINATION_THERAPY: Dict[str, Dict] = {
         "options": [
             {"combo": "Ceftolozane-Tazobactam", "evidence": "★★★",
              "indication": "DTR-PA -- preferred agent where susceptible",
-             "caution": "", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Ceftazidime-Avibactam", "evidence": "★★★",
              "indication": "DTR-PA -- alternative first-line novel beta-lactam",
-             "caution": "", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Imipenem-Relebactam", "evidence": "★★",
              "indication": "DTR-PA -- where ceftolozane/ceftazidime-avibactam unavailable",
-             "caution": "", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Cefiderocol", "evidence": "★★",
              "indication": "DTR-PA -- salvage when all novel beta-lactams fail",
-             "caution": "", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "AVOID: Colistin-based combination as first choice",
              "evidence": "AVOID",
              "indication": "",
              "caution": "IDSA v4.0 prefers the novel beta-lactams over polymyxins "
                         "for DTR-PA -- lower nephrotoxicity and better outcomes. "
                         "Reserve colistin for when none of the above is available.",
-             "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "ref": "IDSA AMR Guidance 2026"},
         ]
     },
     "CRE": {
@@ -5159,16 +5199,16 @@ COMBINATION_THERAPY: Dict[str, Dict] = {
         "options": [
             {"combo": "Ceftazidime-Avibactam", "evidence": "★★★",
              "indication": "KPC-producing CRE -- first-line therapy",
-             "caution": "", "ref": "RECAPTURE trial | IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "RECAPTURE trial | IDSA AMR Guidance 2026"},
             {"combo": "Meropenem-Vaborbactam", "evidence": "★★★",
              "indication": "KPC-producing CRE -- alternative to Ceft-Avib",
-             "caution": "", "ref": "TANGO-II trial | IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "TANGO-II trial | IDSA AMR Guidance 2026"},
             {"combo": "Ceftazidime-Avibactam + Aztreonam", "evidence": "★★★",
              "indication": "MBL-producing CRE (NDM, VIM, IMP) -- synergistic combination",
-             "caution": "", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Colistin + Meropenem high-dose (2g q8h 3h infusion)", "evidence": "★★",
              "indication": "When novel agents unavailable -- heteroresistance approach",
-             "caution": "CAUTION: Nephrotoxicity risk", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "CAUTION: Nephrotoxicity risk", "ref": "IDSA AMR Guidance 2026"},
         ]
     },
     "MRSA": {
@@ -5180,13 +5220,13 @@ COMBINATION_THERAPY: Dict[str, Dict] = {
              "caution": "TDM mandatory: AUC/MIC-guided (not trough-only)", "ref": "IDSA MRSA 2011 (updated 2025)"},
             {"combo": "Daptomycin (8-10 mg/kg) + Ceftaroline", "evidence": "★★★",
              "indication": "Persistent MRSA bacteremia | refractory endocarditis",
-             "caution": "Daptomycin INEFFECTIVE for pneumonia (inactivated by surfactant)", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "Daptomycin INEFFECTIVE for pneumonia (inactivated by surfactant)", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Vancomycin + Rifampicin", "evidence": "★★★",
              "indication": "Biofilm infections: prosthetic joint, CIED, vascular graft",
-             "caution": "NEVER use Rifampicin as monotherapy -- rapid resistance", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "NEVER use Rifampicin as monotherapy -- rapid resistance", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Linezolid 600mg q12h", "evidence": "★★★",
              "indication": "MRSA pneumonia -- superior to Vancomycin (ZEPHyR trial)",
-             "caution": "Avoid >2 weeks | Weekly CBC monitoring | Serotonin syndrome risk", "ref": "ZEPHyR trial 2012 | IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "Avoid >2 weeks | Weekly CBC monitoring | Serotonin syndrome risk", "ref": "ZEPHyR trial 2012 | IDSA AMR Guidance 2026"},
             {"combo": "AVOID: Vancomycin + Piperacillin-Tazobactam", "evidence": "AVOID",
              "indication": "Contraindicated combination -- increased AKI without efficacy benefit",
              "caution": "NINJA trial 2020: increased nephrotoxicity", "ref": "NINJA trial 2020"},
@@ -5198,13 +5238,13 @@ COMBINATION_THERAPY: Dict[str, Dict] = {
         "options": [
             {"combo": "Linezolid 600mg q12h", "evidence": "★★★",
              "indication": "VRE -- drug of choice for serious infections",
-             "caution": "Weekly CBC monitoring; myelosuppression risk", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "Weekly CBC monitoring; myelosuppression risk", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Daptomycin (8-12 mg/kg) + Ampicillin", "evidence": "★★★",
              "indication": "VRE bacteremia | endocarditis -- Ampicillin restores Daptomycin activity even for VRE",
-             "caution": "Weekly CK monitoring", "ref": "IDSA AMR Guidance v4.0 (2024) | Synergy studies"},
+             "caution": "Weekly CK monitoring", "ref": "IDSA AMR Guidance 2026 | Synergy studies"},
             {"combo": "Daptomycin high-dose (≥10 mg/kg) monotherapy", "evidence": "★★",
              "indication": "VRE bacteremia when Ampicillin not available",
-             "caution": "Monitor CK weekly", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "Monitor CK weekly", "ref": "IDSA AMR Guidance 2026"},
         ]
     },
     "ESBL": {
@@ -5213,10 +5253,10 @@ COMBINATION_THERAPY: Dict[str, Dict] = {
         "options": [
             {"combo": "Ertapenem (definitive therapy)", "evidence": "★★★",
              "indication": "ESBL UTI/intraabdominal -- carbapenem-sparing for bacteremia (if MIC allows)",
-             "caution": "", "ref": "IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Meropenem (severe / bacteremia)", "evidence": "★★★",
              "indication": "ESBL bacteremia -- superior to Pip-Taz (MERINO trial)",
-             "caution": "", "ref": "MERINO trial 2018 | IDSA AMR Guidance v4.0 (2024)"},
+             "caution": "", "ref": "MERINO trial 2018 | IDSA AMR Guidance 2026"},
             {"combo": "AVOID: Piperacillin-Tazobactam for bacteremia", "evidence": "AVOID",
              "indication": "Inferior to carbapenems for ESBL bacteremia -- inoculum effect",
              "caution": "MERINO trial 2018: Pip-Taz inferior for ESBL bloodstream infections", "ref": "MERINO trial 2018"},
@@ -5270,11 +5310,12 @@ def get_combination_therapy(
     *,
     is_pregnant: bool = False,
     age_years: Optional[float] = None,
+    age_months: Optional[float] = None,
     is_renal: bool = False,
     cl_cr: Optional[float] = None,
     is_hepatic: bool = False,
 ) -> List[Dict]:
-    """Combination therapy suggestions -- IDSA AMR Guidance v4.0 (2024).
+    """Combination therapy suggestions -- IDSA AMR Guidance 2026.
 
     FIX 2026-08-01 (second pass): this took `phenotypes` and nothing else. It
     was the ONLY panel in the app that proposed agents without passing through
@@ -5295,7 +5336,19 @@ def get_combination_therapy(
     states = set()
     if is_pregnant:
         states.add("pregnancy")
-    if age_years is not None and age_years < 1:
+    # Months win over years. `age_years` is the UI's INTEGER field, which reads
+    # 0 for every infant from birth to eleven months — the same trap that made
+    # apply_safety_gate() treat a six-month-old as a neonate (fixed 2026-08-03).
+    # Resolve here too rather than inheriting it.
+    _eff_age = age_years
+    if age_months is not None:
+        try:
+            _m = float(age_months)
+            if 0 <= _m <= 11:
+                _eff_age = _m / 12.0
+        except (TypeError, ValueError):
+            pass
+    if _eff_age is not None and _eff_age < (28.0 / 365.0):
         states.add("neonate")
     if is_renal or (cl_cr is not None and cl_cr < 60):
         states.add("renal")
@@ -5383,7 +5436,7 @@ def evaluate_deescalation(
 # =========================================================
 # MODULE 1 -- Resistance Phenotype Engine
 # يحدد: ESBL / CRE / MRSA / VRE / MDR / XDR / PDR
-# المرجع: EUCAST Breakpoint Tables v16.0, CLSI M100 Ed36, CDC/ECDC 2017
+# المرجع: EUCAST Breakpoint Tables v16.1, CLSI M100 Ed36, CDC/ECDC 2017
 # =========================================================
 PHENOTYPE_RULES = {
     "MRSA": {
@@ -5502,15 +5555,28 @@ PHENOTYPE_RULES = {
         # previously sitting inside the CRPA marker list, which is what made a
         # carbapenem-susceptible isolate register as carbapenem-resistant.
         #
-        # require_any is set to 6 of the 8 rather than all 8 because a real
-        # panel rarely carries every one of them; demanding all 8 would make the
-        # rule unreachable, which is the failure mode this audit keeps finding.
+        # DEFINITION FIX 2026-08-03 (web-verified against Kadri et al. 2018 and
+        # IDSA): DTR is non-susceptibility to ALL EIGHT agents, not a majority.
+        # A 6-of-8 threshold over-calls it — an isolate still susceptible to
+        # cefepime and levofloxacin is not difficult-to-treat, and labelling it
+        # so pushes a clinician toward the novel beta-lactams when a first-line
+        # agent still works.
+        #
+        # But requiring all eight to be PRESENT on the panel would make the rule
+        # unreachable: no Egyptian panel carries aztreonam plus all three
+        # anti-pseudomonal beta-lactams plus both fluoroquinolones. The engine
+        # therefore requires every one of the eight that WAS TESTED to be R,
+        # with a floor of 5 tested agents so a two-drug panel cannot qualify.
+        # That is the faithful reading of "non-susceptible to all" under partial
+        # testing, and it is handled by `require_all_tested` below rather than
+        # by require_any.
         "organisms": ["Pseudomonas aeruginosa"],
         "markers":   [("Piperacillin + Tazobactam", "R"), ("Ceftazidime", "R"),
                       ("Cefepime", "R"), ("Aztreonam", "R"),
                       ("Meropenem", "R"), ("Imipenem/Cilastatin", "R"),
                       ("Ciprofloxacin", "R"), ("Levofloxacin", "R")],
-        "require_any": 6,
+        "require_any": 5,          # floor: at least 5 of the 8 must be on the panel
+        "require_all_tested": True, # and every tested one must be R
         "icon":  "🔴",
         "label": "DTR-P. aeruginosa -- Difficult-to-Treat Resistance",
         "detail": "مقاومة لكل الخطوط الأولى (بيتا-لاكتام + فلوروكينولون). "
@@ -5556,6 +5622,20 @@ def detect_resistance_phenotypes(
         # عدد الـ markers المطابقة
         matched = sum(1 for drug, expected in markers
                       if sir_map.get(drug) == expected)
+
+        # `require_all_tested` (added 2026-08-03 for DTR-P. aeruginosa): the
+        # definition is non-susceptibility to ALL of a named set, but a real
+        # panel rarely carries every agent in it. Requiring all EIGHT to be
+        # present makes the rule unreachable; requiring a mere majority
+        # over-calls it. So: every listed agent that WAS tested must match, and
+        # `require_any` becomes a floor on how many had to be tested at all.
+        if rule.get("require_all_tested"):
+            tested = [(d, e) for d, e in markers if sir_map.get(d) is not None]
+            if len(tested) < req_any:
+                continue
+            if any(sir_map.get(d) != e for d, e in tested):
+                continue
+            matched = len(tested)
 
         if matched >= req_any and matched > 0:
             detected.append({
@@ -5610,7 +5690,7 @@ def detect_resistance_phenotypes(
 # inline. Output is English (complete sentences) on purpose: the internal PDF
 # renders right-to-left Arabic incorrectly.
 #
-# References: EUCAST Intrinsic Resistance v3.3 | EUCAST Breakpoint Tables v16.0 |
+# References: EUCAST Intrinsic Resistance v3.3 | EUCAST Breakpoint Tables v16.1 |
 #             CLSI M100 Ed36 | EUCAST Expert Rules.
 # =========================================================
 
@@ -5647,7 +5727,7 @@ def _pass_specimen_fit(specimen: str, sir_map: Dict[str, str]) -> List[Dict[str,
                             f"tested on a {specimen} isolate. {why} It is not clinically actionable "
                             f"for a non-urinary (systemic) infection."),
                 "fix": (f"Suppress {drug} from the {specimen} report; it is a urinary-tract agent only.  \n"
-                        f"📖 EUCAST Breakpoint Tables v16.0 — agent site-of-infection notes"),
+                        f"📖 EUCAST Breakpoint Tables v16.1 — agent site-of-infection notes"),
             })
     return out
 
@@ -5674,7 +5754,7 @@ def _pass_non_entero_gram_pos(org_lower: str, sir_map: Dict[str, str]) -> List[D
 # ── Phenotype-level rules (ESBL / carbapenemase). Intrinsic-resistance and
 #    equivalence checks that used to live here are now handled by the
 #    reportability / consistency modules, so only the phenotype notes remain.
-#    QC006 is corrected to the EUCAST v16.0 "report as tested" stance. ──
+#    QC006 is corrected to the EUCAST v16.1 "report as tested" stance. ──
 AST_QC_RULES = [
     {
         "id": "QC003",
@@ -5737,14 +5817,14 @@ AST_QC_RULES = [
                    "({drugs}) = S, a pattern often seen with ESBL production. First check for a "
                    "third-generation cephalosporin discrepancy (see any panel-discrepancy alerts above).",
         "fix": "LABORATORY REPORTING: report susceptibilities exactly as tested. Per EUCAST Breakpoint "
-               "Tables v16.0, the current cephalosporin breakpoints already detect the clinically "
+               "Tables v16.1, the current cephalosporin breakpoints already detect the clinically "
                "important mechanisms, and the presence or absence of an ESBL does not by itself change "
                "the category -- do NOT edit a Susceptible cephalosporin to Resistant (that pre-2017 "
                "practice was withdrawn). ESBL detection is for infection control and surveillance only.  \n"
                "TREATMENT (separate, physician-level decision): a carbapenem is preferred over "
                "cephalosporins / piperacillin-tazobactam for ESBL bacteraemia even when they test "
                "Susceptible (IDSA AMR guidance; MERINO trial, JAMA 2018).  \n"
-               "📖 EUCAST Breakpoint Tables v16.0 -- Enterobacterales, note on cephalosporin breakpoints and ESBL",
+               "📖 EUCAST Breakpoint Tables v16.1 -- Enterobacterales, note on cephalosporin breakpoints and ESBL",
     },
 ]
 
@@ -7414,7 +7494,7 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:0.6mm 0; }
     H.append("""<hr class="dv" style="margin-top:1mm">
 <div class="grid2">
   <div class="g2l" style="font-size:8pt;color:#666">
-    <b>References:</b> CLSI 2026 | EUCAST Breakpoint Tables v16.0 | IDSA AMR Guidance v4.0 (2024) | WHO AWaRe 2025 | Sanford 2025 | BNF 2025 | Egypt Nat. Guidelines
+    <b>References:</b> CLSI 2026 | EUCAST Breakpoint Tables v16.1 | IDSA AMR Guidance 2026 | WHO AWaRe 2025 | Sanford 2025 | BNF 2025 | Egypt Nat. Guidelines
   </div>
   <div class="g2r" style="font-size:8pt;color:#666">
     <b>Disclaimer:</b> Clinical decision support only. Treatment decisions are the sole responsibility of the treating physician.
@@ -8008,7 +8088,7 @@ def generate_decision_tree_image(
     fx1 = P + 3*(fw4+G);  fx2 = W - P
     rbox(draw, (fx1, FY1, fx2, FY2), FOOT_BG, FOOT_BD, radius=12, width=2)
     draw.text((fx1+10*S, FY1+10*S), "REFERENCES", fill=DARK, font=F_SUBTITL)
-    refs = ["EUCAST Breakpoint Tables v16.0", "CLSI M100 Ed36", "IDSA AMR Guidance v4.0 (2024)",
+    refs = ["EUCAST Breakpoint Tables v16.1", "CLSI M100 Ed36", "IDSA AMR Guidance 2026",
             "WHO AWaRe 2025", "Egypt Nat. Guidelines", "BNF 2025 | FDA Labels"]
     ry = FY1 + 30*S
     for ref in refs:
@@ -8281,7 +8361,7 @@ def generate_report(
     L += ["\nDISCLAIMER", sep,
           "هذا التقرير أداة مساعدة للقرار الطبي وليس بديلاً عن التقييم السريري.",
           "القرار النهائي للوصف العلاجي يعود للطبيب المعالج.", sep,
-          "Guidelines: EUCAST Breakpoint Tables v16.0 | CLSI M100 Ed36 | IDSA AMR Guidance v4.0 (2024) | Egypt National",
+          "Guidelines: EUCAST Breakpoint Tables v16.1 | CLSI M100 Ed36 | IDSA AMR Guidance 2026 | Egypt National",
           "Route info: BNF 2025 | FDA Labels | WHO AWaRe 2025",
           "WHO AWaRe : Access | Watch | Reserve", sep,
           f"Developed by Dr / Hussein Ali | {lab_name}{(' | ' + lab_city) if lab_city else ''}", sep]
@@ -9738,7 +9818,7 @@ if uploaded:
 
             # ── ① Treatment Duration ─────────────────────────────────
             with st.expander("⏱️ Treatment Duration", expanded=False):
-                st.caption("Evidence-based duration -- IDSA AMR Guidance v4.0 (2024) | Sanford 2025")
+                st.caption("Evidence-based duration -- IDSA AMR Guidance 2026 | Sanford 2025")
 
                 # ── Auto-suggest severity from patient factors ─────────────
                 _auto = suggest_severity(
@@ -9808,7 +9888,7 @@ if uploaded:
             )
             if _combos:
                 with st.expander(f"🔬 Combination Therapy ({len(_combos)} phenotype)", expanded=True):
-                    st.caption("MDR/XDR combination therapy -- IDSA AMR Guidance v4.0 (2024)")
+                    st.caption("MDR/XDR combination therapy -- IDSA AMR Guidance 2026")
                     for _cs in _combos:
                         _pd = _cs["data"]
                         _urg = _pd["urgency"]
@@ -10236,6 +10316,6 @@ st.divider()
 st.markdown("""
 <div style="text-align:center;color:gray;font-size:0.9rem;">
   <strong>Developed by Dr / Hussein Ali | Orange Lab</strong><br>
-  EUCAST Breakpoint Tables v16.0 | CLSI M100 Ed36 | IDSA AMR Guidance v4.0 (2024) | BNF 2025 | Egypt National Guidelines
+  EUCAST Breakpoint Tables v16.1 | CLSI M100 Ed36 | IDSA AMR Guidance 2026 | BNF 2025 | Egypt National Guidelines
 </div>
 """, unsafe_allow_html=True)

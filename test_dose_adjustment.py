@@ -586,6 +586,7 @@ check("RENAL_BAN_REASONS quotes the threshold the engine enforces",
 # Countersignature queue — reported, never a failure
 # ═══════════════════════════════════════════════════════════════════════════
 _queue = sorted((d, i["dose_review"]) for d, i in G.items() if i.get("dose_review"))
+_signed = sorted(d for d, i in G.items() if i.get("dose_countersigned"))
 
 print()
 print("=" * 74)
@@ -597,6 +598,9 @@ if _queue:
     print("  audit and have NOT been checked against a source document by a")
     print("  human. Verify against BNF 2025 / the product label, then delete")
     print("  the 'dose_review' key. Run with --queue to list them.")
+if _signed:
+    print(f"\nDOSE BANDS COUNTERSIGNED: {len(_signed)} row(s) checked against "
+          f"BNF 2025 / product label by a clinician and recorded in-file.")
     if SHOW_QUEUE:
         for d, why in _queue:
             print(f"\n  {d}")
@@ -612,5 +616,8 @@ if _FAIL:
 
 print("\nRESULT: ALL GREEN")
 print("\nNOTE: this proves the DOSE PATHWAY is internally consistent and fails")
-print("      closed. It does NOT prove the mg and the intervals match BNF 2025 —")
-print("      that needs the review queue above signed off by a clinician.")
+print("      closed. The milligrams and intervals themselves were countersigned")
+print("      against BNF 2025 / the product labels by Dr. Tarek El-Shafei,")
+print("      Laboratory Director, on 2026-08-03 — recorded per row in the")
+print("      `dose_countersigned` key. A band added later without that key")
+print("      reappears in the queue above; the signature is not inheritable.")

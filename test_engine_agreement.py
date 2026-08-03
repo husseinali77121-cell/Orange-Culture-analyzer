@@ -808,6 +808,57 @@ check("every isolation-triggering phenotype has a treatment panel",
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[16] GUIDELINE PINS — web-verified 2026-08-03. Three assignments were")
+print("    wrong against WHO AWaRe 2025 (B09489, 5 Sep 2025): Aztreonam was")
+print("    Watch and is Reserve; oral Fosfomycin was Access and is Watch;")
+print("    Ampicillin/Sulbactam was Watch and is Access. Two that looked wrong")
+print("    are right: Tobramycin is Watch while gentamicin and amikacin are")
+print("    Access, and Vancomycin is Watch by both routes.")
+# ═══════════════════════════════════════════════════════════════════════════
+_WHO_2025 = {
+    "Aztreonam": "Reserve", "Fosfomycin": "Watch", "Ampicillin/Sulbactam": "Access",
+    "Tobramycin": "Watch", "Gentamicin": "Access", "Amikacin": "Access",
+    "Vancomycin": "Watch", "Teicoplanin": "Watch", "Linezolid": "Reserve",
+    "Colistin": "Reserve", "Clindamycin": "Access", "Minocycline": "Watch",
+    "Amoxicillin + Clavulanic acid": "Access", "Piperacillin + Tazobactam": "Watch",
+    "Cefazolin": "Access", "Cephalexin": "Access", "Ceftriaxone": "Watch",
+    "Meropenem": "Watch", "Ertapenem": "Watch", "Ciprofloxacin": "Watch",
+    "Nitrofurantoin": "Access", "Trimethoprim/Sulfamethoxazole": "Access",
+    "Doxycycline": "Access", "Metronidazole": "Access", "Rifampicin": "Watch",
+}
+_aw = [f"{d}: code={G[d].get('aware')!r} WHO={e!r}"
+       for d, e in _WHO_2025.items() if d in G and G[d].get("aware") != e]
+check("AWaRe categories match the WHO 2025 list", not _aw, "\n".join(_aw))
+
+# Nitrofurantoin: MHRA/BNF contraindication is eGFR < 45, not < 60.
+check("nitrofurantoin renal threshold is 45 (MHRA DSU Feb 2015 / BNF)",
+      G.get("Nitrofurantoin", {}).get("renal_limit") == 45,
+      f"renal_limit = {G.get('Nitrofurantoin', {}).get('renal_limit')}")
+
+# DTR is non-susceptibility to ALL EIGHT (Kadri 2018 / IDSA), not a majority.
+_dtr = _RULES.get("DTR_PA", {})
+_dtr_marks = {d for d, _ in _dtr.get("markers", [])}
+_EXPECTED_DTR = {"Piperacillin + Tazobactam", "Ceftazidime", "Cefepime", "Aztreonam",
+                 "Meropenem", "Imipenem/Cilastatin", "Ciprofloxacin", "Levofloxacin"}
+check("DTR-PA names exactly the eight Kadri agents",
+      _dtr_marks == _EXPECTED_DTR,
+      f"missing={sorted(_EXPECTED_DTR - _dtr_marks)} extra={sorted(_dtr_marks - _EXPECTED_DTR)}")
+check("DTR-PA requires every TESTED agent to be resistant, not a majority",
+      _dtr.get("require_all_tested") is True,
+      f"require_all_tested={_dtr.get('require_all_tested')} require_any={_dtr.get('require_any')}")
+
+_over = []
+_full = {d: "R" for d in _EXPECTED_DTR}
+for _spare in ("Cefepime", "Levofloxacin", "Meropenem"):
+    _sir = dict(_full); _sir[_spare] = "S"
+    if "DTR_PA" in {p.get("phenotype") for p in detect_phenotypes("Pseudomonas aeruginosa", _sir)}:
+        _over.append(f"{_spare} susceptible but DTR still called")
+check("DTR-PA is not called when any of the eight is still susceptible",
+      not _over, "\n".join(_over))
+
+
 print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
 if _FAIL:

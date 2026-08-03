@@ -44,9 +44,9 @@ It proves the CODE matches THIS TABLE. It cannot prove THIS TABLE matches
 EUCAST v16 / CLSI M100 Ed36. That still needs a human with the PDF open.
 `countersigned_by` in guideline_registry.py is where that signature goes.
 
-Sources: EUCAST Breakpoint Tables v16.0 · EUCAST Intrinsic Resistance and
-Unusual Phenotypes v3.3 · CLSI M100 Ed36 · IDSA AMR Guidance v4.0 (2024) ·
-IDSA Bacterial Meningitis 2004 + ESCMID 2016 · WHO AWaRe 2023 · BNF 2025.
+Sources: EUCAST Breakpoint Tables v16.1 · EUCAST Intrinsic Resistance and
+Unusual Phenotypes v3.3 · CLSI M100 Ed36 · IDSA AMR Guidance 2026 ·
+IDSA Bacterial Meningitis 2004 + ESCMID 2016 · WHO AWaRe 2025 · BNF 2025.
 """
 from __future__ import annotations
 
@@ -767,12 +767,12 @@ def evaluate(
         s = str(sir).strip().upper()[:1]
         if s == "R":
             v.add(DENY, "culture", "resistant in vitro", "مقاوم معملياً",
-                  "EUCAST Breakpoint Tables v16.0")
+                  "EUCAST Breakpoint Tables v16.1")
         elif s == "I":
             v.add(CAUTION, "culture",
                   "susceptible, increased exposure — requires the high-dose regimen",
                   "حساس بزيادة الجرعة — يلزم نظام الجرعة العالية",
-                  "EUCAST v16.0 definition of category I")
+                  "EUCAST v16.1 definition of category I")
 
     # ---- Layer 2: PK compartment (the layer that was missing) ------------
     if site is None:

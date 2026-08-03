@@ -167,7 +167,7 @@ def _check_phenotype_consistency(
                     "Likely AST technical error or incorrect organism. Repeat testing required."
                 ),
                 drug="Oxacillin, Cefazolin",
-                reference="CLSI M100 Ed36, EUCAST Breakpoint Tables v16.0",
+                reference="CLSI M100 Ed36, EUCAST Breakpoint Tables v16.1",
             ))
 
         # Cefoxitin R but Oxacillin S → flag (Cefoxitin is the surrogate marker)
@@ -183,11 +183,11 @@ def _check_phenotype_consistency(
                     "Consider reporting as MRSA and verify with PBP2a/mecA PCR."
                 ),
                 drug="Cefoxitin, Oxacillin",
-                reference="CLSI M100 Ed36 Table 2B · EUCAST Breakpoint Tables v16.0",
+                reference="CLSI M100 Ed36 Table 2B · EUCAST Breakpoint Tables v16.1",
             ))
 
     # ── ESBL / AmpC phenotype note (Gram-negatives) ──
-    # INFORMATIONAL, not an error. Under EUCAST v16.0 "report as tested", a
+    # INFORMATIONAL, not an error. Under EUCAST v16.1 "report as tested", a
     # susceptible cephalosporin in an ESBL/AmpC producer is reported AS-IS — it is
     # NOT edited to R (that is the pre-2017 practice, withdrawn). ESBL detection is
     # for infection control / surveillance. Preferring a carbapenem in serious
@@ -207,7 +207,7 @@ def _check_phenotype_consistency(
                     message=f"{_mech} predicted with {drug}=S — report as tested",
                     detail=(
                         f"{_mech} was predicted from the phenotype and {drug} tested S. "
-                        f"Report the result AS TESTED (EUCAST v16.0 — do NOT edit S to R; "
+                        f"Report the result AS TESTED (EUCAST v16.1 — do NOT edit S to R; "
                         f"editing susceptible cephalosporins to R on mechanism detection is the "
                         f"pre-2017 practice, withdrawn). The {_mech} call is for infection "
                         f"control and surveillance. Separately — a prescribing decision, not a "
@@ -216,7 +216,7 @@ def _check_phenotype_consistency(
                         f"tests S (IDSA AMR 2024 / MERINO 2018)."
                     ),
                     drug=drug,
-                    reference="EUCAST Breakpoint Tables v16.0 — Enterobacterales note; IDSA AMR 2024",
+                    reference="EUCAST Breakpoint Tables v16.1 — Enterobacterales note; IDSA AMR 2024",
                 ))
 
     # ── CRE phenotype check ──
@@ -233,7 +233,7 @@ def _check_phenotype_consistency(
                         f"Verify carbapenem AST and organism identification."
                     ),
                     drug=carb,
-                    reference="EUCAST Breakpoint Tables v16.0 · Magiorakos et al. 2012",
+                    reference="EUCAST Breakpoint Tables v16.1 · Magiorakos et al. 2012",
                 ))
 
     # ── VRE consistency ──
@@ -249,7 +249,7 @@ def _check_phenotype_consistency(
                     "Review organism identification or AST result."
                 ),
                 drug="Vancomycin",
-                reference="EUCAST Breakpoint Tables v16.0",
+                reference="EUCAST Breakpoint Tables v16.1",
             ))
 
     return issues
@@ -276,7 +276,7 @@ def _check_cross_resistance(sir: Dict[str, str]) -> List[QAIssue]:
                         f"confirm with D-test and macrolide susceptibility pattern."
                     ),
                     drug=f"Erythromycin, {mac}",
-                    reference="CLSI M100 Ed36 · EUCAST Breakpoint Tables v16.0",
+                    reference="CLSI M100 Ed36 · EUCAST Breakpoint Tables v16.1",
                 ))
 
     # Fluoroquinolones: Ciprofloxacin R → Levofloxacin usually R
@@ -291,7 +291,7 @@ def _check_cross_resistance(sir: Dict[str, str]) -> List[QAIssue]:
                 "Possible for some organisms with step-wise mutation patterns but warrants review."
             ),
             drug="Ciprofloxacin, Levofloxacin",
-            reference="EUCAST Breakpoint Tables v16.0",
+            reference="EUCAST Breakpoint Tables v16.1",
         ))
 
     # Quinolones: Levofloxacin R → Ciprofloxacin should be R (≥ resistance)
@@ -306,7 +306,7 @@ def _check_cross_resistance(sir: Dict[str, str]) -> List[QAIssue]:
                 "for most Gram-negative organisms. Review AST methodology."
             ),
             drug="Levofloxacin, Ciprofloxacin",
-            reference="EUCAST Breakpoint Tables v16.0 · CLSI M100 Ed36",
+            reference="EUCAST Breakpoint Tables v16.1 · CLSI M100 Ed36",
         ))
 
     # Clindamycin + Erythromycin (D-test relevance flagged)
@@ -325,7 +325,7 @@ def _check_cross_resistance(sir: Dict[str, str]) -> List[QAIssue]:
                     + ("" if not d_test else f" Current D-test: {d_test}.")
                 ),
                 drug="Erythromycin, Clindamycin",
-                reference="CLSI M100 Ed36 · EUCAST Breakpoint Tables v16.0 — Inducible Clindamycin Resistance",
+                reference="CLSI M100 Ed36 · EUCAST Breakpoint Tables v16.1 — Inducible Clindamycin Resistance",
             ))
 
     return issues
@@ -349,7 +349,7 @@ def _check_betalactam_patterns(sir: Dict[str, str]) -> List[QAIssue]:
                 "Ampicillin=R with Amoxicillin=S is biologically implausible."
             ),
             drug="Ampicillin, Amoxicillin",
-            reference="EUCAST Breakpoint Tables v16.0",
+            reference="EUCAST Breakpoint Tables v16.1",
         ))
 
     # Cefotaxime R + Ceftriaxone S → inconsistent (same class, same MIC pattern)
@@ -380,7 +380,7 @@ def _check_betalactam_patterns(sir: Dict[str, str]) -> List[QAIssue]:
                 "However, Cefepime=R with Ceftriaxone=S warrants careful review."
             ),
             drug="Cefepime, Ceftriaxone",
-            reference="EUCAST Breakpoint Tables v16.0",
+            reference="EUCAST Breakpoint Tables v16.1",
         ))
 
     # Piperacillin/Tazobactam R + Ceftriaxone S in Gram-negatives
@@ -396,7 +396,7 @@ def _check_betalactam_patterns(sir: Dict[str, str]) -> List[QAIssue]:
                 "Consider confirming with ESBL testing."
             ),
             drug="Piperacillin + Tazobactam, Ceftriaxone",
-            reference="EUCAST Breakpoint Tables v16.0",
+            reference="EUCAST Breakpoint Tables v16.1",
         ))
 
     return issues
@@ -425,7 +425,7 @@ def _check_carbapenem_patterns(sir: Dict[str, str]) -> List[QAIssue]:
                 "Perform carbapenemase testing (CarbaNP / mCIM) to clarify."
             ),
             drug="Imipenem/Cilastatin, Meropenem",
-            reference="EUCAST Breakpoint Tables v16.0 · CLSI M100 Ed36",
+            reference="EUCAST Breakpoint Tables v16.1 · CLSI M100 Ed36",
         ))
 
     # Meropenem R + Imipenem S → strong alert
@@ -440,7 +440,7 @@ def _check_carbapenem_patterns(sir: Dict[str, str]) -> List[QAIssue]:
                 "requires carbapenemase testing and repeat AST to confirm."
             ),
             drug="Meropenem, Imipenem/Cilastatin",
-            reference="EUCAST Breakpoint Tables v16.0",
+            reference="EUCAST Breakpoint Tables v16.1",
         ))
 
     # Ertapenem R + Imipenem S → clinically significant (early CRE warning)
@@ -456,7 +456,7 @@ def _check_carbapenem_patterns(sir: Dict[str, str]) -> List[QAIssue]:
                 "Do not dismiss — may progress to full carbapenem resistance."
             ),
             drug="Ertapenem, Imipenem/Cilastatin",
-            reference="EUCAST Breakpoint Tables v16.0 · IDSA AMR Guidance v4.0 (2024)",
+            reference="EUCAST Breakpoint Tables v16.1 · IDSA AMR Guidance 2026",
         ))
 
     return issues
@@ -500,7 +500,7 @@ def _check_aminoglycoside_patterns(sir: Dict[str, str]) -> List[QAIssue]:
                 "against organism-specific AME patterns."
             ),
             drug="Gentamicin, Tobramycin",
-            reference="EUCAST Breakpoint Tables v16.0",
+            reference="EUCAST Breakpoint Tables v16.1",
         ))
 
     return issues
@@ -528,7 +528,7 @@ def _check_glycopeptide_patterns(sir: Dict[str, str]) -> List[QAIssue]:
                 "Treatment options are extremely limited (Daptomycin if susceptible)."
             ),
             drug="Vancomycin, Linezolid",
-            reference="CLSI M100 Ed36 · EUCAST Breakpoint Tables v16.0",
+            reference="CLSI M100 Ed36 · EUCAST Breakpoint Tables v16.1",
         ))
 
     # Vancomycin R but Teicoplanin S — vanB pattern (flag)
@@ -543,7 +543,7 @@ def _check_glycopeptide_patterns(sir: Dict[str, str]) -> List[QAIssue]:
                 "Clinically important — confirm genotype by PCR."
             ),
             drug="Vancomycin, Teicoplanin",
-            reference="EUCAST Breakpoint Tables v16.0",
+            reference="EUCAST Breakpoint Tables v16.1",
         ))
 
     return issues
@@ -742,7 +742,7 @@ def _check_biological_plausibility(organism: str, sir: Dict[str, str]) -> List[Q
                 "Critical error in AST or organism identification."
             ),
             drug="Vancomycin",
-            reference="EUCAST Breakpoint Tables v16.0",
+            reference="EUCAST Breakpoint Tables v16.1",
         ))
 
     # Gram-negative reporting Linezolid=S
@@ -756,7 +756,7 @@ def _check_biological_plausibility(organism: str, sir: Dict[str, str]) -> List[Q
                 "Linezolid=S for any Gram-negative is a critical AST error."
             ),
             drug="Linezolid",
-            reference="EUCAST Breakpoint Tables v16.0",
+            reference="EUCAST Breakpoint Tables v16.1",
         ))
 
     # Gram-positive reporting Aztreonam=S
@@ -770,7 +770,7 @@ def _check_biological_plausibility(organism: str, sir: Dict[str, str]) -> List[Q
                 "Aztreonam=S for any Gram-positive is a critical AST error."
             ),
             drug="Aztreonam",
-            reference="EUCAST Breakpoint Tables v16.0",
+            reference="EUCAST Breakpoint Tables v16.1",
         ))
 
     # Gram-positive reporting Colistin=S
@@ -785,7 +785,7 @@ def _check_biological_plausibility(organism: str, sir: Dict[str, str]) -> List[Q
                 "is a critical reporting error."
             ),
             drug="Colistin",
-            reference="EUCAST Breakpoint Tables v16.0",
+            reference="EUCAST Breakpoint Tables v16.1",
         ))
 
     return issues
@@ -817,7 +817,7 @@ def _check_ast_completeness(organism: str, sir: Dict[str, str]) -> List[QAIssue]
                     "Testing both Oxacillin and Cefoxitin is recommended for complete MRSA detection."
                 ),
                 drug="Cefoxitin",
-                reference="CLSI M100 Ed36 Table 2B · EUCAST Breakpoint Tables v16.0",
+                reference="CLSI M100 Ed36 Table 2B · EUCAST Breakpoint Tables v16.1",
             ))
 
         if has_clinda and has_ery and not has_dtest:
@@ -875,7 +875,7 @@ def _check_clinical_context(
                 "Use only as last resort for XDR organisms with no alternatives."
             ),
             drug="Colistin",
-            reference="IDSA AMR Guidance v4.0 (2024) / EUCAST Breakpoint Tables v16.0",
+            reference="IDSA AMR Guidance 2026 / EUCAST Breakpoint Tables v16.1",
         ))
 
     # Nitrofurantoin in Blood/Sputum/CSF — not systemic
@@ -890,7 +890,7 @@ def _check_clinical_context(
                 f"clinically meaningful information and should be suppressed from the report."
             ),
             drug="Nitrofurantoin",
-            reference="BNF 2025 / EUCAST Breakpoint Tables v16.0",
+            reference="BNF 2025 / EUCAST Breakpoint Tables v16.1",
         ))
 
     # Fusidic acid as only anti-Staph agent without combination
@@ -910,7 +910,7 @@ def _check_clinical_context(
                     "showing susceptibility is required. Review AST panel completeness."
                 ),
                 drug="Fusidic acid",
-                reference="BNF 2025 / EUCAST Breakpoint Tables v16.0",
+                reference="BNF 2025 / EUCAST Breakpoint Tables v16.1",
             ))
 
     return issues

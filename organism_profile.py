@@ -95,7 +95,7 @@ ORGANISM_PROFILE = {
         },
         "note": (
             "🔴 MDR — Ampicillin/Sulbactam أو Cefoperazone/Sulbactam "
-            "بجرعات عالية هو الأساس (IDSA AMR Guidance v4.0 (2024))."
+            "بجرعات عالية هو الأساس (IDSA AMR Guidance 2026)."
         ),
     },
     "Staphylococcus aureus": {
@@ -391,7 +391,7 @@ ORGANISM_PROFILE.update({
 #  Serratia marcescens carry an inducible chromosomal AmpC. Stable derepression
 #  emerges on 3rd-generation cephalosporin therapy in roughly 8-40% of cases
 #  (higher for Enterobacter), so an in-vitro "S" does not predict clinical
-#  success. IDSA AMR Guidance v4.0 (2024) recommends cefepime or a carbapenem
+#  success. IDSA AMR Guidance 2026 recommends cefepime or a carbapenem
 #  for invasive infection, reserving TMP-SMX / fluoroquinolone for step-down.
 # ════════════════════════════════════════════════════════════════════════════
 _AMPC_DEREPRESSION_NOTE = (
@@ -402,7 +402,7 @@ _AMPC_DEREPRESSION_NOTE = (
     "المعدّل المُبلَّغ 8–40% حسب النوع، والأعلى في Enterobacter.\n"
     "**للعدوى الغازية:** Cefepime (ثابت أمام AmpC) أو Carbapenem. "
     "**التنزيل الفموي:** TMP-SMX أو Fluoroquinolone حسب الحساسية.\n"
-    "المصدر: IDSA AMR Guidance v4.0 (2024) · EUCAST Expert Rules v3.1."
+    "المصدر: IDSA AMR Guidance 2026 · EUCAST Expert Rules v3.1."
 )
 _AMPC_3GC_AVOID = ["Ceftriaxone", "Cefotaxime", "Ceftazidime", "Cefixime",
                    "Cefoperazone"]
