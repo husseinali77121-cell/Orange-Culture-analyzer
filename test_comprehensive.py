@@ -29,7 +29,7 @@ SEED   = int(os.environ.get("SEED", "1"))
 
 # ── AST-extract the pure logic bundle from the monolith ────────────────────────
 _WANT = ["INTRINSIC_RESISTANCE","ESBL_PRODUCERS","AMPC_PRODUCERS","ESBL_MARKERS",
-         "CARBAPENEMS","ORGANISM_AVOID_CLASS_MAP","_ORG_NON_INFORMATIVE","_org_matches","is_esbl_producer",
+         "CARBAPENEMS","ORGANISM_AVOID_CLASS_MAP","_re_ws_collapse", "_ORG_NON_INFORMATIVE","_org_matches","is_esbl_producer",
          "_remove_intrinsic_resistance","predict_esbl","is_intrinsically_avoided",
          # Shared helpers introduced with SIR normalisation -- extracted so the
          # re-exec'd predict_esbl can still resolve them.
@@ -66,8 +66,10 @@ except Exception as _e:
     print(f"ENVIRONMENT INCOMPLETE — clinical_data.py not importable ({_e}).")
     sys.exit(2)
 
+import re as _re  # _re_ws_collapse (added 2026-08-03) normalises organism
+                 # whitespace with a regex, so the exec namespace needs `re`.
 NS: Dict[str, Any] = {"Dict":Dict,"Any":Any,"List":List,"ORGANISM_PROFILE":ORGANISM_PROFILE,
-                      "INTRINSIC_RESISTANCE":_CANON_IR}
+                      "INTRINSIC_RESISTANCE":_CANON_IR, "re":_re}
 for k in _WANT:
     if k in _seg: exec(_seg[k], NS)
 predict_esbl          = NS["predict_esbl"]

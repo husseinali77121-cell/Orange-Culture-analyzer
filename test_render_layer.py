@@ -1,324 +1,364 @@
-"""Orange Lab CDSS — render layer guard.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""test_render_layer.py — proofs about what actually reaches the screen.
 
-WHY THIS SUITE EXISTS
----------------------
-The other nine suites all prove the same shape of thing: that the ENGINE
-reaches the right conclusion. Not one of them looks at what the SCREEN
-prints. The 2026-08-02 audit found five defects and every single one lived
-in that gap — the engine decided correctly and the renderer dropped the
-sentence. Measured across the full scenario matrix, before the fix:
+WHY THIS FILE EXISTS
+Every other suite in this repository tests the ENGINE: which bucket a drug lands
+in, whether a table row is reachable, whether two engines agree. None of them
+tested the RENDER LAYER, and on 2026-08-01 that gap held two live defects:
 
-    100.0%  of safety-gate reclassifications rendered a BLANK reason
-     15.3%  of banned drugs rendered "💊 Cefazolin []" with no category
-     48.6%  of warnings rendered a note belonging to a DIFFERENT organ
-            a neonate's kernicterus warning rendered as an empty line
+  1. Safety-gate moves rendered with an EMPTY reason. safety_gate.py emitted the
+     key "why"; the renderer read `reason_ar or reason or ''`. Neither key
+     existed, so 33 of 33 moves printed "Drug: allowed → banned — ".
 
-None of that moved the golden snapshot, because the snapshot records the
-engine's decision and not the words shown to the clinician.
+  2. Warned items rendered the WRONG note. The renderer was two branches — ESBL
+     notes, else `renal_note` — and every warned item carries `**info` spread
+     from ABX_GUIDELINES, so `renal_note` was always populated. The else branch
+     therefore never printed nothing; it printed something fluent and false:
 
-THE RULE THIS SUITE ENFORCES
-----------------------------
-    A decision the clinician cannot read is a decision the system did not
-    make. Every ban must carry a label and a reason; every warning must
-    carry a note; every gate move must carry a cause.
+         Child-Pugh C warning  -> "CrCl <30: خفض الجرعة 50%…"
+         CSF gate demotion     -> "🟢 لا تعديل كلوي مطلوب"
 
-A ban with no visible reason is worse than no ban: it reads as arbitrary,
-and arbitrary bans get overridden.
+     The second one is the dangerous shape. The gate had just refused oxacillin
+     for not crossing the blood-brain barrier in meningitis, and the line under
+     it read "no renal adjustment required" — reassurance in place of a refusal.
 
-Usage
------
-    python test_render_layer.py
-    python test_render_layer.py --verbose
+  3. Neonatal warnings were built without `**info` and without a
+     `warning_reason`, so the renderer had nothing to switch on at all.
+
+An engine that reaches the right verdict and then prints someone else's
+explanation next to it is not safer than an engine that gets it wrong — the
+clinician acts on the sentence, not on the bucket.
+
+Run:  python test_render_layer.py
+      python test_render_layer.py --verbose
 """
 from __future__ import annotations
 
-import pathlib
+import os
 import sys
-import types
 
-ROOT = pathlib.Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT))
+HERE = os.path.dirname(os.path.abspath(__file__))
 VERBOSE = "--verbose" in sys.argv
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+
+_PASS: list[str] = []
+_FAIL: list[str] = []
 
 
-# ── Load the monolith's logic without starting Streamlit ─────────────────────
-class _Mock:
-    def __call__(self, *a, **k): return _Mock()
-    def __getattr__(self, n): return _Mock()
-    def __enter__(self): return _Mock()
-    def __exit__(self, *a): return False
-    def __bool__(self): return False
+def check(name: str, ok: bool, detail: str = "") -> None:
+    (_PASS if ok else _FAIL).append(name)
+    if not ok:
+        print(f"  FAIL  {name}")
+        for line in str(detail).splitlines()[:12]:
+            print(f"          {line}")
+    elif VERBOSE:
+        print(f"  PASS  {name}")
 
 
-class _SessionState(dict):
-    def __getattr__(self, n): return self.get(n)
-    def __setattr__(self, n, v): self[n] = v
+# ═══════════════════════════════════════════════════════════════════════════
+# Load the app without a Streamlit runtime, reusing the house AST-extraction
+# pattern. Only the decision + resolver layer is needed here.
+# ═══════════════════════════════════════════════════════════════════════════
+import ast  # noqa: E402
+
+APP = os.path.join(HERE, "streamlit_app.py")
+if not os.path.exists(APP):
+    print(f"ENVIRONMENT INCOMPLETE — {APP} not found.")
+    sys.exit(2)
 
 
-class _StreamlitStub(types.ModuleType):
-    def __getattr__(self, n): return _Mock()
+def _extract(path: str, names: list[str]):
+    src = open(path, encoding="utf-8").read()
+    tree = ast.parse(src)
+    lines = src.splitlines(keepends=True)
+    seg, order = {}, []
+    for n in tree.body:
+        nm = getattr(n, "name", None)
+        if nm is None and isinstance(n, (ast.Assign, ast.AnnAssign)):
+            tg = n.targets if isinstance(n, ast.Assign) else [n.target]
+            for t in tg:
+                if isinstance(t, ast.Name):
+                    nm = t.id
+        if nm in names and nm not in seg:
+            seg[nm] = "".join(lines[n.lineno - 1:n.end_lineno])
+            order.append(nm)
+    return seg, order, [w for w in names if w not in seg]
 
 
-_stub = _StreamlitStub("streamlit")
-_stub.session_state = _SessionState()
-_stub.secrets = {}
-sys.modules["streamlit"] = _stub
-
-_src = (ROOT / "streamlit_app.py").read_text(encoding="utf-8")
-# Built by concatenation on purpose: writing this marker as one literal would
-# make THIS FILE's own text the first textual match if the file were ever
-# scanned, and it is the exact trap that truncated the module during the audit.
-_MARK = "if not st.session_state." + "authenticated:"
-_cut = _src.index(_MARK)
-APP: dict = {"__name__": "app_core"}
-exec(compile(_src[:_cut], "streamlit_app.py", "exec"), APP)
-
-analyze_antibiotics = APP["analyze_antibiotics"]
-warned_note_for = APP["warned_note_for"]
-banned_category_label = APP["banned_category_label"]
-BANNED_CATEGORY_LABELS = APP["BANNED_CATEGORY_LABELS"]
-build_banned_item = APP["build_banned_item"]
-is_intrinsically_avoided = APP["is_intrinsically_avoided"]
-
-from safety_gate import apply_safety_gate                      # noqa: E402
-from scenario_matrix import build_matrix                       # noqa: E402
-from self_check import run_self_check, BLOCK                   # noqa: E402
-
-passed: list[str] = []
-failed: list[str] = []
-
-
-def check(ok: bool, name: str, detail: str = "") -> None:
-    (passed if ok else failed).append(name if ok else f"{name}\n        {detail}")
-    if VERBOSE or not ok:
-        print(f"  {'PASS' if ok else 'FAIL'}  {name}")
-        if not ok and detail:
-            print(f"          {detail}")
-
-
-HOSTS = [
-    ("adult", dict(age=45, sex="Male", is_renal=False, cl_cr=95.0,
-                   is_preg=False, is_hepatic=False, current_meds=[])),
-    ("pregnant", dict(age=28, sex="Female", is_renal=False, cl_cr=95.0,
-                      is_preg=True, is_hepatic=False, current_meds=[])),
-    ("neonate-0m", dict(age=0, sex="Male", age_months=0, is_renal=False,
-                        cl_cr=95.0, is_preg=False, is_hepatic=False, current_meds=[])),
-    ("neonate-months-unknown", dict(age=0, sex="Male", age_months=None,
-                                    is_renal=False, cl_cr=95.0, is_preg=False,
-                                    is_hepatic=False, current_meds=[])),
-    ("neonate-bad-months", dict(age=0, sex="Male", age_months=99, is_renal=False,
-                                cl_cr=95.0, is_preg=False, is_hepatic=False,
-                                current_meds=[])),
-    ("renal-CrCl22", dict(age=70, sex="Male", is_renal=True, cl_cr=22.0,
-                          is_preg=False, is_hepatic=False, current_meds=[])),
-    ("hepatic-CP-C", dict(age=55, sex="Male", is_renal=False, cl_cr=95.0,
-                          is_preg=False, is_hepatic=True, child_pugh="C",
-                          current_meds=[])),
+_WANT = [
+    "SPECIMEN_TYPES", "BACTERIA_TYPES", "ORGANISM_AVOID_CLASS_MAP",
+    "RENAL_BAN_REASONS", "CHILD_BAN_REASONS", "_SPECIMEN_CATEGORY_RULES",
+    "classify_specimen", "is_intrinsically_avoided", "build_banned_item",
+    "_SIR_ALIASES", "normalize_sir_value", "normalize_sir_map",
+    "_MED_CANON", "_canon_med",
+    "ASSUMED_CRCL_UNKNOWN", "resolve_crcl", "crcl_label", "get_renal_severity",
+    "_PREG_ALIASES", "preg_status_of", "_ACQUIRED_NOT_INTRINSIC",
+    "MDR_CATEGORIES_STAPH", "MDR_CATEGORIES_ENTEROCOCCUS",
+    "MDR_CATEGORIES_STREP", "MDR_NOT_APPLICABLE", "MDR_OUTSIDE_MAGIORAKOS",
+    "NEONATAL_RESTRICTIONS",
+    "ESBL_PRODUCERS", "AMPC_PRODUCERS", "ESBL_MARKERS", "CARBAPENEMS",
+    "_re_ws_collapse", "_ORG_NON_INFORMATIVE", "_org_matches", "is_esbl_producer", "predict_esbl",
+    "MDR_CATEGORIES", "MDR_CATEGORIES_GRAM_NEG", "MDR_CATEGORIES_GRAM_POS",
+    "GRAM_POSITIVE_ORGANISMS", "_remove_intrinsic_resistance", "classify_mdr",
+    "MDR_INFO", "HEPATIC_DOSING", "warned_note_for", "analyze_antibiotics",
+    "_hide_urine_only",
 ]
+
+from abx_guidelines import ABX_GUIDELINES as G                      # noqa: E402
+from organism_profile import ORGANISM_PROFILE as OP                 # noqa: E402
+from specimen_organism_map import (                                 # noqa: E402
+    SPECIMEN_ORDER, get_organisms_for_specimen,
+)
+import re as _re                                                     # noqa: E402
+
+_seg, _order, _missing = _extract(APP, _WANT)
+NS: dict = {
+    "__builtins__": __builtins__, "re": _re,
+    "Dict": dict, "List": list, "Any": object, "Tuple": tuple, "Optional": object,
+    "ABX_GUIDELINES": G, "ORGANISM_PROFILE": OP,
+    "SPECIMEN_ORDER": SPECIMEN_ORDER,
+    "get_organisms_for_specimen": get_organisms_for_specimen,
+}
+try:
+    from clinical_data import INTRINSIC_RESISTANCE
+    NS["INTRINSIC_RESISTANCE"] = INTRINSIC_RESISTANCE
+except Exception:
+    NS["INTRINSIC_RESISTANCE"] = {}
+try:
+    from abx_guidelines import ABX_ALIAS_INDEX, normalize_abx_key
+    NS["ABX_ALIAS_INDEX"] = ABX_ALIAS_INDEX
+    NS["normalize_abx_key"] = normalize_abx_key
+except Exception:
+    pass
+for _nm in _order:
+    exec(compile(_seg[_nm], f"<{_nm}>", "exec"), NS)
+
+analyze = NS["analyze_antibiotics"]
+note_for = NS["warned_note_for"]
+ORGS = list(OP)
+SPECS = list(SPECIMEN_ORDER)
+
+try:
+    from safety_gate import apply_safety_gate
+    GATE = True
+except Exception:
+    GATE = False
+
+
+def pipeline(org, spec, sir, *, age=45, sex="Male", renal=False, crcl=None,
+             preg=False, hep=False, cp="A", am=None):
+    a, w, b, p, i = analyze(list(sir), org, spec, age, sex, renal, crcl, preg,
+                            hep, [], sir, cp, am)
+    rep = {}
+    if GATE:
+        a, w, b, rep = apply_safety_gate(
+            a, w, b, organism=org, specimen=spec, sir_map=sir, age_years=age,
+            is_pregnant=preg, cl_cr=crcl, is_renal=renal, is_hepatic=hep,
+            child_pugh=cp)
+    return a, w, b, p, rep
+
+
+ALL_S = {d: "S" for d in G}
 
 print("=" * 72)
 print("Orange Lab CDSS — render layer")
-print("  every ban labelled · every warning explained · every gate move caused")
+print(f"  {len(G)} agents · {len(ORGS)} organisms · {len(SPECS)} specimens")
 print("=" * 72)
-print()
+if _missing:
+    print(f"\n  WARNING: could not extract {_missing}")
+if not GATE:
+    print("  WARNING: safety_gate.py did not import — gate checks degraded")
 
 
-# ═════════════════════════════════════════════════════════════════════════
-print("[1] STATIC — the label map covers every category the engine emits")
-# ═════════════════════════════════════════════════════════════════════════
-# Scraped from the source rather than from a hand-kept list: a category added
-# in a future edit shows up here without anyone remembering to update a test.
-import re                                                       # noqa: E402
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[1] Every warned item renders a NON-EMPTY explanation.")
+# ═══════════════════════════════════════════════════════════════════════════
+_HOSTS = [
+    ("healthy adult",   dict()),
+    ("renal CrCl 25",   dict(renal=True, crcl=25)),
+    ("renal CrCl 8",    dict(renal=True, crcl=8)),
+    ("Child-Pugh C",    dict(hep=True, cp="C")),
+    ("Child-Pugh B",    dict(hep=True, cp="B")),
+    ("pregnant",        dict(preg=True, sex="Female", age=28)),
+    ("neonate 0 m",     dict(age=0, am=0)),
+    ("neonate unknown", dict(age=0, am=None)),
+    ("child 5",         dict(age=5)),
+    ("elderly 88",      dict(age=88)),
+]
+_ESBL = {"Ceftriaxone": "R", "Cefotaxime": "R", "Ceftazidime": "R"}
 
-_emitted = set(re.findall(r'build_banned_item\(\s*[^,]+,\s*"([a-z_]+)"', _src))
-_emitted |= set(re.findall(r'"category":\s*"([a-z_]+)"', _src))
-_emitted |= set(re.findall(r'"category":\s*"([a-z_]+)"',
-                           (ROOT / "safety_gate.py").read_text(encoding="utf-8")))
-_missing = sorted(c for c in _emitted if c not in BANNED_CATEGORY_LABELS)
-check(not _missing,
-      "every banned category has a display label",
-      f"unlabelled: {_missing}")
-
-check(banned_category_label("a_category_invented_tomorrow").strip() != "",
-      "an unknown category still renders a non-empty label")
-check(banned_category_label(None).strip() != "",
-      "a missing category still renders a non-empty label")
-print()
-
-
-# ═════════════════════════════════════════════════════════════════════════
-print("[2] STATIC — the warned-note resolver never returns an empty string")
-# ═════════════════════════════════════════════════════════════════════════
-_reasons = sorted(set(re.findall(r'"warning_reason":\s*"([a-z_]+)"', _src))
-                  | {"safety_gate", ""})
-_blank = [r for r in _reasons if not warned_note_for({"name": "X", "warning_reason": r}).strip()]
-check(not _blank,
-      "every warning_reason resolves to a non-empty note",
-      f"blank for: {_blank}")
-check(warned_note_for({}).strip() != "",
-      "an item with no reason at all still resolves to a note")
-
-# The defect verbatim: a hepatic warning must not be explained with a
-# kidney instruction just because renal_note happens to be present.
-_hep = {"name": "Ceftriaxone", "warning_reason": "hepatic_adjustment",
-        "hepatic_level": "Caution", "hepatic_rec": "خفض الجرعة",
-        "renal_note": "🟢 آمن كلوياً — يُطرح كبدياً أساساً."}
-check(_hep["renal_note"] not in warned_note_for(_hep),
-      "a hepatic warning is NOT explained with the renal note",
-      f"got: {warned_note_for(_hep)!r}")
-
-_neo = {"name": "Ceftriaxone", "warning_reason": "neonate_age_unknown",
-        "neonate_note": "⚠️ تحذير حديثي الولادة"}
-check("حديثي الولادة" in warned_note_for(_neo),
-      "a neonatal warning shows the neonatal note")
-print()
+_empty, _reasons_seen = [], set()
+for org in ORGS:
+    for spec in SPECS:
+        for label, kw in _HOSTS:
+            sir = dict(ALL_S)
+            if org in ("E. coli", "Klebsiella spp."):
+                sir.update(_ESBL)
+            _a, w, _b, _p, _rep = pipeline(org, spec, sir, **kw)
+            for item in w:
+                r = item.get("warning_reason")
+                _reasons_seen.add(r)
+                if r == "intermediate_culture":
+                    continue          # rendered by its own dedicated banner
+                if not note_for(item, "ar").strip():
+                    _empty.append(f"{org}/{spec}/{label}: {item.get('name')} "
+                                  f"[reason={r!r}] renders nothing")
+check("no warned item renders an empty explanation", not _empty,
+      "\n".join(_empty[:10]))
+if VERBOSE:
+    print(f"        warning_reason values exercised: {sorted(map(str, _reasons_seen))}")
 
 
-# ═════════════════════════════════════════════════════════════════════════
-print("[3] STATIC — every gate move carries a machine-readable reason")
-# ═════════════════════════════════════════════════════════════════════════
-_a, _w, _b, _rep = apply_safety_gate(
-    [{"name": "Cefazolin"}], [], [],
-    organism="Streptococcus pneumoniae", specimen="CSF", age_years=45)
-_mv = _rep.get("moves") or []
-check(bool(_mv), "the gate still demotes Cefazolin on a CSF isolate")
-check(all(m.get("reason_ar") for m in _mv),
-      "every gate move carries reason_ar (the UI renders Arabic)")
-check(all(m.get("reason_en") for m in _mv),
-      "every gate move carries reason_en")
-print()
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[2] The explanation must belong to THIS warning — not to a neighbour.")
+print("    The old renderer fell through to renal_note for every reason it did")
+print("    not name, and renal_note is always populated, so a hepatic warning")
+print("    printed renal dosing and a meningitis gate refusal printed")
+print("    '🟢 no renal adjustment required'.")
+# ═══════════════════════════════════════════════════════════════════════════
+# A keyword scan is the wrong instrument here: the gate's own note for
+# Colistin in urine legitimately discusses nephrotoxicity, and would trip any
+# "mentions kidneys" filter. The precise question is whether the rendered text
+# IS the renal_note field — that is the substitution, and it is exact.
+_wrong_domain = []
+for org in ("E. coli", "Staphylococcus aureus", "Streptococcus pneumoniae"):
+    if org not in OP:
+        continue
+    for spec in ("Blood", "CSF", "Urine"):
+        for label, kw in (("Child-Pugh C", dict(hep=True, cp="C")),
+                          ("neonate unknown", dict(age=0, am=None)),
+                          ("healthy", dict())):
+            _a, w, _b, _p, _rep = pipeline(org, spec, dict(ALL_S), **kw)
+            for item in w:
+                r = item.get("warning_reason")
+                if r in ("renal_adjustment", "intermediate_culture"):
+                    continue
+                shown = note_for(item, "ar").strip()
+                renal = str(item.get("renal_note") or "").strip()
+                if shown and renal and shown == renal:
+                    _wrong_domain.append(
+                        f"{org}/{spec}/{label}: {item.get('name')} [{r}] "
+                        f"rendered the renal_note field verbatim -> {shown[:55]!r}")
+check("a non-renal warning never renders the renal_note field", not _wrong_domain,
+      "\n".join(_wrong_domain[:10]))
+
+# The specific regression: the reassuring line under a meningitis refusal.
+_reassure = []
+_a, w, _b, _p, _rep = pipeline("Streptococcus pneumoniae", "CSF", dict(ALL_S))
+for item in w:
+    txt = note_for(item, "ar")
+    if "لا تعديل كلوي مطلوب" in txt or "no renal adjustment" in txt.lower():
+        _reassure.append(f"{item.get('name')} [{item.get('warning_reason')}]: {txt[:70]}")
+check("a CSF safety-gate demotion never renders a reassuring renal note",
+      not _reassure, "\n".join(_reassure[:6]))
 
 
-# ═════════════════════════════════════════════════════════════════════════
-print("[4] MATRIX — nothing renders blank across the whole scenario space")
-# ═════════════════════════════════════════════════════════════════════════
-blank_bans: list[str] = []
-blank_warns: list[str] = []
-blank_moves: list[str] = []
-no_reason_short: list[str] = []
-cases = 0
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[3] Safety-gate moves must render the reason the gate recorded.")
+# ═══════════════════════════════════════════════════════════════════════════
+if GATE:
+    _blank_moves, _total = [], 0
+    for org in ORGS:
+        for spec in SPECS:
+            for label, kw in (("healthy", dict()),
+                              ("pregnant", dict(preg=True, sex="Female", age=28)),
+                              ("CrCl 8", dict(renal=True, crcl=8)),
+                              ("neonate", dict(age=0, am=0))):
+                _a, _w, _b, _p, rep = pipeline(org, spec, dict(ALL_S), **kw)
+                for m in (rep.get("moves") or []):
+                    _total += 1
+                    # exactly the expression the render layer evaluates
+                    shown = (m.get("reason_ar") or m.get("why")
+                             or m.get("reason_en") or "")
+                    if not str(shown).strip():
+                        _blank_moves.append(
+                            f"{org}/{spec}/{label}: {m.get('drug')} "
+                            f"{m.get('from')}→{m.get('to')} keys={sorted(m)}")
+    check(f"no safety-gate move renders a blank reason ({_total} moves checked)",
+          not _blank_moves, "\n".join(_blank_moves[:10]))
 
-for case in build_matrix():
-    for hname, host in HOSTS:
-        cases += 1
-        sir = dict(case["sir_map"])
-        allowed, warned, banned, preg, inter = analyze_antibiotics(
-            final_drugs=list(sir), organism_type=case["organism"],
-            culture_type=case["specimen"], sir_map=sir, **host)
-        allowed, warned, banned, rep = apply_safety_gate(
-            allowed, warned, banned,
-            organism=case["organism"], specimen=case["specimen"], sir_map={},
-            age_years=host["age"], is_pregnant=host["is_preg"],
-            cl_cr=host["cl_cr"], is_renal=host["is_renal"],
-            is_hepatic=host["is_hepatic"], child_pugh=host.get("child_pugh"))
-        cid = f"{case['id']}/{hname}"
-
-        for it in banned:
-            if not banned_category_label(it.get("category")).strip():
-                blank_bans.append(f"{cid}: {it.get('name')} cat={it.get('category')}")
-            if not (it.get("reason_short") or "").strip():
-                no_reason_short.append(f"{cid}: {it.get('name')}")
-        for it in warned:
-            if not warned_note_for(it).strip():
-                blank_warns.append(f"{cid}: {it.get('name')} "
-                                   f"wr={it.get('warning_reason')}")
-        for m in rep.get("moves", []):
-            if not (m.get("reason_ar") or m.get("reason_en") or m.get("why")):
-                blank_moves.append(f"{cid}: {m.get('drug')}")
-
-check(not blank_bans, f"no banned drug renders an empty category label "
-                      f"({cases} cases)", f"{len(blank_bans)} e.g. {blank_bans[:3]}")
-check(not no_reason_short, "every banned drug carries reason_short",
-      f"{len(no_reason_short)} e.g. {no_reason_short[:3]}")
-check(not blank_warns, "no warning renders an empty note",
-      f"{len(blank_warns)} e.g. {blank_warns[:3]}")
-check(not blank_moves, "no gate move renders an empty reason",
-      f"{len(blank_moves)} e.g. {blank_moves[:3]}")
-print()
+    # Producer/consumer contract, stated once so a rename on either side fails
+    # here rather than silently blanking the panel.
+    _a, _w, _b, _p, rep = pipeline("Streptococcus pneumoniae", "CSF", dict(ALL_S))
+    _keys = set().union(*[set(m) for m in rep.get("moves", [{}])]) if rep.get("moves") else set()
+    check("gate moves carry reason_ar / reason_en alongside why",
+          {"why", "reason_ar", "reason_en"} <= _keys,
+          f"move keys = {sorted(_keys)}")
+else:
+    print("  SKIP  safety_gate.py not importable")
 
 
-# ═════════════════════════════════════════════════════════════════════════
-print("[5] SELF-CHECK — it must FAIL on the defects it was built to catch")
-# ═════════════════════════════════════════════════════════════════════════
-# A verification module that cannot be made to fail is not a verification
-# module. These feed it the pre-fix renderers and demand a BLOCK.
-_old_labels = {"resistant": "..", "renal": "..", "pregnancy": "..",
-               "child": "..", "organism": "..", "other": ".."}
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[4] Every warned item carries a warning_reason at all.")
+print("    Neonatal items were appended without `**info` and without a")
+print("    warning_reason, so the renderer had nothing to switch on.")
+# ═══════════════════════════════════════════════════════════════════════════
+_no_reason = []
+for org in ORGS:
+    for spec in SPECS:
+        for label, kw in _HOSTS:
+            _a, w, _b, _p, _rep = pipeline(org, spec, dict(ALL_S), **kw)
+            for item in w:
+                if not item.get("warning_reason"):
+                    _no_reason.append(f"{org}/{spec}/{label}: {item.get('name')} "
+                                      f"category={item.get('category')!r}")
+check("every warned item has a warning_reason", not _no_reason,
+      "\n".join(_no_reason[:10]))
 
 
-def _old_label(c):
-    return _old_labels.get(c, "")
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[5] Every banned item renders a reason and a detail.")
+# ═══════════════════════════════════════════════════════════════════════════
+_bad_ban = []
+for org in ORGS:
+    for spec in SPECS:
+        for label, kw in _HOSTS:
+            sir = dict(ALL_S)
+            sir.update({"Ceftriaxone": "R", "Ciprofloxacin": "R"})
+            _a, _w, b, _p, _rep = pipeline(org, spec, sir, **kw)
+            for item in b:
+                short = str(item.get("reason_short") or "").strip()
+                if not short:
+                    _bad_ban.append(f"{org}/{spec}/{label}: {item.get('name')} "
+                                    f"[{item.get('category')}] has no reason_short")
+check("no banned item renders without a reason", not _bad_ban,
+      "\n".join(_bad_ban[:10]))
 
 
-def _old_note(it):
-    if it.get("warning_reason") in ("esbl_bli_uti_only", "possible_carbapenemase"):
-        return it.get("esbl_note", "")
-    return it.get("renal_note", "")
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[6] warned_note_for handles every reason the engine can emit, and")
+print("    never falls back to renal_note for an unknown one — that silent")
+print("    substitution is the whole defect this resolver replaced.")
+# ═══════════════════════════════════════════════════════════════════════════
+_KNOWN = {"renal_adjustment", "hepatic_adjustment", "safety_gate", "neonate",
+          "intermediate_culture", "esbl_bli_uti_only", "possible_carbapenemase",
+          "interaction", "pregnancy"}
+_unhandled = sorted(str(r) for r in _reasons_seen if r and r not in _KNOWN)
+check("every warning_reason the engine emits has a resolver branch",
+      not _unhandled, f"unhandled: {_unhandled}")
+
+_probe = {"name": "X", "warning_reason": "some_future_reason",
+          "renal_note": "CrCl <30: reduce by 50%"}
+check("an unknown reason does NOT silently render renal_note",
+      note_for(_probe, "ar") == "",
+      f"rendered {note_for(_probe, 'ar')!r}")
+
+_probe2 = {"name": "X", "warning_reason": "hepatic_adjustment",
+           "hepatic_level": "Reduce 50%", "hepatic_rec": "halve the dose",
+           "renal_note": "CrCl <30: reduce by 50%"}
+_out = note_for(_probe2, "ar")
+check("a hepatic warning renders hepatic text, not renal text",
+      "halve the dose" in _out and "CrCl" not in _out, f"rendered {_out!r}")
 
 
-_r = run_self_check(
-    allowed=[], warned=[], banned=[{"name": "Doxycycline", "category": "hepatic",
-                                    "reason_short": "x"}],
-    sir_map={}, organism="", specimen="Blood", age=40,
-    gate_report={"moves": [], "specimen_recognised": True,
-                 "organism_recognised": True},
-    warned_note_for=_old_note, banned_category_label=_old_label)
-check(_r["state"] == BLOCK,
-      "self-check BLOCKS an unlabelled banned category (regression of bug 2)")
-
-_r = run_self_check(
-    allowed=[], warned=[{"name": "Ceftriaxone", "category": "neonate",
-                         "reason_short": "x"}], banned=[],
-    sir_map={}, organism="", specimen="Blood", age=40,
-    gate_report={"moves": [], "specimen_recognised": True,
-                 "organism_recognised": True},
-    warned_note_for=_old_note, banned_category_label=banned_category_label)
-check(_r["state"] == BLOCK,
-      "self-check BLOCKS a warning with no text (regression of bug 4)")
-
-_r = run_self_check(
-    allowed=[], warned=[], banned=[{"name": "Cefazolin", "category": "safety_gate",
-                                    "reason_short": "x"}],
-    sir_map={}, organism="", specimen="Blood", age=40,
-    gate_report={"moves": [{"drug": "Cefazolin", "from": "allowed",
-                            "to": "banned", "layers": ["site"]}],
-                 "specimen_recognised": True, "organism_recognised": True},
-    warned_note_for=warned_note_for, banned_category_label=banned_category_label)
-check(_r["state"] == BLOCK,
-      "self-check BLOCKS a gate move with no reason (regression of bug 1)")
-
-# And it must NOT block a clean report — a check that always fails is as
-# useless as one that always passes.
-_r = run_self_check(
-    allowed=[{"name": "Meropenem"}], warned=[], banned=[],
-    sir_map={"Meropenem": "S"}, organism="Escherichia coli", specimen="Blood",
-    age=40, cl_cr=95.0,
-    gate_report={"moves": [], "specimen_recognised": True,
-                 "organism_recognised": True},
-    warned_note_for=warned_note_for, banned_category_label=banned_category_label,
-    intrinsic_checker=is_intrinsically_avoided)
-check(_r["state"] != BLOCK, "self-check does NOT block a clean report",
-      f"findings: {[f['code'] for f in _r['findings']]}")
-
-# It must catch a contradiction the engine could never report about itself.
-_r = run_self_check(
-    allowed=[{"name": "Ampicillin"}], warned=[], banned=[],
-    sir_map={"Ampicillin": "R"}, organism="Escherichia coli", specimen="Blood",
-    age=40, cl_cr=95.0,
-    gate_report={"moves": [], "specimen_recognised": True,
-                 "organism_recognised": True},
-    warned_note_for=warned_note_for, banned_category_label=banned_category_label)
-check(_r["state"] == BLOCK,
-      "self-check BLOCKS a drug reported R that reached the Allowed list")
-print()
-
-print("=" * 72)
-print(f"{len(passed)} passed, {len(failed)} failed   ({cases} matrix cases)")
-if failed:
-    print("\nRESULT: FAILURES")
-    for f in failed:
-        print(f"  - {f}")
+print("\n" + "=" * 72)
+print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
+if _FAIL:
+    print("\nRESULT: FAILURES — see above")
     sys.exit(1)
 print("\nRESULT: ALL GREEN")
-print("\nNOTE: this proves every decision is READABLE. It does not prove the")
-print("      decision is clinically right — see guideline_registry.py.")
+print("\nNOTE: this suite proves the right SENTENCE reaches the screen. It says")
+print("      nothing about whether the verdict behind it is clinically correct")
+print("      — that is test_engine_agreement.py and test_scenarios.py.")

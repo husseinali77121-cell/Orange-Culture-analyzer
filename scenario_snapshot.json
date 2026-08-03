@@ -5617,7 +5617,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -5748,7 +5749,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -5834,7 +5836,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -18496,7 +18499,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -18627,7 +18631,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -18713,7 +18718,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -25950,7 +25956,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -26081,7 +26088,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -26167,7 +26175,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -35643,7 +35652,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -35783,7 +35793,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -35875,7 +35886,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -42721,7 +42733,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -42852,7 +42865,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [
@@ -42938,7 +42952,8 @@
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [
-   "CRPA"
+   "CRPA",
+   "DTR_PA"
   ],
   "preg_warn": [],
   "qc_ids": [

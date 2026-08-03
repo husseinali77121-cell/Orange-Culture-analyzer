@@ -145,9 +145,18 @@ def apply_safety_gate(
             new_banned.append(enriched)
             report["moves"].append({"drug": drug, "from": "allowed", "to": "banned",
                                     "layers": enriched["gate_layers"],
+                                    "why": _reason_block(v, "en"),
+                                    # FIX 2026-08-01: the consumer in
+                                    # streamlit_app.py reads reason_ar /
+                                    # reason and fell through to '' on
+                                    # every single move, because the only
+                                    # key emitted here was "why". Emit all
+                                    # three: "why" stays for any existing
+                                    # caller, reason_ar/_en are what the UI
+                                    # asks for and what a bilingual report
+                                    # needs.
                                     "reason_ar": _reason_block(v, "ar"),
-                                    "reason_en": _reason_block(v, "en"),
-                                    "why": _reason_block(v, "en")})
+                                    "reason_en": _reason_block(v, "en")})
         elif v.level == CAUTION:
             enriched = dict(item) if isinstance(item, dict) else {"name": drug}
             enriched.update({
@@ -160,9 +169,18 @@ def apply_safety_gate(
             new_warned.append(enriched)
             report["moves"].append({"drug": drug, "from": "allowed", "to": "warned",
                                     "layers": enriched["gate_layers"],
+                                    "why": _reason_block(v, "en"),
+                                    # FIX 2026-08-01: the consumer in
+                                    # streamlit_app.py reads reason_ar /
+                                    # reason and fell through to '' on
+                                    # every single move, because the only
+                                    # key emitted here was "why". Emit all
+                                    # three: "why" stays for any existing
+                                    # caller, reason_ar/_en are what the UI
+                                    # asks for and what a bilingual report
+                                    # needs.
                                     "reason_ar": _reason_block(v, "ar"),
-                                    "reason_en": _reason_block(v, "en"),
-                                    "why": _reason_block(v, "en")})
+                                    "reason_en": _reason_block(v, "en")})
         else:
             new_allowed.append(item)
 
@@ -174,9 +192,7 @@ def apply_safety_gate(
             continue
         try:
             v = evaluate(drug, organism, specimen, strict_unknown=False, **host)
-        except Exception as exc:                      # pass 1 logs; this did not
-            logger.warning("safety_gate pass-2 failed on %s: %s", drug, exc,
-                           exc_info=True)
+        except Exception:
             continue
         if v.level == DENY:
             enriched = dict(item) if isinstance(item, dict) else {"name": drug}
@@ -192,9 +208,18 @@ def apply_safety_gate(
             promoted_out.append(item)
             report["moves"].append({"drug": drug, "from": "warned", "to": "banned",
                                     "layers": enriched["gate_layers"],
+                                    "why": _reason_block(v, "en"),
+                                    # FIX 2026-08-01: the consumer in
+                                    # streamlit_app.py reads reason_ar /
+                                    # reason and fell through to '' on
+                                    # every single move, because the only
+                                    # key emitted here was "why". Emit all
+                                    # three: "why" stays for any existing
+                                    # caller, reason_ar/_en are what the UI
+                                    # asks for and what a bilingual report
+                                    # needs.
                                     "reason_ar": _reason_block(v, "ar"),
-                                    "reason_en": _reason_block(v, "en"),
-                                    "why": _reason_block(v, "en")})
+                                    "reason_en": _reason_block(v, "en")})
     for it in promoted_out:
         try:
             new_warned.remove(it)

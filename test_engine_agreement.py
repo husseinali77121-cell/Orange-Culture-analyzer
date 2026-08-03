@@ -87,7 +87,7 @@ _WANT = [
     "GRAM_POSITIVE_ORGANISMS", "_remove_intrinsic_resistance", "classify_mdr",
     "MDR_INFO", "HEPATIC_DOSING", "analyze_antibiotics", "_hide_urine_only",
     "ORGANISM_OCR_ALIASES",
-    "PHENOTYPE_RULES", "detect_resistance_phenotypes",
+    "_re_ws_collapse", "PHENOTYPE_RULES", "detect_resistance_phenotypes",
     "COMBINATION_THERAPY", "_COMBO_HOST_FLAGS", "get_combination_therapy",
     "_CFU_SUPERSCRIPTS", "_CFU_VERBAL", "_PUS_VERBAL", "_parse_cfu", "_parse_pus",
     "_cfu_report_state", "_score_colony_count",
@@ -681,6 +681,78 @@ else:
     _flagged = "CFU_NOT_REPORTED" in (_blank.get("special_flags") or [])
     check("an unreadable colony count is flagged to the user, not scored silently",
           _flagged, f"special_flags={_blank.get('special_flags')}")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[15] A phenotype named 'Carbapenem-Resistant' must be defined on")
+print("    CARBAPENEMS. DEFECT: PHENOTYPE_RULES['CRPA'] required 2 of four")
+print("    markers, and two of the four — Pip-Tazo and Ceftazidime — are not")
+print("    carbapenems. It broke both ways:")
+print("      MISSED  Meropenem-R alone -> no CRPA, no isolation alert, no")
+print("              combination panel. Egyptian panels routinely carry")
+print("              meropenem as the only carbapenem.")
+print("      CALLED  Ceftazidime-R + Pip-Tazo-R with BOTH carbapenems S ->")
+print("              'CRPA', immediate-isolation banner and an XDR salvage")
+print("              panel, for a carbapenem-SUSCEPTIBLE isolate — while")
+print("              predict_esbl said 'low' on the same screen.")
+print("    CRAB required 1 of 2 and CRE 1 of 3; CRPA was the lone outlier.")
+# ═══════════════════════════════════════════════════════════════════════════
+_RULES = NS.get("PHENOTYPE_RULES", {})
+_CARBAPENEMS = {"imipenem", "meropenem", "ertapenem", "doripenem", "biapenem"}
+
+_bad_def = []
+for _ph in ("CRE", "CRPA", "CRAB"):
+    _rule = _RULES.get(_ph)
+    if not _rule:
+        _bad_def.append(f"{_ph}: rule missing entirely")
+        continue
+    _marks = [m[0] for m in _rule.get("markers", [])]
+    _noncarb = [d for d in _marks
+                if not any(c in d.lower() for c in _CARBAPENEMS)]
+    if _noncarb:
+        _bad_def.append(f"{_ph}: non-carbapenem markers {_noncarb} in a "
+                        f"carbapenem-resistance definition")
+    if _rule.get("require_any", 99) != 1:
+        _bad_def.append(f"{_ph}: require_any={_rule.get('require_any')}; "
+                        f"CDC/IDSA/EUCAST define these as resistance to AT "
+                        f"LEAST ONE carbapenem")
+check("carbapenem-resistance phenotypes use carbapenem markers, threshold 1",
+      not _bad_def, "\n".join(_bad_def))
+
+# Behavioural proof, in both directions.
+_dir = []
+_ONE_CARB = [("Meropenem R only", {"Meropenem": "R", "Amikacin": "S"}),
+             ("Imipenem R only", {"Imipenem/Cilastatin": "R", "Amikacin": "S"})]
+for _label, _sir in _ONE_CARB:
+    _got = {p.get("phenotype") for p in detect_phenotypes("Pseudomonas aeruginosa", _sir)}
+    if "CRPA" not in _got:
+        _dir.append(f"MISS — {_label}: phenotypes={sorted(_got) or 'NONE'}")
+_carb_susceptible = {"Ceftazidime": "R", "Piperacillin + Tazobactam": "R",
+                     "Meropenem": "S", "Imipenem/Cilastatin": "S"}
+_got = {p.get("phenotype") for p in detect_phenotypes("Pseudomonas aeruginosa",
+                                                      _carb_susceptible)}
+if "CRPA" in _got:
+    _dir.append("OVER-CALL — both carbapenems S but CRPA fired")
+check("CRPA fires on one carbapenem and never on a carbapenem-susceptible isolate",
+      not _dir, "\n".join(_dir))
+
+# Ertapenem must not appear: P. aeruginosa is intrinsically resistant to it, so
+# an ertapenem-R result carries no information about acquired resistance.
+_crpa_marks = [m[0].lower() for m in _RULES.get("CRPA", {}).get("markers", [])]
+check("CRPA does not read ertapenem (P. aeruginosa is intrinsically resistant)",
+      not any("ertapenem" in m for m in _crpa_marks),
+      f"CRPA markers = {_crpa_marks}")
+
+# Every phenotype that raises an isolation banner must have a therapy panel,
+# or the alert tells the ward to isolate and the clinician nothing to give.
+_orphan_ph = []
+for _name, _rule in _RULES.items():
+    if not _rule.get("isolation"):
+        continue
+    if _name not in NS.get("COMBINATION_THERAPY", {}):
+        _orphan_ph.append(f"{_name}: isolation=True but no COMBINATION_THERAPY entry")
+check("every isolation-triggering phenotype has a treatment panel",
+      not _orphan_ph, "\n".join(_orphan_ph))
 
 
 # ═══════════════════════════════════════════════════════════════════════════
