@@ -1969,6 +1969,9 @@ def warned_note_for(item: Dict[str, Any], lang: str = "ar") -> str:
     if reason == "renal_adjustment":
         return pick("renal_note", "renal_note_en") if ar else pick("renal_note_en", "renal_note")
 
+    if reason == "possible_mrsa":
+        return pick("possible_mrsa_note")
+
     if reason == "safety_gate":
         return pick("gate_note", "gate_note_en") if ar else pick("gate_note_en", "gate_note")
 
@@ -2076,6 +2079,28 @@ def analyze_antibiotics(
                       or _org_l_aa == "mrsa"
                       or _mrsa_text_markers)
     _is_mrsa = _is_staph and _mrsa_marker_R
+
+    # ── "Possible MRSA": the panel carries no oxacillin and no cefoxitin ──────
+    # DEFECT 2026-08-03. detect_resistance_phenotypes() already raised
+    # "Possible MRSA -- تأكيد مطلوب" for exactly this pattern (S. aureus, a
+    # beta-lactam R, vancomycin or linezolid S) — and this engine knew nothing
+    # about it, because _is_mrsa requires an oxacillin or cefoxitin R that the
+    # panel never carried. So on a S. aureus BACTERAEMIA the phenotype panel
+    # said "possible MRSA, confirm with cefoxitin/mecA" while the column beside
+    # it recommended Ceftriaxone and Meropenem.
+    #
+    # The response is deliberately CAUTION, not a ban. "Possible" is not
+    # "confirmed": a heuristic inference must not fabricate a diagnosis and
+    # strip every beta-lactam from a patient who may have plain MSSA. But a
+    # beta-lactam must not sit in the green column either while the screen
+    # says the isolate may be methicillin-resistant. Demote and say why.
+    _possible_mrsa = False
+    if _is_staph and not _is_mrsa:
+        _vanco_s = sir_map.get("Vancomycin") == "S"
+        _linez_s = sir_map.get("Linezolid") == "S"
+        _bl_r = any(sir_map.get(d) == "R" for d in
+                    ("Amoxicillin + Clavulanic acid", "Cephalexin", "Cefuroxime"))
+        _possible_mrsa = _bl_r and (_vanco_s or _linez_s)
 
     def _cls_and_name(info_dict: Dict, drug_name: str = "") -> str:
         """Class text PLUS drug name, lower-cased, for robust matching.
@@ -2186,6 +2211,25 @@ def analyze_antibiotics(
                 "السيفالوسبورينات التقليدية، والكاربابينيمات) حتى لو أظهرت المزرعة حساسية. "
                 "العلاج: Vancomycin / Linezolid / Daptomycin (حسب الموقع والحساسية).",
             ))
+            continue
+
+        # Unconfirmed MRSA: caution, never silent approval. See _possible_mrsa.
+        if _possible_mrsa and any(k in _cls_and_name(info, drug)
+                                  for k in ("penicillin", "cephalosporin",
+                                            "carbapenem", "cillin", "cef",
+                                            "ceph", "penem", *_BLI_TOKENS)):
+            _w = {"name": drug, **info,
+                  "warning_reason": "possible_mrsa",
+                  "possible_mrsa_note": (
+                      "⚠️ **اشتباه MRSA غير مؤكَّد.** اللوحة لا تحتوي Oxacillin "
+                      "ولا Cefoxitin، والنمط (بيتا-لاكتام مقاوم + Vancomycin/"
+                      "Linezolid حسّاس) يوحي بمقاومة الميثيسيلين. لو كانت MRSA "
+                      "فكل البيتا-لاكتام سيفشل بغض النظر عن نتيجة القرص "
+                      "(mecA/PBP2a هدف مُعدَّل وليس إنزيماً).\n"
+                      "**قبل استخدام أي بيتا-لاكتام:** اطلب Cefoxitin disk أو "
+                      "PCR (mecA). في تجرثم الدم ابدأ بـ Vancomycin تجريبياً "
+                      "حتى يظهر التأكيد.")}
+            warned.append(_w)
             continue
 
         # ── Cefepime (4th-gen) + ESBL: special handling (NOT a hard ban) ──────
@@ -5432,8 +5476,11 @@ PHENOTYPE_RULES = {
         # Ertapenem is deliberately absent: P. aeruginosa is INTRINSICALLY
         # resistant to it, so an ertapenem-R result carries no information here.
         "organisms": ["Pseudomonas aeruginosa"],
-        "markers":   [("Imipenem/Cilastatin", "R"), ("Meropenem", "R"),
-                      ("Doripenem", "R")],
+        # Doripenem belongs in this definition clinically but is NOT in this
+        # formulary's 51 agents, so a marker naming it can never match and is
+        # exactly the dead-rule pattern this audit keeps removing. Add it back
+        # here the day the agent is added to abx_guidelines.py.
+        "markers":   [("Imipenem/Cilastatin", "R"), ("Meropenem", "R")],
         "require_any": 1,
         "icon":  "🔴",
         "label": "CRPA -- Carbapenem-Resistant Pseudomonas aeruginosa",
@@ -5485,12 +5532,22 @@ def detect_resistance_phenotypes(
     if not sir_map:
         return []
     detected = []
-    org_lower = organism.lower()
+    # `(organism or "")`: predict_esbl carried the same bare .lower() until
+    # 2026-08-01 and raised AttributeError on None while every other entry point
+    # in this file coerced. Same fix, same reason — fail closed, do not raise.
+    org_lower = _re_ws_collapse(organism)
 
     for ph_name, rule in PHENOTYPE_RULES.items():
-        # هل الكائن مرشح لهذا الـ phenotype؟
-        if not any(o.lower() in org_lower or org_lower in o.lower()
-                   for o in rule["organisms"]):
+        # Is this organism a candidate for this phenotype?
+        # FIX 2026-08-03: this was an unguarded two-way substring test, the same
+        # trap already fixed in is_esbl_producer(). `"" in "klebsiella spp."` is
+        # True, so a blank or one-character organism matched EVERY rule and came
+        # back claiming MRSA + VRE + CRE + CRAB simultaneously — four
+        # immediate-isolation banners and four salvage-therapy panels for an
+        # isolate with no name. _org_matches() carries the length floor and the
+        # non-informative-token list, so the guard now lives in one place
+        # instead of being re-derived per call site.
+        if not _org_matches(org_lower, [o.lower() for o in rule["organisms"]]):
             continue
 
         markers   = rule.get("markers", [])
@@ -9265,7 +9322,7 @@ if uploaded:
             allowed, warned, banned, _gate_report = apply_safety_gate(
                 allowed, warned, banned,
                 organism=organism_type, specimen=culture_type, sir_map=sir_map,
-                age_years=age, is_pregnant=is_preg, cl_cr=cl_cr,
+                age_years=age, age_months=age_months, is_pregnant=is_preg, cl_cr=cl_cr,
                 is_renal=is_renal, is_hepatic=is_hepatic,
                 child_pugh=_child_pugh_now,
             )
@@ -9746,7 +9803,7 @@ if uploaded:
             # ── ② Combination Therapy (auto if MDR phenotype) ────────
             _combos = get_combination_therapy(
                 phenotypes,
-                is_pregnant=is_preg, age_years=age,
+                is_pregnant=is_preg, age_years=age, age_months=age_months,
                 is_renal=is_renal, cl_cr=cl_cr, is_hepatic=is_hepatic,
             )
             if _combos:
@@ -10004,7 +10061,7 @@ if uploaded:
                     ) if _pdf_dur else None
                     _combo_for_pdf = get_combination_therapy(
                         phenotypes,
-                        is_pregnant=is_preg, age_years=age,
+                        is_pregnant=is_preg, age_years=age, age_months=age_months,
                         is_renal=is_renal, cl_cr=cl_cr, is_hepatic=is_hepatic,
                     ) if _pdf_combo else None
                     _hep_for_pdf   = (get_hepatic_recommendations(allowed, _cp_pdf)

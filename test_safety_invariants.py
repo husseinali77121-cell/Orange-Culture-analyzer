@@ -419,6 +419,71 @@ for f in ("clinical_matrix.py", "safety_gate.py"):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[AGE] The gate must read MONTHS, not the integer year field.")
+print("    DEFECT 2026-08-03: apply_safety_gate() took age_years only, and the")
+print("    caller passes the UI's integer year field — 0 for every infant from")
+print("    birth to eleven months. clinical_matrix.NEONATE_MAX_YEARS is")
+print("    correctly 28/365, but 0 <= 0.0767, so a six-month-old was evaluated")
+print("    as a neonate and NEONATAL_DENY banned Ceftriaxone in blood, urine")
+print("    AND CSF — the first-line agent for infant bacteraemia and infant")
+print("    meningitis beyond the neonatal period.")
+# ═══════════════════════════════════════════════════════════════════════════
+try:
+    from safety_gate import apply_safety_gate as _gate
+    import inspect as _insp
+    _sig = _insp.signature(_gate)
+    check("apply_safety_gate accepts age_months", "age_months" in _sig.parameters,
+          f"params = {list(_sig.parameters)}")
+
+    _sir = {"Ceftriaxone": "S", "Cefotaxime": "S", "Meropenem": "S",
+            "Trimethoprim/Sulfamethoxazole": "S"}
+
+    def _state(drug, months, spec="CSF"):
+        a, w, b, p, _i = analyze(list(_sir), "E. coli", spec, 0, "Male", False,
+                                 None, False, False, [], _sir, "A", months)
+        a, w, b, _r = _gate(a, w, b, organism="E. coli", specimen=spec,
+                            sir_map=_sir, age_years=0, age_months=months,
+                            child_pugh="A")
+        if drug in {x.get("name") for x in a}: return "allowed"
+        if drug in {x.get("name") for x in w}: return "warned"
+        return "banned"
+
+    _age_bad = []
+    # Neonate: ceftriaxone out (bilirubin displacement), cefotaxime in.
+    if _state("Ceftriaxone", 0) != "banned":
+        _age_bad.append("0 mo: Ceftriaxone not banned — kernicterus risk")
+    if _state("Cefotaxime", 0) == "banned":
+        _age_bad.append("0 mo: Cefotaxime banned — it is the neonatal alternative")
+    # Beyond the neonatal period it must come back, at every site.
+    for _mo in (1, 2, 6, 11):
+        for _sp in ("CSF", "Blood", "Urine"):
+            if _state("Ceftriaxone", _mo, _sp) == "banned":
+                _age_bad.append(f"{_mo} mo / {_sp}: Ceftriaxone still banned "
+                                f"past the 28-day neonatal window")
+    # TMP-SMX: banned under 2 months, available after.
+    if _state("Trimethoprim/Sulfamethoxazole", 1) != "banned":
+        _age_bad.append("1 mo: TMP-SMX not banned")
+    if _state("Trimethoprim/Sulfamethoxazole", 6) == "banned":
+        _age_bad.append("6 mo: TMP-SMX still banned past its 2-month window")
+    check("neonatal bans lift at the correct month, at every site",
+          not _age_bad, "\n".join(_age_bad[:10]))
+
+    # A months value outside 0-11 is a data error. The gate falls back to
+    # age_years, which is 0 here, so the isolate is treated as a neonate and
+    # ceftriaxone stays banned. That is the correct direction: with the age
+    # unknown and the year field reading 0, the patient MIGHT be a neonate, and
+    # the engine simultaneously raises "عمر غير محدد بالشهور" asking for the
+    # month. Fail closed, prompt for the missing datum — do not guess older.
+    check("an unusable months value fails CLOSED rather than widening the window",
+          all(_state("Ceftriaxone", _bad) == "banned" for _bad in (99, -3, None)),
+          f"99 -> {_state('Ceftriaxone', 99)}, "
+          f"-3 -> {_state('Ceftriaxone', -3)}, "
+          f"None -> {_state('Ceftriaxone', None)}")
+except Exception as _e:
+    check("age-months gate checks ran", False, repr(_e))
+
 print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
 if _FAIL:

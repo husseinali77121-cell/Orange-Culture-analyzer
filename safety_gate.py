@@ -30,7 +30,7 @@ USAGE — three lines in streamlit_app.py
     allowed, warned, banned, gate_report = apply_safety_gate(
         allowed, warned, banned,
         organism=organism_type, specimen=culture_type, sir_map=sir_map,
-        age_years=age, is_pregnant=is_preg, cl_cr=cl_cr,
+        age_years=age, age_months=age_months, is_pregnant=is_preg, cl_cr=cl_cr,
         is_renal=is_renal, is_hepatic=is_hepatic)
 """
 from __future__ import annotations
@@ -83,6 +83,7 @@ def apply_safety_gate(
     specimen: Optional[str] = None,
     sir_map: Optional[Dict[str, str]] = None,
     age_years: Optional[float] = None,
+    age_months: Optional[float] = None,
     is_pregnant: bool = False,
     is_lactating: bool = False,
     cl_cr: Optional[float] = None,
@@ -106,7 +107,37 @@ def apply_safety_gate(
         return allowed, warned, banned, report
 
     sir_map = sir_map or {}
-    host = dict(age_years=age_years, is_pregnant=is_pregnant, is_lactating=is_lactating,
+
+    # ── Age resolution ────────────────────────────────────────────────────────
+    # DEFECT 2026-08-03: this gate received `age_years` only, and the caller
+    # passes the UI's INTEGER year field — which is 0 for every infant from
+    # birth to eleven months. clinical_matrix.NEONATE_MAX_YEARS is correctly
+    # 28/365, but `0 <= 0.0767` is True, so a six-month-old was evaluated as a
+    # NEONATE and NEONATAL_DENY banned Ceftriaxone at every site — in blood, in
+    # urine, and in CSF. Ceftriaxone is the first-line agent for infant
+    # bacteraemia and for infant bacterial meningitis beyond the neonatal
+    # period (AAP Red Book / IDSA), so the gate was removing the drug of choice
+    # from the patients who need it most.
+    #
+    # analyze_antibiotics() had this right all along: NEONATAL_RESTRICTIONS is
+    # expressed in MONTHS and bans ceftriaxone below one month only. The gate
+    # simply had no parameter through which months could reach it.
+    #
+    # Months win when supplied — they are the more precise measurement, and
+    # carrying them here is the entire purpose of the "أقل من سنة" field.
+    _eff_age = age_years
+    if age_months is not None:
+        try:
+            _m = float(age_months)
+            # Outside 0-11 is a data error, not a patient: fall back to years
+            # rather than trusting it. Mirrors the same guard in the engine.
+            if 0 <= _m <= 11:
+                _eff_age = _m / 12.0
+        except (TypeError, ValueError):
+            pass
+    report["age_years_effective"] = _eff_age
+
+    host = dict(age_years=_eff_age, is_pregnant=is_pregnant, is_lactating=is_lactating,
                 cl_cr=cl_cr, is_renal=is_renal, is_hepatic=is_hepatic,
                 child_pugh=child_pugh)
 

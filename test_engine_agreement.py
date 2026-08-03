@@ -140,6 +140,7 @@ analyze = NS["analyze_antibiotics"]
 predict_esbl = NS["predict_esbl"]
 is_esbl_producer = NS["is_esbl_producer"]
 OCR_ALIASES = NS.get("ORGANISM_OCR_ALIASES", {})
+detect_phenotypes = NS["detect_resistance_phenotypes"]
 ORGS = list(OP)
 SPECS = list(SPECIMEN_ORDER)
 
@@ -323,6 +324,48 @@ print("    came back 'Possible AmpC β-lactamase (Predicted)', confidence 75.")
 # ═══════════════════════════════════════════════════════════════════════════
 _panel = {"Ceftriaxone": "R", "Ceftazidime": "R", "Cefoxitin": "R",
           "Cefepime": "S", "Meropenem": "S"}
+# Phenotype detection had the identical unguarded substring test until
+# 2026-08-03: a blank organism matched every rule and came back claiming
+# MRSA + VRE + CRE + CRAB at once — four isolation banners and four salvage
+# panels for an isolate with no name.
+_ph_junk = []
+for _j in (None, "", " ", "e", "a", "???", "spp."):
+    _got = {p.get("phenotype") for p in detect_phenotypes(
+        _j, {"Meropenem": "R", "Oxacillin": "R", "Vancomycin": "R"})}
+    if _got:
+        _ph_junk.append(f"detect_resistance_phenotypes({_j!r}) -> {sorted(_got)}")
+check("an unnamed isolate produces no resistance phenotype at all",
+      not _ph_junk, "\n".join(_ph_junk))
+
+# Every phenotype name a detector can emit must be a real key, or a consumer
+# keying on it silently finds nothing. "Possible MRSA" was emitted by a fallback
+# branch and existed in no table: get_combination_therapy returned [] for it,
+# and the therapy engine — whose _is_mrsa flag needs an oxacillin or cefoxitin
+# the panel did not carry — recommended Ceftriaxone and Meropenem for a
+# S. aureus BACTERAEMIA the screen had just labelled "possible MRSA".
+_ADVISORY = {"Possible MRSA"}
+_unregistered, _leaks = [], []
+_probe_sir = {"Amoxicillin + Clavulanic acid": "R", "Cephalexin": "R",
+              "Vancomycin": "S", "Linezolid": "S", "Meropenem": "S",
+              "Ceftriaxone": "S"}
+for _o in ORGS:
+    for _p in detect_phenotypes(_o, _probe_sir):
+        _n = _p.get("phenotype")
+        if _n not in NS.get("PHENOTYPE_RULES", {}) and _n not in _ADVISORY:
+            _unregistered.append(f"{_o}: emitted {_n!r}, in no table")
+check("every phenotype name a detector emits is registered somewhere",
+      not _unregistered, "\n".join(_unregistered[:8]))
+
+_A, _W, _B = buckets("Staphylococcus aureus", "Blood", _probe_sir)
+_ph = {p.get("phenotype") for p in detect_phenotypes("Staphylococcus aureus", _probe_sir)}
+if "Possible MRSA" in _ph:
+    _bl_green = _A & {"Ceftriaxone", "Meropenem", "Cefepime", "Cefuroxime",
+                      "Amoxicillin", "Ampicillin", "Imipenem/Cilastatin"}
+    if _bl_green:
+        _leaks.append(f"phenotype says Possible MRSA, engine RECOMMENDS {sorted(_bl_green)}")
+check("a 'Possible MRSA' isolate has no beta-lactam in the recommended column",
+      not _leaks, "\n".join(_leaks))
+
 _blank_hits = []
 for junk in ("", " ", "  ", "e", "S", "a", ".", "spp.", "sp"):
     if is_esbl_producer(junk):
@@ -481,7 +524,6 @@ print("    alert and NO combination-therapy panel for a CRE bacteraemia. Four")
 print("    of the seven were introduced by the very audit that was fixing this")
 print("    class of bug: a row added in one table, forgotten in a sibling.")
 # ═══════════════════════════════════════════════════════════════════════════
-detect_phenotypes = NS["detect_resistance_phenotypes"]
 get_combos = NS["get_combination_therapy"]
 
 _CARBAPENEMASE_PH = {"CRE", "CRPA", "CRAB"}
@@ -739,6 +781,16 @@ check("CRPA fires on one carbapenem and never on a carbapenem-susceptible isolat
 # Ertapenem must not appear: P. aeruginosa is intrinsically resistant to it, so
 # an ertapenem-R result carries no information about acquired resistance.
 _crpa_marks = [m[0].lower() for m in _RULES.get("CRPA", {}).get("markers", [])]
+# A marker naming an agent outside the formulary can never match: it reads as a
+# rule but is inert. Doripenem sat in the CRPA list this way until 2026-08-03.
+_ghost = []
+for _ph, _r in _RULES.items():
+    for _d, _ in _r.get("markers", []):
+        if _d not in G:
+            _ghost.append(f"{_ph}: marker {_d!r} is not in the formulary")
+check("no phenotype marker names an agent outside the formulary",
+      not _ghost, "\n".join(_ghost))
+
 check("CRPA does not read ertapenem (P. aeruginosa is intrinsically resistant)",
       not any("ertapenem" in m for m in _crpa_marks),
       f"CRPA markers = {_crpa_marks}")

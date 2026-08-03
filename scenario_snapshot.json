@@ -6681,15 +6681,11 @@
  },
  "Blood|Staphylococcus aureus|mdr": {
   "allowed": [
-   "Amoxicillin + Clavulanic acid",
-   "Cefoxitin",
    "Clindamycin",
    "Doxycycline",
    "Erythromycin",
    "Fusidic acid",
    "Linezolid",
-   "Oxacillin",
-   "Penicillin",
    "Trimethoprim/Sulfamethoxazole",
    "Vancomycin"
   ],
@@ -6717,7 +6713,12 @@
   ],
   "preg_warn": [],
   "qc_ids": [],
-  "warned": []
+  "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Oxacillin",
+   "Penicillin"
+  ]
  },
  "Blood|Staphylococcus aureus|mrsa": {
   "allowed": [
@@ -12581,15 +12582,11 @@
  },
  "CSF|Staphylococcus aureus|mdr": {
   "allowed": [
-   "Amoxicillin + Clavulanic acid",
-   "Cefoxitin",
    "Clindamycin",
    "Doxycycline",
    "Erythromycin",
    "Fusidic acid",
    "Linezolid",
-   "Oxacillin",
-   "Penicillin",
    "Trimethoprim/Sulfamethoxazole",
    "Vancomycin"
   ],
@@ -12617,7 +12614,12 @@
   ],
   "preg_warn": [],
   "qc_ids": [],
-  "warned": []
+  "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Oxacillin",
+   "Penicillin"
+  ]
  },
  "CSF|Staphylococcus aureus|mrsa": {
   "allowed": [
@@ -19129,15 +19131,11 @@
  },
  "Pus|Staphylococcus aureus|mdr": {
   "allowed": [
-   "Amoxicillin + Clavulanic acid",
-   "Cefoxitin",
    "Clindamycin",
    "Doxycycline",
    "Erythromycin",
    "Fusidic acid",
    "Linezolid",
-   "Oxacillin",
-   "Penicillin",
    "Trimethoprim/Sulfamethoxazole",
    "Vancomycin"
   ],
@@ -19165,7 +19163,12 @@
   ],
   "preg_warn": [],
   "qc_ids": [],
-  "warned": []
+  "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Oxacillin",
+   "Penicillin"
+  ]
  },
  "Pus|Staphylococcus aureus|mrsa": {
   "allowed": [
@@ -26586,15 +26589,11 @@
  },
  "Sputum|Staphylococcus aureus|mdr": {
   "allowed": [
-   "Amoxicillin + Clavulanic acid",
-   "Cefoxitin",
    "Clindamycin",
    "Doxycycline",
    "Erythromycin",
    "Fusidic acid",
    "Linezolid",
-   "Oxacillin",
-   "Penicillin",
    "Trimethoprim/Sulfamethoxazole",
    "Vancomycin"
   ],
@@ -26622,7 +26621,12 @@
   ],
   "preg_warn": [],
   "qc_ids": [],
-  "warned": []
+  "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Oxacillin",
+   "Penicillin"
+  ]
  },
  "Sputum|Staphylococcus aureus|mrsa": {
   "allowed": [
@@ -36329,8 +36333,6 @@
  },
  "Urine|Staphylococcus aureus|mdr": {
   "allowed": [
-   "Amoxicillin + Clavulanic acid",
-   "Cefoxitin",
    "Clindamycin",
    "Doxycycline",
    "Erythromycin",
@@ -36338,8 +36340,6 @@
    "Fusidic acid",
    "Linezolid",
    "Nitrofurantoin",
-   "Oxacillin",
-   "Penicillin",
    "Trimethoprim/Sulfamethoxazole",
    "Vancomycin"
   ],
@@ -36368,7 +36368,12 @@
   ],
   "preg_warn": [],
   "qc_ids": [],
-  "warned": []
+  "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Oxacillin",
+   "Penicillin"
+  ]
  },
  "Urine|Staphylococcus aureus|mrsa": {
   "allowed": [
@@ -43363,15 +43368,11 @@
  },
  "Wound Swab|Staphylococcus aureus|mdr": {
   "allowed": [
-   "Amoxicillin + Clavulanic acid",
-   "Cefoxitin",
    "Clindamycin",
    "Doxycycline",
    "Erythromycin",
    "Fusidic acid",
    "Linezolid",
-   "Oxacillin",
-   "Penicillin",
    "Trimethoprim/Sulfamethoxazole",
    "Vancomycin"
   ],
@@ -43399,7 +43400,12 @@
   ],
   "preg_warn": [],
   "qc_ids": [],
-  "warned": []
+  "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Oxacillin",
+   "Penicillin"
+  ]
  },
  "Wound Swab|Staphylococcus aureus|mrsa": {
   "allowed": [

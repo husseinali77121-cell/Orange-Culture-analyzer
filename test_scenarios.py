@@ -194,8 +194,13 @@ def run_case(case: dict) -> dict:
     #  renal_note. That is not merely blank: on a suspected-carbapenemase warning
     #  for ceftriaxone it printed "renally safe, hepatically cleared" -- a
     #  reassuring, unrelated sentence attached to a resistance alert.
+    # Kept in step with warned_note_for() in streamlit_app.py, which is now the
+    # single resolver. Any reason added there must be added here, and any reason
+    # added to the engine without a resolver branch fails this invariant.
     _RENDERABLE = {"esbl_bli_uti_only", "possible_carbapenemase",
-                   "intermediate_culture", "renal_adjustment"}
+                   "intermediate_culture", "renal_adjustment",
+                   "hepatic_adjustment", "safety_gate", "neonate",
+                   "possible_mrsa", "interaction", "pregnancy"}
     for _w in warned:
         _wr = _w.get("warning_reason")
         if _wr and _wr not in _RENDERABLE:
