@@ -920,6 +920,6 @@ def run_dashboard() -> None:
     st.markdown("""
     <div style="text-align:center;color:gray;font-size:0.9rem;">
       <strong>Developed by Dr / Hussein Ali | Orange Lab — Microbiology CDSS</strong><br>
-      EUCAST Breakpoint Tables v16.0 (2026) | CLSI M100 Ed36 | IDSA AMR Guidance v4.0 (2024) | BNF 2025 | Egypt National Guidelines
+      EUCAST Breakpoint Tables v16.1 (2026) | CLSI M100 Ed36 | IDSA AMR Guidance 2026 | BNF 2025 | Egypt National Guidelines
     </div>
     """, unsafe_allow_html=True)
