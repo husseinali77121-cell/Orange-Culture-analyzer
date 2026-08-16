@@ -43,7 +43,7 @@ jobs:
       # A missing clinical_data.py is the exact failure that shipped: the import
       # in ast_qa_engine.py fell through to an empty table and the intrinsic
       # check died silently. Fail loudly and early instead of three suites later.
-      - name: "Guard 0 — the canonical table is actually present"
+      - name: "Guard 1 — the canonical table is actually present"
         run: |
           test -f clinical_data.py || {
             echo "::error::clinical_data.py is missing. streamlit_app.py and \
@@ -55,20 +55,20 @@ jobs:
           assert len(I) >= 30, f'table has only {len(I)} organism keys'; \
           print(f'clinical_data.py OK — {len(I)} organism keys')"
 
-      - name: "Guard 1 — drift & invariants (fast, < 1s)"
+      - name: "Guard 2 — drift & invariants (fast, < 1s)"
         run: python test_intrinsic_invariant.py
 
-      - name: "Guard 2 — table sync + OCR drug scanner"
+      - name: "Guard 3 — table sync + OCR drug scanner"
         run: python test_intrinsic_sync.py
 
-      # 639 cases: every clinically valid organism x specimen pair against 15
+      # 809 cases: every clinically valid organism x specimen pair against 15
       # AST archetypes, checked for 13 invariants and diffed against a golden
       # snapshot. A snapshot change fails the build ON PURPOSE -- it means the
       # engine's clinical answer moved and a human has to sign off on it.
-      - name: "Guard 3 — clinical scenario matrix (639 cases)"
+      - name: "Guard 4 — clinical scenario matrix (1,267 snapshot cases)"
         run: python test_scenarios.py
 
-      - name: "Guard 4 — comprehensive behaviour across all cultures"
+      - name: "Guard 5 — comprehensive behaviour across all cultures"
         run: python test_comprehensive.py
         env:
           N_FUZZ: "20000"   # heavier fuzzing in CI; bump anytime
@@ -80,10 +80,151 @@ jobs:
       # Child-Pugh A, if a dose band belongs to a different drug, if a
       # renally-adjusted agent says only "adjust the dose", or if the two renal
       # threshold tables drift apart again.
-      - name: "Guard 5 — renal & hepatic dose adjustment"
+      - name: "Guard 6 — renal & hepatic dose adjustment"
         run: python test_dose_adjustment.py
+
+      # ADDED 2026-08-01. These three suites existed, were listed in the README
+      # and passed locally, and were NEVER RUN HERE. Between them they hold 61
+      # proofs covering the terminal safety gate, the clinical matrix (totality,
+      # fail-closed, monotonicity, demote-only) and guideline traceability —
+      # that is, the newest and most safety-critical layer in the repo shipped
+      # unguarded on every push. Guard 9 below now fails the build if a suite is
+      # ever added to the repo without being added here.
+      - name: "Guard 7 — terminal safety gate & host-state ordering"
+        run: python test_safety_invariants.py
+
+      - name: "Guard 8 — clinical matrix proofs (totality / fail-closed / demote-only)"
+        run: python test_clinical_matrix.py
+
+      - name: "Guard 9 — every rule traces to a versioned source"
+        run: python test_guidelines.py
+
+      # The August-2026 audit: engine agreement and table reachability. Proves
+      # that two engines looking at the same isolate reach the same verdict, and
+      # that a table row which exists is actually inherited by somebody.
+      - name: "Guard 10 — engine agreement & table reachability"
+        run: python test_engine_agreement.py
+
+      # The render layer: proves the right SENTENCE reaches the screen. Added
+      # 2026-08-01 after two live defects were found there — safety-gate moves
+      # rendering a blank reason (33/33), and warned items rendering renal
+      # dosing text for hepatic, neonatal and CSF-gate warnings. Every other
+      # suite tests the engine; none of them looked at the output strings.
+      - name: "Guard 11 — render layer (the right note reaches the screen)"
+        run: python test_render_layer.py
+
+      # The COMPOSED pipeline. Every other guard calls the decision functions
+      # directly, one at a time, with correct arguments. This one walks
+      # run_analysis() — the path the clinician walks — which is where a
+      # parameter that fails to reach a layer actually shows up. Added
+      # 2026-08-03 after a keyword landed on a function that did not accept it
+      # and all ten suites stayed green.
+      - name: "Guard 12 — composed pipeline (the path the user walks)"
+        run: python test_pipeline.py
+
+      # The extracted modules, tested DIRECTLY rather than through whatever
+      # pipeline happens to call them. Added 2026-08-03 when ~3,300 lines came
+      # out of streamlit_app.py into five importable modules and every one of
+      # them was still only covered indirectly — which is the same gap that let
+      # the render layer ship two live defects.
+      - name: "Guard 13 — extracted modules (own contracts)"
+        run: python test_modules.py
+
+      # The clinical DATA, asserted by value. Added 2026-08-05 after mutation
+      # testing the tables for the first time: eight single-value edits were
+      # made and FIVE passed every existing suite, including a teratogen
+      # downgraded from Banned to Caution and daptomycin permitted in
+      # pneumonia. Every other guard tests what the engine DOES WITH the
+      # tables; this one tests what the tables SAY.
+      - name: "Guard 14 — clinical facts (the data, by value)"
+        run: python test_clinical_facts.py
+
+      # A suite nobody runs is a suite that does not exist. Every one of the
+      # three suites above sat green and unexecuted for weeks precisely because
+      # nothing checked this.
+      - name: "Guard 15 — no test suite is orphaned from this workflow"
+        run: |
+          missing=0
+          for f in test_*.py; do
+            grep -q "$f" .github/workflows/cdss-tests.yml || {
+              echo "::error::$f is not run by this workflow. Add a step for it."
+              missing=1
+            }
+          done
+          [ "$missing" = "0" ] && echo "all test suites are wired into CI"
+          exit $missing
+
+      # No application module and no test may import from the abandoned
+      # parallel builds. Their clinical tables predate the 2026-08-01 audit and
+      # a caller gets a weaker answer with nothing to indicate it. qc.py is the
+      # one documented exception — it is itself a legacy redirect.
+      - name: "Guard 16 — the deleted parallel build stays deleted"
+        run: |
+          for d in modules ui data qc.py antibiotics.py; do
+            if [ -e "$d" ]; then
+              echo "::error::$d was deleted on 2026-08-03 (3,227 lines, 20 latent NameErrors) and has returned"
+              exit 1
+            fi
+          done
+          bad=$(grep -ln "^from modules\|^import modules\|^from ui\|^import ui" *.py 2>/dev/null || true)
+          if [ -n "$bad" ]; then
+            echo "::error::these import the deleted parallel build: $bad"
+            exit 1
+          fi
+          echo "the deleted parallel build stays deleted"
 
       # Byte-compile everything so a syntax error in a file no suite imports
       # (modules/, ui/, data/) still turns the run red.
-      - name: "Guard 6 — every .py file compiles"
+      - name: "Guard 17 — every .py file compiles"
         run: python -m compileall -q . && echo "all modules compile"
+
+      # The app's OWN startup validator, as a release gate. It has existed all
+      # along and nothing ran it; the first time it was called it reported four
+      # real defects — three organism profiles naming a drug the formulary does
+      # not have, and a reference to a deleted organism. A validator nobody runs
+      # is a comment that happens to be executable.
+      - name: "Guard 18 — startup validator must be clean"
+        run: |
+          python - <<'EOF'
+          import sys, types
+          st = types.ModuleType("streamlit")
+          class _Stop(Exception): pass
+          class _Ctx:
+              def __enter__(self): return self
+              def __exit__(self,*a): return False
+              def __getattr__(self,n): return lambda *a,**k: _Ctx()
+              def __iter__(self): return iter([_Ctx() for _ in range(6)])
+              def __getitem__(self,i): return _Ctx()
+          class _S(dict):
+              def __getattr__(self,k):
+                  try: return self[k]
+                  except KeyError: raise AttributeError(k)
+              def __setattr__(self,k,v): self[k]=v
+          st.session_state=_S(); st.secrets=_S(); st._Stop=_Stop
+          _n=lambda *a,**k: _Ctx()
+          for x in dir(_Ctx): pass
+          st.__getattr__=lambda n: _n
+          st.stop=lambda *a,**k:(_ for _ in ()).throw(_Stop())
+          st.cache_data=st.cache_resource=lambda f=None,**k:(f if f else (lambda g:g))
+          st.columns=lambda spec,**k:[_Ctx() for _ in range(spec if isinstance(spec,int) else len(spec))]
+          st.tabs=lambda names,**k:[_Ctx() for _ in names]
+          st.sidebar=_Ctx()
+          for _f in ("markdown","write","error","warning","info","success","caption","set_page_config",
+                     "expander","container","form","spinner","empty","status","button","checkbox",
+                     "selectbox","radio","multiselect","text_input","text_area","number_input",
+                     "slider","file_uploader","download_button","date_input","divider","image",
+                     "metric","dataframe","code","json","rerun","toast","header","subheader","title"):
+              setattr(st,_f,_n)
+          sys.modules["streamlit"]=st
+          import importlib.util
+          sp=importlib.util.spec_from_file_location("sa","streamlit_app.py")
+          A=importlib.util.module_from_spec(sp); sys.modules["sa"]=A
+          try: sp.loader.exec_module(A)
+          except _Stop: pass
+          iss=[i for i in A.get_startup_validation_issues() if "[SECURITY]" not in i]
+          if iss:
+              print("::error::startup validator reported table inconsistencies:")
+              for i in iss: print("   -", i)
+              sys.exit(1)
+          print("startup validator: clean")
+          EOF
