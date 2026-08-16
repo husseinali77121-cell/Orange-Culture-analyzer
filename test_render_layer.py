@@ -91,7 +91,7 @@ _WANT = [
     "SPECIMEN_TYPES", "BACTERIA_TYPES", "ORGANISM_AVOID_CLASS_MAP",
     "RENAL_BAN_REASONS", "CHILD_BAN_REASONS", "_SPECIMEN_CATEGORY_RULES",
     "classify_specimen", "is_intrinsically_avoided", "build_banned_item",
-    "_SIR_ALIASES", "normalize_sir_value", "normalize_sir_map",
+    
     "_MED_CANON", "_canon_med",
     "ASSUMED_CRCL_UNKNOWN", "resolve_crcl", "crcl_label", "get_renal_severity",
     "_PREG_ALIASES", "preg_status_of", "_ACQUIRED_NOT_INTRINSIC",
@@ -115,7 +115,14 @@ from specimen_organism_map import (                                 # noqa: E402
 import re as _re                                                     # noqa: E402
 
 _seg, _order, _missing = _extract(APP, _WANT)
+# 2026-08-03: the S/I/R vocabulary moved to ocr_parsing.py. Seed it from
+# the real module instead of slicing it out of the monolith — an
+# importable module is the whole point of having extracted it.
+from ocr_parsing import (normalize_sir_value as _nsv,
+                         normalize_sir_map as _nsm,
+                         _SIR_ALIASES as _sal)
 NS: dict = {
+    "normalize_sir_value": _nsv, "normalize_sir_map": _nsm, "_SIR_ALIASES": _sal,
     "__builtins__": __builtins__, "re": _re,
     "Dict": dict, "List": list, "Any": object, "Tuple": tuple, "Optional": object,
     "ABX_GUIDELINES": G, "ORGANISM_PROFILE": OP,
@@ -422,6 +429,84 @@ except TypeError as _e:
     _detail = str(_e)
 check("get_combination_therapy accepts the host context the UI passes it",
       _ok, locals().get("_detail", ""))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[9] The PDF and the screen must resolve a warning the SAME way.")
+print("    DEFECT 2026-08-03: warned_note_for() fixed the screen; the PDF kept")
+print("    its own if/else that fell through to the RENAL note for every reason")
+print("    it did not name — hepatic, safety-gate, neonatal, possible-MRSA. One")
+print("    defect, two renderers, one fixed. Both now use the one resolver.")
+# ═══════════════════════════════════════════════════════════════════════════
+_src9 = open(os.path.join(HERE, "report_service.py"), encoding="utf-8").read()
+check("the PDF routes its fall-through branch through warned_note_for",
+      "warned_note_for(_wd" in _src9,
+      "the PDF still has its own fall-through — it will drift from the screen")
+check("warned_note_for is wired into report_service via bind()",
+      '"warned_note_for"' in _src9)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[10] STATIC — the UI layer. 1,351 of this file's lines are Streamlit")
+print("    calls that no test can execute without a browser, so they are")
+print("    checked by reading rather than by running.")
+print("    DEFECT 2026-08-03: st.session_state.get('patient_name') was read on")
+print("    every internal QA report, and NOTHING in the file writes that key —")
+print("    the name lives under patient_name_final. Every QA document since the")
+print("    field was added carried a blank patient reference, and a QA document")
+print("    that cannot be tied to its isolate is the one thing it exists for.")
+print("    Third instance of the same shape: safety_gate emitted 'why' while")
+print("    the renderer read 'reason_ar'; report_service needed warned_note_for")
+print("    and had its own copy. A producer and a consumer naming one fact")
+print("    differently is this codebase's most repeated defect.")
+# ═══════════════════════════════════════════════════════════════════════════
+import ast as _ast10
+
+_t10 = _ast10.parse(open(APP, encoding="utf-8").read())
+_written, _read = set(), set()
+for _n in _ast10.walk(_t10):
+    if (isinstance(_n, _ast10.Subscript) and isinstance(_n.value, _ast10.Attribute)
+            and _n.value.attr == "session_state"
+            and isinstance(_n.slice, _ast10.Constant)):
+        (_written if isinstance(_n.ctx, _ast10.Store) else _read).add(_n.slice.value)
+    if (isinstance(_n, _ast10.Call) and isinstance(_n.func, _ast10.Attribute)
+            and _n.func.attr in ("get", "setdefault")
+            and isinstance(_n.func.value, _ast10.Attribute)
+            and _n.func.value.attr == "session_state" and _n.args
+            and isinstance(_n.args[0], _ast10.Constant)):
+        _read.add(_n.args[0].value)
+    if (isinstance(_n, _ast10.Attribute) and isinstance(_n.value, _ast10.Attribute)
+            and _n.value.attr == "session_state"):
+        (_written if isinstance(_n.ctx, _ast10.Store) else _read).add(_n.attr)
+# A literal in any dict counts as a write: the defaults table seeds the state.
+for _n in _ast10.walk(_t10):
+    if isinstance(_n, _ast10.Dict):
+        for _k in _n.keys:
+            if isinstance(_k, _ast10.Constant) and _k.value in _read:
+                _written.add(_k.value)
+
+_METHODS = {"get", "pop", "clear", "keys", "items", "values", "update", "setdefault"}
+_ghost = sorted(_read - _written - _METHODS)
+check("every session_state key that is READ is written somewhere",
+      not _ghost,
+      f"read but never written: {_ghost}\n"
+      "Each of these silently returns its default forever.")
+
+# Duplicate widget keys raise DuplicateWidgetID at runtime, in front of a user,
+# on a page that cannot be tested here.
+_wkeys = {}
+_STATEFUL = {"text_input", "number_input", "selectbox", "multiselect", "radio",
+             "checkbox", "slider", "text_area", "file_uploader", "date_input",
+             "button", "form_submit_button", "download_button", "data_editor"}
+for _n in _ast10.walk(_t10):
+    if (isinstance(_n, _ast10.Call) and isinstance(_n.func, _ast10.Attribute)
+            and _n.func.attr in _STATEFUL):
+        for _kw in _n.keywords:
+            if _kw.arg == "key" and isinstance(_kw.value, _ast10.Constant):
+                _wkeys.setdefault(_kw.value.value, []).append(_n.lineno)
+_dup = {k: v for k, v in _wkeys.items() if len(v) > 1}
+check("no two widgets share a literal key",
+      not _dup, f"{ {k: v for k, v in list(_dup.items())[:5]} }")
 
 print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")

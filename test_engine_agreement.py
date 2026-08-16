@@ -73,7 +73,7 @@ _WANT = [
     "SPECIMEN_TYPES", "BACTERIA_TYPES", "ORGANISM_AVOID_CLASS_MAP",
     "RENAL_BAN_REASONS", "CHILD_BAN_REASONS", "_SPECIMEN_CATEGORY_RULES",
     "classify_specimen", "is_intrinsically_avoided", "build_banned_item",
-    "_SIR_ALIASES", "normalize_sir_value", "normalize_sir_map",
+    
     "_MED_CANON", "_canon_med",
     "ASSUMED_CRCL_UNKNOWN", "resolve_crcl", "crcl_label", "get_renal_severity",
     "_PREG_ALIASES", "preg_status_of", "_ACQUIRED_NOT_INTRINSIC",
@@ -89,15 +89,6 @@ _WANT = [
     "ORGANISM_OCR_ALIASES",
     "_re_ws_collapse", "PHENOTYPE_RULES", "detect_resistance_phenotypes",
     "COMBINATION_THERAPY", "_COMBO_HOST_FLAGS", "get_combination_therapy",
-    "_CFU_SUPERSCRIPTS", "_CFU_VERBAL", "_PUS_VERBAL", "_parse_cfu", "_parse_pus",
-    "_cfu_report_state", "_score_colony_count",
-    # Transitive closure of assess_pathogenicity(), computed rather than
-    # guessed -- the extraction loader has no import machinery, so a missing
-    # dependency surfaces as NameError deep inside a re-exec'd function.
-    "_ORG_CANON_MAP", "_canon_org", "_org_in",
-    "TYPICAL_UROPATHOGENS", "ATYPICAL_UROPATHOGENS",
-    "SIRS_CRITERIA", "BLOOD_CONTAMINANTS", "GI_TRUE_PATHOGENS",
-    "assess_pathogenicity",
 ]
 
 if not os.path.exists(APP):
@@ -111,7 +102,14 @@ from specimen_organism_map import (                                 # noqa: E402
 )
 
 _seg, _order, _missing = _extract(APP, _WANT)
+# 2026-08-03: the S/I/R vocabulary moved to ocr_parsing.py. Seed it from
+# the real module instead of slicing it out of the monolith — an
+# importable module is the whole point of having extracted it.
+from ocr_parsing import (normalize_sir_value as _nsv,
+                         normalize_sir_map as _nsm,
+                         _SIR_ALIASES as _sal)
 NS: dict = {
+    "normalize_sir_value": _nsv, "normalize_sir_map": _nsm, "_SIR_ALIASES": _sal,
     "__builtins__": __builtins__,
     "Dict": dict, "List": list, "Any": object, "Tuple": tuple, "Optional": object,
     "ABX_GUIDELINES": G, "ORGANISM_PROFILE": OP,
@@ -224,8 +222,20 @@ _GN_ONLY = {"Colistin", "Polymyxin B", "Aztreonam"}
 # classical Gram-negative -- the atypicals, and "Anaerobes" which is a mixed
 # bag containing both -- are excluded from this check entirely rather than
 # forced into one side of a dichotomy they do not belong to.
+# EXHAUSTIVE, not a sample. Every Gram-positive organism the dropdown offers
+# must appear here, because the check below is the one that catches "organism
+# added to ORGANISM_PROFILE, forgotten in clinical_data" — which happened five
+# times in this audit, most recently when Coagulase-negative Staphylococci
+# matched NO intrinsic row (the staph keys are singular, "staphylococcus", and
+# "coagulase-negative staphylococcI" is plural) and AZTREONAM came back
+# recommended for a Gram-positive isolate.
 _GRAM_POS_ORGS = {"Staphylococcus aureus", "MRSA", "Enterococcus faecalis",
-                  "Enterococcus faecium", "Streptococcus pneumoniae", "VRE"}
+                  "Enterococcus faecium", "Streptococcus pneumoniae", "VRE",
+                  "Streptococcus pyogenes (Group A)",
+                  "Streptococcus agalactiae (Group B)",
+                  "Listeria monocytogenes",
+                  "Coagulase-negative Staphylococci"}
+# Same requirement in the other direction.
 _GRAM_NEG_ORGS = {"E. coli", "Klebsiella spp.", "Pseudomonas aeruginosa",
                   "Acinetobacter baumannii", "Proteus mirabilis",
                   "Salmonella spp.", "Shigella spp.", "Campylobacter jejuni",
@@ -252,6 +262,21 @@ for org in ORGS:
         _gram_leaks.append(f"{org}: {sorted(leak)} reached allowed/caution")
 check("an agent with no activity against this Gram class is never offered",
       not _gram_leaks, "\n".join(_gram_leaks[:12]))
+
+# The two sets above are only a guard if they stay complete. Anything the
+# dropdown offers that is in NEITHER set escapes the spectrum check entirely —
+# which is exactly how a new organism slips through.
+_ATYPICAL = {"Anaerobes (لاهوائيات)", "Mycoplasma spp.", "Legionella pneumophila",
+             "Enterobacterales (unspeciated)"}
+_unclassified = [o for o in ORGS
+                 if o not in _GRAM_POS_ORGS and o not in _GRAM_NEG_ORGS
+                 and o not in _ATYPICAL]
+check("every selectable organism is classified for the spectrum check",
+      not _unclassified,
+      f"unclassified: {_unclassified}\n"
+      "Add each to _GRAM_POS_ORGS, _GRAM_NEG_ORGS or _ATYPICAL — an organism in "
+      "none of them is never spectrum-checked.")
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -609,7 +634,8 @@ print("    Separately, every verbal report ('heavy growth', 'TNTC', 'full")
 print("    field') returned 0 or None — the same value as 'no growth' — so the")
 print("    strongest reading on the form scored as the weakest.")
 # ═══════════════════════════════════════════════════════════════════════════
-parse_cfu, parse_pus = NS["_parse_cfu"], NS["_parse_pus"]
+# Imported, not sliced — see the note at the pathogenicity checks below.
+from pathogenicity import _parse_cfu as parse_cfu, _parse_pus as parse_pus
 
 _EXPECT_CFU = [
     ("10^5", 100000), ("10*5", 100000), ("10**5", 100000),
@@ -674,8 +700,15 @@ print("    Sterile urine outranking scanty growth is the wrong direction; a")
 print("    verdict built from an unread field is worse — an opinion assembled")
 print("    out of missing data.")
 # ═══════════════════════════════════════════════════════════════════════════
-assess = NS.get("assess_pathogenicity")
-cfu_state = NS.get("_cfu_report_state")
+# 2026-08-03: the pathogenicity engine moved into pathogenicity.py, so these
+# are IMPORTED rather than sliced out of streamlit_app.py. That is the point of
+# extracting them — a module you can import is a module you can test without a
+# 900-line AST harness standing in for an import statement.
+try:
+    from pathogenicity import (assess_pathogenicity as assess,
+                               _cfu_report_state as cfu_state)
+except ImportError:
+    assess = cfu_state = None
 if assess is None or cfu_state is None:
     print("  SKIP  assess_pathogenicity / _cfu_report_state not extracted")
 else:

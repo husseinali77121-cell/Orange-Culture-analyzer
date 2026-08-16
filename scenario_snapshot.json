@@ -1143,6 +1143,293 @@
   ],
   "warned": []
  },
+ "Blood|Coagulase-negative Staphylococci|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Aztreonam"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_staph_gram_neg_agents:Aztreonam"
+  ],
+  "warned": []
+ },
+ "Blood|Coagulase-negative Staphylococci|mdr": {
+  "allowed": [
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Oxacillin",
+   "Penicillin"
+  ]
+ },
+ "Blood|Coagulase-negative Staphylococci|mrsa": {
+  "allowed": [
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Anti-staphylococcal Beta-lactams"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin"
+  ],
+  "warned": []
+ },
+ "Blood|Coagulase-negative Staphylococci|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin",
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "Blood|Coagulase-negative Staphylococci|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Coagulase-negative Staphylococci|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Blood|Coagulase-negative Staphylococci|wild_type": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Coagulase-negative Staphylococci|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin"
+  ],
+  "warned": []
+ },
  "Blood|E. coli|ampc": {
   "allowed": [
    "Amikacin",
@@ -2900,12 +3187,15 @@
   "allowed": [
    "Amoxicillin + Clavulanic acid",
    "Ciprofloxacin",
+   "Daptomycin",
    "Doxycycline",
    "Erythromycin",
    "Levofloxacin",
    "Linezolid",
    "Oxacillin",
    "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
    "Vancomycin"
   ],
   "banned": [
@@ -2927,11 +3217,14 @@
  "Blood|Enterococcus faecium|mdr": {
   "allowed": [
    "Amoxicillin + Clavulanic acid",
+   "Daptomycin",
    "Doxycycline",
    "Erythromycin",
    "Linezolid",
    "Oxacillin",
    "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
    "Vancomycin"
   ],
   "banned": [
@@ -2956,12 +3249,15 @@
   "banned": [
    "Amoxicillin + Clavulanic acid",
    "Ciprofloxacin",
+   "Daptomycin",
    "Doxycycline",
    "Erythromycin",
    "Levofloxacin",
    "Linezolid",
    "Oxacillin",
    "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
    "Vancomycin"
   ],
   "dtr": null,
@@ -3008,12 +3304,15 @@
   "allowed": [
    "Amoxicillin + Clavulanic acid",
    "Ciprofloxacin",
+   "Daptomycin",
    "Doxycycline",
    "Erythromycin",
    "Levofloxacin",
    "Linezolid",
    "Oxacillin",
    "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
    "Vancomycin"
   ],
   "banned": [
@@ -3036,12 +3335,15 @@
   "allowed": [
    "Amoxicillin + Clavulanic acid",
    "Ciprofloxacin",
+   "Daptomycin",
    "Doxycycline",
    "Erythromycin",
    "Levofloxacin",
    "Linezolid",
    "Oxacillin",
-   "Penicillin"
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline"
   ],
   "banned": [
    "Vancomycin"
@@ -3065,12 +3367,15 @@
   "allowed": [
    "Amoxicillin + Clavulanic acid",
    "Ciprofloxacin",
+   "Daptomycin",
    "Doxycycline",
    "Erythromycin",
    "Levofloxacin",
    "Linezolid",
    "Oxacillin",
    "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
    "Vancomycin"
   ],
   "banned": [],
@@ -3092,11 +3397,14 @@
   "banned": [
    "Amoxicillin + Clavulanic acid",
    "Ciprofloxacin",
+   "Daptomycin",
    "Doxycycline",
    "Erythromycin",
    "Levofloxacin",
    "Oxacillin",
    "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
    "Vancomycin"
   ],
   "dtr": null,
@@ -4096,6 +4404,242 @@
    "SPEC-URN:Norfloxacin",
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
+  "warned": []
+ },
+ "Blood|Listeria monocytogenes|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Aztreonam"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "wrongspectrum_gram-positive:Aztreonam"
+  ],
+  "warned": []
+ },
+ "Blood|Listeria monocytogenes|mdr": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Listeria monocytogenes|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Carbapenems",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Listeria monocytogenes|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Listeria monocytogenes|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Blood|Listeria monocytogenes|wild_type": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Listeria monocytogenes|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Carbapenems",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🔴 Likely TRUE INFECTION -- Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
   "warned": []
  },
  "Blood|MRSA|intrinsic_violation": {
@@ -7185,6 +7729,252 @@
   ],
   "warned": []
  },
+ "Blood|Streptococcus agalactiae (Group B)|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Blood|Streptococcus agalactiae (Group B)|mdr": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefoxitin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Cefazolin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Streptococcus agalactiae (Group B)|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "Blood|Streptococcus agalactiae (Group B)|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Penicillins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Streptococcus agalactiae (Group B)|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Blood|Streptococcus agalactiae (Group B)|wild_type": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Streptococcus agalactiae (Group B)|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
  "Blood|Streptococcus pneumoniae|intrinsic_violation": {
   "allowed": [
    "Amoxicillin + Clavulanic acid",
@@ -7430,6 +8220,269 @@
   "preg_warn": [],
   "qc_ids": [
    "rare_van_pneumococcus:Vancomycin"
+  ],
+  "warned": []
+ },
+ "Blood|Streptococcus pyogenes (Group A)|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Blood|Streptococcus pyogenes (Group A)|mdr": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefoxitin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Cefazolin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Streptococcus pyogenes (Group A)|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_pen_gas:Penicillin"
+  ],
+  "warned": []
+ },
+ "Blood|Streptococcus pyogenes (Group A)|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Penicillins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_pen_gas:Penicillin"
+  ],
+  "warned": []
+ },
+ "Blood|Streptococcus pyogenes (Group A)|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Blood|Streptococcus pyogenes (Group A)|wild_type": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Blood|Streptococcus pyogenes (Group A)|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "XDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_pen_gas:Penicillin"
   ],
   "warned": []
  },
@@ -8065,6 +9118,293 @@
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "CSF|Coagulase-negative Staphylococci|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Aztreonam"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_staph_gram_neg_agents:Aztreonam"
+  ],
+  "warned": []
+ },
+ "CSF|Coagulase-negative Staphylococci|mdr": {
+  "allowed": [
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Oxacillin",
+   "Penicillin"
+  ]
+ },
+ "CSF|Coagulase-negative Staphylococci|mrsa": {
+  "allowed": [
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Anti-staphylococcal Beta-lactams"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin"
+  ],
+  "warned": []
+ },
+ "CSF|Coagulase-negative Staphylococci|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Tetracyclines"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin",
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "CSF|Coagulase-negative Staphylococci|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "CSF|Coagulase-negative Staphylococci|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "CSF|Coagulase-negative Staphylococci|wild_type": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "CSF|Coagulase-negative Staphylococci|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Tetracyclines"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin"
   ],
   "warned": []
  },
@@ -9727,7 +11067,8 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Ampicillin/Sulbactam"
+   "Ampicillin/Sulbactam",
+   "Daptomycin"
   ],
   "dtr": null,
   "esbl": null,
@@ -11024,7 +12365,9 @@
  },
  "CSF|Listeria monocytogenes|intrinsic_violation": {
   "allowed": [
+   "Amoxicillin",
    "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
    "Ciprofloxacin",
    "Clindamycin",
    "Doxycycline",
@@ -11032,6 +12375,7 @@
    "Gentamicin",
    "Levofloxacin",
    "Linezolid",
+   "Meropenem",
    "Oxacillin",
    "Penicillin",
    "Trimethoprim/Sulfamethoxazole",
@@ -11055,11 +12399,14 @@
  },
  "CSF|Listeria monocytogenes|mdr": {
   "allowed": [
+   "Amoxicillin",
    "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
    "Clindamycin",
    "Doxycycline",
    "Erythromycin",
    "Linezolid",
+   "Meropenem",
    "Oxacillin",
    "Penicillin",
    "Trimethoprim/Sulfamethoxazole",
@@ -11087,7 +12434,9 @@
  "CSF|Listeria monocytogenes|pdr": {
   "allowed": [],
   "banned": [
+   "Amoxicillin",
    "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
    "Ciprofloxacin",
    "Clindamycin",
    "Doxycycline",
@@ -11095,6 +12444,7 @@
    "Gentamicin",
    "Levofloxacin",
    "Linezolid",
+   "Meropenem",
    "Oxacillin",
    "Penicillin",
    "Trimethoprim/Sulfamethoxazole",
@@ -11107,6 +12457,7 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Anti-staphylococcal Beta-lactams",
+   "Carbapenems",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
@@ -11144,7 +12495,9 @@
  },
  "CSF|Listeria monocytogenes|urine_agent_offsite": {
   "allowed": [
+   "Amoxicillin",
    "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
    "Ciprofloxacin",
    "Clindamycin",
    "Doxycycline",
@@ -11152,6 +12505,7 @@
    "Gentamicin",
    "Levofloxacin",
    "Linezolid",
+   "Meropenem",
    "Oxacillin",
    "Penicillin",
    "Trimethoprim/Sulfamethoxazole",
@@ -11175,7 +12529,9 @@
  },
  "CSF|Listeria monocytogenes|wild_type": {
   "allowed": [
+   "Amoxicillin",
    "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
    "Ciprofloxacin",
    "Clindamycin",
    "Doxycycline",
@@ -11183,6 +12539,7 @@
    "Gentamicin",
    "Levofloxacin",
    "Linezolid",
+   "Meropenem",
    "Oxacillin",
    "Penicillin",
    "Trimethoprim/Sulfamethoxazole",
@@ -11205,13 +12562,16 @@
    "Linezolid"
   ],
   "banned": [
+   "Amoxicillin",
    "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
    "Ciprofloxacin",
    "Clindamycin",
    "Doxycycline",
    "Erythromycin",
    "Gentamicin",
    "Levofloxacin",
+   "Meropenem",
    "Oxacillin",
    "Penicillin",
    "Trimethoprim/Sulfamethoxazole",
@@ -11224,6 +12584,7 @@
   "mdr_cats": [
    "Aminoglycosides",
    "Anti-staphylococcal Beta-lactams",
+   "Carbapenems",
    "Fluoroquinolones",
    "Folate PI",
    "Glycopeptides",
@@ -12856,6 +14217,252 @@
   ],
   "warned": []
  },
+ "CSF|Streptococcus agalactiae (Group B)|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "CSF|Streptococcus agalactiae (Group B)|mdr": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefoxitin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Cefazolin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "CSF|Streptococcus agalactiae (Group B)|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "CSF|Streptococcus agalactiae (Group B)|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Penicillins"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "CSF|Streptococcus agalactiae (Group B)|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "CSF|Streptococcus agalactiae (Group B)|wild_type": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "CSF|Streptococcus agalactiae (Group B)|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
  "CSF|Streptococcus pneumoniae|intrinsic_violation": {
   "allowed": [
    "Amoxicillin + Clavulanic acid",
@@ -14245,6 +15852,293 @@
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Pus|Coagulase-negative Staphylococci|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Aztreonam"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_staph_gram_neg_agents:Aztreonam"
+  ],
+  "warned": []
+ },
+ "Pus|Coagulase-negative Staphylococci|mdr": {
+  "allowed": [
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Oxacillin",
+   "Penicillin"
+  ]
+ },
+ "Pus|Coagulase-negative Staphylococci|mrsa": {
+  "allowed": [
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Anti-staphylococcal Beta-lactams"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin"
+  ],
+  "warned": []
+ },
+ "Pus|Coagulase-negative Staphylococci|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin",
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "Pus|Coagulase-negative Staphylococci|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Coagulase-negative Staphylococci|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Pus|Coagulase-negative Staphylococci|wild_type": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Coagulase-negative Staphylococci|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin"
   ],
   "warned": []
  },
@@ -16001,6 +17895,248 @@
   ],
   "warned": []
  },
+ "Pus|Enterococcus faecium|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Pus|Enterococcus faecium|mdr": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ciprofloxacin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Enterococcus faecium|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Fluoroquinolones",
+   "Glycopeptides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "VRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "Pus|Enterococcus faecium|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Penicillins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Enterococcus faecium|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Pus|Enterococcus faecium|vre": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline"
+  ],
+  "banned": [
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Glycopeptides"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "VRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Enterococcus faecium|wild_type": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Enterococcus faecium|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Fluoroquinolones",
+   "Glycopeptides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "VRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
  "Pus|Hafnia alvei|ampc": {
   "allowed": [
    "Amikacin",
@@ -16980,6 +19116,242 @@
    "SPEC-URN:Norfloxacin",
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
+  "warned": []
+ },
+ "Pus|Listeria monocytogenes|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Aztreonam"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "wrongspectrum_gram-positive:Aztreonam"
+  ],
+  "warned": []
+ },
+ "Pus|Listeria monocytogenes|mdr": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Listeria monocytogenes|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Carbapenems",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Listeria monocytogenes|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Listeria monocytogenes|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Pus|Listeria monocytogenes|wild_type": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Listeria monocytogenes|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Carbapenems",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
   "warned": []
  },
  "Pus|MRSA|intrinsic_violation": {
@@ -19402,6 +21774,515 @@
   "qc_ids": [
    "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
    "rare_vrsa:Vancomycin"
+  ],
+  "warned": []
+ },
+ "Pus|Streptococcus agalactiae (Group B)|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Pus|Streptococcus agalactiae (Group B)|mdr": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefoxitin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Cefazolin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Streptococcus agalactiae (Group B)|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "Pus|Streptococcus agalactiae (Group B)|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Penicillins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Streptococcus agalactiae (Group B)|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Pus|Streptococcus agalactiae (Group B)|wild_type": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Streptococcus agalactiae (Group B)|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Streptococcus pyogenes (Group A)|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Pus|Streptococcus pyogenes (Group A)|mdr": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefoxitin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Cefazolin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Streptococcus pyogenes (Group A)|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_pen_gas:Penicillin"
+  ],
+  "warned": []
+ },
+ "Pus|Streptococcus pyogenes (Group A)|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Penicillins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_pen_gas:Penicillin"
+  ],
+  "warned": []
+ },
+ "Pus|Streptococcus pyogenes (Group A)|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Pus|Streptococcus pyogenes (Group A)|wild_type": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Pus|Streptococcus pyogenes (Group A)|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "XDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_pen_gas:Penicillin"
   ],
   "warned": []
  },
@@ -22437,7 +25318,8 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
-   "Ampicillin/Sulbactam"
+   "Ampicillin/Sulbactam",
+   "Daptomycin"
   ],
   "dtr": null,
   "esbl": null,
@@ -27341,6 +30223,269 @@
   ],
   "warned": []
  },
+ "Sputum|Streptococcus pyogenes (Group A)|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Sputum|Streptococcus pyogenes (Group A)|mdr": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefoxitin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Cefazolin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Sputum|Streptococcus pyogenes (Group A)|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_pen_gas:Penicillin"
+  ],
+  "warned": []
+ },
+ "Sputum|Streptococcus pyogenes (Group A)|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Penicillins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_pen_gas:Penicillin"
+  ],
+  "warned": []
+ },
+ "Sputum|Streptococcus pyogenes (Group A)|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Sputum|Streptococcus pyogenes (Group A)|wild_type": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Sputum|Streptococcus pyogenes (Group A)|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "XDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_pen_gas:Penicillin"
+  ],
+  "warned": []
+ },
  "Stool|Campylobacter jejuni|ampc": {
   "allowed": [
    "Amikacin",
@@ -27502,7 +30647,9 @@
    "Piperacillin + Tazobactam",
    "Tetracycline"
   ],
-  "banned": [],
+  "banned": [
+   "Daptomycin"
+  ],
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
@@ -30486,6 +33633,277 @@
   ],
   "warned": []
  },
+ "Urine|Coagulase-negative Staphylococci|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Aztreonam"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_staph_gram_neg_agents:Aztreonam"
+  ],
+  "warned": []
+ },
+ "Urine|Coagulase-negative Staphylococci|mdr": {
+  "allowed": [
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Norfloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Oxacillin",
+   "Penicillin"
+  ]
+ },
+ "Urine|Coagulase-negative Staphylococci|mrsa": {
+  "allowed": [
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Anti-staphylococcal Beta-lactams"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin"
+  ],
+  "warned": []
+ },
+ "Urine|Coagulase-negative Staphylococci|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin",
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "Urine|Coagulase-negative Staphylococci|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Coagulase-negative Staphylococci|wild_type": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Coagulase-negative Staphylococci|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Fosfomycins",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin"
+  ],
+  "warned": []
+ },
  "Urine|E. coli|ampc": {
   "allowed": [
    "Amikacin",
@@ -32117,6 +35535,235 @@
    "Norfloxacin",
    "Oxacillin",
    "Penicillin",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Fluoroquinolones",
+   "Glycopeptides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "VRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Enterococcus faecium|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Urine|Enterococcus faecium|mdr": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ciprofloxacin",
+   "Levofloxacin",
+   "Norfloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Enterococcus faecium|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Fluoroquinolones",
+   "Glycopeptides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "VRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "Urine|Enterococcus faecium|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Penicillins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Enterococcus faecium|vre": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline"
+  ],
+  "banned": [
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Glycopeptides"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "VRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Enterococcus faecium|wild_type": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Enterococcus faecium|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
    "Vancomycin"
   ],
   "dtr": null,
@@ -36586,6 +40233,231 @@
   ],
   "warned": []
  },
+ "Urine|Streptococcus agalactiae (Group B)|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Urine|Streptococcus agalactiae (Group B)|mdr": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefoxitin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Cefazolin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Levofloxacin",
+   "Norfloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Streptococcus agalactiae (Group B)|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "Urine|Streptococcus agalactiae (Group B)|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Penicillins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Streptococcus agalactiae (Group B)|wild_type": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Urine|Streptococcus agalactiae (Group B)|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Fosfomycin",
+   "Levofloxacin",
+   "Nitrofurantoin",
+   "Norfloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
  "Urine|Streptococcus agalactiae|intrinsic_violation": {
   "allowed": [
    "Amoxicillin + Clavulanic acid",
@@ -38132,6 +42004,293 @@
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Coagulase-negative Staphylococci|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Aztreonam"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_staph_gram_neg_agents:Aztreonam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Coagulase-negative Staphylococci|mdr": {
+  "allowed": [
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Oxacillin",
+   "Penicillin"
+  ]
+ },
+ "Wound Swab|Coagulase-negative Staphylococci|mrsa": {
+  "allowed": [
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Anti-staphylococcal Beta-lactams"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Coagulase-negative Staphylococci|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin",
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Coagulase-negative Staphylococci|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Coagulase-negative Staphylococci|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Coagulase-negative Staphylococci|wild_type": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Coagulase-negative Staphylococci|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Ceftriaxone|Cephalexin|Penicillin"
   ],
   "warned": []
  },
@@ -39888,6 +44047,248 @@
   ],
   "warned": []
  },
+ "Wound Swab|Enterococcus faecium|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Enterococcus faecium|mdr": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ciprofloxacin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Enterococcus faecium|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Fluoroquinolones",
+   "Glycopeptides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "VRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Enterococcus faecium|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Penicillins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Enterococcus faecium|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Enterococcus faecium|vre": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline"
+  ],
+  "banned": [
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Glycopeptides"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "VRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Enterococcus faecium|wild_type": {
+  "allowed": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Enterococcus faecium|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ciprofloxacin",
+   "Daptomycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Teicoplanin",
+   "Tigecycline",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Fluoroquinolones",
+   "Glycopeptides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [
+   "VRE"
+  ],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
  "Wound Swab|Hafnia alvei|ampc": {
   "allowed": [
    "Amikacin",
@@ -40867,6 +45268,242 @@
    "SPEC-URN:Norfloxacin",
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
+  "warned": []
+ },
+ "Wound Swab|Listeria monocytogenes|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Aztreonam"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "wrongspectrum_gram-positive:Aztreonam"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Listeria monocytogenes|mdr": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin",
+   "Levofloxacin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Listeria monocytogenes|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Carbapenems",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Listeria monocytogenes|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Ciprofloxacin",
+   "Gentamicin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Listeria monocytogenes|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Listeria monocytogenes|wild_type": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Linezolid",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "banned": [],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Listeria monocytogenes|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Gentamicin",
+   "Levofloxacin",
+   "Meropenem",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Aminoglycosides",
+   "Anti-staphylococcal Beta-lactams",
+   "Carbapenems",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
   "warned": []
  },
  "Wound Swab|MRSA|intrinsic_violation": {
@@ -43639,6 +48276,515 @@
   "qc_ids": [
    "intr_mrsa_betalactams:Amoxicillin + Clavulanic acid|Cefadroxil|Cefazolin|Ceftriaxone|Cefuroxime sodium|Cephalexin|Penicillin",
    "rare_vrsa:Vancomycin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus agalactiae (Group B)|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus agalactiae (Group B)|mdr": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefoxitin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Cefazolin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus agalactiae (Group B)|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus agalactiae (Group B)|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Penicillins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus agalactiae (Group B)|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus agalactiae (Group B)|wild_type": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus agalactiae (Group B)|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "MDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes (Group A)|intrinsic_violation": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Amikacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "intr_strep_enterococcus_aminoglycosides:Amikacin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes (Group A)|mdr": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefoxitin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Cefazolin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Levofloxacin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes (Group A)|pdr": {
+  "allowed": [],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "PDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Oxazolidinones",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_linezolid_gram_pos:Linezolid",
+   "rare_pen_gas:Penicillin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes (Group A)|thin_panel": {
+  "allowed": [],
+  "banned": [
+   "Oxacillin",
+   "Penicillin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [
+   "Penicillins"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_pen_gas:Penicillin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes (Group A)|urine_agent_offsite": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Nitrofurantoin",
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "SPEC-URN:Nitrofurantoin"
+  ],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes (Group A)|wild_type": {
+  "allowed": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Linezolid",
+   "Oxacillin",
+   "Penicillin",
+   "Vancomycin"
+  ],
+  "banned": [
+   "Trimethoprim/Sulfamethoxazole"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": null,
+  "mdr_cats": [],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [],
+  "warned": []
+ },
+ "Wound Swab|Streptococcus pyogenes (Group A)|xdr": {
+  "allowed": [
+   "Linezolid"
+  ],
+  "banned": [
+   "Amoxicillin",
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin",
+   "Azithromycin",
+   "Cefazolin",
+   "Cefoxitin",
+   "Ceftriaxone",
+   "Cephalexin",
+   "Ciprofloxacin",
+   "Clarithromycin",
+   "Clindamycin",
+   "Doxycycline",
+   "Erythromycin",
+   "Levofloxacin",
+   "Oxacillin",
+   "Penicillin",
+   "Trimethoprim/Sulfamethoxazole",
+   "Vancomycin"
+  ],
+  "dtr": null,
+  "esbl": null,
+  "esbl_conf": 0,
+  "mdr": "XDR",
+  "mdr_cats": [
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones",
+   "Folate PI",
+   "Glycopeptides",
+   "Lincosamides",
+   "Macrolides",
+   "Penicillins",
+   "Tetracyclines"
+  ],
+  "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
+  "phenotypes": [],
+  "preg_warn": [],
+  "qc_ids": [
+   "rare_pen_gas:Penicillin"
   ],
   "warned": []
  },

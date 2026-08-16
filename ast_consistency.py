@@ -480,43 +480,21 @@ def format_issue(issue: Dict[str, Any], lang: str = "ar") -> Dict[str, str]:
 # TEMPORARY. These override rules whose text is wrong at source. Fix
 # clinical_data.py and delete the entry — an override layer that outlives its
 # cause becomes a second, invisible source of truth.
-QC_RULE_OVERRIDES: Dict[str, Dict[str, str]] = {
-    # QC006 told the user to "avoid ALL cephalosporins even if S in the AST" and
-    # attributed that to EUCAST Breakpoint Tables v16.1. EUCAST says the opposite in the v16.1
-    # tables: the Enterobacterales cephalosporin breakpoints detect the
-    # clinically important mechanisms, isolates that produce a beta-lactamase but
-    # test susceptible are REPORTED AS TESTED, and the presence or absence of an
-    # ESBL does not by itself change the categorisation. ESBL detection is for
-    # infection control and surveillance. Editing susceptible cephalosporins to R
-    # on ESBL detection is the pre-2017 practice, withdrawn.
-    #
-    # There IS a real clinical argument for avoiding cephalosporins in ESBL
-    # bacteraemia (IDSA 2024; the MERINO trial) — but that is a PRESCRIBING
-    # decision for the treating physician, not a LABORATORY REPORTING rule, and
-    # it is not EUCAST's. The old text fused the two and mis-cited the result.
-    #
-    # NOTE ON PLACEHOLDERS: this message MUST keep {drugs} and {r_drug}. The old
-    # override hardcoded "Cefoperazone-S مع Cefotaxime-R" into the text, and
-    # run_ast_qc() applies the override AFTER substituting the placeholders — so
-    # the hardcoded names overwrote the real ones and every QC006 alert named two
-    # drugs that were often not on the panel at all (e.g. a Cephalexin-S +
-    # Ceftriaxone-R panel was reported as "Cefoperazone-S مع Cefotaxime-R").
-    # rule["trigger_fn"] / rule["trigger_r_fn"] in clinical_data.py exist purely
-    # to name the ACTUAL drugs; keep the placeholders so they can do their job.
-    "QC006": {
-        "message": ("⚠️ **نمط يستدعي الانتباه** — {drugs}-S مع {r_drug}-R: "
-                    "قد يشير إلى ESBL أو إلى تباين تقني. "
-                    "**راجع أولاً وجود تناقض بين سيفالوسبورينات الجيل الثالث** "
-                    "(انظر تنبيهات التناقض أعلاه إن وُجدت)."),
-        "fix": ("**الإبلاغ المعملي:** بلِّغ النتائج **كما هي**. EUCAST v16.1: "
-                "الـ breakpoints الحالية تكتشف آليات المقاومة المهمة إكلينيكياً، "
-                "ووجود ESBL من عدمه **لا يغيّر التصنيف** بذاته — اكتشاف الـ ESBL "
-                "لأغراض مكافحة العدوى والترصّد. لا تُحوِّل سيفالوسبورين حسّاس "
-                "إلى R (ممارسة ما قبل 2017، أُلغيت).  \n"
-                "**القرار العلاجي (منفصل — للطبيب):** في تجرثم الدم بـ ESBL "
-                "يُفضَّل الكاربابينيم على السيفالوسبورينات/pip-tazo حتى مع S — "
-                "IDSA AMR 2024 (4th update) · تجربة MERINO (JAMA 2018).  \n"
-                "📖 EUCAST Breakpoint Tables v16.1 — Enterobacterales, note on "
-                "cephalosporin breakpoints and ESBL"),
-    },
-}
+# QC_RULE_OVERRIDES was DELETED 2026-08-03 (40 lines).
+#
+# It existed to patch QC006's text at runtime: the original wording told
+# laboratories to "avoid ALL cephalosporins even if S in the AST" and attributed
+# that to EUCAST, which says the opposite — the current Enterobacterales
+# cephalosporin breakpoints detect the clinically important mechanisms, isolates
+# are REPORTED AS TESTED, and the presence of an ESBL does not by itself change
+# the categorisation. That is a real correction and it is still in force.
+#
+# But it was applied AT SOURCE: run_ast_qc() now emits the corrected message and
+# the corrected `fix` text directly, so the override table overrode nothing and
+# no code ever read it. A dead override for a live correction is worse than no
+# override — a reader finds it, believes the patch happens here, and looks in
+# the wrong place when the text needs changing again.
+#
+# The clinical reasoning survives in run_ast_qc()'s QC006 entry, which is where
+# the text actually lives.
+

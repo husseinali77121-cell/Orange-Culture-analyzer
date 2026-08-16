@@ -104,3 +104,32 @@ __all__ = [
     "get_organisms_for_specimen",
     "validate_specimen_organism_map",
 ]
+
+# ── Organisms added 2026-08-03 ──────────────────────────────────────────────
+# Each already had a complete intrinsic-resistance row in clinical_data and no
+# route into the UI, so none of those rules could fire. Placement is by where
+# the organism is genuinely isolated, not by convenience.
+for _sp in ("Blood", "CSF", "Pus", "Wound Swab"):
+    for _o in ("Listeria monocytogenes",):
+        if _o not in SPECIMEN_ORGANISM_MAP.get(_sp, []):
+            SPECIMEN_ORGANISM_MAP.setdefault(_sp, []).append(_o)
+
+for _sp in ("Wound Swab", "Pus", "Blood", "Sputum"):
+    if "Streptococcus pyogenes (Group A)" not in SPECIMEN_ORGANISM_MAP.get(_sp, []):
+        SPECIMEN_ORGANISM_MAP.setdefault(_sp, []).append("Streptococcus pyogenes (Group A)")
+
+# GBS: urine included deliberately — GBS bacteriuria in pregnancy signals heavy
+# colonisation and changes intrapartum management, whatever the colony count.
+for _sp in ("Blood", "CSF", "Urine", "Wound Swab", "Pus"):
+    if "Streptococcus agalactiae (Group B)" not in SPECIMEN_ORGANISM_MAP.get(_sp, []):
+        SPECIMEN_ORGANISM_MAP.setdefault(_sp, []).append("Streptococcus agalactiae (Group B)")
+
+for _sp in ("Urine", "Blood", "Pus", "Wound Swab"):
+    if "Enterococcus faecium" not in SPECIMEN_ORGANISM_MAP.get(_sp, []):
+        SPECIMEN_ORGANISM_MAP.setdefault(_sp, []).append("Enterococcus faecium")
+
+# CoNS everywhere it is actually reported — which is everywhere, because the
+# question it raises (contaminant or not) is a question at every site.
+for _sp in ("Blood", "Urine", "Wound Swab", "Pus", "CSF"):
+    if "Coagulase-negative Staphylococci" not in SPECIMEN_ORGANISM_MAP.get(_sp, []):
+        SPECIMEN_ORGANISM_MAP.setdefault(_sp, []).append("Coagulase-negative Staphylococci")

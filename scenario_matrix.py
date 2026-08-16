@@ -38,8 +38,6 @@ FLUOROQUIN   = ["Ciprofloxacin", "Levofloxacin", "Ofloxacin", "Norfloxacin"]
 AMINOGLYC    = ["Gentamicin", "Amikacin", "Tobramycin"]
 BLI_COMBOS   = ["Amoxicillin + Clavulanic acid", "Ampicillin/Sulbactam",
                 "Piperacillin + Tazobactam"]
-URINARY_ONLY = ["Nitrofurantoin", "Fosfomycin", "Norfloxacin"]
-GRAM_POS_ONLY = ["Vancomycin", "Linezolid", "Teicoplanin", "Daptomycin"]
 MRSA_MARKERS = ["Oxacillin", "Cefoxitin"]
 
 # A broad but realistic Gram-negative panel — what an Egyptian private lab

@@ -183,6 +183,18 @@ _ORG_CANON: Dict[str, str] = {
     "morganella morganii": "Morganella morganii", "morganella": "Morganella morganii",
     "providencia spp.": "Providencia spp.", "providencia": "Providencia spp.",
     "hafnia alvei": "Hafnia alvei", "hafnia": "Hafnia alvei",
+    # added 2026-08-03 with the five previously unreachable organisms
+    "listeria monocytogenes": "Listeria monocytogenes", "listeria": "Listeria monocytogenes",
+    "streptococcus pyogenes": "Streptococcus pyogenes (Group A)",
+    "streptococcus pyogenes (group a)": "Streptococcus pyogenes (Group A)",
+    "group a streptococcus": "Streptococcus pyogenes (Group A)",
+    "streptococcus agalactiae": "Streptococcus agalactiae (Group B)",
+    "streptococcus agalactiae (group b)": "Streptococcus agalactiae (Group B)",
+    "group b streptococcus": "Streptococcus agalactiae (Group B)",
+    "enterococcus faecium": "Enterococcus faecium",
+    "staphylococcus epidermidis": "Coagulase-negative Staphylococci",
+    "coagulase negative staphylococci": "Coagulase-negative Staphylococci",
+    "coagulase-negative staphylococci": "Coagulase-negative Staphylococci",
     "anaerobes (لاهوائيات)": "Anaerobes (لاهوائيات)", "anaerobes": "Anaerobes (لاهوائيات)",
 }
 
@@ -643,6 +655,129 @@ RENAL_RULES: Dict[str, Tuple[Optional[float], Optional[float], str, str]] = {
     "Gatifloxacin": (40, None, "renally cleared — 400 mg loading then 200 mg q24h",
                      "يُطرح كلوياً — 400 مجم تحميل ثم 200 مجم كل 24 ساعة"),
 }
+
+# ── Novel beta-lactams & reserve Gram-positive agents (added 2026-08-03) ─────
+# These nine were named by COMBINATION_THERAPY as recommended salvage regimens
+# and were absent from the formulary entirely, so this table had no row for them
+# either. prove_totality() failed the moment they were added, which is exactly
+# what it is for: a new agent must be wired into EVERY layer or it is not really
+# in the product.
+SITE_PENETRATION.update({
+    "Ceftazidime + Avibactam": {
+        "Urine": ("allow", "", ""), "Blood": ("allow", "", ""),
+        "Sputum": ("allow", "", ""), "Pus": ("allow", "", ""),
+        "Wound Swab": ("allow", "", ""),
+        "CSF": ("caution",
+                "limited CSF penetration; adjunctive only, never sole therapy for meningitis",
+                "نفاذية سحائية محدودة — مساعِد فقط ولا يُعتمد وحيداً في السحايا"),
+        "Stool": ("caution", "systemic agent; enteric infection rarely needs it",
+                  "دواء جهازي — نادراً ما تحتاجه العدوى المعوية"),
+    },
+    "Ceftolozane + Tazobactam": {
+        "Urine": ("allow", "", ""), "Blood": ("allow", "", ""),
+        "Sputum": ("allow", "", ""), "Pus": ("allow", "", ""),
+        "Wound Swab": ("allow", "", ""),
+        "CSF": ("caution", "limited CSF data; not established for meningitis",
+                "بيانات سحائية محدودة — غير مُثبت في السحايا"),
+        "Stool": ("caution", "systemic agent", "دواء جهازي"),
+    },
+    "Meropenem + Vaborbactam": {
+        "Urine": ("allow", "", ""), "Blood": ("allow", "", ""),
+        "Sputum": ("allow", "", ""), "Pus": ("allow", "", ""),
+        "Wound Swab": ("allow", "", ""),
+        "CSF": ("caution", "meropenem component penetrates; vaborbactam data limited",
+                "الميروبينيم ينفذ لكن بيانات الـ vaborbactam محدودة"),
+        "Stool": ("caution", "systemic agent", "دواء جهازي"),
+    },
+    "Imipenem + Relebactam": {
+        "Urine": ("allow", "", ""), "Blood": ("allow", "", ""),
+        "Sputum": ("allow", "", ""), "Pus": ("allow", "", ""),
+        "Wound Swab": ("allow", "", ""),
+        "CSF": ("deny",
+                "imipenem lowers the seizure threshold and is not used for CNS infection",
+                "الإيميبينيم يخفض عتبة النوبات ولا يُستخدم لعدوى الجهاز العصبي"),
+        "Stool": ("caution", "systemic agent", "دواء جهازي"),
+    },
+    "Cefiderocol": {
+        "Urine": ("allow", "", ""), "Blood": ("allow", "", ""),
+        "Sputum": ("allow", "", ""), "Pus": ("allow", "", ""),
+        "Wound Swab": ("allow", "", ""),
+        "CSF": ("caution", "limited CSF data; last-resort adjunct only",
+                "بيانات سحائية محدودة — مساعِد ملاذ أخير فقط"),
+        "Stool": ("caution", "systemic agent", "دواء جهازي"),
+    },
+    "Ceftaroline": {
+        "Blood": ("allow", "", ""), "Sputum": ("allow", "", ""),
+        "Pus": ("allow", "", ""), "Wound Swab": ("allow", "", ""),
+        "Urine": ("caution",
+                  "renally excreted but not an established agent for urinary infection",
+                  "يُطرح كلوياً لكنه ليس دواءً معتمداً لعدوى المسالك"),
+        "CSF": ("caution", "penetrates inflamed meninges; data are case-series only",
+                "ينفذ السحايا الملتهبة لكن الأدلة سلاسل حالات فقط"),
+        "Stool": ("caution", "systemic agent", "دواء جهازي"),
+    },
+    "Daptomycin": {
+        "Blood": ("allow", "", ""), "Pus": ("allow", "", ""),
+        "Wound Swab": ("allow", "", ""),
+        # The single most important row in this block.
+        "Sputum": ("deny",
+                   "inactivated by pulmonary surfactant — NEVER use for pneumonia, "
+                   "whatever the susceptibility result says",
+                   "يُثبَّط بالسيرفاكتانت الرئوي — ممنوع تماماً في الالتهاب الرئوي "
+                   "مهما كانت نتيجة الحساسية"),
+        "Urine": ("caution", "adequate urinary levels but not a first-line urinary agent",
+                  "تركيز بولي كافٍ لكنه ليس خياراً بولياً أولياً"),
+        "CSF": ("caution", "poor CSF penetration; adjunct only",
+                "نفاذية سحائية ضعيفة — مساعِد فقط"),
+        "Stool": ("caution", "systemic agent", "دواء جهازي"),
+    },
+    "Tigecycline": {
+        "Pus": ("allow", "", ""), "Wound Swab": ("allow", "", ""),
+        "Blood": ("deny",
+                  "very low serum concentrations — never as sole therapy for bacteraemia; "
+                  "FDA all-cause mortality warning",
+                  "تركيز دموي منخفض جداً — لا يُستخدم منفرداً في تجرثم الدم؛ "
+                  "تحذير FDA بزيادة الوفيات"),
+        "Urine": ("deny", "negligible urinary excretion",
+                  "إفراز بولي ضئيل — غير فعّال في المسالك"),
+        "Sputum": ("caution", "not an approved indication for HAP/VAP",
+                   "ليس استطباباً معتمداً في الالتهاب الرئوي المكتسب بالمستشفى"),
+        "CSF": ("deny", "does not reach therapeutic CSF concentrations",
+                "لا يصل لتركيز علاجي في السائل النخاعي"),
+        "Stool": ("caution", "systemic agent", "دواء جهازي"),
+    },
+    "Teicoplanin": {
+        "Blood": ("allow", "", ""), "Pus": ("allow", "", ""),
+        "Wound Swab": ("allow", "", ""),
+        "Sputum": ("caution", "poor epithelial lining fluid penetration",
+                   "نفاذية ضعيفة لسائل البطانة الرئوية"),
+        "Urine": ("caution", "not a first-line urinary agent",
+                  "ليس خياراً بولياً أولياً"),
+        "CSF": ("deny", "does not reach therapeutic CSF concentrations",
+                "لا يصل لتركيز علاجي في السائل النخاعي"),
+        "Stool": ("caution", "systemic agent", "دواء جهازي"),
+    },
+})
+
+RENAL_RULES.update({
+    "Ceftazidime + Avibactam": (50, 6, "dose reduction required below CrCl 50",
+                                "يلزم خفض الجرعة تحت CrCl 50"),
+    "Ceftolozane + Tazobactam": (50, 15, "dose reduction required below CrCl 50",
+                                 "يلزم خفض الجرعة تحت CrCl 50"),
+    "Meropenem + Vaborbactam": (50, 15, "dose reduction required below CrCl 50",
+                                "يلزم خفض الجرعة تحت CrCl 50"),
+    "Imipenem + Relebactam": (90, 15, "dose reduction required below CrCl 90",
+                              "يلزم خفض الجرعة تحت CrCl 90"),
+    "Cefiderocol": (60, 15, "dose reduction below CrCl 60; INCREASE if CrCl >=120",
+                    "خفض الجرعة تحت CrCl 60؛ وزيادتها إذا CrCl ≥120"),
+    "Ceftaroline": (50, 15, "dose reduction required below CrCl 50",
+                    "يلزم خفض الجرعة تحت CrCl 50"),
+    "Daptomycin": (30, None, "extend to every 48 hours below CrCl 30; monitor CPK",
+                   "تمديد الفترة إلى كل 48 ساعة تحت CrCl 30 مع مراقبة CPK"),
+    "Teicoplanin": (60, None, "reduce maintenance from day 4; monitor trough",
+                    "خفض جرعة الصيانة من اليوم الرابع مع مراقبة المستوى القاعي"),
+})
+
 
 # Hepatic: Child-Pugh C verdict. This layer was previously INERT — the flag
 # produced only a side-channel text alert that the PDF truncated to 4 items.

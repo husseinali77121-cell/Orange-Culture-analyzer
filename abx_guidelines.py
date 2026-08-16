@@ -740,8 +740,14 @@ ABX_GUIDELINES = {
         "child_note": "ممنوع <8 سنوات (teeth/bone). >8 سنوات: مقبول للـ atypicals وRickettsia عند الضرورة. BNF 2025.",
         "interacts_with": ["Antacids (مضادات الحموضة)"],
         "aliases": ["vibramycin","doxy"],
+        # "Rickettsia spp." was removed here on 2026-08-03 with the profile
+        # itself: it was unreachable from every specimen list, so the reference
+        # pointed at an organism the dropdown could never offer. The clinical
+        # fact — doxycycline is the drug of choice for rickettsial disease — is
+        # kept in child_note and specimen_notes, where it belongs, because that
+        # disease is diagnosed serologically and never reaches this workflow.
         "organisms": ["Mycoplasma spp.","Staphylococcus aureus","H. influenzae",
-                      "Rickettsia spp.","Acinetobacter baumannii",
+                      "Acinetobacter baumannii",
                       "Stenotrophomonas maltophilia","Legionella pneumophila"],
         "specimen_notes": {
             "Sputum":     "✅ atypical pneumonia (Mycoplasma/Legionella).",
@@ -1479,6 +1485,275 @@ _EXTRA_ENTRIES_3 = {
 for _k3, _v3 in _EXTRA_ENTRIES_3.items():
     if _k3 not in ABX_GUIDELINES:
         ABX_GUIDELINES[_k3] = _v3
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  NOVEL BETA-LACTAMS & RESERVE GRAM-POSITIVE AGENTS — added 2026-08-03
+# ═══════════════════════════════════════════════════════════════════════════
+#  GAP THIS CLOSES
+#  COMBINATION_THERAPY named Ceftazidime-Avibactam, Ceftolozane-Tazobactam,
+#  Meropenem-Vaborbactam, Imipenem-Relebactam, Cefiderocol, Ceftaroline and
+#  Daptomycin as recommended salvage regimens for CRE / CRPA / CRAB / MRSA —
+#  and NONE of them existed in this formulary. So the app would tell a
+#  clinician "use Ceftazidime-Avibactam" and then be unable to read the
+#  susceptibility result when the lab reported one: the agent had no AWaRe
+#  category, no renal band, no pregnancy status, no intrinsic-resistance
+#  interaction, and analyze_antibiotics() would drop it silently because it was
+#  not a key in this table.
+#
+#  Recommending an agent you cannot interpret is the worst of both worlds. These
+#  entries close it.
+#
+#  DOSING IS NOT COUNTERSIGNED FOR THESE. The sixteen bands Dr. Tarek signed on
+#  2026-08-03 did not include them, so each carries `dose_review` and will
+#  appear in `python test_dose_adjustment.py --queue` until a clinician has
+#  checked the milligrams against the label. That is deliberate: a signature
+#  must not be inherited by rows that were added after it.
+# ═══════════════════════════════════════════════════════════════════════════
+ABX_GUIDELINES.update({
+    "Ceftazidime + Avibactam": {
+        "priority": 9, "class": "Cephalosporin + Beta-lactamase Inhibitor (IV)",
+        "note": ("🛡️ (Avycaz/Zavicefta) IV فقط. **الخط الأول لـ KPC-CRE و OXA-48** "
+                 "وخيار قوي في DTR-Pseudomonas. Avibactam مثبط غير بيتا-لاكتام "
+                 "يغطي Class A و C و D — **لكن ليس المعادن (MBL/NDM/VIM/IMP)**. "
+                 "في MBL يُضاف Aztreonam. IDSA AMR Guidance 2026."),
+        "renal_limit": 50,
+        "renal_note": ("CrCl 31-50: 1.25g q8h. CrCl 16-30: 0.94g q12h. "
+                       "CrCl 6-15: 0.94g q24h. CrCl ≤5 أو HD: 0.94g q48h "
+                       "وتُعطى بعد الغسيل. label / BNF 2025."),
+        "renal_note_en": ("CrCl 31-50: 1.25g q8h. CrCl 16-30: 0.94g q12h. "
+                          "CrCl 6-15: 0.94g q24h. CrCl <=5 or HD: 0.94g q48h "
+                          "after dialysis. Label / BNF 2025."),
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified against product label + IDSA AMR Guidance 2026 / BNF 2025 · novel beta-lactam and reserve Gram-positive bands",
+        "hepatic_caution": False, "aware": "Reserve", "high_po": False,
+        "preg_status": "Caution",
+        "preg_note": "بيانات بشرية محدودة؛ يُستخدم فقط إذا لم يوجد بديل فعّال.",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["avycaz", "zavicefta", "ceftazidimeavibactam", "caz-avi", "cazavi"],
+        "organisms": ["Klebsiella spp.", "E. coli", "Pseudomonas aeruginosa",
+                      "Enterobacter cloacae", "Serratia marcescens",
+                      "Citrobacter freundii", "Enterobacterales (unspeciated)"],
+        "specimen_notes": {
+            "Blood": "🛡️ تجرثم دم بـ CRE (KPC/OXA-48) أو DTR-Pseudomonas.",
+            "Urine": "🛡️ UTI معقد بـ CRE — إفراز بولي ممتاز.",
+            "Sputum": "🛡️ HAP/VAP بـ CRE أو DTR-Pseudomonas.",
+            "CSF": "⚠️ نفاذية سحائية محدودة — لا يُعتمد كعلاج وحيد للسحايا.",
+        },
+    },
+    "Ceftolozane + Tazobactam": {
+        "priority": 9, "class": "Cephalosporin + Beta-lactamase Inhibitor (IV)",
+        "note": ("🛡️ (Zerbaxa) IV فقط. **الخيار المفضّل في DTR-Pseudomonas** — "
+                 "أقوى سيفالوسبورين مضاد للزائفة، ثابت أمام فقد OprD وضخّ MexAB. "
+                 "ضعيف أمام CRE المنتج للكاربابينيميز. IDSA AMR Guidance 2026."),
+        "renal_limit": 50,
+        "renal_note": ("CrCl 30-50: 750mg q8h. CrCl 15-29: 375mg q8h. "
+                       "HD: جرعة تحميل 750mg ثم 150mg q8h بعد الغسيل. label."),
+        "renal_note_en": ("CrCl 30-50: 750mg q8h. CrCl 15-29: 375mg q8h. "
+                          "HD: 750mg load then 150mg q8h after dialysis. Label."),
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified against product label + IDSA AMR Guidance 2026 / BNF 2025 · novel beta-lactam and reserve Gram-positive bands",
+        "hepatic_caution": False, "aware": "Reserve", "high_po": False,
+        "preg_status": "Caution",
+        "preg_note": "بيانات بشرية محدودة؛ للعدوى المهددة للحياة بلا بديل.",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["zerbaxa", "ceftolozanetazobactam", "c-t", "ceftolozane"],
+        "organisms": ["Pseudomonas aeruginosa", "Klebsiella spp.", "E. coli",
+                      "Enterobacterales (unspeciated)"],
+        "specimen_notes": {
+            "Blood": "🛡️ تجرثم دم بـ DTR-Pseudomonas — الخيار الأول.",
+            "Sputum": "🛡️ HAP/VAP بالزائفة المقاومة — جرعة مضاعفة 3g q8h.",
+            "Urine": "🛡️ UTI معقد بالزائفة.",
+            "Pus": "🛡️ عدوى داخل بطنية معقدة — يُشارَك مع Metronidazole.",
+        },
+    },
+    "Meropenem + Vaborbactam": {
+        "priority": 9, "class": "Carbapenem + Beta-lactamase Inhibitor (IV)",
+        "note": ("🛡️ (Vabomere) IV فقط. **بديل الخط الأول لـ KPC-CRE** — "
+                 "Vaborbactam مثبط بورونيك يستهدف Class A (KPC) بشكل أساسي. "
+                 "**لا يغطي OXA-48 ولا المعادن.** TANGO-II | IDSA 2026."),
+        "renal_limit": 50,
+        "renal_note": ("CrCl 30-49: 2g q8h. CrCl 15-29: 2g q12h. "
+                       "CrCl <15: 1g q12h. HD: بعد الغسيل. label."),
+        "renal_note_en": ("CrCl 30-49: 2g q8h. CrCl 15-29: 2g q12h. "
+                          "CrCl <15: 1g q12h. HD: after dialysis. Label."),
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified against product label + IDSA AMR Guidance 2026 / BNF 2025 · novel beta-lactam and reserve Gram-positive bands",
+        "hepatic_caution": False, "aware": "Reserve", "high_po": False,
+        "preg_status": "Caution", "preg_note": "بيانات محدودة.",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["vabomere", "meropenemvaborbactam", "mem-vab"],
+        "organisms": ["Klebsiella spp.", "E. coli", "Enterobacter cloacae",
+                      "Enterobacterales (unspeciated)"],
+        "specimen_notes": {
+            "Blood": "🛡️ تجرثم دم بـ KPC-CRE.",
+            "Urine": "🛡️ UTI معقد بـ CRE.",
+            "CSF": "⚠️ بيانات سحائية محدودة.",
+        },
+    },
+    "Imipenem + Relebactam": {
+        "priority": 9, "class": "Carbapenem + Beta-lactamase Inhibitor (IV)",
+        "note": ("🛡️ (Recarbrio) IV فقط. يغطي KPC-CRE و DTR-Pseudomonas. "
+                 "**لا يغطي OXA-48 ولا المعادن ولا Acinetobacter.** IDSA 2026."),
+        "renal_limit": 90,
+        "renal_note": ("CrCl 60-89: 1g q6h. CrCl 30-59: 750mg q6h. "
+                       "CrCl 15-29: 500mg q6h. HD: 500mg q6h بعد الغسيل. label."),
+        "renal_note_en": ("CrCl 60-89: 1g q6h. CrCl 30-59: 750mg q6h. "
+                          "CrCl 15-29: 500mg q6h. HD: 500mg q6h after dialysis."),
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified against product label + IDSA AMR Guidance 2026 / BNF 2025 · novel beta-lactam and reserve Gram-positive bands",
+        "hepatic_caution": False, "aware": "Reserve", "high_po": False,
+        "preg_status": "Caution", "preg_note": "بيانات محدودة.",
+        "child_safe": False, "interacts_with": ["Valproic acid (يخفض مستواه — خطر نوبات)"],
+        "aliases": ["recarbrio", "imipenemrelebactam", "imi-rel"],
+        "organisms": ["Pseudomonas aeruginosa", "Klebsiella spp.", "E. coli",
+                      "Enterobacterales (unspeciated)"],
+        "specimen_notes": {
+            "Blood": "🛡️ تجرثم دم بـ KPC-CRE أو DTR-Pseudomonas.",
+            "Sputum": "🛡️ HAP/VAP.",
+            "Pus": "🛡️ عدوى داخل بطنية معقدة.",
+        },
+    },
+    "Cefiderocol": {
+        "priority": 10, "class": "Siderophore Cephalosporin (IV)",
+        "note": ("🛡️ (Fetroja) IV فقط. **يدخل الخلية عبر ناقلات الحديد** — "
+                 "ثابت أمام كل فئات البيتا-لاكتاماز **بما فيها المعادن "
+                 "(NDM/VIM/IMP)**. ملاذ أخير لـ CRAB و MBL-CRE و DTR-Pseudomonas. "
+                 "⚠️ زيادة وفيات غير مفسّرة في دراسة CREDIBLE-CR للـ CRAB — "
+                 "يُستخدم عند غياب البديل. IDSA AMR Guidance 2026."),
+        "renal_limit": 60,
+        "renal_note": ("CrCl 30-59: 1.5g q8h. CrCl 15-29: 1g q8h. "
+                       "CrCl <15 أو HD: 750mg q12h بعد الغسيل. "
+                       "⚠️ **زيادة التصفية الكلوية (ARC ≥120): 2g q6h**. label."),
+        "renal_note_en": ("CrCl 30-59: 1.5g q8h. CrCl 15-29: 1g q8h. "
+                          "CrCl <15 or HD: 750mg q12h after dialysis. "
+                          "Augmented renal clearance (>=120): 2g q6h. Label."),
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified against product label + IDSA AMR Guidance 2026 / BNF 2025 · novel beta-lactam and reserve Gram-positive bands",
+        "hepatic_caution": False, "aware": "Reserve", "high_po": False,
+        "preg_status": "Caution", "preg_note": "بيانات بشرية غير كافية.",
+        "child_safe": False, "interacts_with": [],
+        "aliases": ["fetroja", "fetcroja", "cefiderocolo"],
+        "organisms": ["Acinetobacter baumannii", "Pseudomonas aeruginosa",
+                      "Stenotrophomonas maltophilia", "Klebsiella spp.",
+                      "E. coli", "Enterobacterales (unspeciated)"],
+        "specimen_notes": {
+            "Blood": "🛡️ ملاذ أخير — CRAB أو MBL-CRE بلا بديل.",
+            "Sputum": "🛡️ HAP/VAP بـ CRAB — راجع إشارة الوفيات في CREDIBLE-CR.",
+            "Urine": "🛡️ UTI معقد — إفراز بولي ممتاز.",
+        },
+    },
+    "Ceftaroline": {
+        "priority": 8, "class": "Anti-MRSA Cephalosporin (IV)",
+        "note": ("🛡️ (Zinforo/Teflaro) IV فقط. **السيفالوسبورين الوحيد الفعّال ضد "
+                 "MRSA** — يرتبط بـ PBP2a مباشرة، وهو الاستثناء الحقيقي لقاعدة "
+                 "«كل البيتا-لاكتام يفشل في MRSA». **لا يغطي الزائفة ولا CRE.**"),
+        "renal_limit": 50,
+        "renal_note": ("CrCl 31-50: 400mg q12h. CrCl 15-30: 300mg q12h. "
+                       "CrCl <15 أو HD: 200mg q12h بعد الغسيل. label."),
+        "renal_note_en": ("CrCl 31-50: 400mg q12h. CrCl 15-30: 300mg q12h. "
+                          "CrCl <15 or HD: 200mg q12h after dialysis. Label."),
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified against product label + IDSA AMR Guidance 2026 / BNF 2025 · novel beta-lactam and reserve Gram-positive bands",
+        "hepatic_caution": False, "aware": "Reserve", "high_po": False,
+        "preg_status": "Caution", "preg_note": "بيانات محدودة.",
+        "child_safe": True, "interacts_with": [],
+        "aliases": ["zinforo", "teflaro", "ceftarolinefosamil"],
+        "organisms": ["Staphylococcus aureus", "MRSA",
+                      "Streptococcus pneumoniae", "H. influenzae"],
+        "specimen_notes": {
+            "Blood": "🛡️ تجرثم دم بـ MRSA — بديل/مُشارِك عند فشل الفانكومايسين.",
+            "Sputum": "🛡️ CAP شديد بـ MRSA.",
+            "Wound Swab": "🛡️ عدوى جلد ونسيج رخو معقدة بـ MRSA.",
+            "Pus": "🛡️ عدوى نسيج رخو بـ MRSA.",
+        },
+    },
+    "Daptomycin": {
+        "priority": 8, "class": "Cyclic Lipopeptide (IV)",
+        "note": ("🛡️ (Cubicin) IV فقط. مبيد سريع لموجب الجرام بما فيه MRSA و VRE. "
+                 "⛔ **ممنوع تماماً في الالتهاب الرئوي** — يُثبَّط بالسيرفاكتانت "
+                 "الرئوي فيصبح بلا فعالية مهما كانت نتيجة الحساسية. "
+                 "راقب CPK أسبوعياً (انحلال ربيدي)."),
+        "renal_limit": 30,
+        "renal_note": ("الجرعة المعتادة 4 mg/kg q24h للجلد و6 mg/kg q24h لتجرثم "
+                       "الدم (حتى 8–10 mg/kg في VRE/MRSA المعقّد). "
+                       "CrCl <30 أو HD/CAPD: **نفس الـ mg/kg لكن كل 48 ساعة** "
+                       "(مثال: 6 mg/kg q48h ≈ 420 mg لوزن 70 kg). "
+                       "في الغسيل تُعطى بعده. راقب CPK أسبوعياً. label / BNF 2025."),
+        "renal_note_en": ("Usual 4 mg/kg q24h for skin, 6 mg/kg q24h for "
+                          "bacteraemia (up to 8-10 mg/kg in complicated "
+                          "VRE/MRSA). CrCl <30 or HD/CAPD: same mg/kg EVERY 48 "
+                          "HOURS (e.g. 6 mg/kg q48h = 420 mg at 70 kg), given "
+                          "after dialysis. Monitor CPK weekly. Label / BNF 2025."),
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified against product label + IDSA AMR Guidance 2026 / BNF 2025 · novel beta-lactam and reserve Gram-positive bands",
+        "hepatic_caution": False, "aware": "Reserve", "high_po": False,
+        "preg_status": "Caution", "preg_note": "بيانات محدودة.",
+        "child_safe": True,
+        "interacts_with": ["Statins (سيمفاستاتين/أتورفاستاتين — انحلال ربيدي)"],
+        "aliases": ["cubicin", "daptomicin", "dapto"],
+        "organisms": ["Staphylococcus aureus", "MRSA", "Enterococcus faecalis",
+                      "VRE"],
+        "specimen_notes": {
+            "Blood": "🛡️ تجرثم دم بـ MRSA أو VRE — التهاب شغاف الجانب الأيمن.",
+            "Wound Swab": "🛡️ عدوى جلد ونسيج رخو معقدة.",
+            "Pus": "🛡️ عدوى نسيج رخو عميقة.",
+            "Sputum": "⛔ **لا يُستخدم** — يُثبَّط بالسيرفاكتانت الرئوي.",
+        },
+    },
+    "Tigecycline": {
+        "priority": 9, "class": "Glycylcycline (IV)",
+        "note": ("🛡️ (Tygacil) IV فقط. طيف واسع يشمل CRE و CRAB و MRSA و VRE. "
+                 "⛔ **تركيزات دموية منخفضة جداً — لا يُستخدم منفرداً في تجرثم "
+                 "الدم ولا في التهابات المسالك.** تحذير FDA: زيادة وفيات في "
+                 "التحليل التجميعي. ⛔ **لا يغطي الزائفة ولا Proteae إطلاقاً.**"),
+        "renal_limit": 0,
+        "renal_note": "🟢 لا تعديل كلوي — إخراج صفراوي. لا يُزال بالغسيل.",
+        "renal_note_en": "No renal adjustment — biliary excretion. Not dialysed.",
+        "hepatic_caution": True, "aware": "Reserve", "high_po": False,
+        "preg_status": "Banned",
+        "preg_note": "⛔ تتراسيكلين — تلوّن الأسنان وتثبيط نمو العظم. مضاد استطباب.",
+        "child_safe": False,
+        "interacts_with": ["Warfarin (مضادات التخثر)"],
+        "aliases": ["tygacil", "tigecyclin"],
+        "organisms": ["Acinetobacter baumannii", "Klebsiella spp.", "E. coli",
+                      "MRSA", "VRE", "Enterobacterales (unspeciated)",
+                      "Anaerobes (لاهوائيات)"],
+        "specimen_notes": {
+            "Pus": "🛡️ عدوى داخل بطنية معقدة — الاستطباب المعتمد.",
+            "Wound Swab": "🛡️ عدوى جلد ونسيج رخو معقدة.",
+            "Blood": "⛔ **غير مناسب منفرداً** — تركيز دموي منخفض.",
+            "Urine": "⛔ **غير مناسب** — إفراز بولي ضئيل.",
+            "Sputum": "⚠️ ليس استطباباً معتمداً للـ HAP/VAP.",
+        },
+    },
+    "Teicoplanin": {
+        "priority": 7, "class": "Glycopeptide (IV/IM)",
+        "note": ("🛡️ (Targocid) بديل الفانكومايسين لموجب الجرام. يُعطى مرة يومياً "
+                 "بعد جرعات التحميل، وأقل سمّية كلوية وأقل متلازمة الرجل الأحمر. "
+                 "⚠️ **VanA مقاوم للاثنين؛ VanB يبقى حسّاساً للتيكوبلانين** — وهو "
+                 "الفارق الذي يميّز النمطين."),
+        "renal_limit": 60,
+        "renal_note": ("التحميل 400 mg (6 mg/kg) q12h × 3 جرعات — **كاملة في كل "
+                       "الحالات مهما كانت الوظيفة الكلوية**. الصيانة 400 mg q24h. "
+                       "من اليوم الرابع: CrCl 30-60: 200 mg q24h أو 400 mg q48h. "
+                       "CrCl <30 أو HD: 133 mg q24h أو 400 mg q72h. "
+                       "راقب المستوى القاعي (≥10 mg/L، و≥20 في الشغاف). BNF 2025."),
+        "renal_note_en": ("Loading 400 mg (6 mg/kg) q12h x 3 doses — FULL in all "
+                          "cases regardless of renal function. Maintenance 400 mg "
+                          "q24h. From day 4: CrCl 30-60: 200 mg q24h or 400 mg "
+                          "q48h. CrCl <30 or HD: 133 mg q24h or 400 mg q72h. "
+                          "Monitor trough (>=10 mg/L, >=20 in endocarditis). "
+                          "BNF 2025."),
+        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified against product label + IDSA AMR Guidance 2026 / BNF 2025 · novel beta-lactam and reserve Gram-positive bands",
+        "hepatic_caution": False, "aware": "Watch", "high_po": False,
+        "preg_status": "Caution", "preg_note": "بيانات محدودة؛ يُفضَّل الفانكومايسين.",
+        "child_safe": True,
+        "interacts_with": ["Aminoglycosides (تراكم السمّية الكلوية والأذنية)"],
+        "aliases": ["targocid", "teicoplanina", "teico"],
+        "organisms": ["Staphylococcus aureus", "MRSA", "Enterococcus faecalis",
+                      "Streptococcus pneumoniae"],
+        "specimen_notes": {
+            "Blood": "🛡️ تجرثم دم بموجب الجرام — بديل الفانكومايسين.",
+            "Wound Swab": "🛡️ عدوى جلد ونسيج رخو.",
+            "Pus": "🛡️ عدوى عظم ومفصل — جرعة يومية واحدة تسهّل العلاج المنزلي.",
+            "CSF": "⛔ نفاذية سحائية رديئة — لا يُستخدم للسحايا.",
+        },
+    },
+})
 
 # Rebuild alias index
 ABX_ALIAS_INDEX = build_antibiotic_alias_index(ABX_GUIDELINES)

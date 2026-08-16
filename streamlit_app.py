@@ -165,7 +165,6 @@ st.markdown("""
 # الثوابت
 # =========================================================
 SESSION_TIMEOUT = 30 * 60
-SIR_LABELS      = {"S": "Sensitive", "I": "Intermediate", "R": "Resistant"}
 BACTERIA_TYPES  = list(ORGANISM_PROFILE.keys())
 SPECIMEN_TYPES  = list(SPECIMEN_ORDER or DEFAULT_SPECIMENS)
 
@@ -429,7 +428,6 @@ def _vendor(key: str, default: str) -> str:
         return default
 
 
-VENDOR_NAME  = _vendor("vendor_name",  "Orange Lab")
 VENDOR_PHONE = _vendor("vendor_phone", "01016872801")
 VENDOR_EMAIL = _vendor("vendor_email", "Hussein.ali77121@gmail.com")
 
@@ -456,13 +454,25 @@ SUBSCRIBERS = load_subscribers()
 #                                   print(a.make_password_hash('the-password'))"
 # ═══════════════════════════════════════════════════════════════════════
 _PBKDF2_ITERATIONS = 240_000
-# Login throttle. Session-scoped, so it stops an ordinary brute-force loop
-# rather than a distributed one -- but before 2026-08-01 there was no limit
-# of any kind, only a log line.
-_LOGIN_MAX_ATTEMPTS: int = 5
-_LOGIN_LOCKOUT_SECONDS: int = 300
+# Login throttle — see auth_service.py. Persisted per ACCOUNT, not per session.
+import auth_service as _AUTH                                        # noqa: E402
+# The two aliases that used to live here (_LOGIN_MAX_ATTEMPTS,
+# _LOGIN_LOCKOUT_SECONDS) were kept for backward compatibility when the throttle
+# moved to auth_service.py, and nothing ever read them. Read
+# _AUTH.MAX_ATTEMPTS / _AUTH.LOCKOUT_SECONDS directly — one name per fact.
 
 
+# ── Administrator utility — intentionally not called from anywhere ──────────
+# make_password_hash() is run BY HAND, from a Python shell, to generate the
+# value that goes into the `subscriber_hashes` secret:
+#
+#     python -c "import streamlit_app as s; print(s.make_password_hash('...'))"
+#
+# A dead-code scan flags it every time because nothing in the app invokes it.
+# It stays: an operator needs it to onboard a subscriber, and the alternative
+# is a password-hashing routine pasted into a shell from memory, which is how
+# salts get omitted. Deleting it would remove the only correct way to produce
+# the value this app refuses to start without.
 def make_password_hash(password: str, iterations: int = _PBKDF2_ITERATIONS) -> str:
     """Encode a password as pbkdf2_sha256$iterations$salt$hash (base64 parts)."""
     salt = os.urandom(16)
@@ -584,32 +594,23 @@ init_session_state()
 # =========================================================
 # أدوات مساعدة
 # =========================================================
-def fuzzy_match(a: str, b: str) -> float:
-    """Similarity 0-100 between two drug-name strings.
+# ── OCR / parsing moved to ocr_parsing.py (2026-08-03) ──────────────────────
+# 329 lines that were spread across FOURTEEN fragments between line 586 and
+# line 1898 of this file: the fuzzy matcher, the organism alias table, the disk
+# codes, the drug scanner and the S/I/R vocabulary. Three of this audit's
+# defects lived in that scatter — the phantom "Ampicillin" from a substring
+# match, the disk-code panel that parsed to nothing, and an S/I/R vocabulary a
+# thousand lines from the table it validated. Re-exported so existing callers
+# and the AST-extraction harnesses still find them by name.
+from ocr_parsing import (                                            # noqa: E402,F401
+    fuzzy_match, normalize_ocr_text, clean_patient_name, detect_age_months,
+    ORGANISM_OCR_ALIASES, ABX_DISK_CODES,
+    _scan_line_for_disk_codes, _scan_line_for_drugs, extract_detected_drugs,
+    _SIR_ALIASES, normalize_sir_value, normalize_sir_map,
+    match_antibiotic_from_text,
+)
 
-    BUG FIXED: the old body returned a flat 100.0 whenever either string was a
-    substring of the other. That made the caller's `>= 82` threshold completely
-    inert -- a single OCR character was enough to bind a garbage token to a real
-    antibiotic ('a' vs 'Amikacin' scored 100.0). Containment is now scored by
-    how much of the LONGER string the match actually covers, and a floor is
-    applied so a fragment can never outscore a genuine near-miss.
-    """
-    a = (a or "").lower().strip()
-    b = (b or "").lower().strip()
-    if not a or not b:
-        return 0.0
-    if a == b:
-        return 100.0
-    ratio = SequenceMatcher(None, a, b).ratio() * 100
-    if a in b or b in a:
-        short, long = (a, b) if len(a) <= len(b) else (b, a)
-        # A containment is only as strong as its coverage of the longer name,
-        # and fragments under 4 characters carry no evidential weight at all.
-        if len(short) < 4:
-            return ratio
-        coverage = (len(short) / len(long)) * 100
-        return max(ratio, coverage)
-    return ratio
+
 
 def make_file_hash(file_bytes: bytes) -> str:
     return hashlib.sha256(file_bytes).hexdigest()
@@ -772,13 +773,6 @@ def get_startup_validation_issues() -> List[str]:
             seen.add(issue)
     return deduped
 
-def normalize_ocr_text(text: str) -> str:
-    cleaned = text or ""
-    for old, new in {"\u2013": "-", "\u2014": "-", "\u00a0": " ", "|": " "}.items():
-        cleaned = cleaned.replace(old, new)
-    cleaned = re.sub(r"[ \t]+", " ", cleaned)
-    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
-    return cleaned.strip()
 
 def best_default_index(options: List[str], preferred: Optional[str]) -> int:
     if preferred and preferred in options:
@@ -788,34 +782,6 @@ def best_default_index(options: List[str], preferred: Optional[str]) -> int:
 # =========================================================
 # اكتشاف اسم المريض من OCR
 # =========================================================
-def clean_patient_name(name: str) -> str:
-    """Strip form labels and stray glyphs out of an OCR'd patient-name field.
-
-    NOT CURRENTLY CALLED. Kept deliberately: the OCR pipeline populates the name
-    field via extract_all_data(), and whether that path routes through here has
-    changed more than once. Deleting it would mean rewriting the blacklist the
-    next time the OCR field mapping moves, and the blacklist is the part that
-    took the tuning. If it is still uncalled at the next review, delete it then
-    -- but check `extract_all_data` first.
-    """
-    if not name:
-        return ""
-    name = normalize_ocr_text(name)
-    blacklist = [
-        "name", "patient", "patient name", "specimen", "organism", "age", "sex",
-        "male", "female", "urine", "culture", "report", "lab", "result",
-        "اسم", "المريض", "اسم المريض", "العمر", "النوع", "الجنس",
-        "العينة", "المزرعة", "نتيجة", "تقرير", "معمل", "مختبر"
-    ]
-    low = name.lower()
-    for token in blacklist:
-        low = low.replace(token.lower(), " ")
-    name = low
-    name = re.sub(r"[^A-Za-z\u0600-\u06FF\s]", " ", name)
-    name = re.sub(r"\s{2,}", " ", name).strip()
-    if len(name) < 3:
-        return ""
-    return name.title() if re.search(r"[A-Za-z]", name) else name
 
 def get_subscription_days_left(email: str) -> Optional[int]:
     email = (email or "").strip().lower()
@@ -885,19 +851,25 @@ def check_subscription(email: str, password: str = "") -> bool:
     if not email or "@" not in email:
         st.warning("⚠️ أدخل بريدًا إلكترونيًا صحيحًا")
         return False
-    # ── Throttle (added 2026-08-01) ──────────────────────────────────────────
-    # There was no limit of any kind on password attempts -- only a
-    # logger.warning that nobody reads -- so a subscriber address plus an
-    # unattended script was enough to grind through a weak password. The counter
-    # lives in session_state, which is per-browser-session and therefore not a
-    # defence against a distributed attacker; it is a defence against the
-    # realistic case, an ordinary brute-force loop, and it costs nothing.
-    _now = time.time()
-    _fails = st.session_state.get("login_failures", 0)
-    _until = st.session_state.get("login_locked_until", 0.0)
-    if _until > _now:
-        st.error(f"⛔ محاولات كثيرة خاطئة. حاول بعد "
-                 f"{int(_until - _now)} ثانية.")
+    # ── Throttle ─────────────────────────────────────────────────────────────
+    # 2026-08-01 this counter lived in st.session_state, which is per BROWSER
+    # SESSION: an attacker clearing cookies, opening a private window, or
+    # driving the app from a script got a fresh five attempts every time. It
+    # stopped a naive loop and nothing else.
+    #
+    # 2026-08-03 it moved to auth_service.py, keyed by ACCOUNT and persisted on
+    # disk, so the limit follows the e-mail rather than the browser. Storage
+    # failures FAIL OPEN and are logged loudly — a laboratory locked out of its
+    # own CDSS because a disk filled up is a worse outcome than a slower brute
+    # force, and the attempt is recorded either way.
+    #
+    # Still NOT a distributed rate limiter: one JSON file under one process. If
+    # this is ever scaled horizontally the store must move to Redis, and the
+    # interface in auth_service is deliberately the shape that migration keeps.
+    _locked, _wait, _prior_fails = _AUTH.check_lockout(email)
+    if _locked:
+        st.error(f"⛔ محاولات كثيرة خاطئة على هذا الحساب. "
+                 f"حاول بعد {_wait // 60}:{_wait % 60:02d} دقيقة.")
         return False
     if email not in SUBSCRIBERS:
         st.error("❌ هذا البريد غير مسجل في النظام")
@@ -912,18 +884,12 @@ def check_subscription(email: str, password: str = "") -> bool:
     _stored = SUBSCRIBER_HASHES.get(email)
     if _stored:
         if not verify_password(password, _stored):
-            _fails += 1
-            st.session_state["login_failures"] = _fails
-            if _fails >= _LOGIN_MAX_ATTEMPTS:
-                st.session_state["login_locked_until"] = _now + _LOGIN_LOCKOUT_SECONDS
-                st.error(f"⛔ تم قفل المحاولات {_LOGIN_LOCKOUT_SECONDS // 60} دقيقة "
-                         f"بعد {_fails} محاولات خاطئة.")
-                logger.error("login lockout triggered for %s after %d failures",
-                             email, _fails)
+            _now_locked, _wait2, _left = _AUTH.record_failure(email, "bad password")
+            if _now_locked:
+                st.error(f"⛔ تم قفل المحاولات {_wait2 // 60} دقائق "
+                         f"بعد {_AUTH.MAX_ATTEMPTS} محاولات خاطئة.")
             else:
-                st.error(f"❌ كلمة المرور غير صحيحة "
-                         f"({_LOGIN_MAX_ATTEMPTS - _fails} محاولة متبقية)")
-                logger.warning("failed login attempt %d for %s", _fails, email)
+                st.error(f"❌ كلمة المرور غير صحيحة ({_left} محاولة متبقية)")
             return False
     elif SUBSCRIBER_HASHES:
         # FIX 2026-08-01: this branch printed a warning and then FELL THROUGH,
@@ -952,10 +918,8 @@ def check_subscription(email: str, password: str = "") -> bool:
         return False
     st.session_state.email     = email
     st.session_state.days_left = days_left
-    # Credentials accepted -- clear the throttle so a user who mistyped once is
-    # not still one attempt from a lockout on their next session action.
-    st.session_state["login_failures"] = 0
-    st.session_state["login_locked_until"] = 0.0
+    # Credentials accepted: clear the account's counter and record the sign-in.
+    _AUTH.record_success(email)
     if days_left < 0:
         st.error(f"⏳ انتهى اشتراكك منذ {abs(days_left)} يوم")
         st.info(f"📞 للتجديد: {VENDOR_PHONE} | ✉️ {VENDOR_EMAIL}")
@@ -1079,26 +1043,6 @@ def detect_age(text: str) -> Optional[int]:
     return None
 
 
-def detect_age_months(text: str) -> Optional[int]:
-    """Age in MONTHS for an under-one patient, or None.
-
-    Feeds the NEONATAL_RESTRICTIONS gate, which cannot distinguish a two-week-old
-    from an eleven-month-old without it and therefore warns instead of deciding.
-    """
-    t = str(text or "")
-    m = re.search(r"(\d+)\s*(?:day|days|d\b|يوم|أيام)", t, re.I)
-    if m:
-        return min(11, int(m.group(1)) // 30)
-    m = re.search(r"(\d+)\s*(?:week|weeks|wk|w\b|أسبوع|اسبوع)", t, re.I)
-    if m:
-        return min(11, int(m.group(1)) // 4)
-    m = re.search(r"(\d+)\s*(?:month|months|mo\b|mos|شهر|شهور|أشهر)", t, re.I)
-    if m and 0 <= int(m.group(1)) <= 11:
-        return int(m.group(1))
-    m = re.search(r"(?:age|العمر|السن)\s*[:\-]?\s*(\d{1,2})\s*/\s*12\b", t, re.I)
-    if m and 0 <= int(m.group(1)) <= 11:
-        return int(m.group(1))
-    return None
 
 def detect_sex(text_lower: str) -> Optional[str]:
     """Robust sex detection — regex with word boundaries, Female checked first.
@@ -1167,62 +1111,6 @@ def detect_specimen(text_lower: str) -> Optional[str]:
 # nothing and the organism field came back empty. Since almost every downstream
 # decision keys on the organism, an empty field silently disables intrinsic
 # resistance, mechanism inference and MDR classification all at once.
-ORGANISM_OCR_ALIASES: Dict[str, str] = {
-    "escherichia coli": "E. coli", "e.coli": "E. coli", "e. coli": "E. coli",
-    "esch coli": "E. coli", "e coli": "E. coli",
-    "klebsiella pneumoniae": "Klebsiella spp.", "klebsiella oxytoca": "Klebsiella spp.",
-    "k. pneumoniae": "Klebsiella spp.", "k.pneumoniae": "Klebsiella spp.",
-    "klebsiella": "Klebsiella spp.",
-    "staph aureus": "Staphylococcus aureus", "s. aureus": "Staphylococcus aureus",
-    "s.aureus": "Staphylococcus aureus",
-    "methicillin resistant staphylococcus aureus": "MRSA",
-    "methicillin-resistant staphylococcus aureus": "MRSA",
-    "pseudomonas": "Pseudomonas aeruginosa", "p. aeruginosa": "Pseudomonas aeruginosa",
-    "ps. aeruginosa": "Pseudomonas aeruginosa",
-    "acinetobacter": "Acinetobacter baumannii", "a. baumannii": "Acinetobacter baumannii",
-    "proteus": "Proteus mirabilis", "p. mirabilis": "Proteus mirabilis",
-    # FIX 2026-08-01: this mapped to "Enterococcus faecium", which is not a key
-    # in ORGANISM_PROFILE. best_default_index() returns 0 for a name the widget
-    # does not offer, so an OCR'd E. faecium report silently defaulted to the
-    # first organism in the filtered list. E. faecalis is the correct nearest
-    # selectable profile and carries the same intrinsic row; the species
-    # difference (ampicillin resistance) is ACQUIRED and comes from the AST.
-    "enterococcus faecium": "Enterococcus faecalis",
-    "e. faecium": "Enterococcus faecalis",
-    "e. faecalis": "Enterococcus faecalis", "enterococcus": "Enterococcus faecalis",
-    "vancomycin resistant enterococcus": "VRE",
-    "vancomycin-resistant enterococcus": "VRE",
-    "strep pneumoniae": "Streptococcus pneumoniae",
-    "s. pneumoniae": "Streptococcus pneumoniae", "pneumococcus": "Streptococcus pneumoniae",
-    "stenotrophomonas": "Stenotrophomonas maltophilia",
-    "s. maltophilia": "Stenotrophomonas maltophilia",
-    # These three targets did not exist in ORGANISM_PROFILE until 2026-08-01, so
-    # an OCR'd Serratia or Enterobacter report fell through to index 0 -- E. coli
-    # on Urine and Blood -- losing the whole chromosomal-AmpC derepression rule
-    # on the organisms it matters most for. The profiles now exist.
-    "enterobacter cloacae": "Enterobacter cloacae", "enterobacter": "Enterobacter cloacae",
-    "e. cloacae": "Enterobacter cloacae",
-    "klebsiella aerogenes": "Enterobacter cloacae",     # renamed from E. aerogenes
-    "enterobacter aerogenes": "Enterobacter cloacae",
-    "serratia": "Serratia marcescens", "s. marcescens": "Serratia marcescens",
-    "serratia marcescens": "Serratia marcescens",
-    "citrobacter freundii": "Citrobacter freundii", "c. freundii": "Citrobacter freundii",
-    "citrobacter": "Citrobacter freundii",
-    "morganella morganii": "Morganella morganii", "morganella": "Morganella morganii",
-    "m. morganii": "Morganella morganii",
-    "providencia": "Providencia spp.", "providencia stuartii": "Providencia spp.",
-    "providencia rettgeri": "Providencia spp.",
-    "hafnia alvei": "Hafnia alvei", "hafnia": "Hafnia alvei",
-    "salmonella": "Salmonella spp.", "shigella": "Shigella spp.",
-    "haemophilus influenzae": "H. influenzae", "h. influenzae": "H. influenzae",
-    "campylobacter": "Campylobacter jejuni",
-    "legionella": "Legionella pneumophila",
-    "mycoplasma": "Mycoplasma spp.",
-    # "rickettsia" alias removed 2026-08-01 with the profile: it resolved to
-    # a key that no longer exists, and best_default_index() falls back to
-    # index 0 for an unknown name -- the silent-misidentification bug this
-    # audit already fixed for Serratia and Enterobacter.
-}
 
 
 def detect_organism(text_lower: str) -> Optional[str]:
@@ -1297,10 +1185,6 @@ def classify_sir_from_line(line: str) -> Optional[str]:
 #  "+", "/", spaces and case never matter), longest alias first, and CLAIMS the
 #  character span each match occupies. A shorter name that falls entirely inside
 #  an already-claimed span is a fragment of the longer name, not a second drug.
-_ABX_ALIAS_SORTED = sorted(
-    ((k, v) for k, v in ABX_ALIAS_INDEX.items() if len(k) >= 5),
-    key=lambda item: len(item[0]), reverse=True,
-)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # CLSI / EUCAST DISK CODES  (added 2026-08-01)
@@ -1326,158 +1210,15 @@ _ABX_ALIAS_SORTED = sorted(
 # also carries an S/I/R verdict. That is the shape of a result row and nothing
 # else. A code appearing in prose has no verdict beside it and is ignored.
 # ═══════════════════════════════════════════════════════════════════════════
-ABX_DISK_CODES: Dict[str, str] = {
-    # Penicillins & BLI combinations
-    "P": "Penicillin", "PEN": "Penicillin",
-    "AMP": "Ampicillin", "AM": "Ampicillin",
-    "AMX": "Amoxicillin", "AML": "Amoxicillin",
-    "AMC": "Amoxicillin + Clavulanic acid",
-    "SAM": "Ampicillin/Sulbactam", "AMS": "Ampicillin/Sulbactam",
-    "TZP": "Piperacillin + Tazobactam", "PTZ": "Piperacillin + Tazobactam",
-    "OX": "Oxacillin", "OXA": "Oxacillin",
-    # Cephalosporins
-    "CZ": "Cefazolin", "KZ": "Cefazolin", "CFZ": "Cefazolin",
-    "CL": "Cephalexin", "LEX": "Cephalexin", "CN30": "Cephalexin",
-    "CXM": "Cefuroxime", "CRM": "Cefuroxime",
-    "FOX": "Cefoxitin", "CX": "Cefoxitin",
-    "CRO": "Ceftriaxone", "CTR": "Ceftriaxone",
-    "CTX": "Cefotaxime",
-    "CAZ": "Ceftazidime",
-    "FEP": "Cefepime", "CPM": "Cefepime",
-    "CFM": "Cefixime", "CE": "Cefixime",
-    "CFP": "Cefoperazone", "CES": "Cefoperazone + Sulbactam",
-    # Carbapenems & monobactam
-    "IPM": "Imipenem/Cilastatin", "IMP": "Imipenem/Cilastatin",
-    "MEM": "Meropenem", "MRP": "Meropenem",
-    "ETP": "Ertapenem", "ERT": "Ertapenem",
-    "ATM": "Aztreonam", "AZT": "Aztreonam",
-    # Aminoglycosides  (CN = gentamicin in the EUCAST/Oxoid convention)
-    "CN": "Gentamicin", "GEN": "Gentamicin", "GM": "Gentamicin",
-    "AK": "Amikacin", "AN": "Amikacin", "AMK": "Amikacin",
-    "TOB": "Tobramycin", "TM": "Tobramycin", "NN": "Tobramycin",
-    # Quinolones
-    "CIP": "Ciprofloxacin",
-    "LEV": "Levofloxacin", "LVX": "Levofloxacin",
-    "MXF": "Moxifloxacin", "MFX": "Moxifloxacin",
-    "OFX": "Ofloxacin", "OF": "Ofloxacin",
-    "NOR": "Norfloxacin", "NX": "Norfloxacin",
-    # Others
-    "SXT": "Trimethoprim/Sulfamethoxazole", "TS": "Trimethoprim/Sulfamethoxazole",
-    "COT": "Trimethoprim/Sulfamethoxazole",
-    "TE": "Tetracycline", "TET": "Tetracycline",
-    "DO": "Doxycycline", "DOX": "Doxycycline",
-    "MH": "Minocycline", "MI": "Minocycline", "MIN": "Minocycline",
-    "VA": "Vancomycin", "VAN": "Vancomycin",
-    "LZD": "Linezolid", "LNZ": "Linezolid",
-    "DA": "Clindamycin", "CD": "Clindamycin", "CLI": "Clindamycin",
-    "E": "Erythromycin", "ERY": "Erythromycin",
-    "AZM": "Azithromycin", "AZI": "Azithromycin",
-    "CLR": "Clarithromycin",
-    "FD": "Fusidic acid", "FA": "Fusidic acid",
-    "F": "Nitrofurantoin", "NIT": "Nitrofurantoin", "FT": "Nitrofurantoin",
-    "FOS": "Fosfomycin", "FOT": "Fosfomycin",
-    "CT": "Colistin", "CST": "Colistin", "COL": "Colistin",
-    "MTZ": "Metronidazole", "MET": "Metronidazole",
-    "RD": "Rifampicin", "RA": "Rifampicin",
-}
 
 # A result row must carry a verdict. Reuse the same vocabulary the value parser
 # accepts so the two cannot drift.
-_DISK_CODE_TOKEN = re.compile(r"[A-Za-z]{1,4}\d{0,3}")
 
 
-def _scan_line_for_disk_codes(line: str) -> List[str]:
-    """Antibiotics named by CLSI/EUCAST disk code on ONE result row.
-
-    Returns [] unless the line also carries an S/I/R verdict — a bare code in
-    prose is not a result and must not create a panel entry.
-    """
-    if not line:
-        return []
-    tokens = re.split(r"[^\w./+-]+", line.strip())
-    tokens = [t for t in tokens if t]
-    if not tokens:
-        return []
-    # Does this line look like a result row at all?
-    if not any(normalize_sir_value(t) is not None for t in tokens):
-        return []
-    found: List[str] = []
-    for tok in tokens:
-        # A verdict token is never also a drug code (S / I / R would otherwise
-        # collide with nothing here, but NS and RES would).
-        if normalize_sir_value(tok) is not None:
-            continue
-        if not _DISK_CODE_TOKEN.fullmatch(tok):
-            continue
-        name = ABX_DISK_CODES.get(tok.upper())
-        if name and name in ABX_GUIDELINES and name not in found:
-            found.append(name)
-    return found
 
 
-def _scan_line_for_drugs(line: str) -> List[str]:
-    """Every distinct antibiotic named in ONE line, longest-name-wins."""
-    norm = normalize_abx_key(line)
-    if not norm:
-        return []
-    claimed: List[Tuple[int, int]] = []
-    found:   List[str] = []
-    for alias_norm, abx_name in _ABX_ALIAS_SORTED:
-        start = 0
-        while True:
-            i = norm.find(alias_norm, start)
-            if i < 0:
-                break
-            j = i + len(alias_norm)
-            # Skip if this hit is entirely inside a longer name already matched.
-            if not any(s <= i and j <= e for s, e in claimed):
-                claimed.append((i, j))
-                if abx_name not in found:
-                    found.append(abx_name)
-            start = i + 1
-    # Full names win. Only when the line named nothing spelled out do we fall
-    # back to disk codes, so "Ciprofloxacin  CIP  R" cannot double-count and a
-    # stray two-letter token on a named row cannot invent a second agent.
-    if not found:
-        found = _scan_line_for_disk_codes(line)
-    return found
 
-def match_antibiotic_from_text(snippet: str) -> Optional[str]:
-    """The single antibiotic a result line refers to (longest name wins)."""
-    hits = _scan_line_for_drugs(snippet)
-    if hits:
-        # Prefer the longest official name among the hits: on a line reading
-        # "Ampicillin/Sulbactam  S" the combination -- not the partner -- is
-        # the drug that was tested.
-        return max(hits, key=lambda n: len(normalize_abx_key(n)))
-    best_match = None
-    best_score = 0.0
-    for abx_name, info in ABX_GUIDELINES.items():
-        for variant in [abx_name, *info.get("aliases", [])]:
-            score = fuzzy_match(variant, snippet)
-            if score > best_score:
-                best_score = score
-                best_match = abx_name
-    return best_match if best_score >= 82 else None
 
-def extract_detected_drugs(full_text: str) -> List[str]:
-    """
-    Every antibiotic named anywhere in the OCR text -- with or without S/I/R.
-
-    Scanning is done PER LINE (an AST sheet prints one agent per row) so a name
-    can never be assembled across a line break, and each line uses the
-    span-claiming longest-wins matcher above so combination agents do not spawn
-    phantom entries for their own components.
-    """
-    detected: List[str] = []
-    for line in (full_text or "").splitlines():
-        line = line.strip()
-        if len(line) < 3:
-            continue
-        for name in _scan_line_for_drugs(line):
-            if name not in detected:
-                detected.append(name)
-    return sorted(detected)
 
 @st.cache_data(show_spinner=False)
 def detect_pus_cells(text: str) -> str:
@@ -1499,8 +1240,28 @@ def detect_pus_cells(text: str) -> str:
     scope = _pus_line or text_l   # fall back to whole text only if unlabeled
 
     # ── Text qualifiers (check first, within scope) ──────────────────────────
-    if re.search(r"tntc|too\s+numerous|innumerable|uncountable", scope):
+    # ADDED 2026-08-03. This extractor and pathogenicity._parse_pus disagreed
+    # about the same words: the SCORER resolved "full field", "loaded",
+    # "plenty", "many", "occasional" to numbers, and this EXTRACTOR returned ""
+    # for all of them — so the verbal readings never reached the scorer that
+    # knew what to do with them. A microscopist writing "pus cells: full field",
+    # the strongest pyuria on the form, produced no value at all.
+    #
+    # The vocabularies are now the same one, resolved to the same words, so a
+    # change to _PUS_VERBAL cannot silently leave this function behind.
+    if re.search(r"tntc|too\s+numerous|innumerable|uncountable"
+                 r"|full\s*field|packed|loaded|مليء|حقل\s*كامل", scope):
         return "TNTC"
+    if re.search(r"plenty|numerous|كثير", scope):
+        return ">50"
+    if re.search(r"\bmany\b|عديد", scope):
+        return ">30"
+    if re.search(r"\bmoderate\b|متوسط", scope):
+        return "10-20"
+    if re.search(r"occasional|\bfew\b|scanty|قليل", scope):
+        return "1-3"
+    if re.search(r"\bnil\b|\bnone\b|not\s*seen|absent|لا\s*يوجد", scope):
+        return "0"
     m_over = re.search(r"over\s*(\d+)", scope)
     if m_over:
         return f"Over {m_over.group(1)}"
@@ -1833,46 +1594,10 @@ HEPATIC_DOSING: Dict[str, Dict] = {
 # NS (non-susceptible) maps to R: it is the conservative direction and the only
 # one that cannot cost a patient a failed therapy.
 # ═══════════════════════════════════════════════════════════════════════
-_SIR_ALIASES = {
-    "S": "S", "SUSCEPTIBLE": "S", "SENSITIVE": "S", "SENS": "S", "حساس": "S",
-    "I": "I", "INTERMEDIATE": "I", "INTER": "I", "INT": "I", "متوسط": "I",
-    "SDD": "I", "SUSCEPTIBLE-DOSE DEPENDENT": "I", "SUSCEPTIBLE DOSE DEPENDENT": "I",
-    "R": "R", "RESISTANT": "R", "RESIST": "R", "RES": "R", "مقاوم": "R",
-    "NS": "R", "NON-SUSCEPTIBLE": "R", "NONSUSCEPTIBLE": "R",
-}
 
 
-def normalize_sir_value(value: Any) -> Optional[str]:
-    """One S/I/R value -> canonical 'S' | 'I' | 'R', or None if unreadable.
-
-    Returning None (rather than defaulting to 'S') is deliberate: an
-    uninterpretable result must drop out of the panel, never be presented to a
-    clinician as a susceptible agent.
-    """
-    if value is None:
-        return None
-    v = str(value).strip().upper().replace("_", " ")
-    return _SIR_ALIASES.get(v)
 
 
-def normalize_sir_map(sir_map: Optional[Dict[str, Any]]) -> Dict[str, str]:
-    """Canonicalise a whole panel, dropping entries that cannot be read."""
-    out: Dict[str, str] = {}
-    for drug, value in (sir_map or {}).items():
-        # Keys are trimmed too. OCR routinely emits " Ciprofloxacin " with
-        # padding; the padded key matched no formulary entry, so the drug was
-        # dropped from the report in complete silence -- neither recommended nor
-        # banned, simply gone.
-        key = str(drug or "").strip()
-        if not key:
-            continue
-        v = normalize_sir_value(value)
-        if v is not None:
-            out[key] = v
-        elif value not in (None, ""):
-            logger.warning("unreadable AST value %r for %r -- dropped from the "
-                           "panel rather than assumed susceptible", value, drug)
-    return out
 
 
 # ── Pregnancy status: canonicalise the enum ─────────────────────────────────
@@ -1928,6 +1653,121 @@ def preg_status_of(info: Dict[str, Any]) -> str:
     """
     raw = str(info.get("preg_status") or "").strip().upper()
     return _PREG_ALIASES.get(raw, "Warn")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  run_analysis() — THE PIPELINE AS ONE CALLABLE FUNCTION
+# ═══════════════════════════════════════════════════════════════════════════
+#  WHY THIS EXISTS
+#  Until 2026-08-03 the whole decision pipeline lived INSIDE the Streamlit UI
+#  block, and that block sits behind an OCR file upload. Line-tracing a full UI
+#  run reached 12.8% of this file and touched NONE of analyze_antibiotics,
+#  apply_safety_gate, detect_resistance_phenotypes or generate_report: without a
+#  file there is no drug list, so the analysis never starts.
+#
+#  The consequence was not theoretical. A text replacement added `age_months=`
+#  to two get_combination_therapy() calls that take no such parameter — a
+#  TypeError on the combination panel and on PDF export — and all ten suites
+#  stayed green, because every suite calls these functions DIRECTLY with correct
+#  arguments and none of them walks the path the user walks.
+#
+#  This function is that path, minus Streamlit. It takes a Patient, an organism,
+#  a specimen and an S/I/R map, and returns everything the UI renders. The UI
+#  now calls it instead of inlining it, so a test can walk the same code the
+#  clinician does — which is the only way the class of bug above gets caught.
+#
+#  It is deliberately PURE: no session_state, no widgets, no I/O. Everything it
+#  needs arrives as arguments and everything it produces is returned.
+# ═══════════════════════════════════════════════════════════════════════════
+def run_analysis(
+    patient: "Patient",
+    organism: str,
+    specimen: str,
+    sir_map: Dict[str, str],
+    drugs: Optional[List[str]] = None,
+    *,
+    apply_gate: bool = True,
+) -> Dict[str, Any]:
+    """Run the full clinical pipeline and return every panel the UI shows.
+
+    Returns a dict with: allowed / warned / banned / preg_warn / interactions,
+    gate_report, phenotypes, mdr, mechanism, ranked, combinations, syndrome,
+    duration, severity, patient_warnings.
+    """
+    drugs = list(drugs if drugs is not None else sir_map.keys())
+    k = patient.as_kwargs()
+
+    allowed, warned, banned, preg_warn, interactions = analyze_antibiotics(
+        drugs, organism, specimen, k["age"], k["sex"], k["is_renal"],
+        k["cl_cr"], k["is_preg"], k["is_hepatic"], k["current_meds"], sir_map,
+        k["child_pugh"], k["age_months"],
+    )
+
+    gate_report: Dict[str, Any] = {}
+    if apply_gate and SAFETY_GATE_AVAILABLE:
+        allowed, warned, banned, gate_report = apply_safety_gate(
+            allowed, warned, banned,
+            organism=organism, specimen=specimen, sir_map=sir_map,
+            age_years=k["age"], age_months=k["age_months"],
+            is_pregnant=k["is_preg"], cl_cr=k["cl_cr"], is_renal=k["is_renal"],
+            is_hepatic=k["is_hepatic"], child_pugh=k["child_pugh"],
+        )
+
+    phenotypes = detect_resistance_phenotypes(organism, sir_map)
+    mechanism = predict_esbl(organism, sir_map)
+    mdr = classify_mdr(organism, sir_map)
+    ranked = rank_sensitive_antibiotics(allowed, specimen, organism, sir_map, phenotypes)
+    combinations = get_combination_therapy(
+        phenotypes,
+        is_pregnant=k["is_preg"], age_years=k["age"], age_months=k["age_months"],
+        is_renal=k["is_renal"], cl_cr=k["cl_cr"], is_hepatic=k["is_hepatic"],
+    )
+
+    severity = suggest_severity(specimen, k["age"], k["sex"], k["is_preg"],
+                                k["is_renal"], k["cl_cr"] or 95)
+    syndrome = get_infection_syndrome(specimen, organism, k["age"], k["is_preg"])
+    _syn_key = syndrome.get("syndrome", "") if isinstance(syndrome, dict) else (syndrome or "")
+    duration = get_treatment_duration(
+        specimen, organism, _syn_key, k["age"], k["sex"], k["is_renal"],
+        phenotypes, severity.get("suggested", "moderate"),
+    )
+
+    # ── Which safety layers actually ran ────────────────────────────────────
+    # ADDED 2026-08-05 after an import-failure injection: with safety_gate or
+    # clinical_matrix unimportable, this function returned a full, confident
+    # result set with gate_report={} and said nothing. The UI does raise a
+    # "DEGRADED CLINICAL MODE" banner, but run_analysis() is the PUBLIC entry
+    # point now — anything calling it programmatically, this project's own test
+    # suites included, received un-gated recommendations that were
+    # indistinguishable from gated ones.
+    #
+    # A result that skipped the terminal safety check must SAY SO in the result,
+    # not only on a page the caller may never render. Callers can then refuse to
+    # report, and a test can assert the gate ran.
+    degraded = []
+    if not SAFETY_GATE_AVAILABLE:
+        degraded.append("safety_gate + clinical_matrix — no site-penetration "
+                        "check and no host-state demotion were applied")
+    elif apply_gate and not gate_report:
+        degraded.append("safety_gate returned no report — the terminal check "
+                        "may not have run")
+    if not INTRINSIC_TABLE_OK:
+        degraded.append("clinical_data — intrinsically inactive agents were NOT "
+                        "filtered out and are NOT excluded from MDR counting")
+
+    return {
+        "allowed": allowed, "warned": warned, "banned": banned,
+        "preg_warn": preg_warn, "interactions": interactions,
+        "gate_report": gate_report, "phenotypes": phenotypes,
+        "mechanism": mechanism, "mdr": mdr, "ranked": ranked,
+        "combinations": combinations, "severity": severity,
+        "syndrome": syndrome, "duration": duration,
+        "patient_warnings": patient.validate(),
+        # Empty on a healthy run. Non-empty means a safety layer did not run and
+        # the result must not be reported as if it had.
+        "degraded": degraded,
+        "gate_applied": bool(apply_gate and SAFETY_GATE_AVAILABLE),
+    }
 
 
 def warned_note_for(item: Dict[str, Any], lang: str = "ar") -> str:
@@ -3380,50 +3220,37 @@ ESBL_PRODUCERS = frozenset([
     "enterobacterales", "hafnia alvei",
 ])
 
-def _re_ws_collapse(text: str) -> str:
-    """lower + strip + collapse internal runs of whitespace to one space.
+# ── Organism matching now lives in clinical_utils.py ────────────────────────
+# These were three separate implementations of the same idea, and the guards
+# were added to two of them and forgotten on the third — twice. They are now
+# thin aliases over ONE implementation so they cannot drift again.
+from clinical_utils import (                                    # noqa: E402
+    org_matches as _cu_org_matches,
+    NON_INFORMATIVE_ORGANISM_TOKENS as _ORG_NON_INFORMATIVE,
+    NEONATE_MAX_YEARS, resolve_age_years, Patient,
+)
 
-    Every organism matcher in this file needs the same normalisation, and
-    before 2026-08-03 they each did their own `.lower().strip()` -- which
-    leaves "Escherichia  coli" with its doubled internal space intact and
-    matching nothing.
+
+def _re_ws_collapse(text) -> str:
+    """lower + strip + collapse internal whitespace. Thin alias over
+    clinical_utils.collapse_ws, defined as a real function rather than an
+    import alias because the AST-extraction harnesses lift it out by name."""
+    from clinical_utils import collapse_ws
+    return collapse_ws(text)
+
+
+def _org_matches(org_l, keys) -> bool:
+    """Alias over clinical_utils.org_matches — see that module for the history.
+
+    Kept as a module-level name because the AST-extraction test harnesses slice
+    functions out of this file by name and exec them in a bare namespace. The
+    import is INSIDE the function for the same reason: a module-level alias
+    would resolve to nothing once the function is lifted out of the file, and
+    the harnesses would fail with a NameError that says nothing about the real
+    dependency. Importing here makes the extracted function self-sufficient.
     """
-    return re.sub(r"\s+", " ", (text or "").strip().lower())
-
-
-# Tokens that clear the four-character floor but name no organism. "spp." is a
-# substring of "klebsiella spp." and matched every key that carried it.
-_ORG_NON_INFORMATIVE = frozenset({
-    "spp.", "spp", "sp.", "species", "gram", "n/a", "na", "none", "nil",
-    "unknown", "unspeciated", "isolate", "organism", "culture", "growth",
-})
-
-
-def _org_matches(org_l: str, keys) -> bool:
-    """Substring match with the same length guard the intrinsic matchers use.
-
-    FIX 2026-08-01. The predicate below was `any(p in org_l or org_l in p ...)`
-    with no floor on len(org_l). `"" in "escherichia coli"` is True, so a blank
-    or one-character organism matched the FIRST key and every mechanism gate
-    opened: is_esbl_producer("") returned True and predict_esbl("") came back
-    "Possible AmpC β-lactamase (Predicted)", confidence 75 — a fabricated
-    mechanism call on an isolate with no name.
-
-    _remove_intrinsic_resistance() and is_intrinsically_avoided() both already
-    carry `len(org_l) >= 4` for exactly this reason and document it. The guard
-    was written twice and forgotten on the third matcher. A genus fragment is
-    never shorter than four characters.
-
-    FIX 2026-08-03: internal whitespace is now collapsed too. `.strip()` cleans
-    the ends and leaves the middle, so an OCR'd "Escherichia  coli" with a
-    doubled space matched nothing — no intrinsic row, no producer status. This
-    mirrors what _canon_org() has always done, so the two matchers now normalise
-    identically.
-    """
-    org_l = _re_ws_collapse(org_l)
-    if not org_l or org_l in _ORG_NON_INFORMATIVE:
-        return False
-    return any(p in org_l or (len(org_l) >= 4 and org_l in p) for p in keys)
+    from clinical_utils import org_matches as _m
+    return _m(org_l, keys)
 
 
 def is_esbl_producer(organism: str) -> bool:
@@ -3761,910 +3588,20 @@ def predict_esbl(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
 # spp."), but the pathogenicity lists historically used full binomials. Direct
 # `organism in LIST` tests silently failed -> mis-scored non-urine organisms.
 # Canonicalize BOTH sides so membership is spelling-independent.
-_ORG_CANON_MAP = {
-    "e. coli": "escherichia coli", "e.coli": "escherichia coli",
-    "escherichia coli": "escherichia coli",
-    "enterohemorrhagic e. coli": "escherichia coli o157",
-    "escherichia coli o157:h7": "escherichia coli o157",
-    "klebsiella spp.": "klebsiella", "klebsiella pneumoniae": "klebsiella",
-    "klebsiella oxytoca": "klebsiella", "klebsiella": "klebsiella",
-    "proteus mirabilis": "proteus", "proteus spp.": "proteus", "proteus": "proteus",
-    "enterococcus faecalis": "enterococcus", "enterococcus spp.": "enterococcus",
-    "enterococcus faecium": "enterococcus", "enterococcus": "enterococcus",
-    "vre": "vre",
-    "h. influenzae": "haemophilus influenzae",
-    "haemophilus influenzae": "haemophilus influenzae",
-    "staphylococcus aureus": "staphylococcus aureus", "mssa": "staphylococcus aureus",
-    "mrsa": "mrsa",
-    "staphylococcus epidermidis": "cons",
-    "staphylococcus saprophyticus": "staphylococcus saprophyticus",
-    "coagulase negative staphylococcus": "cons",
-    "coagulase-negative staphylococci": "cons", "cons": "cons",
-    "streptococcus viridans": "viridans streptococci",
-    "viridans streptococci": "viridans streptococci",
-    "corynebacterium spp.": "corynebacterium", "corynebacterium": "corynebacterium",
-    "campylobacter jejuni": "campylobacter", "campylobacter spp.": "campylobacter",
-    "campylobacter": "campylobacter",
-    "salmonella spp.": "salmonella", "salmonella": "salmonella",
-    "shigella spp.": "shigella", "shigella": "shigella",
-    "streptococcus pneumoniae": "streptococcus pneumoniae",
-    "s. pneumoniae": "streptococcus pneumoniae",
-    "pseudomonas aeruginosa": "pseudomonas aeruginosa",
-    "acinetobacter baumannii": "acinetobacter baumannii",
-    "stenotrophomonas maltophilia": "stenotrophomonas maltophilia",
-    "legionella pneumophila": "legionella", "legionella": "legionella",
-    "mycoplasma spp.": "mycoplasma", "mycoplasma pneumoniae": "mycoplasma",
-    "moraxella catarrhalis": "moraxella catarrhalis",
-    "neisseria meningitidis": "neisseria meningitidis",
-    "neisseria spp.": "neisseria",
-    "listeria monocytogenes": "listeria monocytogenes",
-    "streptococcus agalactiae": "streptococcus agalactiae",
-    "gbs": "streptococcus agalactiae",
-    "anaerobes (لاهوائيات)": "anaerobes", "anaerobes": "anaerobes",
-    "clostridioides difficile": "c. difficile", "clostridium difficile": "c. difficile",
-    "candida albicans": "candida", "candida spp.": "candida", "candida": "candida",
-}
+# ── Pathogenicity scoring moved to pathogenicity.py (2026-08-03) ────────────
+# 904 lines: the colony-count parser, the verbal-report tables, the three-state
+# report classifier and assess_pathogenicity() itself. They were pure functions
+# over their own tables the whole time, sitting in the middle of a 10,400-line
+# file between the UI and the PDF writer. Re-exported here so every existing
+# caller and every AST-extraction test harness still finds them by name.
+from pathogenicity import (                                          # noqa: E402,F401
+    assess_pathogenicity,
+    _ORG_CANON_MAP, _canon_org, _org_in,
+    _CFU_SUPERSCRIPTS, _CFU_VERBAL, _PUS_VERBAL,
+    _parse_cfu, _cfu_report_state, _score_colony_count, _parse_pus,
+)
 
 
-def _canon_org(name: str) -> str:
-    n = re.sub(r"\s+", " ", (name or "").strip().lower())
-    return _ORG_CANON_MAP.get(n, n)
-
-
-def _org_in(name: str, group) -> bool:
-    """Spelling-independent membership test for organism names."""
-    target = _canon_org(name)
-    return any(_canon_org(g) == target for g in group)
-
-
-# =========================================================
-def assess_pathogenicity(
-    specimen: str,
-    organism: str,
-    colony_count_text: str,
-    culture_purity: str,
-    symptoms: list,
-    pus_cells_text: str,
-    urinalysis_result: str,
-    gram_stain: str,
-    age: int,
-    sex: str,
-    host_factors: list,
-    # Sputum-specific
-    sputum_pus_cells: str = "",
-    sputum_epithelial: str = "",
-    # Blood-specific (SIRS)
-    sirs_criteria: list = None,
-    blood_source: str = "",
-    # Wound-specific
-    wound_type: str = "",
-) -> dict:
-    """
-    Pathogenicity Score Engine v2
-    Returns: {score, verdict, color, interpretation, recommendations,
-              factors_pos, factors_neg, abu_detected, special_flags}
-    """
-    if sirs_criteria is None:
-        sirs_criteria = []
-
-    score        = 0
-    factors_pos  = []
-    factors_neg  = []
-    special_flags = []
-    abu_detected  = False
-
-    # ── Organism Lists ────────────────────────────────────────────────
-    TYPICAL_UROPATHOGENS = [
-        "Escherichia coli", "Klebsiella pneumoniae", "Klebsiella spp.",
-        "Proteus mirabilis", "Proteus spp.", "Enterococcus faecalis",
-        "Enterococcus spp.", "Staphylococcus saprophyticus",
-        "Pseudomonas aeruginosa", "Enterobacter spp.", "Enterobacter cloacae",
-        "Citrobacter spp.", "Morganella morganii", "Serratia marcescens",
-    ]
-    ATYPICAL_UROPATHOGENS = [
-        "Staphylococcus aureus", "Staphylococcus epidermidis",
-        "Streptococcus viridans", "Corynebacterium spp.",
-        "Candida albicans", "Candida spp.", "MRSA",
-    ]
-    NORMAL_SKIN_FLORA = [
-        "Staphylococcus epidermidis", "Corynebacterium spp.",
-        "Streptococcus viridans",
-    ]
-    RESPIRATORY_PATHOGENS = [
-        "Streptococcus pneumoniae", "Haemophilus influenzae",
-        "Klebsiella pneumoniae", "Pseudomonas aeruginosa",
-        "Staphylococcus aureus", "Moraxella catarrhalis",
-        "Acinetobacter baumannii", "Enterobacter spp.",
-        "Escherichia coli", "Serratia marcescens",
-        "MRSA", "Legionella pneumophila", "Mycoplasma spp.",
-        "Stenotrophomonas maltophilia",
-    ]
-    URT_CONTAMINANTS_SPUTUM = [
-        "Streptococcus viridans", "Neisseria spp.", "Candida spp.",
-        "Candida albicans", "Staphylococcus epidermidis",
-        "Corynebacterium spp.",
-    ]
-    TRUE_BLOOD_PATHOGENS = [
-        "Staphylococcus aureus", "Streptococcus pneumoniae",
-        "Escherichia coli", "Klebsiella pneumoniae", "Pseudomonas aeruginosa",
-        "Acinetobacter baumannii", "Enterococcus faecalis", "Enterococcus spp.",
-        "Candida albicans", "Candida spp.", "Salmonella spp.",
-        "Neisseria meningitidis", "Listeria monocytogenes",
-        "MRSA", "H. influenzae", "VRE", "Anaerobes (لاهوائيات)",
-        "Stenotrophomonas maltophilia", "Proteus mirabilis",
-    ]
-    # ══════════════════════════════════════════════════════════════════
-    # ORGANISMS THAT ARE NEVER A CONTAMINANT IN BLOOD
-    # ------------------------------------------------------------------
-    # Found on re-review. A Staphylococcus aureus blood culture with fever
-    # scored 35 and was reported as "🟠 LIKELY CONTAMINANT -- Repeat
-    # Recommended". S. aureus is in TRUE_BLOOD_PATHOGENS and did earn its +25,
-    # but the missing-SIRS and single-bottle deductions pulled the total back
-    # under the threshold -- so an additive score alone could never protect it.
-    #
-    # S. aureus bacteraemia carries roughly 20-30% mortality. It mandates
-    # echocardiography, source control and 2-6 weeks of intravenous therapy.
-    # Telling a clinician to repeat the sample instead is the most dangerous
-    # single output this engine can produce, and no combination of missing
-    # metadata should be able to generate it.
-    #
-    # This list is deliberately NARROWER than TRUE_BLOOD_PATHOGENS: E. coli or
-    # Enterococcus in one bottle can occasionally be contamination, so they keep
-    # the ordinary scoring. The organisms below cannot.
-    NEVER_CONTAMINANT_IN_BLOOD = [
-        "Staphylococcus aureus", "MRSA", "MSSA",
-        "Streptococcus pneumoniae", "Streptococcus pyogenes",
-        "Neisseria meningitidis", "Haemophilus influenzae", "H. influenzae",
-        "Listeria monocytogenes", "Salmonella spp.", "Salmonella typhi",
-        "Candida albicans", "Candida spp.", "Streptococcus agalactiae",
-        "Brucella spp.", "Neisseria gonorrhoeae",
-    ]
-
-    BLOOD_CONTAMINANTS = [
-        "Staphylococcus epidermidis", "Corynebacterium spp.",
-        "Bacillus spp.", "Propionibacterium spp.", "Micrococcus spp.",
-    ]
-
-    # Re-review found four hard crashes on None: symptoms, specimen, age and
-    # host_factors. They arrive from widgets today, but a cleared number_input or
-    # a restored session can deliver None, and a traceback in place of a
-    # pathogenicity verdict is not an acceptable failure mode.
-    specimen      = specimen or ""
-    organism      = organism or ""
-    symptoms      = list(symptoms or [])
-    host_factors  = list(host_factors or [])
-    if not isinstance(age, (int, float)):
-        age = 40
-    spec_lower = specimen.lower()
-
-    # ══════════════════════════════════════════════════════════════════
-    # URINE
-    # ══════════════════════════════════════════════════════════════════
-    if "urine" in spec_lower:
-
-        # Pediatric threshold: < 2 years -> any growth significant
-        if age < 2:
-            score += 20
-            factors_pos.append(f"✅ Infant < 2 yrs -- any colony count clinically significant")
-            special_flags.append("PEDIATRIC_UTI")
-
-        # Organism context
-        if _org_in(organism, TYPICAL_UROPATHOGENS):
-            score += 20
-            factors_pos.append(f"✅ {organism} -- typical uropathogen")
-        elif _org_in(organism, ATYPICAL_UROPATHOGENS):
-            score -= 20
-            factors_neg.append(f"⚠️ {organism} -- atypical uropathogen; consider contamination or hematogenous seeding")
-        else:
-            score += 5
-            factors_pos.append(f"➕ {organism} -- occasional uropathogen")
-
-        # Colony count
-        # FIX 2026-08-01 (third pass): the three branches below used to be
-        # written out inline, and all three ended at `elif cfu_val > 0`, so a
-        # zero -- whether "no growth" or an unread field -- fell through with no
-        # adjustment and scored HIGHER than a genuine low count. See
-        # _cfu_report_state() for the measurements.
-        cfu_val   = _parse_cfu(colony_count_text)
-        cfu_state = _cfu_report_state(colony_count_text)
-        _d, _pos, _neg = _score_colony_count(cfu_state, cfu_val, age, sex)
-        score += _d
-        if _pos:
-            factors_pos.append(_pos)
-        if _neg:
-            factors_neg.append(_neg)
-        if cfu_state == "unreported":
-            special_flags.append("CFU_NOT_REPORTED")
-
-        # Pyuria / Urinalysis
-        pus_val = _parse_pus(pus_cells_text)
-        if pus_val is not None:
-            if pus_val > 10:
-                score += 20
-                factors_pos.append(f"✅ Significant pyuria ({pus_val} WBC/HPF)")
-            elif pus_val >= 5:
-                score += 10
-                factors_pos.append(f"➕ Mild pyuria ({pus_val} WBC/HPF)")
-            else:
-                score -= 15
-                factors_neg.append(f"⚠️ No/minimal pyuria ({pus_val} WBC/HPF) -- argues against UTI")
-        elif "طبيعي" in urinalysis_result or "normal" in urinalysis_result.lower():
-            score -= 25
-            factors_neg.append("❌ Normal urinalysis -- strongly suggests contamination")
-        elif "pyuria" in urinalysis_result.lower() or "wbc" in urinalysis_result.lower():
-            score += 15
-            factors_pos.append("✅ Pyuria noted on urinalysis")
-        elif "nitrit" in urinalysis_result.lower():
-            score += 10
-            factors_pos.append("➕ Nitrites positive -- bacterial activity")
-
-        # ABU Detection
-        classic_symp = [s for s in symptoms if s in [
-            "Dysuria / Frequency / Urgency", "Fever (> 38°C)", "Flank pain / Loin pain"
-        ]]
-        if not classic_symp and cfu_val >= 100000 and pus_val is not None and pus_val >= 5:
-            abu_detected = True
-            special_flags.append("ABU_DETECTED")
-            # ABU: treat only if pregnant or pre-surgery
-            if "Pregnant" in host_factors or "Pre-surgical" in host_factors:
-                score += 20
-                factors_pos.append("✅ ABU in high-risk context (pregnancy/pre-op) -- TREAT")
-                special_flags.append("ABU_TREAT")
-            else:
-                score -= 20
-                factors_neg.append("⚠️ Asymptomatic Bacteriuria (ABU) -- Do NOT treat (IDSA 2019)")
-                special_flags.append("ABU_NO_TREAT")
-
-        # Sex & Age context
-        if sex == "Female":
-            score += 10
-            factors_pos.append("➕ Female -- higher UTI prevalence")
-        if sex == "Male" and 15 <= age <= 50:
-            score -= 5
-            factors_neg.append("⚠️ Male (non-pediatric/non-elderly) -- UTI uncommon")
-        if sex == "Male" and age > 50:
-            score += 10
-            factors_pos.append("➕ Male > 50 -- prostatic age, any UTI is significant")
-        if age < 1:
-            score += 15
-            factors_pos.append("✅ Infant < 1 yr -- all UTIs require treatment")
-
-    # ══════════════════════════════════════════════════════════════════
-    # SPUTUM -- Murray-Washington criteria
-    # ══════════════════════════════════════════════════════════════════
-    elif "sputum" in spec_lower or "respiratory" in spec_lower or "bal" in spec_lower:
-
-        # Murray-Washington score from WBCs & epithelial cells
-        mw_pus   = _parse_pus(sputum_pus_cells)   # WBC/LPF
-        mw_epith = _parse_pus(sputum_epithelial)   # Epithelial cells/LPF
-
-        if mw_pus is not None and mw_epith is not None:
-            if mw_pus >= 25 and mw_epith < 10:
-                score += 30
-                factors_pos.append(f"✅ Murray-Washington Grade ≥4: WBC≥25, Epi<10/LPF -- Adequate sputum")
-                special_flags.append("MW_ADEQUATE")
-            elif mw_pus >= 25 and mw_epith >= 10:
-                score += 10
-                factors_pos.append(f"➕ Murray-Washington: WBC≥25 but Epi≥10 -- mixed quality")
-                special_flags.append("MW_MIXED")
-            elif mw_epith >= 25:
-                score -= 20
-                factors_neg.append(f"❌ Murray-Washington: Epi≥25/LPF -- heavily contaminated, reject specimen")
-                special_flags.append("MW_REJECT")
-            else:
-                score += 5
-        elif mw_epith is not None and mw_epith >= 25:
-            score -= 20
-            factors_neg.append("❌ Epithelial cells ≥25/LPF -- specimen inadequate (saliva)")
-            special_flags.append("MW_REJECT")
-
-        # Organism context
-        if _org_in(organism, RESPIRATORY_PATHOGENS):
-            score += 20
-            factors_pos.append(f"✅ {organism} -- recognized respiratory pathogen")
-        elif _org_in(organism, URT_CONTAMINANTS_SPUTUM):
-            score -= 20
-            factors_neg.append(f"⚠️ {organism} -- likely URT/oropharyngeal contaminant")
-        else:
-            score += 5
-
-        # Symptoms
-        resp_symp = [s for s in symptoms if s in [
-            "Productive cough / Purulent sputum",
-            "Fever (> 38°C)", "Dyspnea", "Pleuritic chest pain"
-        ]]
-        if len(resp_symp) >= 2:
-            score += 20
-            factors_pos.append(f"✅ {len(resp_symp)} respiratory symptoms present")
-        elif len(resp_symp) == 1:
-            score += 10
-            factors_pos.append("➕ 1 respiratory symptom present")
-
-    # ══════════════════════════════════════════════════════════════════
-    # BLOOD CULTURE -- SIRS criteria
-    # ══════════════════════════════════════════════════════════════════
-    elif "blood" in spec_lower:
-
-        # SIRS criteria (≥2 = SIRS, ≥3 = high probability sepsis)
-        sirs_count = len(sirs_criteria)
-        if sirs_count >= 3:
-            score += 35
-            factors_pos.append(f"✅ {sirs_count}/4 SIRS criteria met -- high sepsis probability")
-            special_flags.append("SIRS_HIGH")
-        elif sirs_count == 2:
-            score += 20
-            factors_pos.append(f"➕ 2/4 SIRS criteria met -- bacteremia possible")
-            special_flags.append("SIRS_MET")
-        elif sirs_count == 1:
-            score += 10
-            factors_pos.append("➕ 1 SIRS criterion -- low probability bacteremia")
-        else:
-            # No SIRS: neutral — let organism type drive (true pathogen vs CoNS contaminant).
-            # (was +5, which contradicted the contaminant warning printed below.)
-            score += 0
-            factors_neg.append("⚠️ No SIRS criteria -- consider contaminant especially for CoNS")
-
-        # Organism type
-        if _org_in(organism, NEVER_CONTAMINANT_IN_BLOOD):
-            score += 25
-            special_flags.append("NEVER_CONTAMINANT")
-            factors_pos.append(
-                f"🔴 {organism} في الدم لا يُعد ملوِّثاً أبداً — عزلة واحدة كافية. "
-                "ابدأ العلاج فوراً ولا تنتظر إعادة المزرعة.")
-        elif _org_in(organism, TRUE_BLOOD_PATHOGENS):
-            score += 25
-            factors_pos.append(f"✅ {organism} -- true bloodstream pathogen; single positive = significant")
-        elif _org_in(organism, BLOOD_CONTAMINANTS):
-            score -= 20
-            factors_neg.append(f"⚠️ {organism} -- common blood culture contaminant (CoNS/Coryne); requires ≥2 bottles")
-            special_flags.append("BLOOD_CONTAMINANT_RISK")
-        else:
-            score += 15
-            factors_pos.append(f"➕ {organism} -- possible bloodstream pathogen")
-
-        # Number of positive bottles
-        if "Multiple bottles positive" in blood_source:
-            score += 15
-            factors_pos.append("✅ Multiple blood culture bottles positive -- true bacteremia")
-        elif "Single bottle" in blood_source and _org_in(organism, BLOOD_CONTAMINANTS):
-            score -= 15
-            factors_neg.append("⚠️ Single bottle + contaminant organism -- likely contamination")
-
-        # Source identified
-        if blood_source and "source" in blood_source.lower():
-            score += 10
-            factors_pos.append(f"➕ Source identified: {blood_source}")
-
-    # ══════════════════════════════════════════════════════════════════
-    # CSF
-    # ══════════════════════════════════════════════════════════════════
-    elif "csf" in spec_lower or "cerebrospinal" in spec_lower:
-        score += 40
-        factors_pos.append("✅ CSF -- any growth is always clinically significant (sterile site)")
-        special_flags.append("CSF_ALWAYS_SIGNIFICANT")
-
-    # ══════════════════════════════════════════════════════════════════
-    # STOOL / GI
-    # ══════════════════════════════════════════════════════════════════
-    elif "stool" in spec_lower or "fecal" in spec_lower or "rectal" in spec_lower:
-
-        # GI-specific pathogens always significant
-        GI_TRUE_PATHOGENS = [
-            "Salmonella spp.", "Shigella spp.", "Campylobacter spp.",
-            "Clostridioides difficile", "Clostridium difficile",
-            "Yersinia enterocolitica", "Vibrio cholerae", "Listeria monocytogenes",
-            "Enterohemorrhagic E. coli", "Escherichia coli O157:H7",
-            "Entamoeba histolytica",
-        ]
-        GI_NORMAL_FLORA = [
-            "Escherichia coli", "Klebsiella spp.", "Klebsiella pneumoniae",
-            "Enterococcus faecalis", "Enterococcus spp.",
-            "Proteus mirabilis", "Proteus spp.",
-        ]
-
-        if _org_in(organism, GI_TRUE_PATHOGENS):
-            score += 40
-            factors_pos.append(f"✅ {organism} -- obligate GI pathogen; always clinically significant")
-            special_flags.append("GI_TRUE_PATHOGEN")
-        elif _org_in(organism, GI_NORMAL_FLORA):
-            score -= 10
-            factors_neg.append(f"⚠️ {organism} -- normal GI flora; significance depends on clinical context")
-        else:
-            score += 15
-            factors_pos.append(f"➕ {organism} -- potential GI pathogen; correlate clinically")
-
-        # GI Symptoms
-        gi_symp = [s for s in symptoms if s in [
-            "Fever (> 38°C)", "Bloody diarrhea", "Watery diarrhea",
-            "Vomiting", "Abdominal cramps",
-        ]]
-        if len(gi_symp) >= 2:
-            score += 25
-            factors_pos.append(f"✅ {len(gi_symp)} GI symptoms -- supports true infection")
-        elif len(gi_symp) == 1:
-            score += 10
-        else:
-            score -= 10
-            factors_neg.append("⚠️ No GI symptoms -- most stool cultures positive without symptoms = colonization")
-
-        # Most GI infections: antibiotics often NOT indicated
-        factors_neg.append("⚠️ Most GI infections: supportive care preferred; antibiotics only for severe/immunocompromised")
-
-    # ══════════════════════════════════════════════════════════════════
-    # WOUND / PUS
-    # ══════════════════════════════════════════════════════════════════
-    elif any(w in spec_lower for w in ["wound", "pus", "abscess", "swab"]):
-        wound_lower = wound_type.lower() if wound_type else ""
-
-        if _org_in(organism, NORMAL_SKIN_FLORA) and not wound_lower:
-            score += 10
-            factors_pos.append(f"➕ {organism} -- possible wound pathogen, assess clinical context")
-        else:
-            score += 25
-            factors_pos.append(f"✅ {organism} -- likely wound pathogen")
-
-        # Wound type context
-        if "surgical" in wound_lower or "post-op" in wound_lower:
-            score += 15
-            factors_pos.append("✅ Post-surgical wound -- any growth is significant")
-        elif "chronic" in wound_lower or "diabetic" in wound_lower:
-            score += 10
-            factors_pos.append("➕ Chronic/diabetic wound -- higher clinical significance")
-        elif "superficial" in wound_lower:
-            score -= 5
-            factors_neg.append("➕ Superficial wound -- assess depth and clinical signs")
-
-        # Symptoms
-        wound_symp = [s for s in symptoms if s in [
-            "Erythema / Warmth / Swelling",
-            "Purulent discharge",
-            "Fever (> 38°C)",
-            "Pain / Tenderness",
-        ]]
-        if len(wound_symp) >= 2:
-            score += 20
-            factors_pos.append(f"✅ {len(wound_symp)} local infection signs present")
-        elif len(wound_symp) == 1:
-            score += 10
-
-    # ══════════════════════════════════════════════════════════════════
-    # Shared factors (all specimens)
-    # ══════════════════════════════════════════════════════════════════
-
-    # Culture purity
-    if culture_purity == "Pure growth":
-        score += 15
-        factors_pos.append("✅ Pure culture -- supports true infection")
-    elif culture_purity == "Mixed growth":
-        score -= 15
-        factors_neg.append("⚠️ Mixed growth -- suggests contamination")
-
-    # Gram stain
-    if "WBCs + Gram" in gram_stain:
-        score += 15
-        factors_pos.append("✅ Gram stain: organisms + WBCs -- supports infection")
-    elif "Organisms" in gram_stain and "بدون" not in gram_stain and "without" not in gram_stain.lower():
-        score += 5
-        factors_pos.append("➕ Organisms seen on Gram stain")
-    elif "طبيعية" in gram_stain or "No organisms" in gram_stain:
-        score -= 10
-        factors_neg.append("⚠️ Normal Gram stain -- no organisms seen")
-
-    # Host factors
-    if "Immunosuppressants / Steroids" in host_factors:
-        score += 10
-        factors_pos.append("➕ Immunocompromised -- lower threshold for clinical significance")
-    if "Diabetes" in host_factors:
-        score += 5
-        factors_pos.append("➕ Diabetes -- increased infection susceptibility")
-    if "تاريخ UTIs متكررة" in host_factors or "Recurrent infections" in host_factors:
-        score += 5
-        factors_pos.append("➕ Recurrent infection history")
-    if "Urinary catheter" in host_factors or "Central line / PICC" in host_factors or "Catheter" in host_factors:
-        score += 10
-        factors_pos.append("➕ Indwelling device -- lower threshold for significance")
-    if "Renal abnormality / Vesicoureteral reflux" in host_factors:
-        score += 10
-        factors_pos.append("➕ Structural abnormality -- increased susceptibility")
-    if "Pregnant" in host_factors:
-        score += 10
-        factors_pos.append("✅ Pregnancy -- any bacteriuria requires treatment")
-    if not host_factors:
-        score -= 5
-        factors_neg.append("➕ No host risk factors identified")
-
-    # Pediatric global flag
-    if age < 3 and "PEDIATRIC_UTI" not in special_flags and "csf" not in spec_lower:
-        score += 5
-        factors_pos.append("➕ Young child -- higher clinical vigilance warranted")
-
-    # ── Clamp ────────────────────────────────────────────────────────
-    score = max(0, min(100, score))
-
-    # ── Verdict ──────────────────────────────────────────────────────
-    # HARD FLOOR: a never-contaminant sterile-site isolate cannot be downgraded
-    # to "contaminant" by missing metadata, whatever the additive score says.
-    if "NEVER_CONTAMINANT" in special_flags and score < 75:
-        score = 75
-
-    if "CSF_ALWAYS_SIGNIFICANT" in special_flags:
-        verdict = "🔴 ALWAYS SIGNIFICANT -- Treat Immediately"
-        color   = "error"
-        interpretation = "العينة من موقع معقم (CSF) -- أي نمو يُعدّ مرضياً بغض النظر عن العوامل الأخرى."
-        recommendations = [
-            "ابدأ العلاج التجريبي فوراً ريثما تظهر نتيجة الحساسية.",
-            "استشر طبيب الأمراض المعدية.",
-            "احتجز المريض ومراقبته بشكل مكثف.",
-        ]
-    elif "MW_REJECT" in special_flags:
-        verdict = "🟢 SPECIMEN INADEQUATE -- Reject & Repeat"
-        color   = "success"
-        interpretation = "العينة غير مناسبة (خلايا طلائية ≥25/LPF). النتيجة تعكس تلوثاً من تجويف الفم لا عدوى حقيقية."
-        recommendations = [
-            "ارفض العينة وأعِد طلب البلغم بتقنية صحيحة.",
-            "يُفضَّل التجميع الصباحي الباكر (Early morning sputum).",
-            "فكّر في BAL إذا تعذّر الحصول على عينة مناسبة.",
-        ]
-    elif "ABU_NO_TREAT" in special_flags:
-        verdict = "🟡 ASYMPTOMATIC BACTERIURIA (ABU) -- Do NOT Treat"
-        color   = "warning"
-        interpretation = (
-            "تشير المعطيات إلى Asymptomatic Bacteriuria. وفقاً لـ IDSA 2019: "
-            "لا يُنصح بالعلاج إلا في الحامل أو قبل تدخل جراحي بولي."
-        )
-        recommendations = [
-            "لا تعطِ مضادات حيوية (Antibiotic Stewardship -- IDSA 2019).",
-            "تابع المريض وأعِد التقييم إذا ظهرت أعراض.",
-            "استثناءات: حمل -- قبيل جراحة بولية (Urology pre-op).",
-        ]
-    elif "ABU_TREAT" in special_flags:
-        verdict = "🔴 ABU IN HIGH-RISK CONTEXT -- Treat"
-        color   = "error"
-        interpretation = "ABU في سياق يستوجب العلاج (حمل / تدخل جراحي بولي)."
-        recommendations = [
-            "اختر مضاداً حيوياً مناسباً للحمل حسب نتيجة الحساسية.",
-            "مدة العلاج 5–7 أيام عادةً.",
-            "أعِد المزرعة بعد الانتهاء من الدورة للتأكد من الشفاء.",
-        ]
-    elif score >= 75:
-        verdict = "🔴 Likely TRUE INFECTION -- Treat"
-        color   = "error"
-        interpretation = (
-            "المؤشرات تدعم بقوة وجود عدوى حقيقية. يُنصح بالعلاج "
-            "الموجَّه بنتيجة الحساسية مع مراعاة السياق الكلينيكي."
-        )
-        recommendations = [
-            "ابدأ العلاج بناءً على نتيجة الـ AST.",
-            "راعِ شدة الأعراض وعوامل الخطر.",
-            "راجع الجرعة حسب الوظيفة الكلوية.",
-            "De-escalate بعد 48–72 ساعة إذا تحسّن المريض.",
-        ]
-    elif score >= 50:
-        verdict = "🟡 POSSIBLE INFECTION -- Clinical Correlation Required"
-        color   = "warning"
-        interpretation = (
-            "النتيجة حدودية. يُنصح بالتقييم الكلينيكي الكامل قبل البدء بالعلاج. "
-            "قد تحتاج فحوصات إضافية أو إعادة المزرعة."
-        )
-        recommendations = [
-            "قيّم المريض كلينيكياً قبل إعطاء المضادات الحيوية.",
-            "فكّر في إعادة المزرعة إذا كان الوضع غير واضح.",
-            "راجع نتيجة الـ Urinalysis / CRP / CBC إذا لم تكن متاحة.",
-        ]
-    elif score >= 30:
-        verdict = "🟠 LIKELY CONTAMINANT -- Repeat Recommended"
-        color   = "warning"
-        interpretation = (
-            "المؤشرات تميل نحو التلوث أو الاستعمار. "
-            "يُنصح بإعادة أخذ العينة بتقنية صحيحة قبل البدء بالعلاج."
-        )
-        recommendations = [
-            "أعِد أخذ العينة مع تحسين التقنية.",
-            "لا تبدأ العلاج بناءً على هذه النتيجة وحدها.",
-            "إذا تكرر العزل، فكّر في مصدر بديل (Hematogenous / Device).",
-        ]
-    else:
-        verdict = "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat"
-        color   = "success"
-        interpretation = (
-            "المؤشرات تدعم التلوث أو الاستعمار بشكل كبير. "
-            "العلاج غير مبرر في الغالب. تابع المريض كلينيكياً."
-        )
-        recommendations = [
-            "لا تعطِ مضادات حيوية بناءً على هذه النتيجة.",
-            "أعِد تقييم المريض إذا استمرت الأعراض أو تطورت.",
-            "التزم بمبادئ Antibiotic Stewardship.",
-        ]
-
-    return {
-        "score":           score,
-        "verdict":         verdict,
-        "color":           color,
-        "interpretation":  interpretation,
-        "recommendations": recommendations,
-        "factors_pos":     factors_pos,
-        "factors_neg":     factors_neg,
-        "abu_detected":    abu_detected,
-        "special_flags":   special_flags,
-    }
-
-
-_CFU_SUPERSCRIPTS = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
-
-# Semi-quantitative and verbal colony reports, mapped to a representative count.
-# ORDER MATTERS: scanned top-down and the first hit wins, so the more specific
-# phrase must precede the substring it contains ("no significant growth" before
-# "significant growth", "scanty" before "growth").
-#
-# Values sit in the MIDDLE of the band each phrase denotes, never on a
-# threshold, so a rounding argument can never flip the score:
-#   heavy / TNTC / confluent  -> 10^5 band  (significant at every age and sex)
-#   moderate                  -> 10^4 band  (borderline for males, significant <2y)
-#   scanty / few / light      -> 10^3 band  (significant only if symptomatic)
-_CFU_VERBAL: List[Tuple[str, int]] = [
-    ("no significant growth", 0),
-    ("insignificant growth", 0),
-    ("no bacterial growth", 0),
-    ("لا يوجد نمو", 0),
-    ("نمو غير معنوي", 0),
-    ("too numerous to count", 300000),
-    ("tntc", 300000),
-    ("confluent growth", 300000),
-    ("innumerable", 300000),
-    ("heavy growth", 300000),
-    ("heavy mixed growth", 300000),
-    ("profuse growth", 300000),
-    ("+++", 300000),
-    ("نمو كثيف", 300000),
-    ("نمو غزير", 300000),
-    ("significant growth", 300000),
-    ("moderate growth", 30000),
-    ("moderate mixed growth", 30000),
-    ("++", 30000),
-    ("نمو متوسط", 30000),
-    ("scanty growth", 3000),
-    ("scant growth", 3000),
-    ("light growth", 3000),
-    ("few colonies", 3000),
-    ("occasional colonies", 3000),
-    ("نمو ضئيل", 3000),
-    ("نمو قليل", 3000),
-]
-
-# Verbal pyuria estimates. _parse_pus() returns None for "not stated", and the
-# caller skips the whole pyuria block on None -- so "full field", the strongest
-# reading on the form, used to contribute nothing at all.
-_PUS_VERBAL: List[Tuple[str, int]] = [
-    ("full field", 100),
-    ("packed", 100),
-    ("loaded", 100),
-    ("innumerable", 100),
-    ("too numerous", 100),
-    ("tntc", 100),
-    ("plenty", 50),
-    ("numerous", 50),
-    ("many", 30),
-    ("moderate", 15),
-    ("مليء", 100),
-    ("كثير", 30),
-    ("متوسط", 15),
-    ("few", 3),
-    ("occasional", 3),
-    ("rare", 1),
-    ("قليل", 3),
-    ("نادر", 1),
-]
-
-
-def _parse_cfu(text: str) -> int:
-    """Numeric CFU/mL from a free-text colony-count field.
-
-    REWRITTEN. The previous body ended with `val = int(nums[-1])` -- the LAST
-    number anywhere in the string. Any trailing digit hijacked the result:
-
-        "Colony count 100000 CFU/mL (specimen 2)"  ->  2
-        "10 5 CFU/mL"   (OCR lost the superscript) ->  5
-        "Growth < 10^4 CFU/mL"                     ->  10000  (direction dropped)
-
-    The first two turn a significant count into an insignificant one, which is
-    the direction that costs a patient a treated infection. The third does the
-    opposite and manufactures significance out of an explicitly sub-threshold
-    report.
-
-    Strategy: normalise, then read the count that is ACTUALLY tied to a CFU /
-    count keyword or to power-of-ten notation, and honour the comparison
-    operator that precedes it.
-    """
-    if not text:
-        return 0
-    t = str(text)
-
-    # Unicode superscripts after "10" -> caret form ("10⁵" -> "10^5").
-    t = re.sub(r"10\s*([\u2070\u00b9\u00b2\u00b3\u2074-\u2079]+)",
-               lambda m: "10^" + m.group(1).translate(_CFU_SUPERSCRIPTS), t)
-    # OCR frequently renders "10⁵" as "10 5" / "10-5" once the superscript is
-    # lost. A bare "10" followed by a single digit 2-9 is a lost exponent, never
-    # a real count of "5 CFU/mL".
-    t = re.sub(r"\b10\s*[\-\u2013 ]\s*([2-9])\b", r"10^\1", t)
-    # FIX 2026-08-01 (second pass): the caret was the ONLY exponent form this
-    # function understood. Analysers and technologists routinely type the ASCII
-    # alternatives, and every one of them collapsed to the mantissa:
-    #     "10*5" -> 10   "10**5" -> 10   "10E5" -> 10   "10e5" -> 10
-    # For an adult male urine that turns +25 "significant bacteriuria" into
-    # -15 "likely insignificant" -- a 40-point swing in the direction that
-    # dismisses a real infection. Normalise them all to the caret form first.
-    t = re.sub(r"\b10\s*(?:\*\*|\*|[eE]|\^)\s*(\d+)", r"10^\1", t)
-    # A coefficient in front of a power of ten was silently dropped:
-    # "5x10^4" returned 10 000, not 50 000. Fold it in before the scan.
-    t = re.sub(
-        r"(\d+(?:\.\d+)?)\s*[x\u00d7\u2715*]\s*10\s*\^\s*(\d+)",
-        lambda m: str(int(float(m.group(1)) * (10 ** int(m.group(2))))), t)
-    t = t.replace("\u2009", " ")
-
-    low = t.lower()
-    if any(k in low for k in ("no growth", "sterile", "no organism", "لا يوجد نمو")):
-        return 0
-
-    # ── Semi-quantitative and verbal reports ─────────────────────────────────
-    # FIX 2026-08-01 (second pass): "heavy growth", "TNTC" and "significant
-    # growth" all returned 0 -- the SAME value as "no growth". Callers cannot
-    # distinguish "nothing grew" from "the parser gave up", and 0 is scored as
-    # absence of infection, so the strongest possible signal on the form was
-    # read as the weakest. These phrasings are what Egyptian lab report forms
-    # actually print. Mapped to the midpoint of the band each phrase denotes,
-    # so the existing thresholds (10^3 / 10^4 / 10^5) keep working unchanged.
-    for _kw, _val in _CFU_VERBAL:
-        if _kw in low:
-            return _val
-
-    # Candidate counts. The number pattern is deliberately STRICT:
-    #   10^n            power-of-ten notation
-    #   1,234,567       thousands-separated
-    #   12345           a plain run of digits
-    # An earlier draft of this rewrite used `\d[\d, ]{2,}`, which greedily ate
-    # across a clause boundary: "pus cells 20-25, 100000 CFU/mL" matched
-    # "25, 100000" and returned 25,100,000. A comma or space may only appear
-    # INSIDE a thousands group, never as a separator between two readings.
-    pat = re.compile(
-        r"(?:10\s*\^\s*(?P<exp>\d+))"
-        r"|(?P<grp>\d{1,3}(?:,\d{3})+)"
-        r"|(?P<num>\d+)"
-    )
-
-    cands = []
-    for m in pat.finditer(t):
-        if m.group("exp"):
-            val = 10 ** int(m.group("exp"))
-        elif m.group("grp"):
-            val = int(m.group("grp").replace(",", ""))
-        else:
-            val = int(m.group("num"))
-        cands.append((m.start(), m.end(), val))
-    if not cands:
-        return 0
-
-    # Prefer a candidate sitting next to a CFU / count keyword. Report suffixes
-    # ("sample #3", "(specimen 2)") and unrelated clauses ("pus cells 20-25")
-    # carry no such keyword, so they drop out.
-    anchored = [(a, b, v) for a, b, v in cands
-                if re.search(r"cfu|colon|count|/ml|/cc|بكتير|مستعمر",
-                             low[max(0, a - 24): b + 26])]
-    pool = anchored or cands
-    start, end, value = max(pool, key=lambda c: c[2])
-
-    # "<" applies only when it sits IMMEDIATELY BEFORE the count we chose. The
-    # first draft searched the whole string, so a "pus cells < 5" clause silently
-    # decremented an unrelated colony count.
-    prefix = low[max(0, start - 14): start]
-    if re.search(r"[<\u2264]\s*(?:10\s*\^\s*)?$|less than\s*$|below\s*$|أقل من\s*$",
-                 prefix) and value > 0:
-        value -= 1
-    return value
-
-
-def _cfu_report_state(text: str) -> str:
-    """Classify WHAT the colony-count field says, not just its numeric value.
-
-    _parse_cfu() returns an int, and 0 is overloaded: it means both "the lab
-    reported no growth" and "the field is blank or the parser could not read
-    it". assess_pathogenicity() consumed only that int, and every one of its
-    three age/sex branches was written as
-
-        if   cfu_val >= HIGH: score += ...
-        elif cfu_val >= MID:  score += ...
-        elif cfu_val > 0:     score -= PENALTY      # small count is penalised
-        #    cfu_val == 0  ->  no branch at all     # zero is NOT
-
-    so zero escaped the penalty a small count pays, and the score went
-    BACKWARDS at the bottom of the range:
-
-        male 35, dysuria, pyuria 20-25
-            "No growth"  -> 45      "10^3 CFU/mL" -> 30
-        infant, field left blank
-            -> 85  ->  "Likely TRUE INFECTION -- Treat"
-
-    Sterile urine scoring higher than scanty growth is the wrong direction, and
-    an unread field scoring at all is worse: it is an opinion manufactured from
-    an absence of data.
-
-    Returns one of:
-        "none"       -- the lab explicitly reported no growth. Strong evidence
-                        AGAINST infection; must outweigh a low-but-real count.
-        "unreported" -- blank, or present but unparseable. Contributes NOTHING
-                        to the score and is surfaced to the user instead.
-        "counted"    -- a real reading; use _parse_cfu()'s value.
-    """
-    raw = (text or "").strip()
-    if not raw:
-        return "unreported"
-    low = raw.lower()
-    if any(k in low for k in ("no growth", "sterile", "no organism",
-                              "no significant growth", "insignificant growth",
-                              "no bacterial growth", "لا يوجد نمو",
-                              "نمو غير معنوي")):
-        return "none"
-    # A reading the parser could not resolve to a number is NOT a zero count.
-    # _parse_cfu returns 0 for both, which is exactly the conflation above.
-    return "counted" if _parse_cfu(raw) > 0 else "unreported"
-
-
-def _score_colony_count(state: str, cfu_val: int, age: int, sex: str):
-    """(delta, positive_factor, negative_factor) for the colony-count field.
-
-    Split out of assess_pathogenicity so the three age/sex branches share one
-    treatment of the "none" and "unreported" states — the original had the
-    thresholds written out three times and the zero case missing from all three.
-    """
-    if state == "unreported":
-        return 0, None, ("ℹ️ Colony count not reported / unreadable — this field "
-                         "contributed nothing to the score. Enter it for a "
-                         "reliable assessment.")
-    if state == "none":
-        # Must be a HARDER penalty than any low-count penalty below, otherwise
-        # sterile urine outranks scanty growth. Explicit no-growth with an
-        # organism named on the form is itself a contradiction worth flagging.
-        return -30, None, ("❌ No growth reported — strong evidence against "
-                           "infection. If an organism was isolated, the colony "
-                           "count and the culture result disagree; re-check the "
-                           "report before treating.")
-
-    if age < 2:
-        if cfu_val >= 10000:
-            return 20, "✅ Colony count ≥ 10⁴ CFU/mL (significant for age < 2)", None
-        return 5, f"➕ Colony count {cfu_val:,} -- borderline (pediatric)", None
-    if sex == "Female" and age >= 12:
-        if cfu_val >= 100000:
-            return 25, "✅ Colony count ≥ 10⁵ CFU/mL -- significant bacteriuria", None
-        if cfu_val >= 1000:
-            return 12, "➕ Colony count 10³–10⁵ -- significant if symptomatic (female)", None
-        return -10, None, f"⚠️ Colony count {cfu_val:,} < 10³ -- likely insignificant"
-    if cfu_val >= 100000:
-        return 25, "✅ Colony count ≥ 10⁵ CFU/mL -- significant bacteriuria", None
-    if cfu_val >= 10000:
-        return 10, "➕ Colony count 10⁴–10⁵ CFU/mL -- borderline", None
-    return -15, None, f"⚠️ Colony count {cfu_val:,} < 10⁴ -- likely insignificant"
-
-
-def _parse_pus(text: str):
-    """Highest WBC/HPF reading in the text, or None when none is stated.
-
-    Returning None is meaningful: assess_pathogenicity() skips its entire pyuria
-    block on None. That is correct for "not done", and was WRONG for "full
-    field" / "loaded" / "TNTC" -- the strongest pyuria a microscopist can report
-    -- which contributed nothing because the string holds no digit. The verbal
-    forms are resolved first so a stray digit elsewhere in the field cannot
-    outrank them.
-    """
-    if not text:
-        return None
-    low = str(text).lower()
-    for _kw, _val in _PUS_VERBAL:
-        if _kw in low:
-            return _val
-    nums = re.findall(r'[\d]+', text)
-    if not nums:
-        return None
-    return max(int(n) for n in nums)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -5293,6 +4230,24 @@ _COMBO_HOST_FLAGS: List[Tuple[str, List[str], str, str]] = [
                  "ciprofloxacin", "levofloxacin", "moxifloxacin"],
      "⛔ وليد/طفل: غير مناسب لهذه الفئة العمرية إلا باستثناء مبرَّر.",
      "NEONATE/CHILD: not appropriate for this age band without justification."),
+    # Added 2026-08-03. A mutation that widened this panel's neonate window to
+    # every infant survived every suite — and writing the test that kills it
+    # showed the window was not the only gap: NONE of the salvage agents this
+    # panel actually recommends was in the neonate list. A neonate with XDR
+    # Pseudomonas got Cefiderocol and Imipenem-Relebactam with no age caution
+    # at all, because the list named only ceftriaxone and the tetracyclines.
+    #
+    # Amikacin and colistin are deliberately NOT here: amikacin is standard
+    # neonatal sepsis therapy and colistin has real neonatal experience. Adding
+    # them would flag the two agents a neonatologist is most likely to need.
+    ("neonate", ["cefiderocol", "relebactam", "vaborbactam", "avibactam",
+                 "ceftolozane", "ceftaroline", "daptomycin"],
+     "⚠️ وليد: بيانات السلامة والجرعة في حديثي الولادة محدودة أو غير متوفرة "
+     "لهذا الدواء. لا يُستخدم إلا بعد استشارة حديثي الولادة والأمراض المعدية، "
+     "وبتوثيق سبب غياب البديل.",
+     "NEONATE: neonatal safety and dosing data for this agent are limited or "
+     "absent. Use only after neonatology and infectious-diseases consultation, "
+     "documenting why no alternative exists."),
     ("renal", ["colistin", "polymyxin", "amikacin", "gentamicin", "tobramycin",
                "vancomycin"],
      "⚠️ قصور كلوي: يحتاج تعديل جرعة ومتابعة CrCl/TDM — الجرعات المكتوبة هنا "
@@ -5340,15 +4295,9 @@ def get_combination_therapy(
     # 0 for every infant from birth to eleven months — the same trap that made
     # apply_safety_gate() treat a six-month-old as a neonate (fixed 2026-08-03).
     # Resolve here too rather than inheriting it.
-    _eff_age = age_years
-    if age_months is not None:
-        try:
-            _m = float(age_months)
-            if 0 <= _m <= 11:
-                _eff_age = _m / 12.0
-        except (TypeError, ValueError):
-            pass
-    if _eff_age is not None and _eff_age < (28.0 / 365.0):
+    from clinical_utils import resolve_age_years as _ray, NEONATE_MAX_YEARS as _NMY
+    _eff_age = _ray(age_years, age_months)
+    if _eff_age is not None and _eff_age <= _NMY:
         states.add("neonate")
     if is_renal or (cl_cr is not None and cl_cr < 60):
         states.add("renal")
@@ -6514,1858 +5463,36 @@ def pdf_glyph_guard(html: str) -> str:
     return "".join(out)
 
 
-def generate_pdf_html_report(
-    patient_name: str, age: int, sex: str, weight: float,
-    cl_cr: float, is_renal: bool, is_preg: bool, is_hepatic: bool,
-    allowed: List[Dict], warned: List[Dict], banned: List[Dict],
-    preg_warn_items: List[Dict], organism: str, specimen: str,
-    sir_map: Dict[str, str], interactions: List[str],
-    mdr_result: Dict, esbl_result: Dict, phenotypes: List[Dict],
-    colony_count: str = "", date_in: str = "", pus_cells: str = "",
-    rbcs: str = "", lab_name: str = "Your Lab Name", lab_city: str = "",
-    patho_assessment: dict = None, duration_data: dict = None,
-    combo_suggestions: list = None, show_commercial_names: bool = False,
-    child_pugh: str = "", hepatic_recs: list = None,
-    lang: str = "ar",
-) -> Optional[bytes]:
-    if not WEASYPRINT_AVAILABLE:
-        return None
-
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-    # ── Language helpers ─────────────────────────────────────────────────
-    _EN = lang == "en"
-
-    # All bilingual strings used in this PDF
-    _T = {
-        # Section headers
-        "recommended":   "Recommended Therapy -- Ranked"       if _EN else "Recommended Therapy -- Ranked",
-        "avoid":         "Avoid / Contraindicated"            if _EN else "⊘ Avoid / Contraindicated",
-        "dose_adj":      "⚠ Dose Adjustment / Use with Caution",
-        "interactions":  "⊕ Drug Interactions",
-        "pregnancy":     "⚠ Pregnancy -- Use with Caution",
-        "preg_sub":      "(Physician decision required for all items below)",
-        "treatment":     "Treatment Duration",
-        "pathogenicity": "Pathogenicity Assessment",
-        # Pregnancy inline notes
-        "preg_extra":    "Additional options require caution in pregnancy -- see Pregnancy section below."
-                         if _EN else "⚠ خيارات إضافية بحذر في الحمل -- راجع قسم Pregnancy بالأسفل.",
-        "preg_only":     "All sensitive agents require caution in pregnancy -- see Pregnancy -- Use with Caution below."
-                         if _EN else "⚠ جميع الخيارات الحساسة تتطلب حذراً في الحمل -- راجع قسم Pregnancy -- Use with Caution بالأسفل لاتخاذ القرار.",
-        # Renal
-        "renal_label":   "Patient CrCl" if _EN else "Patient CrCl",
-        "renal_thresh":  "Threshold: CrCl ≤",
-        "renal_adj":     "⚠ Renal dose adjustment required  |  Threshold: CrCl ≤",
-        "intermediate":  "⚠ Intermediate (I) in culture result -- use only if no better option",
-        # Patho
-        "supporting":    "Supporting:",
-        "against":       "Against:",
-        "recs":          "Recommendations:",
-        # Duration
-        "protocol":      "Protocol",
-        "standard":      "Standard",
-        "range":         "Range",
-        "iv_po":         "IV/PO Split",
-        "follow_up":     "▣ Follow-up culture recommended after treatment",
-        # Footer
-        "disclaimer":    "Disclaimer: Clinical decision support only. Treatment decisions are the sole responsibility of the treating physician.",
-        "references":    "References",
-    }
-
-    def _xlate_preg_note(note: str) -> str:
-        """Translate Arabic preg_note to English for EN mode."""
-        if not _EN or not note:
-            return note
-        import re as _re
-        _arabic_re = _re.compile(r'[؀-ۿ]+')
-        if not _arabic_re.search(note):
-            return note   # already English
-
-        # Known translations map
-        _AR_EN = {
-            "ممنوع في الحمل":                   "Contraindicated in pregnancy",
-            "تحذير حمل":                         "Pregnancy caution",
-            "مقبول في الحمل":                    "Acceptable in pregnancy",
-            "آمن في الـ":                        "Safe in",
-            "تجنّب في الـ":                      "Avoid in",
-            "تجنّب":                             "Avoid",
-            "يترسّب في عظام وأسنان الجنين":      "chelates into fetal bone and teeth",
-            "تصبغ دائم للأسنان":                "permanent tooth discoloration",
-            "تثبيط نمو العظام":                 "inhibited bone growth",
-            "محظورة في كل مراحل الحمل":          "contraindicated throughout all trimesters",
-            "خاصة بعد الأسبوع":                 "especially after week",
-            "البديل":                           "Alternative",
-            "بيانات بشرية محدودة":              "limited human data",
-            "يعبر المشيمة":                     "crosses placenta",
-            "سُمية للأذن الجنينية":             "fetal ototoxicity",
-            "فقدان سمع دائم":                   "permanent hearing loss",
-            "مضاد حمض الفوليك":                 "folate antagonist",
-            "عيوب أنبوب عصبي":                  "neural tube defects",
-            "يُفضل تجنبه":                      "prefer to avoid",
-            "إن وُجد بديل آمن":                 "if a safer alternative exists",
-            "مقبول في كل":                      "acceptable throughout all",
-            "عند الضرورة":                      "when medically necessary",
-            "القرار النهائي للطبيب المعالج":     "Final decision: treating physician",
-            "حصراً":                            "exclusively",
-            "خطر":                              "risk of",
-            "خطر hemolytic anemia في الجنين":   "risk of fetal hemolytic anemia (G6PD)",
-            "نيونيتل hemolysis عند الوليد":     "neonatal hemolysis",
-            "البديل في 3rd trim":               "Alternative in 3rd trim",
-            "جرعة واحدة":                       "(single dose)",
-            "الأدلة الحديثة":                   "Recent evidence",
-            "دحضت مخاوف":                       "refuted concerns about",
-            "التشوهات القديمة":                 "historical malformation risk",
-            "يُفضل تجنبه في الـ 1st trimester": "prefer to avoid in 1st trimester",
-            "ارتبط بتشوهات خلقية":              "associated with congenital malformations",
-            "الدراسات الحيوانية والبشرية":       "in animal and human studies",
-            "أثبت سُمية جنينية في الحيوانات":   "demonstrated fetal toxicity in animal studies",
-            "يُستخدم فقط عند انعدام البدائل":    "use only when no alternatives available",
-            "يُستخدم عند الضرورة القصوى":        "use only when critically necessary",
-            "مراقبة وظائف الكلى":               "monitor renal function",
-            "السمع للأم والجنين":                "and fetal/maternal hearing",
-            "Category C":                        "Category C",
-            "Category B":                        "Category B",
-            "عند الحاجة لكاربابينيم":           "when a carbapenem is needed",
-            "يُفضل Meropenem":                  "Meropenem preferred",
-            "عند تعذّر Meropenem":              "if Meropenem is unavailable",
-            "nephrotoxicity":                    "nephrotoxicity",
-            "يُستخدم فقط لإنقاذ الحياة":        "life-saving use only",
-            "في XDR gram-negatives":            "for XDR gram-negative infections",
-            "غياب أي بديل":                     "when no alternative exists",
-            "تجنّب ما أمكن":                    "avoid whenever possible",
-            "تجنّب في الـ 3rd trimester":        "avoid in 3rd trimester",
-            "≥36 أسبوع":                        "≥36 weeks gestation",
-            "ممنوع في الـ 1st trimester":        "contraindicated in 1st trimester",
-            "ممنوع في كل الحمل":                "contraindicated throughout pregnancy",
-            "لا يُعتبر خطاً أول":               "not a first-line agent",
-            "أبداً في الحمل":                    "at any point in pregnancy",
-            "خطر التشوهات أقل مما كان يُعتقد":  "teratogenicity risk lower than previously thought",
-            "لا يُستخدم كخط أول":               "do not use as first-line",
-            "فقط عند غياب البديل الأكثر أمانًا": "only when no safer alternative exists",
-            "مقبول بجرعة واحدة":                "acceptable as single dose",
-            "لـ uncomplicated UTI في الحمل":    "for uncomplicated UTI in pregnancy",
-            "خيار مفضل على Nitrofurantoin":     "preferred over Nitrofurantoin",
-            "1st trim":                          "1st trimester",
-            "2nd trim":                          "2nd trimester",
-            "3rd trim":                          "3rd trimester",
-            "trimester":                         "trimester",
-        }
-
-        result = note
-        for ar, en in _AR_EN.items():
-            result = result.replace(ar, en)
-        return result
-
-    def _xlate_patho(text: str) -> str:
-        """Translate Arabic pathogenicity text to English."""
-        if not _EN or not text:
-            return text
-        import re as _re
-        if not _re.compile(r'[؀-ۿ]').search(text):
-            return text
-        _PATHO_EN = {
-            # Organism name carrying an Arabic parenthetical (EN report → Latin only)
-            "Anaerobes (لاهوائيات)": "Anaerobes",
-            "(لاهوائيات)": "",
-            # Contaminant-tier interpretations / recommendations (were leaking Arabic)
-            "يُنصح بإعادة أخذ العينة بتقنية صحيحة قبل البدء بالعلاج.":
-                "Repeat specimen collection with proper technique before starting treatment.",
-            "أعِد أخذ العينة مع تحسين التقنية.":
-                "Repeat specimen collection with improved technique.",
-            "لا تبدأ العلاج بناءً على هذه النتيجة وحدها.":
-                "Do NOT start treatment based on this result alone.",
-            "إذا تكرر العزل، فكّر في مصدر بديل (Hematogenous / Device).":
-                "If the isolate recurs, consider an alternative source (Hematogenous / Device).",
-            "المؤشرات تدعم التلوث أو الاستعمار بشكل كبير. العلاج غير مبرر في الغالب. تابع المريض كلينيكياً.":
-                "Indicators strongly support contamination or colonization. Treatment is usually not justified. Follow up the patient clinically.",
-            "لا تعطِ مضادات حيوية بناءً على هذه النتيجة.":
-                "Do NOT give antibiotics based on this result.",
-            "التزم بمبادئ Antibiotic Stewardship.":
-                "Adhere to Antibiotic Stewardship principles.",
-            "المؤشرات تدعم بقوة وجود عدوى حقيقية. يُنصح بالعلاج الموجَّه بنتيجة الحساسية مع مراعاة السياق الكلينيكي.":
-                "Strong indicators of TRUE INFECTION. Culture-directed therapy is recommended, considering the clinical context.",
-            "المؤشرات تدعم بقوة وجود عدوى حقيقية":
-                "Strong indicators of true infection",
-            "يُنصح بالعلاج الموجَّه بنتيجة الحساسية مع مراعاة السياق الكلينيكي":
-                "Culture-directed therapy recommended based on clinical context",
-            "ابدأ العلاج بناءً على نتيجة الـ AST.":
-                "Initiate therapy based on AST results.",
-            "ابدأ العلاج بناءً على نتيجة الـ AST":
-                "Initiate therapy based on AST results",
-            "راعِ شدة الأعراض وعوامل الخطر.":
-                "Consider symptom severity and risk factors.",
-            "راعِ شدة الأعراض وعوامل الخطر":
-                "Consider severity and risk factors",
-            "راجع الجرعة حسب الوظيفة الكلوية.":
-                "Review dosing based on renal function.",
-            "راجع الجرعة حسب الوظيفة الكلوية":
-                "Review dosing based on renal function",
-            "De-escalate بعد 48–72 ساعة إذا تحسّن المريض.":
-                "De-escalate after 48–72 hours if patient improves.",
-            "النتيجة حدودية. يُنصح بالتقييم الكلينيكي الكامل قبل البدء بالعلاج.":
-                "Borderline result. Full clinical assessment recommended before initiating treatment.",
-            "قد تحتاج فحوصات إضافية أو إعادة المزرعة.":
-                "Additional workup or repeat culture may be needed.",
-            "لا يُنصح بالعلاج إلا في الحامل أو قبل تدخل جراحي بولي.":
-                "Treatment not recommended unless patient is pregnant or pre-urological procedure.",
-            "المؤشرات تميل نحو التلوث أو الاستعمار.":
-                "Indicators suggest contamination or colonization.",
-            "ABU في سياق يستوجب العلاج (حمل / تدخل جراحي بولي).":
-                "Asymptomatic Bacteriuria requiring treatment (pregnancy / pre-op).",
-            "اختر مضاداً حيوياً مناسباً للحمل حسب نتيجة الحساسية.":
-                "Select a pregnancy-appropriate antibiotic per sensitivity results.",
-            "مدة العلاج 5–7 أيام عادةً.":
-                "Treatment duration typically 5–7 days.",
-            "أعِد المزرعة بعد الانتهاء من الدورة للتأكد من الشفاء.":
-                "Repeat culture post-treatment to confirm clearance.",
-            "العينة غير مناسبة":
-                "Specimen inadequate",
-            "ارفض العينة وأعِد طلب البلغم بتقنية صحيحة.":
-                "Reject specimen and request repeat sputum with proper technique.",
-            "قيّم المريض كلينيكياً قبل إعطاء المضادات الحيوية.":
-                "Assess the patient clinically before giving antibiotics.",
-            "فكّر في إعادة المزرعة إذا كان الوضع غير واضح.":
-                "Consider repeating the culture if the situation is unclear.",
-            "راجع نتيجة الـ Urinalysis / CRP / CBC إذا لم تكن متاحة.":
-                "Review Urinalysis / CRP / CBC results if not available.",
-            "النتيجة حدودية. يُنصح بالتقييم الكلينيكي الكامل قبل البدء بالعلاج. قد تحتاج فحوصات إضافية أو إعادة المزرعة.":
-                "Borderline result. Full clinical assessment is recommended before starting treatment. Additional tests or repeat culture may be needed.",
-            "أعِد تقييم المريض إذا استمرت الأعراض أو تطورت.":
-                "Re-evaluate the patient if symptoms persist or progress.",
-            "ابدأ العلاج التجريبي فوراً ريثما تظهر نتيجة الحساسية.":
-                "Start empiric therapy immediately pending sensitivity results.",
-            "احتجز المريض ومراقبته بشكل مكثف.":
-                "Admit the patient for intensive monitoring.",
-            "استثناءات: حمل -- قبيل جراحة بولية (Urology pre-op).":
-                "Exceptions: pregnancy / pre-urological surgery.",
-            "استشر طبيب الأمراض المعدية.":
-                "Consult an infectious disease specialist.",
-            "العينة من موقع معقم (CSF) -- أي نمو يُعدّ مرضياً بغض النظر عن العوامل الأخرى.":
-                "Specimen from a sterile site (CSF) -- any growth is pathogenic regardless of other factors.",
-            "تابع المريض وأعِد التقييم إذا ظهرت أعراض.":
-                "Follow up and reassess if symptoms appear.",
-            "تشير المعطيات إلى Asymptomatic Bacteriuria. وفقاً لـ IDSA 2019: لا يُنصح بالعلاج إلا في الحامل أو قبل تدخل جراحي بولي.":
-                "Findings indicate Asymptomatic Bacteriuria. Per IDSA 2019: treatment not recommended except in pregnancy or before a urological procedure.",
-            "لا تعطِ مضادات حيوية (Antibiotic Stewardship -- IDSA 2019).":
-                "Do NOT give antibiotics (Antibiotic Stewardship -- IDSA 2019).",
-        }
-        result = text
-        for ar, en in _PATHO_EN.items():
-            result = result.replace(ar, en)
-
-        # Word-level fallback for any remaining Arabic fragments
-        # NOTE: a word-level Arabic->English dictionary (_WORD_EN) used to sit
-        # here but was never wired in -- the regex strip below always ran instead.
-        # It has been deleted rather than connected, because partial word
-        # substitution produced half-translated "franco" text that is harder to
-        # read than clean removal. What IS unsafe is deleting a clinical
-        # recommendation with no trace, so the strip now logs what it dropped.
-        # Safety net: strip any residual Arabic so the English report is
-        # guaranteed to contain ZERO Arabic (and never franco-garbage from
-        # partial word substitution). Complete phrases above are fully
-        # translated; this only catches anything not yet mapped.
-        if re.compile(r'[؀-ۿ]').search(result):
-            _dropped = re.findall(r'[؀-ۿ\uFB50-\uFEFF]+(?:\s+[؀-ۿ\uFB50-\uFEFF]+)*', result)
-            if _dropped:
-                logger.warning(
-                    "EN report: %d Arabic fragment(s) had no translation and were "
-                    "removed -- add them to _PATHO_EN: %s",
-                    len(_dropped), " | ".join(f[:60] for f in _dropped[:5]))
-            result = re.sub(r'[؀-ۿ\uFB50-\uFEFF]+', '', result)
-            result = re.sub(r'\(\s*\)', '', result)            # drop empty parens
-            result = re.sub(r'\s+([.,;:،])', r'\1', result)     # tidy space before punct
-            result = re.sub(r'\s{2,}', ' ', result).strip()
-        return result
-
-    # ── AWaRe helpers ────────────────────────────────────────────────────
-    AWARE_CLR  = {"Access": "#1e8449", "Watch": "#b7770d", "Reserve": "#922b21"}
-    AWARE_PILL = {"Access": "background:#1e8449;color:#fff",
-                  "Watch":  "background:#b7770d;color:#fff",
-                  "Reserve":"background:#922b21;color:#fff"}
-    AWARE_CARD = {"Access": "background:#eafaf1;border:0.8pt solid #1e8449",
-                  "Watch":  "background:#fef9e7;border:0.8pt solid #b7770d",
-                  "Reserve":"background:#fdf2f2;border:0.8pt solid #922b21"}
-    # NOTE: AWaRe class is NOT used as the therapy "line" anymore (see ranked loop
-    # below) — Access!=first-line for a given site. Line labels come from the syndrome.
-
-    # المصدر الموحّد للترتيب — نفس منطق الشاشة والصورة (الحساسية أولاً ثم
-    # العينة ثم AWaRe ثم الطريق)، بدلاً من ترتيب AWaRe منفصل كان يعطي ترتيباً
-    # مختلفاً عن الشاشة.
-    ranked   = rank_sensitive_antibiotics(allowed, specimen, organism, sir_map, phenotypes)
-    mdr_class = mdr_result.get("level","") if mdr_result else ""
-    ph_labels = [p.get("phenotype","") for p in phenotypes]
-    esbl_prob = esbl_result.get("probability","low")
-    esbl_conf = esbl_result.get("confidence", 0) if esbl_result else 0
-    # Header pills must reflect only confirmed/high-confidence findings —
-    # weak/fallback inferences (e.g. "Possible MRSA" without Oxacillin/Cefoxitin
-    # confirmation) stay in the body detail, not the prominent header badge.
-    _WEAK_HEADER_PHENOTYPES = {"Possible MRSA"}
-    _hdr_ph_labels = [p for p in ph_labels if p not in _WEAK_HEADER_PHENOTYPES]
-    # Flags for Avoid-reason tagging (derived from passed-in results)
-    _is_esbl_like     = esbl_prob in ("high", "ampc", "ampc_plasmid")
-    _is_carbapenemase = esbl_prob in ("carbapenemase", "possible_carbapenemase")
-    _is_mrsa          = any("MRSA" in str(p).upper() for p in ph_labels) \
-                        or "mrsa" in str(organism).lower()
-
-    def pill(txt, style):
-        return f'<span style="padding:0.35mm 2.6mm;border-radius:2mm;font-size:8.5pt;font-weight:bold;{style}">{_esc(txt)}</span>'
-
-    def _rnote(d):
-        """Renal note in the report's language.
-
-        EN reports must never fall back to the Arabic renal_note: the
-        downstream Arabic strip would delete words like "تجنّب" (avoid) and
-        "بعد" (after) mid-sentence, turning "(avoid 875mg)" into "(875mg)"
-        and "+ dose after dialysis" into "+ dose dialysis".
-
-        The two entries this used to hold back (Cefotaxime, Norfloxacin) held
-        another drug's dose band and had renal_note_en blanked as a stopgap.
-        That protected the English report only -- the ARABIC report, which is
-        the one this lab issues, kept printing pip-tazo doses under Cefotaxime
-        and co-amoxiclav doses under Norfloxacin. Both bands are now corrected
-        at source, so the hold below is dormant. It stays as a net: any future
-        entry with a deliberately blank renal_note_en shows an explicit hold
-        rather than a silent gap or the wrong drug's dosing.
-        """
-        if not _EN:
-            return d.get("renal_note", "") or ""
-        en = (d.get("renal_note_en") or "").strip()
-        if en:
-            return en
-        if "renal_note_en" in d:
-            return ("Renal dosing withheld -- entry flagged for clinical "
-                    "verification. Consult BNF 2025.")
-        return d.get("renal_note", "") or ""
-
-    def _join_more(items, n):
-        """Join first n items, then say how many were withheld."""
-        items = [str(i) for i in (items or [])]
-        head = ", ".join(items[:n])
-        rest = len(items) - n
-        return head + (f"  (+{rest} more)" if rest > 0 else "")
-
-    def _clip(text, limit):
-        """Word-boundary-safe truncation with a visible ellipsis.
-
-        The previous code sliced clinical strings at a raw character index,
-        which cut dose bands mid-number ('CrCl 40-6') and gave the reader no
-        signal that anything had been dropped. This never splits a token and
-        always marks the cut.
-        """
-        s = str(text or '')
-        if len(s) <= limit:
-            return s
-        cut = s[:limit]
-        sp = cut.rfind(' ')
-        if sp > limit * 0.55:
-            cut = cut[:sp]
-        return cut.rstrip(' ,;.-') + '\u2026'
-    # ── Compact CSS ──────────────────────────────────────────────────────
-    CSS = """
-@page {
-    size: A4;
-    margin: 6mm 10mm 8mm 10mm;
-    @bottom-center {
-        content: "Page " counter(page) " of " counter(pages) " | Microbiology CDSS | @@LABFOOT@@";
-        font-size: 7.5pt; color: #7b8794;
-        font-family: 'Noto Sans','Liberation Sans','DejaVu Sans', sans-serif;
-    }
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-/* ══ TYPE SYSTEM ═══════════════════════════════════════════════════════
-   Serif sets prose, headings and the masthead (clinical/journal register).
-   Sans sets numeric and tabular data (digit clarity in dense dose strings).
-   Amiri is listed last in every stack and every Latin family ahead of it has
-   zero Arabic coverage, so Arabic resolves to Amiri and nothing else does.
-   Geometric symbols (✓ ✗ ⊘ ◆ ● ▣ ▲ ↻ ⊕) fall through to DejaVu Sans.        */
-body { font-family: 'Noto Serif','Liberation Serif','Amiri','DejaVu Sans',serif;
-       font-size: 9.3pt; line-height: 1.42; color: #1a1a2e; direction: ltr;
-       background: #fff; -weasy-hyphens: none; }
-
-/* Data faces — tabular figures so dose columns align and digits stay distinct */
-.ast, .compact-tbl, .info4, .dose-grid, .ranked-row, .tier-sep,
-.hdr-right, .hdr-lbl, .score-lbl {
-    font-family: 'Noto Sans','Liberation Sans','Amiri','DejaVu Sans',sans-serif;
-    font-variant-numeric: tabular-nums;
-    -weasy-font-variant-numeric: tabular-nums;
-}
-/* Binomial names stay serif italic — scientific convention */
-.hdr-org, i.sci { font-family:'Noto Serif','Liberation Serif',serif; font-style:italic; }
-/* Arabic runs */
-.rtl, .ar, .hdr-pt { font-family:'Amiri','Noto Naskh Arabic',serif; }
-.ltr { direction: ltr; unicode-bidi: embed; display: inline; }
-.rtl { direction: rtl; unicode-bidi: embed; }
-/* Header — compact */
-.hdr { background:#0d3b66; color:#fff; padding:2mm 8mm 1.5mm; display:flex;
-       justify-content:space-between; align-items:center; }
-.hdr-lab  { font-size:15.5pt; font-weight:bold; letter-spacing:0.35pt; }
-.hdr-pt   { font-size:9pt; }
-.hdr-org  { font-size:9.2pt; }
-.hdr-sub  { font-size:8.6pt; color:#c3d3e4; margin-top:0.4mm; }
-.hdr-pills { margin-top:0.7mm; }
-.hdr-right { font-size:8.6pt; color:#edf3f9; text-align:right; direction:ltr; }
-.hdr-lbl  { font-size:8pt; color:#9fb8d2; letter-spacing:0.5pt; }
-.accent   { height:1mm; background:#ff8c00; }
-.content  { padding: 0.5mm 0; }
-/* Micro info grid */
-.info4 { display: table; width: 100%; border-collapse: collapse; font-size:9pt; margin:1mm 0; }
-.info4 tr td { padding: 1mm 2.5mm; border: 0.3pt solid #d5d8dc; }
-.lbl4 { background:#f4f6f8; font-weight:bold; color:#0d3b66; width:14%; }
-.val4 { width:22%; }
-/* Section titles — tighter */
-.sec-ttl { font-size:9.2pt; font-weight:bold; color:#0d3b66; text-transform:uppercase;
-            letter-spacing:0.9pt; border-bottom:0.7pt solid #0d3b66;
-            padding-bottom:0.4mm; margin:1.6mm 0 0.8mm;
-            direction:ltr; text-align:left; }
-/* AST table */
-.ast { width:100%; border-collapse:collapse; font-size:8.8pt; direction:ltr; }
-.ast th { background:#0d3b66; color:#fff; padding:1mm 2.5mm; text-align:left; font-size:8pt; }
-.ast td { padding:1mm 2.5mm; border:0.3pt solid #d5d8dc; text-align:left; }
-.ast tr:nth-child(even) td { background:#f8f9fa; }
-.sir-s { color:#1e8449; font-weight:bold; }
-.sir-i { color:#b7770d; font-weight:bold; }
-.sir-r { color:#922b21; font-weight:bold; }
-/* Two-column grid */
-.pb { page-break-after: always; }
-.grid2 { display:table; width:100%; border-spacing:1mm; border-collapse:separate; direction:ltr; }
-.g2l { display:table-cell; width:49%; vertical-align:top; direction:ltr; text-align:left; }
-.g2r { display:table-cell; width:49%; vertical-align:top; direction:ltr; text-align:left; }
-/* Ranked rows — tighter */
-.ranked-row { padding:1mm 2.5mm; margin:0.4mm 0; border-radius:1.5mm; direction:ltr; text-align:left;
-              display:flex; justify-content:space-between; align-items:center; page-break-inside:avoid; }
-.tier-sep { font-size:8.2pt; font-weight:bold; text-transform:uppercase; letter-spacing:0.3pt;
-            direction:ltr; text-align:left;
-            padding:0.2mm 0; margin-top:0.8mm; border-top:0.8pt solid; }
-/* Alerts — tighter */
-.alert { padding:1.1mm 2.8mm; border-radius:1.5mm; margin:0.5mm 0; font-size:9.2pt; direction:ltr; text-align:left; }
-.al-warn   { background:#fef9e7; border:0.4pt solid #b7770d; color:#7d6608; }
-.al-danger { background:#fdedec; border:0.4pt solid #922b21; color:#78281f; }
-.al-info   { background:#eaf4fb; border:0.4pt solid #2980b9; color:#1a5276; }
-.score-bar { background:#e5e7eb; border-radius:1.5mm; height:3mm; width:100%; }
-.score-fill{ height:3mm; border-radius:1.5mm; }
-.compact-tbl { width:100%; border-collapse:collapse; font-size:9.2pt; direction:ltr; }
-.compact-tbl td { padding:0.8mm 2.5mm; border:0.3pt solid #d5d8dc; text-align:left; }
-.compact-tbl .lbl { background:#f4f6f8; font-weight:bold; color:#0d3b66; width:40%; }
-.warn-val  { color:#b7770d; font-weight:bold; }
-.danger-val{ color:#922b21; font-weight:bold; }
-.no-break  { page-break-inside: avoid; }
-hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:0.6mm 0; }
-/* Safety net: long, unbreakable drug names must never overflow the A4 margin */
-.content, .alert, .g2l, .g2r, .ranked-row > div { overflow-wrap:anywhere; }
-.ranked-row > div { min-width:0; }
-"""
-
-    # ── Specimen short label for header (lab-report convention) ───────────
-    SPECIMEN_SHORT = {
-        "Urine":       "Urine C/S",
-        "Blood":       "Blood C/S",
-        "Sputum":      "Sputum C/S",
-        "Wound Swab":  "Wound C/S",
-        "Pus":         "Pus C/S",
-        "Stool":       "Stool C/S",
-        "CSF":         "CSF C/S",
-    }
-    specimen_short = SPECIMEN_SHORT.get(specimen, f"{specimen} C/S" if specimen else "")
-
-    def hdr_html(page_lbl: str) -> str:
-        mdr_pills = ""
-        # MDR/XDR/PDR — deterministic category count (Magiorakos 2012), always shown
-        if mdr_class: mdr_pills += pill(mdr_class, "background:#922b21;color:#fff")+" "
-        # Resistance phenotypes (MRSA/VRE/CRE/CRAB/CRPA) — confirmed via direct AST
-        # markers, always shown. Weak/fallback inferences already excluded upstream.
-        for ph in _hdr_ph_labels[:3]: mdr_pills += pill(ph, "background:#6e2fa0;color:#fff")+" "
-        # ESBL/AmpC/Carbapenemase — genuinely PREDICTED mechanisms (predict_esbl()).
-        # Only surface in header when confidence is high; lower-confidence calls
-        # remain available in the body detail, not as a prominent badge.
-        if esbl_conf >= 70:
-            if esbl_prob == "crpa":
-                mdr_pills += pill("DTR-P.aeruginosa" if (esbl_result or {}).get("dtr") else "CR-P.aeruginosa",
-                                  "background:#922b21;color:#fff" if (esbl_result or {}).get("dtr")
-                                  else "background:#b7770d;color:#fff")
-            elif esbl_prob in ("carbapenemase", "possible_carbapenemase"): mdr_pills += pill("CARBAPENEMASE","background:#922b21;color:#fff")
-            elif esbl_prob in ("ampc", "ampc_plasmid"):        mdr_pills += pill("AmpC","background:#b7770d;color:#fff")
-            elif esbl_prob in ("high","moderate"): mdr_pills += pill("ESBL+","background:#b7770d;color:#fff")
-        _pills_html = ("<div class='hdr-pills'>" + mdr_pills + "</div>") if mdr_pills else ""
-        return f"""<div class="hdr">
-  <div>
-    <div class="hdr-lab">{_esc(lab_name)}</div>
-    <div class="hdr-sub">{_esc(lab_city)} &nbsp;|&nbsp; Microbiology CDSS</div>
-    {_pills_html}
-  </div>
-  <div class="hdr-right">
-    <b style="font-size:11pt">{_esc(specimen_short)}</b><br>
-    <span class="hdr-lbl">{page_lbl}</span><br>
-    {_esc(date_in or now_str[:10])}<br>
-    <b class="hdr-pt">&#x2067;@@PTNAME@@&#x2069;</b><br>
-    <span class="hdr-org">&#x2066;{_esc(organism)}&#x2069;</span>
-  </div>
-</div><div class="accent"></div><div class="content">"""
-
-    # Resolve the footer lab-name token (see P1) -- quotes stripped so the
-    # value cannot break out of the CSS content string.
-    CSS = CSS.replace(
-        "@@LABFOOT@@",
-        (lab_name or "").replace('"', "").replace("\\", "")
-    )
-
-    H = []
-    _doc_title = (
-        f"{specimen_short or 'Culture'} Clinical Advisory"
-        f" -- {organism or 'isolate'} -- {lab_name or 'Lab'}"
-    )
-    H.append(f"<!DOCTYPE html><html lang='en' dir='ltr'><head><meta charset='UTF-8'>"
-             f"<title>{_esc(_doc_title)}</title>"
-             f"<style>{CSS}</style></head><body>")
-
-    # ════════════════════════════════════════════════════════════════
-    # SINGLE PAGE: Clinical Decision Support
-    # (Page 1 Patient/Culture/AST removed -- CDS only)
-    # ════════════════════════════════════════════════════════════════
-    H.append(hdr_html("CLINICAL ADVISORY"))
-    H.append('<div class="content">')
-
-    # ── RECOMMENDED THERAPY — RANKED (Page 1 — compact like orange_lab) ──────
-    if ranked:
-        H.append(f'<div class="sec-ttl">{_T["recommended"]}</div>')
-        # ── Line-of-therapy label is SITE-SPECIFIC, not AWaRe ────────────────
-        # AWaRe (Access/Watch/Reserve) is a stewardship/conservation class, NOT a
-        # clinical preference rank for this infection. Using it as the "line" made an
-        # Access aminoglycoside (Gentamicin) show as "First-line" for a Sputum case,
-        # sitting *below* the actually-preferred Watch agents — clinically misleading.
-        # The first-line set now comes from the syndrome table (curated per specimen,
-        # e.g. Sputum -> Amox/Clav, Levofloxacin, Azithromycin). AWaRe stays only as
-        # the row tint + pill on the right.
-        # First-line set is ORGANISM-aware first (curated per organism), then falls
-        # back to the specimen syndrome. This stops e.g. Azithromycin being labelled
-        # "FIRST-LINE" for an Enterobacterales (macrolides aren't first-line for GNB),
-        # even though the CAP syndrome lists it as an empiric first choice.
-        _prof_fl = _drop_intrinsic(
-            (ORGANISM_PROFILE.get(organism) or {}).get("first_line") or [], organism)
-        _syn_fl  = INFECTION_SYNDROMES.get((specimen, None), {})
-        _fl_src  = _prof_fl or (_syn_fl.get("first_choice") or [])
-        _fl_norm = {normalize_abx_key(n) for n in _fl_src}
-        prev_tier = ""
-        # If AST + safety filtering left NO curated first-line agent standing,
-        # labelling every surviving row "ALTERNATIVE" leaves the document with
-        # no primary recommendation. Detect that and promote the top row.
-        _fl_survives = any(
-            normalize_abx_key(_r.get("name","")) in _fl_norm for _r in ranked
-        ) if _fl_norm else False
-        for i, _rd in enumerate(ranked, 1):
-            _raw  = _rd.get("aware","")
-            _nm_norm = normalize_abx_key(_rd.get("name",""))
-            if _fl_norm and _fl_survives:
-                _tlbl = "FIRST-LINE" if _nm_norm in _fl_norm else "ALTERNATIVE"
-            else:                                   # no curated syndrome list -> rank by position
-                _tlbl = "PRIMARY" if i == 1 else "ALTERNATIVE"
-            _clr  = AWARE_CLR.get(_raw,"#444")      # drug name + pill colour = AWaRe (stewardship)
-            _hclr = "#1e8449" if _tlbl in ("FIRST-LINE", "PRIMARY") else "#0d3b66"  # header colour = line
-            _ccss = AWARE_CARD.get(_raw,"")
-            _sirv = sir_map.get(_rd.get("name",""),"S")
-            _rte  = "PO" if _rd.get("high_po") else "IV/IM"
-            _rnl  = _esc(_rnote(_rd)) if is_renal else ""
-            if _tlbl != prev_tier:
-                H.append(f'<div class="tier-sep" style="color:{_hclr};border-color:{_hclr}">{_tlbl}</div>')
-                prev_tier = _tlbl
-            H.append(
-                f'<div class="ranked-row" style="{_ccss};border-radius:1.5mm;padding:1mm 2.5mm;margin:0.3mm 0">'
-                '<div style="flex:1;min-width:0;overflow-wrap:anywhere">'
-                f'<b style="font-size:10.5pt;color:{_clr}">{i}. {_esc(_rd.get("name",""))}</b>'
-                f'&ensp;<span class="ltr" style="background:#fff;border:0.4pt solid {_clr};color:{_clr};'
-                f'font-size:8.5pt;padding:0.3mm 2.5mm;border-radius:1mm">{_sirv}</span>'
-                f'&ensp;<span style="font-size:8.5pt;color:#555">{_rte}</span>'
-                + (f'&ensp;<small style="color:#b7770d">⚠ {_rnl}</small>' if _rnl else "")
-                + '</div>'
-                f'<div>{pill(_raw, AWARE_PILL.get(_raw,""))}</div>'
-                '</div>'
-            )
-        if is_preg and preg_warn_items:
-            H.append('<div style="font-size:8.2pt;color:#6c3483;margin-top:0.5mm">'
-                     f'{_T["preg_extra"]}</div>')
-    else:
-        H.append(f'<div class="sec-ttl">{_T["recommended"]}</div>')
-        if is_preg and preg_warn_items:
-            H.append(f'<div class="alert al-info" style="font-size:8.4pt">{_T["preg_only"]}</div>')
-        else:
-            H.append('<div class="alert al-info" style="font-size:8.4pt">'
-                     'No clear first-line options — see Caution / Pregnancy sections below.</div>')
-
-    # ── AVOID -- each drug with its specific reason ────────────────────────
-    if banned:
-        def _ban_reason(bd):
-            cat = bd.get("category", "")
-            nm  = bd.get("name", "")
-            _sir = sir_map.get(nm, "")
-            _info_lookup = ABX_GUIDELINES.get(nm, {})
-            _cls = (_info_lookup.get("class", "") or "").lower()
-            # 1. Resistant in culture (explicit R)
-            if cat == "resistant" or _sir == "R":
-                return ('✗ (R)', '#922b21')
-            # 2. Pregnancy contraindication
-            if cat == "pregnancy":
-                return ('⊘ Pregnancy', '#7d3c98')
-            # 3. Pediatric / child
-            if cat in ("child", "pediatric"):
-                return ('⊘ Pediatric', '#7d3c98')
-            # 4. Renal
-            if cat == "renal":
-                return ('⚠ Renal', '#b7770d')
-            # 5. Organism-based (MRSA / ESBL / AmpC / Carbapenemase / intrinsic)
-            if cat == "organism":
-                _is_betalactam = any(k in _cls for k in
-                                     ("penicillin", "cephalosporin", "carbapenem"))
-                # MRSA: detected + beta-lactam
-                if _is_mrsa and _is_betalactam:
-                    return ('⚠ MRSA -- β-lactam', '#922b21')
-                # Carbapenemase
-                if _is_carbapenemase and _is_betalactam:
-                    return ('⚠ Carbapenemase', '#922b21')
-                # ESBL/AmpC suppression of penicillins+cephalosporins
-                if _is_esbl_like and _is_betalactam:
-                    return ('⚠ ESBL Concern', '#b7770d')
-                # Otherwise intrinsic resistance
-                return ('⚠ Intrinsic R', '#922b21')
-            return ('✗ Avoid', '#922b21')
-
-        H.append(
-            '<div class="sec-ttl" style="margin-top:1mm;color:#922b21;border-bottom-color:#922b21">'
-            f'{_T["avoid"]}</div>'
-        )
-        _avoid_rows = []
-        for _bd in banned:
-            _nm   = _esc(_bd.get("name",""))
-            _tag, _clr = _ban_reason(_bd)
-            _avoid_rows.append(
-                f'<span style="display:inline-block;margin:0.3mm 1mm 0.3mm 0;'
-                f'padding:0.2mm 2mm;background:#fff;border:0.4pt solid {_clr};'
-                f'border-radius:1.5mm;font-size:8pt;max-width:90mm;overflow-wrap:anywhere;vertical-align:top">'
-                f'<b style="color:#1a1a2e">{_nm}</b> '
-                f'<span style="color:{_clr};font-size:8.2pt">{_tag}</span></span>'
-            )
-        H.append(
-            f'<div class="alert al-danger" style="font-size:8.5pt;line-height:1.6">'
-            f'{"".join(_avoid_rows)}</div>'
-        )
-        # Pregnancy-banned — separate line for clarity
-        _preg_banned = [_bd for _bd in banned if _bd.get("category") == "pregnancy"]
-        if _preg_banned and is_preg:
-            _pb_names = ", ".join(_esc(_bd["name"]) for _bd in _preg_banned)
-            H.append(
-                '<div class="alert al-danger" style="font-size:8.5pt;margin-top:1mm">'
-                f'⊘ <b>Pregnancy Contraindicated:</b> {_pb_names}</div>'
-            )
-
-    # ── DOSE ADJUSTMENT / USE WITH CAUTION -- compact chip grid ──────────
-    if warned:
-        H.append('<div class="sec-ttl" style="margin-top:0.6mm;color:#b7770d;border-bottom-color:#b7770d">'
-                 f'{_T["dose_adj"]}</div>')
-        # Shared notes (renal / intermediate) stated ONCE here instead of
-        # repeating under every single drug below.
-        _sub_notes = []
-        if is_renal:
-            _sub_notes.append(f'Patient CrCl = {crcl_label(cl_cr, is_renal)}')
-        if any(_wd.get("warning_reason") == "intermediate_culture" for _wd in warned):
-            _sub_notes.append('⚠ Intermediate (I) in culture -- use only if no better option')
-        if _sub_notes:
-            H.append('<div style="font-size:8.2pt;color:#7d6608;margin-bottom:1mm">'
-                     + ' &nbsp;·&nbsp; '.join(_sub_notes) + '</div>')
-
-        H.append('<div class="dose-grid" style="display:flex;flex-wrap:wrap;gap:1mm;align-items:stretch">')
-        for _wd in warned:
-            _wname = _esc(_wd.get("name",""))
-            _waw   = _esc(_wd.get("aware",""))
-            _wreason = _wd.get("warning_reason","")
-            _waw_style = {
-                "Access":  "background:#1e8449;color:#fff",
-                "Watch":   "background:#b7770d;color:#fff",
-                "Reserve": "background:#922b21;color:#fff",
-            }.get(_wd.get("aware",""), "background:#888;color:#fff")
-
-            # Reason-specific detail -- "intermediate_culture" is skipped here
-            # since it's already covered once by the shared note above.
-            _detail = ""
-            if _wreason == "renal_adjustment":
-                _rl = _wd.get("renal_limit","-")
-                _rn = _esc(_rnote(_wd))
-                _detail = f'Renal dose adjustment required | Threshold: CrCl \u2264 {_rl} ml/min' + (f' -- {_rn}' if _rn else '')
-            elif _wreason in ("esbl_bli_uti_only", "possible_carbapenemase"):
-                _esbl_txt = (_wd.get("esbl_note_en") if _EN and _wd.get("esbl_note_en")
-                             else _wd.get("esbl_note","ESBL organism -- BLI combo for uncomplicated UTI only"))
-                _detail = _esc(_esbl_txt)
-            elif _wreason == "intermediate_culture":
-                # Never leave the card body empty -- a blank card next to cards
-                # carrying a renal caveat reads as "nothing to adjust here".
-                _detail = ('Intermediate (I) on AST \u2014 use only if no better '
-                           'option; maximise dose/exposure.')
-                _rn_i = _esc(_rnote(_wd))
-                if _rn_i:
-                    _detail += f' Renal: {_rn_i}'
-            else:
-                _detail = _esc(_rnote(_wd) or _wd.get("note",""))
-
-            H.append(
-                # flex:1 1 42mm -> chips grow to fill each row evenly (fixes poor
-                # distribution when few drugs); min-width forces a clean wrap; max-width
-                # keeps a lone chip from spanning the whole page; overflow:hidden +
-                # word wrapping on the name stop long drug names spilling past the
-                # right margin.
-                '<div style="flex:1 1 42mm;min-width:40mm;max-width:92mm;padding:0.5mm 2mm;'
-                'border-radius:1.5mm;background:#fef9e7;border:0.5pt solid #b7770d;'
-                'overflow:hidden;page-break-inside:avoid">'
-                '<div style="display:flex;justify-content:space-between;align-items:center;gap:1.5mm;min-width:0">'
-                f'<b style="font-size:9pt;color:#6b5806;min-width:0;overflow-wrap:anywhere;word-break:break-word">{_wname}</b>'
-                '<span style="padding:0.2mm 1.8mm;border-radius:1.5mm;font-size:7pt;flex:0 0 auto;'
-                f'font-weight:bold;white-space:nowrap;{_waw_style}">{_waw}</span>'
-                '</div>'
-                + (f'<div style="font-size:8pt;color:#4a4a4a;margin-top:0.4mm;line-height:1.35;overflow-wrap:anywhere">{_detail}</div>'
-                   if _detail else '')
-                + '</div>'
-            )
-        H.append('</div>')
-
-    # ── Interactions (compact) ─────────────────────────────────────────
-    # SILENT-TRUNCATION FIX: this used to print `interactions[:4]`, so on a
-    # hepatic patient with several flagged agents the 5th warning onwards simply
-    # never appeared in the document the physician actually reads -- and nothing
-    # told anyone it had been dropped. All items are now printed; if the list is
-    # long the overflow is condensed onto one line rather than discarded.
-    if interactions:
-        _ia_all = list(interactions)
-        _ia_head, _ia_tail = _ia_all[:6], _ia_all[6:]
-        _rows = [f'<span style="font-size:9pt">{_esc(ia)}</span>' for ia in _ia_head]
-        if _ia_tail:
-            _rows.append('<span style="font-size:8pt">+ '
-                         + _esc(" · ".join(_ia_tail)) + '</span>')
-        H.append(f'<div class="sec-ttl" style="margin-top:0.6mm">{_T["interactions"]}</div>'
-                 '<div class="alert al-warn">' + '<br>'.join(_rows) + '</div>')
-
-    # 2-column equal — Treatment Duration LEFT, Pathogenicity RIGHT
-    H.append('<div class="grid2" style="margin-top:0.6mm">')
-
-    # ── Treatment Duration (now left column) ──────────────────────────────
-    H.append('<div class="g2l">')
-    if duration_data:
-        d = duration_data
-        H.append('<div class="sec-ttl">Treatment Duration</div>')
-        std = d.get("standard_days", d.get("standard","?"))
-        H.append('<table class="compact-tbl">'
-                 f'<tr><td class="lbl">Protocol</td><td>{_esc(d.get("label",""))}</td></tr>'
-                 f'<tr><td class="lbl">Standard</td><td><b style="font-size:12pt">{std} days</b></td></tr>'
-                 f'<tr><td class="lbl">Range</td><td>{d.get("min_days","?")}–{d.get("max_days","?")} days</td></tr>'
-                 f'<tr><td class="lbl">IV/PO Split</td><td class="ltr">IV:{d.get("iv_days",0)}d · PO:{d.get("po_days",0)}d</td></tr>'
-                 '</table>')
-        if d.get("notes"):
-            _note = annotate_regimen_note(d["notes"], sir_map, lang=lang)
-            H.append(f'<div class="alert al-info" style="font-size:8pt;margin-top:0.5mm">▣ {_esc(_clip(_note, 400))}</div>')
-        if d.get("follow_up_culture"):
-            H.append('<div class="alert al-warn" style="font-size:8.5pt">↻ Follow-up culture recommended after treatment</div>')
-        H.append(f'<div style="font-size:8.4pt;color:#7b8794;margin-top:1.2mm">§ {_esc(d.get("ref",""))}</div>')
-    else:
-        H.append('<div class="sec-ttl">Treatment Duration</div>')
-        H.append('<div class="alert al-info" style="font-size:9pt">Select severity level to see treatment duration</div>')
-    H.append('</div>')
-
-    # ── Pathogenicity (now right column, expanded) ────────────────────────
-    H.append('<div class="g2r">')
-    if patho_assessment:
-        sc     = patho_assessment.get("score",0)
-        verd   = _esc(patho_assessment.get("verdict",""))
-        interp = _esc(_xlate_patho(patho_assessment.get("interpretation","")))
-        flags  = patho_assessment.get("special_flags",[])
-        recs   = [_esc(_xlate_patho(r)) for r in patho_assessment.get("recommendations",[])]
-        fpos   = patho_assessment.get("factors_pos",[])
-        fneg   = patho_assessment.get("factors_neg",[])
-        clr2   = _score_color(sc)
-
-        H.append('<div class="sec-ttl">Pathogenicity Assessment</div>')
-        # Score bar
-        H.append(f'<div class="score-bar"><div class="score-fill" '
-                 f'style="width:{sc}%;background:{clr2}"></div></div>')
-        H.append(f'<div style="font-size:10pt;margin:0.5mm 0;font-weight:bold;color:{clr2}">{sc}% — {verd}</div>')
-        # Interpretation
-        if interp:
-            H.append(f'<div style="font-size:9pt;color:#444;margin-bottom:0.5mm">{_clip(interp, 240)}</div>')
-        # Flags
-        flag_msgs = {
-            "ABU_NO_TREAT":  ("al-warn",   "ABU -- Do NOT Treat (IDSA 2019)"),
-            "ABU_TREAT":     ("al-danger", "ABU -- TREAT (High-risk)"),
-            "MW_REJECT":     ("al-danger", "Specimen REJECTED -- Repeat"),
-            "MW_ADEQUATE":   ("al-info",   "Murray-Washington: Adequate"),
-            "SIRS_HIGH":     ("al-danger", "SIRS ≥3 -- Sepsis Probable"),
-            "PEDIATRIC_UTI": ("al-info",   "Pediatric threshold applied"),
-            # Added 2026-08-01: an unread colony count used to contribute a
-            # silent zero. It now contributes nothing AND says so, because a
-            # verdict built on a field nobody filled in should not look the
-            # same as one built on a real reading.
-            "CFU_NOT_REPORTED": ("al-warn",
-                                 "Colony count not reported / unreadable -- "
-                                 "excluded from the score"),
-        }
-        for fl, (cls, msg) in flag_msgs.items():
-            if fl in flags:
-                H.append(f'<div class="alert {cls}" style="font-size:8.5pt;margin:0.3mm 0">{msg}</div>')
-        # Supporting factors (compact)
-        if fpos:
-            H.append(f'<div style="font-size:8.5pt;color:#1e8449;margin-top:1mm"><b>{_T["supporting"]}</b></div>')
-            for f in fpos[:3]:
-                H.append(f'<div style="font-size:8.5pt;color:#1e8449">{_esc(_clip(_xlate_patho(f), 120))}</div>')
-        # Against factors
-        if fneg:
-            H.append(f'<div style="font-size:8.5pt;color:#b7770d;margin-top:0.5mm"><b>{_T["against"]}</b></div>')
-            for f in fneg[:3]:
-                H.append(f'<div style="font-size:8.5pt;color:#b7770d">{_esc(_clip(f, 120))}</div>')
-        # Recommendations
-        if recs:
-            H.append(f'<div style="font-size:8.5pt;font-weight:bold;margin-top:0.5mm">{_T["recs"]}</div>')
-            for r in recs[:3]:
-                H.append(f'<div style="font-size:8.5pt">• {_clip(r, 150)}</div>')
-    else:
-        # Non-urine: show ESBL / MDR / resistance summary instead of pathogenicity
-        _is_urine_pdf = "urine" in (specimen or "").lower()
-        if _is_urine_pdf:
-            H.append('<div class="sec-ttl">Pathogenicity Assessment</div>')
-            H.append('<div class="alert al-info" style="font-size:9pt">Run Pathogenicity Assessment in the app to see score</div>')
-        else:
-            H.append('<div class="sec-ttl">Organism Resistance Profile</div>')
-            # ESBL / Mechanism
-            if esbl_result and esbl_result.get("probability") not in ("low", None):
-                _ep3 = esbl_result.get("probability")
-                _em3 = _esc(esbl_result.get("mechanism", ""))
-                _ec3 = esbl_result.get("confidence", 0)
-                _ed3 = _esc(esbl_result.get("detail",""))
-                if _ep3 == "carbapenemase":
-                    H.append(f'<div class="alert al-danger" style="font-size:8.5pt"><b>▲ {_em3}</b> ({_ec3}%)</div>')
-                    H.append(f'<div style="font-size:8pt;color:#922b21">{_clip(_ed3, 200)}</div>')
-                elif _ep3 in ("high","ampc"):
-                    _l3 = "AmpC β-Lactamase" if _ep3 == "ampc" else "ESBL Producer"
-                    H.append(f'<div class="alert al-danger" style="font-size:8.5pt"><b>⚠ {_l3}</b> ({_ec3}%) — {_em3}</div>')
-                    H.append(f'<div style="font-size:8pt;color:#555">{_clip(_ed3, 200)}</div>')
-                elif _ep3 == "moderate":
-                    H.append(f'<div class="alert al-warn" style="font-size:8.5pt"><b>◆ ESBL Suspected</b> ({_ec3}%)</div>')
-                    H.append(f'<div style="font-size:8pt;color:#555">{_clip(_ed3, 200)}</div>')
-            # MDR level
-            if mdr_result and mdr_result.get("level"):
-                _ml3 = mdr_result["level"]
-                _mi3 = MDR_INFO.get(_ml3, {})
-                _clr3 = "#922b21" if _ml3 in ("XDR","PDR") else "#b7770d"
-                H.append(f'<div style="font-size:9pt;font-weight:bold;color:{_clr3};margin-top:1mm">'
-                         f'{_mi3.get("icon","")} {_mi3.get("label","")}</div>')
-                H.append(f'<div style="font-size:8pt;color:#555">'
-                         f'Resistant {mdr_result["resistant_count"]}/{mdr_result["total_tested"]} categories: '
-                         f'{_esc(_join_more(mdr_result.get("resistant_categories",[]), 6))}</div>')
-            # Phenotypes
-            if phenotypes:
-                for _ph3 in phenotypes[:3]:
-                    _phn3 = _esc(_ph3.get("phenotype",""))
-                    H.append(f'<div style="font-size:8.5pt;color:#6e2fa0;margin-top:0.5mm">◆ {_phn3}</div>')
-            # No resistance info → show full Susceptibility Summary
-            if (not esbl_result or esbl_result.get("probability") in ("low", None)) \
-               and not (mdr_result and mdr_result.get("level")) \
-               and not phenotypes:
-                H.append('<div class="sec-ttl">Susceptibility Summary</div>')
-                # ── AST stats ──────────────────────────────────────────────────
-                _s_n = sum(1 for v in sir_map.values() if v == "S")
-                _i_n = sum(1 for v in sir_map.values() if v == "I")
-                _r_n = sum(1 for v in sir_map.values() if v == "R")
-                _tot = len(sir_map)
-                _gram_txt = ("Gram-positive organism"
-                             if (mdr_result or {}).get("gram") == "positive"
-                             else "Gram-negative organism"
-                             if (mdr_result or {}).get("gram") == "negative"
-                             else "")
-                _access_n = sum(1 for d in allowed if d.get("aware") == "Access")
-                _watch_n  = sum(1 for d in allowed if d.get("aware") == "Watch")
-                _res_n    = sum(1 for d in allowed if d.get("aware") == "Reserve")
-                _aware_str = (
-                    (f"{_access_n} Access" if _access_n else "")
-                    + (" · " if _access_n and (_watch_n or _res_n) else "")
-                    + (f"{_watch_n} Watch" if _watch_n else "")
-                    + (" · " if _watch_n and _res_n else "")
-                    + (f"{_res_n} Reserve" if _res_n else "")
-                )
-                # Score bar colour: green if >60% sensitive
-                _pct_s = int(_s_n / _tot * 100) if _tot else 0
-                _bar_clr = "#1e8449" if _pct_s >= 60 else "#b7770d" if _pct_s >= 40 else "#922b21"
-                H.append(
-                    f'<div class="score-bar" style="margin:1mm 0">'
-                    f'<div class="score-fill" style="width:{_pct_s}%;background:{_bar_clr}"></div></div>'
-                )
-                H.append(
-                    '<table style="width:100%;border-collapse:collapse;font-size:9pt;margin-top:0.5mm">'
-                    f'<tr><td style="padding:0.5mm 1mm;color:#1e8449">✓ Sensitive</td>'
-                    f'<td style="padding:0.5mm 1mm;font-weight:bold;color:#1e8449">{_s_n} agents</td>'
-                    f'<td style="padding:0.5mm 1mm;font-size:8pt;color:#888">{_pct_s}%</td></tr>'
-                    + (f'<tr><td style="padding:0.5mm 1mm;color:#b7770d">● Intermediate</td>'
-                       f'<td style="padding:0.5mm 1mm;font-weight:bold;color:#b7770d">{_i_n} agent{"s" if _i_n!=1 else ""}</td>'
-                       f'<td></td></tr>' if _i_n else "")
-                    + f'<tr><td style="padding:0.5mm 1mm;color:#922b21">✗ Resistant</td>'
-                      f'<td style="padding:0.5mm 1mm;font-weight:bold;color:#922b21">{_r_n} agent{"s" if _r_n!=1 else ""}</td>'
-                      f'<td></td></tr>'
-                    '</table>'
-                )
-                H.append('<hr class="dv" style="margin:0.8mm 0">')
-                if _gram_txt:
-                    H.append(f'<div style="font-size:9pt;color:#1a1a2e;margin:0.3mm 0">'
-                             f'● {_gram_txt}</div>')
-                H.append(f'<div style="font-size:9pt;color:#0d3b66;margin:0.3mm 0">'
-                         f'Pattern: <b>Non-MDR / Susceptible</b></div>')
-                if _aware_str:
-                    H.append(f'<div style="font-size:9pt;color:#555;margin:0.3mm 0">'
-                             f'AWaRe: {_aware_str}</div>')
-                H.append('<hr class="dv" style="margin:0.8mm 0">')
-                H.append(
-                    '<div class="alert al-info" style="font-size:8.5pt">'
-                    '▣ No ESBL / AmpC / Carbapenemase markers detected.<br>'
-                    '<span style="font-size:8pt">Standard culture-directed therapy applicable. '
-                    'Follow recommended regimen above.</span></div>'
-                )
-    H.append('</div></div>')
-
-    # ── PREGNANCY -- USE WITH CAUTION  (dedicated section) ─────────────────
-    if is_preg and preg_warn_items:
-        H.append('<hr class="dv">')
-        H.append(
-            '<div class="sec-ttl" style="color:#7d3c98;border-bottom-color:#7d3c98">'
-            f'{_T["pregnancy"]} &nbsp;'
-            '<span style="font-size:8pt;font-weight:normal;color:#888">'
-            f'{_T["preg_sub"]}</span></div>'
-        )
-        for _pw in preg_warn_items:
-            _pname = _esc(_pw.get("name", ""))
-            _paw   = _esc(_pw.get("aware", ""))
-            _pnote = (_pw.get("preg_note") or "").strip()
-            # Use English note if lang=en
-            if _EN and _pw.get("preg_note_en"):
-                _pnote = _pw.get("preg_note_en").strip()
-            H.append(
-                f'<div style="margin:0.3mm 0;padding:0.8mm 2.5mm;border-radius:2mm;'
-                f'border:1pt solid #c39bd3;background:#f5eef8;page-break-inside:avoid">'
-                f'<div style="display:flex;justify-content:space-between;align-items:center">'
-                f'<b style="font-size:9pt;color:#6c3483">{_pname}</b>'
-                f'<span style="padding:0.3mm 2.5mm;border-radius:2mm;font-size:8pt;'
-                f'font-weight:bold;background:#7d3c98;color:#fff">{_paw}</span>'
-                f'</div>'
-            )
-            if _pnote:
-                for _line in _pnote.splitlines():
-                    _line = _line.strip()
-                    if not _line:
-                        continue
-                    if _line.startswith("⊘"):
-                        _lcolor = "#922b21"; _lbg = "#fdf2f2"
-                    elif _line.startswith("✓"):
-                        _lcolor = "#1e8449"; _lbg = "#eafaf1"
-                    elif _line.startswith("⚠"):
-                        _lcolor = "#b7770d"; _lbg = "#fef9e7"
-                    elif _line.startswith(">>>"):
-                        _lcolor = "#444";   _lbg = "#f0f0f0"
-                    else:
-                        _lcolor = "#444";   _lbg = "transparent"
-                    H.append(
-                        f'<div style="font-size:9pt;color:{_lcolor};'
-                        f'background:{_lbg};padding:0.3mm 2mm;margin-top:0.5mm;'
-                        f'border-radius:1mm">{_esc(_xlate_preg_note(_line))}</div>'
-                    )
-            H.append('</div>')
-
-    # Combination + Hepatic (compact)
-    if combo_suggestions:
-        H.append('<hr class="dv" style="margin:0.5mm 0"><div class="sec-ttl">Combination Therapy — MDR</div>')
-        for cs in combo_suggestions[:2]:
-            data = cs["data"]
-            H.append(f'<div class="alert al-danger" style="font-size:8.5pt">'
-                     f'<b>{_esc(data["urgency"])} — {_esc(data["title"])}</b></div>')
-            for opt in data["options"][:3]:
-                avoid = "AVOID" in opt.get("evidence","") or "AVOID" in opt["combo"].upper()
-                H.append(f'<div style="font-size:8.5pt;margin:0.3mm 0;color:{"#922b21" if avoid else "#1a1a2e"}">'
-                         f'{"⊘ " if avoid else "• "}<b>{_esc(opt["combo"])}</b>'
-                         f' <span style="color:#888">({_esc(opt["evidence"])})</span></div>')
-
-    if is_hepatic and hepatic_recs:
-        action_recs = [r for r in hepatic_recs if r.get("requires_action")][:3]
-        if action_recs:
-            H.append(f'<hr class="dv" style="margin:0.5mm 0"><div class="sec-ttl">Hepatic Dosing — CP-{_esc(child_pugh)}</div>')
-            for r in action_recs:
-                cls4 = "danger-val" if "Avoid" in r["level"] else "warn-val"
-                H.append(f'<div style="font-size:9pt;margin:0.3mm 0">'
-                         f'<b class="{cls4}">{_esc(r["name"])}</b>: {_esc(r["recommendation"])}</div>')
-
-    # Footer
-    H.append("""<hr class="dv" style="margin-top:1mm">
-<div class="grid2">
-  <div class="g2l" style="font-size:8pt;color:#666">
-    <b>References:</b> CLSI 2026 | EUCAST Breakpoint Tables v16.1 | IDSA AMR Guidance 2026 | WHO AWaRe 2025 | Sanford 2025 | BNF 2025 | Egypt Nat. Guidelines
-  </div>
-  <div class="g2r" style="font-size:8pt;color:#666">
-    <b>Disclaimer:</b> Clinical decision support only. Treatment decisions are the sole responsibility of the treating physician.
-  </div>
-</div>
-
-</div></body></html>"""
+# ── Report rendering moved to report_service.py (2026-08-03) ───────────────
+# 1,852 lines of presentation — the PDF, the decision-tree PNG and the text
+# report — extracted from this file. They decide nothing; they render what
+# run_analysis() already decided. The dependency is injected by bind() rather
+# than imported, because these renderers need thirty-seven names from here and
+# a plain import would be circular. Re-exported so every existing caller and
+# every AST-extraction harness still finds them by name.
+import report_service as _RS                                        # noqa: E402
+_RS.bind(
+    ABX_GUIDELINES=ABX_GUIDELINES, ORGANISM_PROFILE=ORGANISM_PROFILE,
+    MDR_INFO=MDR_INFO, INFECTION_SYNDROMES=INFECTION_SYNDROMES,
+    RENAL_BAN_REASONS=RENAL_BAN_REASONS, ARABIC_SUPPORT=ARABIC_SUPPORT,
+    PIL_AVAILABLE=PIL_AVAILABLE, WEASYPRINT_AVAILABLE=WEASYPRINT_AVAILABLE,
+    _arabic_reshaper_mod=_arabic_reshaper_mod, _wp=_wp,
+    Image=Image, ImageDraw=ImageDraw, ImageFont=ImageFont,
+    classify_mdr=classify_mdr, predict_esbl=predict_esbl,
+    rank_sensitive_antibiotics=rank_sensitive_antibiotics,
+    crcl_label=crcl_label, resolve_crcl=resolve_crcl,
+    preg_status_of=preg_status_of, get_renal_severity=get_renal_severity,
+    _drop_intrinsic=_drop_intrinsic, _hide_urine_only=_hide_urine_only,
+    _esc=_esc, _score_color=_score_color,
+    annotate_regimen_note=annotate_regimen_note,
+    get_commercial_name=get_commercial_name, pdf_glyph_guard=pdf_glyph_guard,
+    normalize_abx_key=normalize_abx_key, warned_note_for=warned_note_for,
 )
+generate_pdf_html_report     = _RS.generate_pdf_html_report
+generate_decision_tree_image = _RS.generate_decision_tree_image
+generate_report              = _RS.generate_report
 
-    _full_html = "".join(H)
-    if _EN:
-        # Final safety net: guarantee a pure-English report by removing any Arabic
-        # that escaped phrase-translation (e.g. an organism's Arabic parenthetical
-        # like "Anaerobes (لاهوائيات)"), then tidy the artifacts left behind. HTML
-        # tags/attributes are ASCII, so only visible text is affected.
-        # Arabic ranges, deliberately excluding U+FE00-FE0F: those are emoji
-        # variation selectors, not Arabic, and a range like FB50-FEFF swallows
-        # them.
-        _AR = r'\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF'
-        # 1. Parenthetical glosses -- purely Arabic inside brackets. Safe to
-        #    drop; this is the case the original net was written for.
-        _full_html = re.sub(r'\s*\(\s*[' + _AR + r'\s\u060C\u061B\u061F.,\-]+\s*\)',
-                            '', _full_html)
-        # 2. Anything still Arabic is running clinical text. Leave it visible
-        #    rather than amputating words from a dose instruction. Record it so
-        #    QA can see the leak instead of the patient inheriting it.
-        _ar_leaks = re.findall(r'[' + _AR + r']+(?:[\s\u060C][' + _AR + r']+)*',
-                               _full_html)
-        if _ar_leaks:
-            try:
-                _uniq = sorted(set(t.strip() for t in _ar_leaks if t.strip()))
-                logging.warning(
-                    "EN report: %d Arabic fragment(s) reached render; "
-                    "add an _en field for these: %s",
-                    len(_uniq), " | ".join(_uniq[:12])
-                )
-            except Exception:
-                pass
-        _full_html = re.sub(r'\(\s*\)', '', _full_html)      # empty () left by stripping
-        _full_html = re.sub(r'[ \t]{2,}', ' ', _full_html)   # collapse doubled spaces
-    # Restore the patient name AFTER the Arabic strip: the name is a patient
-    # identifier, not clinical prose, so the pure-English rule must not apply to
-    # it -- a report with no name is a misidentification hazard, which is worse
-    # than an Arabic word on an English page. The placeholder is ASCII, so it
-    # survives the strip above unharmed.
-    _full_html = _full_html.replace("@@PTNAME@@", _esc(patient_name or "—"))
-    try:
-        return _wp.HTML(string=pdf_glyph_guard(_full_html)).write_pdf()
-    except Exception:
-        return None
 
-
-
-def generate_decision_tree_image(
-    patient_name:    str,
-    age:             int,
-    sex:             str,
-    weight:          float,
-    cl_cr:           float,
-    is_renal:        bool,
-    is_preg:         bool,
-    organism:        str,
-    specimen:        str,
-    first_line:      List[str],
-    preferred:       List[str],
-    use_caution:     List[str],
-    contraindicated: List[str],
-    reserve:         List[str],
-    notes:           List[str],
-    colony_count:    str = "",
-    date_in:         str = "",
-    pus_cells:       str = "",
-    rbcs:            str = "",
-    lab_name:        str = "Your Lab Name",
-    lab_city:        str = "",
-    mdr_result:          Optional[Dict] = None,
-    esbl_result:         Optional[Dict] = None,
-    phenotypes:          Optional[List] = None,
-    referring_physician: str = "",
-    culture_condition:   str = "Aerobic",
-    microbiologist:      str = "",
-    age_months:          Optional[int] = None,
-) -> bytes:
-    if not PIL_AVAILABLE:
-        raise RuntimeError("Pillow غير متاح -- أضف Pillow لـ requirements.txt")
-
-    # ── Scale & Canvas ────────────────────────────────────────────────────────
-    # A4 landscape = 297mm × 210mm  @ 200 DPI = 2339 × 1654 px
-    # نطرح 10mm من كل جهة -> 277mm × 190mm = 2181 × 1496 px
-    # أصغر من A4 بـ ~20mm -> يُطبع بدون قص
-    S  = 2                       # 2× scale -> جودة طباعة جيدة
-    W  = 2181                    # 277mm @ 200 DPI  (أصغر من A4 بـ 20mm)
-    H  = 1496                    # 190mm @ 200 DPI  (أصغر من A4 بـ 20mm)
-    P  = 14   * S                # padding
-    G  = 8    * S                # gap
-
-    # ── Color Palette (identical to reference) ────────────────────────────────
-    BG         = (248, 250, 252)
-    WHITE      = (255, 255, 255)
-    DARK       = (28,  32,  40)
-    GRAY       = (95, 100, 112)
-    LIGHT_GRAY = (190, 195, 205)
-
-    NAVY       = (4,   26,  63)
-    PURPLE_BD  = (120, 75, 178);  PURPLE_BG  = (247, 243, 254)
-    GREEN_BD   = (45, 138,  68);  GREEN_BG   = (236, 252, 240);  GREEN_TXT  = (20,  95,  40)
-    AMBER_BD   = (195,140,  30);  AMBER_BG   = (255, 250, 228);  AMBER_TXT  = (120,  80,   0)
-    RED_BD     = (183, 52,  52);  RED_BG     = (255, 237, 234);  RED_TXT    = (148,  30,  30)
-    BLUE_BD    = (35,  90, 172);  BLUE_BG    = (234, 244, 255);  BLUE_TXT   = (15,   55, 145)
-    ALERT_BD   = (205,115,  50);  ALERT_BG   = (255, 248, 232);  ALERT_TXT  = (130,  60,   5)
-    SPEC_BD    = (35,  90, 172);  SPEC_BG    = (234, 244, 255)
-    MICRO_BD   = (30, 130,  65);  MICRO_BG   = (234, 252, 238)
-    FL_BD      = (190,138,  28);  FL_BG      = (255, 250, 225)
-    FOOT_BD    = (185,192,200);   FOOT_BG    = (247, 249, 251)
-
-    # ── Fonts (all scaled) ────────────────────────────────────────────────────
-    def gf(size: int, bold: bool = False):
-        """
-        Robust font loader with comprehensive fallbacks.
-        Priority: Liberation Sans -> DejaVu -> NotoSans -> Amiri -> auto-discover
-        Liberation/DejaVu give the clean sans-serif look of the old images.
-        NotoSans/Amiri are fallbacks for Streamlit Cloud if Liberation not found.
-        """
-        import os as _os
-        _b = "Bold" if bold else "Regular"
-        paths = [
-            # ── DejaVu Sans FIRST -- supports Arabic Unicode (fonts-dejavu-core) ─
-            f"/usr/share/fonts/truetype/dejavu/DejaVuSans{'-Bold' if bold else ''}.ttf",
-            f"/usr/share/fonts/dejavu/DejaVuSans{'-Bold' if bold else ''}.ttf",
-            f"/usr/share/fonts/truetype/dejavu-sans/DejaVuSans{'-Bold' if bold else ''}.ttf",
-            # ── Liberation Sans (fonts-liberation in packages.txt) ──────────────
-            f"/usr/share/fonts/truetype/liberation/LiberationSans-{_b}.ttf",
-            f"/usr/share/fonts/truetype/liberation2/LiberationSans-{_b}.ttf",
-            f"/usr/share/fonts/liberation/LiberationSans-{_b}.ttf",
-            # ── Noto Sans (fonts-noto-core in packages.txt) -- clean sans-serif ──
-            f"/usr/share/fonts/truetype/noto/NotoSans-{_b}.ttf",
-            f"/usr/share/fonts/truetype/noto/NotoSans{'Bold' if bold else 'Regular'}.ttf",
-            "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
-            "/usr/share/fonts/noto/NotoSans-Regular.ttf",
-            # ── Amiri (fonts-hosny-amiri in packages.txt) -- Arabic+Latin ────────
-            f"/usr/share/fonts/opentype/fonts-hosny-amiri/Amiri-{_b}.ttf",
-            f"/usr/share/fonts/opentype/fonts-hosny-amiri/amiri-{'bold' if bold else 'regular'}.ttf",
-            f"/usr/share/fonts/truetype/amiri/Amiri-{_b}.ttf",
-            # ── Other common fonts ───────────────────────────────────────────────
-            f"/usr/share/fonts/truetype/freefont/FreeSans{'Bold' if bold else ''}.ttf",
-            f"/usr/share/fonts/truetype/ubuntu/Ubuntu-{'B' if bold else 'R'}.ttf",
-        ]
-        for p in paths:
-            if _os.path.isfile(p):
-                try:
-                    return ImageFont.truetype(p, size * S)
-                except Exception:
-                    continue
-        # Auto-discover: search for ANY usable sans-serif font
-        for _fdir in ["/usr/share/fonts/truetype", "/usr/share/fonts/opentype",
-                      "/usr/share/fonts"]:
-            if not _os.path.isdir(_fdir):
-                continue
-            try:
-                for _root, _, _files in _os.walk(_fdir):
-                    for _f in sorted(_files):   # sorted = deterministic order
-                        if not _f.lower().endswith((".ttf", ".otf")):
-                            continue
-                        _fl = _f.lower()
-                        if any(k in _fl for k in
-                               ("liberation", "dejavu", "notosans", "noto-sans",
-                                "ubuntu", "freesans", "amiri", "arial", "sans")):
-                            try:
-                                return ImageFont.truetype(
-                                    _os.path.join(_root, _f), size * S)
-                            except Exception:
-                                continue
-            except Exception:
-                continue
-        return ImageFont.load_default()
-
-    F_HEADER  = gf(20, True)
-    F_TITLE   = gf(15, True)
-    F_SUBTITL = gf(12, True)
-    F_TEXT    = gf(12)
-    F_SMALL   = gf(10)
-    F_ORG     = gf(26, True)
-    F_SUMNUM  = gf(20, True)
-    F_BADGE   = gf(9,  True)
-
-    def fh(f) -> int:
-        return f.size if hasattr(f, "size") else 14 * S
-
-    def tw(draw, text, font) -> float:
-        try:
-            return draw.textlength(text, font=font)
-        except Exception:
-            return len(text) * fh(font) * 0.6
-
-    # ── Arabic text helper ────────────────────────────────────────────────────
-    def _fix_arabic(text: str) -> str:
-        """
-        Reshape Arabic text for Pillow.
-        reshape() connects letters correctly.
-        get_display() reverses word order -- NOT used here to avoid reversal.
-        """
-        if not text:
-            return ""
-        if not ARABIC_SUPPORT:
-            return str(text)
-        try:
-            return _arabic_reshaper_mod.reshape(str(text))
-        except Exception:
-            return str(text)
-
-    def rbox(draw, box, bg, bd, radius=14, width=3):
-        draw.rounded_rectangle(
-            [box[0], box[1], box[2], box[3]],
-            radius=radius * S, fill=bg, outline=bd, width=width * S
-        )
-
-    def text_wrap(draw, x, y, text, font, fill, max_w, gap=4, max_y=None, min_size=7):
-        """
-        Word-wraps text within max_w. If max_y is given and the wrapped
-        text would cross that boundary at the current font size, the font
-        is progressively shrunk (down to min_size) so the text always
-        stays inside its box; if it still doesn't fit at min_size, the
-        last visible line is truncated with "…" instead of overflowing
-        past the border.
-        """
-        text = _fix_arabic(text)   # reshape Arabic before wrapping
-
-        def _wrap(f):
-            words = text.split()
-            lines, cur = [], ""
-            for w in words:
-                trial = (cur + " " + w).strip()
-                if tw(draw, trial, f) <= max_w:
-                    cur = trial
-                else:
-                    if cur: lines.append(cur)
-                    cur = w
-            if cur: lines.append(cur)
-            return lines
-
-        f = font
-        lines = _wrap(f)
-        lh = fh(f) + gap * S
-
-        if max_y is not None and (y + lh * len(lines)) > max_y:
-            nominal = max(min_size, int(fh(font) / S) - 1)
-            for step in range(nominal, min_size - 1, -1):
-                f2 = gf(step)
-                lines2 = _wrap(f2)
-                lh2 = fh(f2) + gap * S
-                if (y + lh2 * len(lines2)) <= max_y:
-                    f, lines, lh = f2, lines2, lh2
-                    break
-            else:
-                f = gf(min_size)
-                lines = _wrap(f)
-                lh = fh(f) + gap * S
-                max_lines = max(1, int((max_y - y) // lh))
-                if len(lines) > max_lines:
-                    lines = lines[:max_lines]
-                    lines[-1] = lines[-1].rstrip() + "…"
-
-        for line in lines:
-            draw.text((x, y), line, fill=fill, font=f)
-            y += lh
-        return y
-
-    # AWaRe colors -- Access أخضر، Watch برتقالي
-    AWARE_NAME_COLORS = {
-        "[A]": (20, 138, 68),    # أخضر -- Access
-        "[W]": (180, 100,  0),   # برتقالي -- Watch
-    }
-
-    def section_box(draw, box, title, title_color, subtitle, items, bg, bd,
-                    ft, fs, fi):
-        x1, y1, x2, y2 = box
-        rbox(draw, box, bg, bd, radius=16, width=3)
-        draw.text((x1 + 14*S, y1 + 12*S), _fix_arabic(title), fill=title_color, font=ft)
-        cy = y1 + 12*S + fh(ft) + 6*S
-        if subtitle:
-            draw.text((x1 + 14*S, cy), _fix_arabic(subtitle), fill=(110,115,125), font=fs)
-            cy += fh(fs) + 4*S
-        draw.line([(x1 + 10*S, cy), (x2 - 10*S, cy)], fill=bd, width=1*S)
-        cy += 8*S
-        for item in items:
-            if cy + fh(fi) + 7*S > y2 - 8*S:
-                draw.text((x1 + 14*S, cy), "…", fill=LIGHT_GRAY, font=fi)
-                break
-            # استخراج badge [A] أو [W]
-            badge = ""
-            display_name = item
-            for b in ["[A]", "[W]"]:
-                if item.endswith(b):
-                    badge = b
-                    display_name = item[:-len(b)].rstrip()
-                    break
-            # لون الاسم حسب AWaRe
-            name_color = AWARE_NAME_COLORS.get(badge, DARK)
-            cy = text_wrap(draw, x1 + 14*S, cy, f"• {display_name}",
-                           fi, name_color, x2 - x1 - 26*S, gap=5, max_y=y2-8*S)
-
-    # ── Build Image ───────────────────────────────────────────────────────────
-    img  = Image.new("RGB", (W, H), BG)
-    draw = ImageDraw.Draw(img)
-
-    # ── 1. HEADER ─────────────────────────────────────────────────────────────
-    rbox(draw, (P, 6*S, W-P, 62*S), NAVY, NAVY, radius=12, width=1)
-    htxt = f"🔬  {lab_name.upper()} – MICROBIOLOGY DEPARTMENT"
-    hw   = tw(draw, htxt, F_HEADER)
-    draw.text(((W - hw)//2, 16*S), _fix_arabic(htxt), fill=WHITE, font=F_HEADER)
-
-    # ── 2. CULTURE BOX (center) ───────────────────────────────────────────────
-    CB = (368*S, 72*S, 870*S, 198*S)
-    rbox(draw, CB, WHITE, NAVY, radius=14, width=2)
-
-    ctype = "Culture/ Growth"
-    ctw_  = tw(draw, ctype, F_SUBTITL)
-    draw.text(((CB[0]+CB[2]-ctw_)//2, CB[1]+12*S), _fix_arabic(ctype), fill=DARK, font=F_SUBTITL)
-
-    ow = tw(draw, organism, F_ORG)
-    draw.text(((CB[0]+CB[2]-ow)//2, CB[1]+38*S), _fix_arabic(organism), fill=NAVY, font=F_ORG)
-
-    # Colony count under organism -- Date In inline
-    cc_parts = []
-    if colony_count:
-        cc_parts.append(f"Colony Count: {colony_count}")
-    if date_in:
-        cc_parts.append(f"Date In: {date_in}")
-    if cc_parts:
-        cc_txt = "   |   ".join(cc_parts)
-        cctw   = tw(draw, cc_txt, F_TEXT)
-        draw.text(((CB[0]+CB[2]-cctw)//2, CB[1]+38*S+fh(F_ORG)+6*S),
-                  cc_txt, fill=(90, 90, 140), font=F_TEXT)
-
-    # ── 3. PATIENT BOX (left) ─────────────────────────────────────────────────
-    PB = (P, 72*S, 358*S, 198*S)
-    rbox(draw, PB, PURPLE_BG, PURPLE_BD, radius=14, width=3)
-    # No "PATIENT DETAILS" header -- direct fields
-    p_lines = []
-    if patient_name:
-        p_lines.append(f"Patient Name:  {patient_name}")
-    _age_lbl = f"{age_months} months" if age_months is not None else f"{age} yrs"
-    p_lines.append(f"Sex / Age:     {'Male' if sex == 'Male' else 'Female'}, {_age_lbl}")
-    if referring_physician:
-        p_lines.append(f"Referred by:   Dr/ {referring_physician}")
-    if is_renal:
-        _eff, _meas = resolve_crcl(cl_cr, is_renal)
-        p_lines.append(
-            f"Renal:         IMPAIRED  CrCl:{_eff:.0f}"
-            f"{'' if _meas else ' (assumed)'}" if _eff is not None
-            else "Renal:         IMPAIRED  CrCl:not measured")
-    else:
-        p_lines.append("Renal:         Normal")
-    p_lines.append("Hepatic:       Normal")
-    if sex == "Female" and 12 <= age <= 55:
-        p_lines.append(f"Pregnancy:     {'Yes' if is_preg else 'No'}")
-
-    py = 78*S
-    for ln in p_lines[:7]:
-        draw.text((P+14*S, py), _fix_arabic(f"• {ln}"), fill=DARK, font=F_TEXT)
-        py += fh(F_TEXT) + 5*S
-
-    # ── 4. ALERT BOX (right) -- يشمل MDR/ESBL/Phenotype ──────────────────────
-    AB = (885*S, 72*S, W-P, 198*S)
-
-    # لون المربع حسب خطورة الـ phenotype
-    _ph_names   = [p.get("phenotype","") for p in (phenotypes or [])]
-    _has_cre    = any(p in _ph_names for p in ["CRE","CRAB","CRPA"])
-    _has_mdr    = (mdr_result or {}).get("level") in ("XDR","PDR")
-    _esbl_prob  = (esbl_result or {}).get("probability")
-    _has_esbl   = _esbl_prob in ("high", "carbapenemase", "ampc",
-                                 "ampc_plasmid", "possible_carbapenemase",
-                                 "crpa")
-
-    if _has_cre or _has_mdr:
-        AB_BG = (255, 237, 234);  AB_BD = (183, 52, 52);   AB_TXT = (148, 30, 30)
-    elif _has_esbl:
-        AB_BG = (255, 248, 232);  AB_BD = (205,115, 50);   AB_TXT = (130, 60,  5)
-    else:
-        AB_BG = ALERT_BG;         AB_BD = ALERT_BD;         AB_TXT = ALERT_TXT
-
-    rbox(draw, AB, AB_BG, AB_BD, radius=14, width=3)
-
-    # عنوان ديناميكي
-    if _has_cre:
-        alert_title = "🚨 CRE / XDR ALERT"
-    elif _has_mdr:
-        alert_title = "🔴 MDR/XDR ALERT"
-    elif _esbl_prob in ("ampc", "ampc_plasmid"):
-        alert_title = "⚠  AmpC ALERT"
-    elif _has_esbl:
-        alert_title = "⚠  ESBL ALERT"
-    else:
-        alert_title = "⚠  IMPORTANT ALERT"
-
-    draw.text((AB[0]+12*S, 72*S+12*S), _fix_arabic(alert_title), fill=AB_TXT, font=F_SUBTITL)
-    alerts: List[str] = []
-
-    # ── MDR/XDR/PDR ──────────────────────────────────────────────────────────
-    mdr_lvl = (mdr_result or {}).get("level")
-    if mdr_lvl:
-        mdr_cats = (mdr_result or {}).get("resistant_categories", [])
-        rc = (mdr_result or {}).get("resistant_count", 0)
-        rt = (mdr_result or {}).get("total_tested", 0)
-        alerts.append(f"{mdr_lvl}: Resistant {rc}/{rt} categories")
-        if mdr_cats:
-            alerts.append(f"R-cats: {', '.join(mdr_cats[:3])}")
-
-    # ── ESBL / AmpC / Carbapenemase ────────────────────────────────────────────
-    _esbl_mech = (esbl_result or {}).get("mechanism", "")
-    if _esbl_prob in ("carbapenemase", "possible_carbapenemase"):
-        if "OXA-48" in _esbl_mech:
-            alerts.append("Possible OXA-48 carbapenemase")
-        else:
-            alerts.append("Carbapenemase (KPC/MBL/OXA) possible!")
-        alerts.append("Send to reference lab immediately.")
-    elif _esbl_prob in ("ampc", "ampc_plasmid"):
-        alerts.append("Possible AmpC β-lactamase")
-        alerts.append("Avoid 3rd-gen cephalosporins; use Cefepime/Carbapenem")
-    elif _esbl_prob == "high":
-        alerts.append("High probability ESBL Producer")
-        alerts.append("Use Carbapenems for severe cases")
-    elif _esbl_prob == "moderate":
-        alerts.append("ESBL confirmation recommended")
-        alerts.append("Double Disk Synergy Test")
-    elif _esbl_prob == "crpa":
-        if (esbl_result or {}).get("dtr"):
-            alerts.append("DTR P. aeruginosa - all first-line agents non-susceptible")
-            alerts.append("Ceftolozane-Tazo / Ceftazidime-Avi / Imipenem-Rel / Cefiderocol")
-        else:
-            alerts.append("Carbapenem-resistant P. aeruginosa - mechanism not determined")
-            _abl = (esbl_result or {}).get("active_betalactams") or []
-            alerts.append(f"Still susceptible: {', '.join(_abl)} - high-dose extended infusion"
-                          if _abl else "Check Ceftazidime / Cefepime / Pip-Tazo before escalating")
-
-    # ── Phenotypes ────────────────────────────────────────────────────────────
-    for ph in (phenotypes or [])[:2]:
-        ph_name = ph.get("phenotype","")
-        if ph_name not in ("Possible MRSA",):
-            alerts.append(f"Phenotype: {ph_name}")
-
-    # ── Organism-specific baseline alerts ────────────────────────────────────
-    org_l = organism.lower()
-    if not alerts:  # فقط لو مفيش MDR/ESBL
-        if "klebsiella" in org_l:
-            alerts += ["Consider ESBL screening",
-                       "Natural resistance: Ampicillin"]
-        elif "e. coli" in org_l or "coli" in org_l:
-            alerts += ["Most common UTI pathogen",
-                       "Verify with culture sensitivity"]
-        elif "pseudomonas" in org_l:
-            alerts += ["High intrinsic resistance",
-                       "Anti-pseudomonal agent required"]
-        elif "mrsa" in org_l or "staphylococcus" in org_l:
-            alerts += ["Check MRSA status",
-                       "Vancomycin/Linezolid if MRSA"]
-        elif "acinetobacter" in org_l:
-            alerts += ["MDR risk -- check Carbapenem S/I/R"]
-        else:
-            alerts = ["Verify sensitivity results."]
-
-    if is_renal:
-        _eff, _meas = resolve_crcl(cl_cr, is_renal)
-        alerts.append(f"Renal adj. (CrCl {_eff:.0f} ml/min"
-                      f"{'' if _meas else ', assumed'})" if _eff is not None
-                      else "Renal adj. (CrCl not measured)")
-    if is_preg and age >= 18:
-        alerts.append("Pregnancy: verify fetal safety")
-
-    ay = 72*S + 12*S + fh(F_SUBTITL) + 8*S
-    alert_max_w = AB[2] - AB[0] - 22*S
-    for al in alerts[:6]:
-        if ay + fh(F_SMALL) + 4*S > AB[3] - 6*S:
-            break
-        ay = text_wrap(draw, AB[0]+12*S, ay, f"• {al}",
-                       F_SMALL, AB_TXT, alert_max_w, gap=4, max_y=AB[3]-6*S)
-        ay += 2*S
-
-    # ── 5. ROW 2: Specimen | Microscopic Exam | First-Line ────────────────────
-    R2_Y1 = 210*S
-    R2_Y2 = 310*S
-    r2w   = (W - 2*P - 2*G) // 3
-
-    # Specimen box -- no title, direct fields
-    # Specimen label -- add collection method for Urine
-    _spec_label = specimen
-    if "urine" in specimen.lower():
-        _spec_label = f"{specimen} / Mid-Stream"
-    spec_items = [
-        f"Specimen:      {_spec_label}",
-        "Method:        Culture & Sensitivity",
-        f"Condition:     {culture_condition}",
-    ]
-    if microbiologist:
-        spec_items.append(f"Microbiologist: Dr/ {microbiologist}")
-    micro_items = [
-        f"Pus Cells: {pus_cells if pus_cells else chr(8212)} /HPF",
-        f"RBCs:      {rbcs if rbcs else chr(8212)} /HPF",
-    ]
-    fl_items = first_line[:4] or ["--"]
-
-    r2_data = [
-    ("",                   spec_items,  SPEC_BD,  SPEC_BG,  ""),
-    ("MICROSCOPIC EXAM",   micro_items, MICRO_BD, MICRO_BG, "🔬"),
-    ("CLINICAL STRATEGY",  fl_items,    FL_BD,    FL_BG,    "📋"),
-    ]
-    for i, (title, items, bd, bg, icon) in enumerate(r2_data):
-        bx1 = P + i*(r2w+G)
-        bx2 = bx1 + r2w
-        rbox(draw, (bx1, R2_Y1, bx2, R2_Y2), bg, bd, radius=12, width=2)
-        if title:
-            draw.text((bx1+12*S, R2_Y1+9*S), _fix_arabic(f"{icon} {title}"), fill=bd, font=F_SUBTITL)
-            iy = R2_Y1 + 32*S
-        else:
-            iy = R2_Y1 + 11*S  # start higher when no title
-        for it in items[:5]:
-            iy = text_wrap(draw, bx1+14*S, iy, f"• {it}",
-                           F_SMALL, DARK, bx2-bx1-24*S, gap=4, max_y=R2_Y2-6*S)
-
-    # ── 6. FOUR MAIN COLUMNS ──────────────────────────────────────────────────
-    COL_Y1 = 323*S
-    COL_Y2 = H - 115*S
-    cw     = (W - 2*P - 3*G) // 4
-
-    # Dynamic column titles based on pregnancy
-    avoid_title    = "🚫 AVOID IN PREGNANCY" if is_preg else "🚫 AVOID / CONTRAINDICT."
-    avoid_subtitle = "Contraindicated / Not recommended" if is_preg else "Due to other factors"
-
-    columns = [
-        ("✅ PREFERRED (SAFE)",  "Preferred oral options",  preferred,       GREEN_BD, GREEN_BG, GREEN_TXT),
-        ("⚠️  USE WITH CAUTION", "Use with caution",         use_caution,     AMBER_BD, AMBER_BG, AMBER_TXT),
-        (avoid_title,            avoid_subtitle,             contraindicated,  RED_BD,   RED_BG,   RED_TXT),
-        ("🛡️  RESERVE (WHO)",     "Last-resort agents (MDR/XDR)", reserve,      BLUE_BD,  BLUE_BG,  BLUE_TXT),
-    ]
-    for i, (title, subtitle, items, bd, bg, tc) in enumerate(columns):
-        bx1 = P + i*(cw+G)
-        bx2 = bx1 + cw
-        section_box(draw, (bx1, COL_Y1, bx2, COL_Y2),
-                    title, tc, subtitle, items or ["--"],
-                    bg, bd, F_TITLE, F_SMALL, F_TEXT)
-
-    # ── 7. FOOTER -- 4 مربعات متساوية ─────────────────────────────────────────
-    FY1 = H - 116*S
-    FY2 = H - 8*S
-    fw4 = (W - 2*P - 3*G) // 4
-
-    # ① WHO AWaRe
-    fx1 = P;  fx2 = fx1 + fw4
-    rbox(draw, (fx1, FY1, fx2, FY2), FOOT_BG, FOOT_BD, radius=12, width=2)
-    draw.text((fx1+10*S, FY1+10*S), "WHO AWaRe", fill=DARK, font=F_SUBTITL)
-    bx = fx1 + 10*S
-    by = FY1 + 30*S
-    for label, color in [("ACCESS", GREEN_TXT), ("WATCH", AMBER_TXT), ("RESERVE", RED_TXT)]:
-        lw      = tw(draw, label, F_BADGE)
-        badge_w = int(lw) + 10*S
-        rbox(draw, (bx-2*S, by-2*S, bx+badge_w, by+fh(F_BADGE)+4*S),
-             color, color, radius=5, width=1)
-        draw.text((bx+3*S, by), label, fill=WHITE, font=F_BADGE)
-        bx += badge_w + 5*S
-    draw.text((fx1+10*S, by+fh(F_BADGE)+7*S),
-              "1st/2nd | Caution | Last resort", fill=GRAY, font=F_SMALL)
-
-    # ② SUMMARY
-    fx1 = P + fw4 + G;  fx2 = fx1 + fw4
-    rbox(draw, (fx1, FY1, fx2, FY2), FOOT_BG, FOOT_BD, radius=12, width=2)
-    draw.text((fx1+10*S, FY1+10*S), "SUMMARY", fill=DARK, font=F_SUBTITL)
-    sum_items = [
-        (f"~{len(preferred)}",       "Recommended", GREEN_TXT),
-        (f"~{len(use_caution)}",     "Caution",     AMBER_TXT),
-        (f"~{len(contraindicated)}", "Avoided",     RED_TXT),
-        (f"~{len(reserve)}",         "Reserve",     BLUE_TXT),
-    ]
-    sw = (fx2 - fx1 - 16*S) // 4
-    for j, (num, lbl, clr) in enumerate(sum_items):
-        sx = fx1 + 10*S + j * sw
-        draw.text((sx, FY1+28*S), num, fill=clr,  font=F_SUMNUM)
-        draw.text((sx, FY1+62*S), lbl, fill=GRAY, font=F_SMALL)
-
-    # ③ NOTES
-    fx1 = P + 2*(fw4+G);  fx2 = fx1 + fw4
-    rbox(draw, (fx1, FY1, fx2, FY2), FOOT_BG, FOOT_BD, radius=12, width=2)
-    draw.text((fx1+10*S, FY1+10*S), "NOTES", fill=DARK, font=F_SUBTITL)
-    ny = FY1 + 30*S
-    for note in (notes or [])[:5]:
-        if ny + fh(F_SMALL) + 3*S > FY2 - 6*S:
-            break
-        ny = text_wrap(draw, fx1+10*S, ny, f"• {note}",
-                       F_SMALL, DARK, fx2-fx1-18*S, gap=3, max_y=FY2-6*S)
-
-    # ④ REFERENCES
-    fx1 = P + 3*(fw4+G);  fx2 = W - P
-    rbox(draw, (fx1, FY1, fx2, FY2), FOOT_BG, FOOT_BD, radius=12, width=2)
-    draw.text((fx1+10*S, FY1+10*S), "REFERENCES", fill=DARK, font=F_SUBTITL)
-    refs = ["EUCAST Breakpoint Tables v16.1", "CLSI M100 Ed36", "IDSA AMR Guidance 2026",
-            "WHO AWaRe 2025", "Egypt Nat. Guidelines", "BNF 2025 | FDA Labels"]
-    ry = FY1 + 30*S
-    for ref in refs:
-        if ry + fh(F_SMALL) + 3*S > FY2 - 6*S:
-            break
-        ry = text_wrap(draw, fx1+10*S, ry, f"• {ref}",
-                       F_SMALL, DARK, fx2-fx1-18*S, gap=3, max_y=FY2-6*S)
-    # ── Export Ultra HD ───────────────────────────────────────────────────────
-    buf = io.BytesIO()
-    img.save(buf, "PNG", dpi=(200, 200), optimize=False)
-    return buf.getvalue()
-
-
-def generate_report(
-    patient_name:    str,
-    age:             int,
-    sex:             str,
-    weight:          float,
-    cl_cr:           float,
-    is_renal:        bool,
-    is_preg:         bool,
-    is_hepatic:      bool,
-    allowed:         List[Dict],
-    warned:          List[Dict],
-    banned:          List[Dict],
-    preg_warn_items: List[Dict],
-    organism:        str,
-    specimen:        str,
-    interactions:    List[str],
-    sir_map:         Dict[str, str],
-    colony_count:    str = "",
-    date_in:         str = "",
-    pus_cells:       str = "",
-    rbcs:            str = "",
-    lab_name:              str = "Your Lab Name",
-    lab_city:              str = "",
-    patho_assessment:      dict = None,
-    show_commercial_names: bool = False,
-    age_months:            Optional[int] = None,
-) -> str:
-    now  = datetime.now().strftime("%Y-%m-%d %H:%M")
-    sep  = "=" * 60
-    sep2 = "-" * 60
-    L:   List[str] = []
-
-    lab_hdr = lab_name.upper() if lab_name else "ORANGE LAB"
-    L += [sep, f"{lab_hdr} -- CLINICAL DECISION REPORT", sep, f"Date     : {now}"]
-    if patient_name:
-        L.append(f"Patient  : {patient_name}")
-    L.append(sep)
-
-    L += ["\nPATIENT DETAILS", sep2,
-          (f"Age      : {age_months} months" if age_months is not None
-         else f"Age      : {age} years"),
-          f"Gender   : {sex}",
-          f"Weight   : {weight} kg",
-          f"Renal    : {'IMPAIRED' if is_renal else 'Normal'}"]
-    if is_renal:
-        _eff, _ = resolve_crcl(cl_cr, is_renal)
-        L.append(f"CrCl     : {crcl_label(cl_cr, is_renal)} "
-                 f"({get_renal_severity(_eff)})")
-    L.append(f"Hepatic  : {'IMPAIRED' if is_hepatic else 'Normal'}")
-    if sex == "Female" and age >= 18:
-        L.append(f"Pregnant : {'Yes' if is_preg else 'No'}")
-
-    L += ["\nCULTURE & MICROSCOPY", sep2,
-          f"Specimen : {specimen}"]
-    if date_in:
-        L.append(f"Date In  : {date_in}")
-    L.append(f"Organism : {organism}")
-    if colony_count:
-        L.append(f"Colony   : {colony_count}")
-    if pus_cells:
-        L.append(f"Pus Cells: {pus_cells} /HPF")
-    if rbcs:
-        L.append(f"RBCs     : {rbcs} /HPF")
-
-    if organism in ORGANISM_PROFILE:
-        op = ORGANISM_PROFILE[organism]
-        if op.get("note"):
-            L.append(f"Note       : {op['note']}")
-        spec_ctx = (op.get("specimen_context") or {}).get(specimen, "")
-        if spec_ctx:
-            L.append(f"Context    : {spec_ctx}")
-        _fl_disp = _hide_urine_only(op.get("first_line"), specimen)
-        if _fl_disp:
-            L.append(f"First-line : {', '.join(_fl_disp)}")
-        if op.get("avoid"):
-            L.append(f"Avoid      : {', '.join(op['avoid'])}")
-
-    if sir_map:
-        L += ["\nSENSITIVITY RESULTS", sep2]
-        for drug, result in sorted(sir_map.items()):
-            label = {"S": "Sensitive", "R": "Resistant", "I": "Intermediate"}.get(result, result)
-            L.append(f"{drug:<40} {label}")
-
-    if interactions:
-        L += ["\nINTERACTIONS / WARNINGS", sep2]
-        for item in sorted(set(interactions)):
-            L.append(f"- {item}")
-
-    # MDR/XDR/PDR + ESBL في التقرير
-    if sir_map:
-        mdr_r = classify_mdr(organism, sir_map)
-        if mdr_r["level"]:
-            info = MDR_INFO[mdr_r["level"]]
-            L += [f"\n{info['icon']} RESISTANCE CLASSIFICATION: {info['label']}", sep2,
-                  info["detail"],
-                  f"Resistant ({mdr_r['resistant_count']}/{mdr_r['total_tested']}): "
-                  + ", ".join(mdr_r['resistant_categories']),
-                  f"Action: {info['action']}", ""]
-        esbl_r = predict_esbl(organism, sir_map)
-        prob   = esbl_r.get("probability")
-        if prob == "carbapenemase":
-            L += [f"\n🚨 {esbl_r.get('mechanism','POSSIBLE CARBAPENEMASE PRODUCER').upper()}", sep2,
-                  esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
-        elif prob in ("ampc", "ampc_plasmid"):
-            L += ["\n⚠️  POSSIBLE AmpC β-LACTAMASE PRODUCER", sep2,
-                  esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
-        elif prob == "high":
-            L += ["\n⚠️  HIGH PROBABILITY ESBL PRODUCER", sep2,
-                  esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
-        elif prob == "crpa":
-            L += [f"\n{'🚨' if esbl_r.get('dtr') else '⚠️ '} "
-                  f"{esbl_r.get('mechanism','CARBAPENEM-RESISTANT P. AERUGINOSA').upper()}", sep2,
-                  esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
-        elif prob == "moderate":
-            L += ["\n🔶 ESBL CONFIRMATION RECOMMENDED", sep2,
-                  esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
-
-    L += ["\nRECOMMENDED ANTIBIOTICS", sep]
-    if allowed:
-        for item in allowed:
-            sir_tag  = f" [Culture: {sir_map[item['name']]}]" if sir_map and item['name'] in sir_map else ""
-            preg_tag = " [Pregnancy: caution]" if (is_preg and preg_status_of(item) == "Warn") else ""
-            L += [f"\n{item['name']}{sir_tag}{preg_tag}", sep2,
-                  f"WHO AWaRe : {item.get('aware','-')}",
-                  f"Class     : {item.get('class','-')}",
-                  f"Route     : {'Oral/PO-friendly' if item.get('high_po') else 'IV/IM only'}"]
-            spec_note = (item.get("specimen_notes") or {}).get(specimen, "")
-            if spec_note:
-                L += [f"Note      : {item.get('note','')}", f"{specimen}   : {spec_note}"]
-            else:
-                L.append(f"Note      : {item.get('note','')}")
-            if is_renal:
-                L.append(f"Renal     : {item.get('renal_note','-')}")
-            if is_preg and preg_status_of(item) == "Warn":
-                pn = (item.get("preg_note") or "").splitlines()
-                if pn:
-                    L.append(f"Pregnancy : {pn[0]}")
-            if show_commercial_names:
-                _brands = get_commercial_name(item["name"])
-                if _brands:
-                    L.append(f"Brands    : {_brands}")
-    else:
-        L.append("No recommended options after applying all restrictions.")
-
-    if warned:
-        L += ["\nDOSE ADJUSTMENT / USE WITH CAUTION", sep]
-        if is_renal:
-            L.append(f"Patient CrCl = {crcl_label(cl_cr, is_renal)}\n")
-        for item in warned:
-            sir_tag = f" [Culture: {sir_map[item['name']]}]" if sir_map and item['name'] in sir_map else ""
-            L += [f"{item['name']}{sir_tag}", sep2, f"WHO AWaRe : {item.get('aware','-')}"]
-            # Printed BEFORE the reason branch, not inside it: an Intermediate
-            # agent that also needs a renal or hepatic adjustment carries the
-            # other reason in warning_reason, and the I used to disappear from
-            # this report entirely.
-            if (item.get("culture_intermediate")
-                    and item.get("warning_reason") != "intermediate_culture"):
-                L.append("!! CONFLICT : culture is INTERMEDIATE (EUCAST: susceptible at "
-                         "INCREASED exposure) while the host requires a REDUCED dose. "
-                         "Prefer a fully susceptible agent; if unavoidable, dose with TDM.")
-            if item.get("warning_reason") == "intermediate_culture":
-                L.append("Reason    : Intermediate (I) on culture result")
-            elif item.get("esbl_note") or item.get("esbl_note_en"):
-                # Mechanism warnings (ESBL BLI-in-UTI, suspected carbapenemase)
-                # carry their reason in esbl_note; without this branch they fell
-                # through to renal_note and printed an empty reason.
-                L.append("Reason    : " + (item.get("esbl_note_en")
-                                           or item.get("esbl_note", "-")))
-            else:
-                L += [f"Renal note: {item.get('renal_note','-')}",
-                      f"Limit CrCl: <= {item.get('renal_limit','-')} ml/min"]
-            if show_commercial_names:
-                _brands = get_commercial_name(item["name"])
-                if _brands:
-                    L.append(f"Brands    : {_brands}")
-            L.append("")
-
-    if is_preg and preg_warn_items:
-        L += ["\nPREGNANCY -- USE WITH CAUTION", sep]
-        for item in preg_warn_items:
-            L += [item['name'], sep2]
-            L.extend((item.get("preg_note") or "").splitlines())
-            L.append("")
-
-    if banned:
-        L += ["\nCONTRAINDICATED / INEFFECTIVE", sep]
-        grouped: Dict[str, list] = {
-            "resistant": [], "renal": [], "pregnancy": [],
-            "child": [], "organism": [], "specimen": [], "other": [],
-        }
-        for item in banned:
-            grouped.setdefault(item["category"], []).append(item)
-        labels = [
-            ("resistant", "[A] RESISTANT IN CULTURE"),
-            ("renal",     "[B] CONTRAINDICATED -- RENAL IMPAIRMENT"),
-            ("pregnancy", "[C] CONTRAINDICATED -- PREGNANCY"),
-            ("child",     "[D] NOT SUITABLE FOR AGE"),
-            ("organism",  f"[E] INEFFECTIVE FOR {organism}"),
-            ("specimen",  f"[F] INAPPROPRIATE FOR {specimen.upper()} SPECIMEN"),
-            ("other",     "[G] OTHER CONTRAINDICATIONS"),
-        ]
-        _rendered_cats = set()
-        for cat, heading in labels:
-            if grouped.get(cat):
-                _rendered_cats.add(cat)
-                L += [f"\n{heading}", sep2]
-                for b in grouped[cat]:
-                    L.append(f"- {b['name']} -- {b.get('reason_short', '')}")
-                    if cat == "renal":
-                        dk       = b["name"].lower().replace(" ", "")
-                        rendered = False
-                        for k, v in RENAL_BAN_REASONS.items():
-                            if k in dk:
-                                L.extend([f"  {ln}" for ln in v.splitlines()])
-                                rendered = True
-                                break
-                        if not rendered:
-                            L.extend([f"  {ln}" for ln in (b.get("reason_detail") or "").splitlines()])
-                    else:
-                        L.extend([f"  {ln}" for ln in (b.get("reason_detail") or "").splitlines()])
-                    L.append("")
-        # Safety net -- never silently drop a banned drug whose category is not
-        # listed above (e.g. a future/unknown category).
-        for cat, items in grouped.items():
-            if cat in _rendered_cats or not items:
-                continue
-            L += [f"\n[+] OTHER -- {cat.upper()}", sep2]
-            for b in items:
-                L.append(f"- {b['name']} -- {b.get('reason_short', '')}")
-                L.extend([f"  {ln}" for ln in (b.get("reason_detail") or "").splitlines()])
-                L.append("")
-
-    # ── Pathogenicity Assessment ──────────────────────────────────────
-    if patho_assessment:
-        sc    = patho_assessment.get("score", 0)
-        verd  = patho_assessment.get("verdict", "")
-        interp = patho_assessment.get("interpretation", "")
-        recs  = patho_assessment.get("recommendations", [])
-        flags = patho_assessment.get("special_flags", [])
-        L += ["", "PATHOGENICITY ASSESSMENT", sep2,
-              f"Score    : {sc}% -- {verd}"]
-        if "ABU_DETECTED" in flags:
-            L.append("FLAG     : Asymptomatic Bacteriuria (ABU) Detected")
-        if "MW_REJECT" in flags:
-            L.append("FLAG     : Murray-Washington -- Specimen REJECTED")
-        elif "MW_ADEQUATE" in flags:
-            L.append("FLAG     : Murray-Washington -- Adequate Sputum Quality")
-        if "SIRS_HIGH" in flags:
-            L.append("FLAG     : SIRS >=3 criteria -- Sepsis Probable")
-        if interp:
-            L.append(f"Interp   : {interp}")
-        if recs:
-            L.append("Recs     :")
-            for r in recs:
-                L.append(f"  • {r}")
-
-    L += ["\nDISCLAIMER", sep,
-          "هذا التقرير أداة مساعدة للقرار الطبي وليس بديلاً عن التقييم السريري.",
-          "القرار النهائي للوصف العلاجي يعود للطبيب المعالج.", sep,
-          "Guidelines: EUCAST Breakpoint Tables v16.1 | CLSI M100 Ed36 | IDSA AMR Guidance 2026 | Egypt National",
-          "Route info: BNF 2025 | FDA Labels | WHO AWaRe 2025",
-          "WHO AWaRe : Access | Watch | Reserve", sep,
-          f"Developed by Dr / Hussein Ali | {lab_name}{(' | ' + lab_city) if lab_city else ''}", sep]
-    return "\n".join(L)
 
 
 
@@ -9371,17 +6498,24 @@ if uploaded:
 
         for _pp in validate_patient_context(age, sex, is_preg, cl_cr, age_months):
             st.warning(_pp)
-        allowed, warned, banned, preg_warn_items, interactions_alerts = analyze_antibiotics(
-            final_drugs=final_drugs,
-            organism_type=organism_type,
-            culture_type=culture_type,
-            age=age, sex=sex, age_months=age_months,
-            is_renal=is_renal, cl_cr=cl_cr,
-            is_preg=is_preg, is_hepatic=is_hepatic,
-            current_meds=current_meds,
-            sir_map=sir_map,
-            child_pugh=_child_pugh_now,
+        # ONE call instead of two inlined ones. run_analysis() is this same
+        # pipeline exposed as a pure function, so a test can walk exactly the
+        # path the clinician walks — see its docstring for why that matters.
+        _patient = Patient(
+            age_years=age, age_months=age_months, sex=sex,
+            is_pregnant=is_preg, is_renal=is_renal, cl_cr=cl_cr,
+            is_hepatic=is_hepatic, child_pugh=_child_pugh_now,
+            current_meds=list(current_meds or []),
         )
+        _res = run_analysis(_patient, organism_type, culture_type, sir_map,
+                            drugs=final_drugs)
+        allowed              = _res["allowed"]
+        warned               = _res["warned"]
+        banned               = _res["banned"]
+        preg_warn_items      = _res["preg_warn"]
+        interactions_alerts  = _res["interactions"]
+        for _pw in _res["patient_warnings"]:
+            st.warning(_pw)
 
         # ══════════════════════════════════════════════════════════════════════
         # TERMINAL SAFETY GATE — second, independent opinion before display
@@ -9399,13 +6533,7 @@ if uploaded:
         # engine: the worst a bug in it can do is make the advice stricter.
         # ══════════════════════════════════════════════════════════════════════
         if SAFETY_GATE_AVAILABLE:
-            allowed, warned, banned, _gate_report = apply_safety_gate(
-                allowed, warned, banned,
-                organism=organism_type, specimen=culture_type, sir_map=sir_map,
-                age_years=age, age_months=age_months, is_pregnant=is_preg, cl_cr=cl_cr,
-                is_renal=is_renal, is_hepatic=is_hepatic,
-                child_pugh=_child_pugh_now,
-            )
+            _gate_report = _res["gate_report"]
             _moves = _gate_report.get("moves") or []
             if _moves:
                 with st.expander(
@@ -9556,7 +6684,23 @@ if uploaded:
                         qc_issues=qc_issues,
                         confidence=qa_confidence,
                         microbiologist=st.session_state.get("microbiologist", ""),
-                        patient_ref=st.session_state.get("patient_name", "") or "",
+                        # FIX 2026-08-03. This read "patient_name", a key NOTHING
+                        # in this file ever writes — the name is stored under
+                        # patient_name_final (the confirmed value) and
+                        # patient_name_ocr (what the scan read). So the patient
+                        # reference on every internal QA report has been blank
+                        # since the field was added, and a QA document with no
+                        # patient reference cannot be tied back to the isolate
+                        # it audits, which is the only thing it is for.
+                        #
+                        # Found by a static session_state audit: 4 keys were
+                        # READ that are never WRITTEN, and this was the one that
+                        # mattered. Same shape as the safety-gate "why" versus
+                        # "reason_ar" mismatch — a producer and a consumer
+                        # naming the same fact differently.
+                        patient_ref=(st.session_state.get("patient_name_final", "")
+                                     or st.session_state.get("patient_name_ocr", "")
+                                     or ""),
                     )
                     if _qa_pdf:
                         st.download_button(

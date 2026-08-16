@@ -70,8 +70,8 @@ _WANT = [
     "ASSUMED_CRCL_UNKNOWN", "resolve_crcl", "crcl_label", "get_renal_severity",
     "calc_creatinine_clearance", "HEPATIC_DOSING",
     "_SPECIMEN_CATEGORY_RULES", "classify_specimen", "is_intrinsically_avoided",
-    "build_banned_item", "_SIR_ALIASES", "normalize_sir_value",
-    "normalize_sir_map", "_MED_CANON", "_canon_med", "_PREG_ALIASES",
+    "build_banned_item", 
+    "_MED_CANON", "_canon_med", "_PREG_ALIASES",
     "preg_status_of", "ESBL_PRODUCERS", "AMPC_PRODUCERS", "ESBL_MARKERS",
     "CARBAPENEMS", "_re_ws_collapse", "_ORG_NON_INFORMATIVE", "_org_matches", "is_esbl_producer", "_ACQUIRED_NOT_INTRINSIC",
     "_remove_intrinsic_resistance", "predict_esbl",
@@ -99,7 +99,14 @@ def _extract(path: str, names: list) -> tuple:
 
 
 _seg, _order, _missing = _extract(APP, _WANT)
+# 2026-08-03: the S/I/R vocabulary moved to ocr_parsing.py. Seed it from
+# the real module instead of slicing it out of the monolith — an
+# importable module is the whole point of having extracted it.
+from ocr_parsing import (normalize_sir_value as _nsv,
+                         normalize_sir_map as _nsm,
+                         _SIR_ALIASES as _sal)
 NS: dict = {
+    "normalize_sir_value": _nsv, "normalize_sir_map": _nsm, "_SIR_ALIASES": _sal,
     "__builtins__": __builtins__, "re": re,
     "Dict": dict, "List": list, "Any": object, "Tuple": tuple, "Optional": object,
     "ABX_GUIDELINES": G,
@@ -225,8 +232,10 @@ _sig = _src.split("def analyze_antibiotics(", 1)[1].split("->", 1)[0]
 check('analyze_antibiotics still defaults child_pugh="C"',
       'child_pugh: str = "C"' in _sig, _sig.strip()[:200])
 
+# The analysis call moved into run_analysis() on 2026-08-03, so the anchor is
+# now the UI's single entry into the pipeline rather than the inlined call.
 _i_sel = _src.find('key="cp_sel_sidebar"')
-_i_call = _src.find("allowed, warned, banned, preg_warn_items, interactions_alerts = analyze_antibiotics(")
+_i_call = _src.find("_res = run_analysis(")
 check("the Child-Pugh selector renders BEFORE the analysis call",
       0 < _i_sel < _i_call,
       f"selector at char {_i_sel}, analysis at char {_i_call} — a widget below "
@@ -428,159 +437,80 @@ check("a worsening Child-Pugh grade never adds an agent",
 # ═══════════════════════════════════════════════════════════════════════════
 print("\n[8] ONE FORMULARY — no second copy of the drug table may exist")
 # ═══════════════════════════════════════════════════════════════════════════
-# There were three copies of ABX_GUIDELINES: abx_guidelines.py (live in the
-# monolith), data/antibiotics.py (live in the modular build) and a dead,
+# HISTORY. There were THREE copies of ABX_GUIDELINES: abx_guidelines.py (live in
+# the monolith), data/antibiotics.py (live in the modular build) and a dead,
 # byte-identical antibiotics.py at the root. The two live copies had drifted into
 # different generations -- 15/41 renal_limits, 32/41 renal_notes and, worst,
-# preg_status for Doxycycline and Tetracycline, which was "Warn" in the modular
-# copy where modules/analyzer.py bans only on "Banned" and has no tetracycline
-# class override. A tetracycline therefore reached a pregnant patient as a
-# caution in that build. Two files holding the same clinical facts drift by
-# construction; the copies are gone and this check keeps them gone.
+# preg_status for Doxycycline and Tetracycline, which read "Warn" in the modular
+# copy where modules/analyzer.py bans only on "Banned". A tetracycline therefore
+# reached a pregnant patient as a mere caution in that build.
+#
+# 2026-08-03: modules/, ui/, data/, qc.py and antibiotics.py were DELETED.
+# 3,227 lines carrying 20 latent NameErrors -- code that parsed but could not
+# run. The redirect shims went with them, since a redirect to a deleted package
+# is just a slower ImportError. This check therefore changed shape: it no longer
+# proves the redirects behave, it proves the copies never come back.
 import importlib                                                     # noqa: E402
-import pathlib                                                       # noqa: E402
+import ast as _ast8                                                  # noqa: E402
+from pathlib import Path as _Path8                                   # noqa: E402
+_ROOT = _Path8(__file__).resolve().parent
 
-_ROOT = pathlib.Path(HERE)
-_literals = []
-for _py in sorted(_ROOT.rglob("*.py")):
-    if "__pycache__" in _py.parts or _py.name.startswith("test_"):
+_GONE = ["modules", "ui", "data", "qc.py", "antibiotics.py"]
+_resurrected = [g for g in _GONE if (_ROOT / g).exists()]
+check("the deleted parallel build has not returned",
+      not _resurrected, f"present again: {_resurrected}")
+
+# Exactly one module in the tree may define an ABX_GUIDELINES table literal.
+_definers = []
+for _py in sorted(_ROOT.glob("*.py")):
+    try:
+        _t = _ast8.parse(_py.read_text(encoding="utf-8"))
+    except SyntaxError:
         continue
+    for _n in _t.body:
+        if isinstance(_n, _ast8.Assign):
+            for _tg in _n.targets:
+                if (isinstance(_tg, _ast8.Name) and _tg.id == "ABX_GUIDELINES"
+                        and isinstance(_n.value, _ast8.Dict) and len(_n.value.keys) > 5):
+                    _definers.append(_py.name)
+        elif isinstance(_n, _ast8.AnnAssign):
+            if (isinstance(_n.target, _ast8.Name) and _n.target.id == "ABX_GUIDELINES"
+                    and isinstance(_n.value, _ast8.Dict) and len(_n.value.keys) > 5):
+                _definers.append(_py.name)
+check("exactly one file defines the ABX_GUIDELINES table",
+      _definers == ["abx_guidelines.py"], f"definers = {_definers}")
+
+# Same for the organism table.
+_org_definers = []
+for _py in sorted(_ROOT.glob("*.py")):
     try:
-        _tree = ast.parse(_py.read_text(encoding="utf-8"))
-    except Exception:
+        _t = _ast8.parse(_py.read_text(encoding="utf-8"))
+    except SyntaxError:
         continue
-    for _n in ast.walk(_tree):
-        if isinstance(_n, ast.Assign):
-            for _t in _n.targets:
-                if (isinstance(_t, ast.Name) and _t.id == "ABX_GUIDELINES"
-                        and isinstance(_n.value, ast.Dict)
-                        and len(_n.value.keys) > 5):
-                    _literals.append(f"{_py.relative_to(_ROOT)}:{_n.lineno} "
-                                     f"({len(_n.value.keys)} agents)")
-check("exactly one ABX_GUIDELINES table literal in the repository",
-      len(_literals) == 1,
-      "found " + str(len(_literals)) + ":\n" + "\n".join(_literals) +
-      "\nA second copy will drift from the first. Import it, do not restate it.")
+    for _n in _t.body:
+        _tgt = None
+        if isinstance(_n, _ast8.Assign) and len(_n.targets) == 1:
+            _tgt = _n.targets[0]
+        elif isinstance(_n, _ast8.AnnAssign):
+            _tgt = _n.target
+        if (isinstance(_tgt, _ast8.Name) and _tgt.id == "ORGANISM_PROFILE"
+                and isinstance(_n.value, _ast8.Dict) and len(_n.value.keys) > 5):
+            _org_definers.append(_py.name)
+check("exactly one file defines the ORGANISM_PROFILE table",
+      _org_definers == ["organism_profile.py"], f"definers = {_org_definers}")
 
-# antibiotics.py at the root may exist ONLY as a redirect. It used to be a
-# byte-identical 893-line copy of the formulary; it is now a 51-line re-export.
-# Deleting it is still the tidiest end state, but a redirect is safe: it holds no
-# clinical facts, so there is nothing in it to fall out of step.
-if (_ROOT / "antibiotics.py").exists():
-    try:
-        _legacy = importlib.import_module("antibiotics")
-        check("legacy antibiotics.py is a redirect, not a second copy",
-              _legacy.ABX_GUIDELINES is G,
-              "it serves its own table again — re-export, do not restate")
-        check("legacy antibiotics.py holds no table literal of its own",
-              "antibiotics.py:" not in "\n".join(_literals),
-              "\n".join(_literals))
-    except Exception as _exc:
-        check("legacy antibiotics.py imports cleanly", False, str(_exc))
-
+# The canonical QA engine must still be reachable and still find the classic
+# intrinsic contradiction. This used to be asserted through modules/qc.py; it is
+# now asserted against the engine itself, which is what actually runs.
 try:
-    _mod_tbl = importlib.import_module("data.antibiotics").ABX_GUIDELINES
-    check("data/antibiotics.py serves the SAME object, not a copy",
-          _mod_tbl is G,
-          "the modular build has its own table again; re-export instead")
-    for _sym in ("AWARE_COLORS", "get_commercial_name", "ABX_ALIAS_INDEX",
-                 "normalize_abx_key", "ORGANISM_AVOID_CLASS_MAP",
-                 "RENAL_BAN_REASONS", "CHILD_BAN_REASONS", "COMMON_MEDS"):
-        check(f"data/antibiotics.py still exports {_sym}",
-              hasattr(importlib.import_module("data.antibiotics"), _sym),
-              "the modular build imports this; removing it breaks ui/dashboard.py")
-except Exception as _exc:                                            # pragma: no cover
-    check("data/antibiotics.py imports cleanly", False, str(_exc))
-
-# The brand that was a formulary entry of its own must survive as an alias, or
-# collapsing the tables silently drops it from OCR matching.
-from abx_guidelines import ABX_ALIAS_INDEX as _IDX                    # noqa: E402
-for _brand in ("furadantin", "macrobid", "macrofuran"):
-    check(f"brand '{_brand}' still resolves to Nitrofurantoin",
-          _IDX.get(_brand) == "Nitrofurantoin", f"resolves to {_IDX.get(_brand)!r}")
-
-check("Furadantin is no longer a separate formulary entry",
-      "Furadantin" not in G,
-      "one molecule with two formulary rows can be counted twice on one panel")
-
-# The organism tables had the same problem: data/organisms.py held 17 organisms
-# against the canonical 20, missing "VRE", "Rickettsia spp." and the
-# "Enterobacterales (unspeciated)" fall-back key the OCR path lands on when the
-# report names no species, plus 11 shared profiles that disagreed.
-for _name, _canon_mod in (("ORGANISM_PROFILE", "organism_profile"),
-                          ("SPECIMEN_ORGANISM_MAP", "specimen_organism_map")):
-    _lits = []
-    for _py in sorted(_ROOT.rglob("*.py")):
-        if "__pycache__" in _py.parts or _py.name.startswith("test_"):
-            continue
-        try:
-            _t = ast.parse(_py.read_text(encoding="utf-8"))
-        except Exception:
-            continue
-        for _n in _t.body:
-            if isinstance(_n, ast.Assign):
-                for _tg in _n.targets:
-                    if (isinstance(_tg, ast.Name) and _tg.id == _name
-                            and isinstance(_n.value, ast.Dict)
-                            and len(_n.value.keys) > 3):
-                        _lits.append(f"{_py.relative_to(_ROOT)}:{_n.lineno}")
-    check(f"exactly one {_name} table literal",
-          len(_lits) == 1, f"found {len(_lits)}: {_lits}")
-
-try:
-    _do = importlib.import_module("data.organisms")
-    _op = importlib.import_module("organism_profile")
-    check("data/organisms.py serves the SAME ORGANISM_PROFILE object",
-          _do.ORGANISM_PROFILE is _op.ORGANISM_PROFILE,
-          "the modular build has its own organism table again")
-    for _k in ("VRE", "Enterobacterales (unspeciated)"):
-        check(f"organism key {_k!r} reaches the modular build",
-              _k in _do.ORGANISM_PROFILE)
-    check("data/organisms.py derives SPECIMEN_TYPES, does not restate it",
-          list(_do.SPECIMEN_TYPES) == list(_do.SPECIMEN_ORDER),
-          f"{_do.SPECIMEN_TYPES} vs {_do.SPECIMEN_ORDER}")
-except Exception as _exc:                                            # pragma: no cover
-    check("data/organisms.py imports cleanly", False, str(_exc))
-
-# modules/qc.py iterated an undefined AST_QC_RULES, so the modular build's AST QC
-# raised NameError on every call. It must be wired to the canonical engine, not
-# left to degrade to an empty rule set that silently finds nothing.
-# Same for qc.py. This one mattered more than it looked: the NameError guard
-# lived in the DEAD copy and never reached modules/qc.py, so the copy that ran
-# was the broken one.
-if (_ROOT / "qc.py").exists():
-    try:
-        _legacy_qc = importlib.import_module("qc")
-        _live_qc = importlib.import_module("modules.qc")
-        check("legacy qc.py is a redirect, not a second implementation",
-              _legacy_qc.run_ast_qc is _live_qc.run_ast_qc,
-              "it defines its own run_ast_qc again — re-export, do not restate")
-    except Exception as _exc:
-        check("legacy qc.py imports cleanly", False, str(_exc))
-try:
-    _mq = importlib.import_module("modules.qc")
-    check("modules.qc no longer references an undefined rule table",
-          not hasattr(_mq, "AST_QC_RULES") or _mq.AST_QC_RULES is not None)
-    check("modules.qc is wired to the canonical QA engine",
-          getattr(_mq, "QA_ENGINE_AVAILABLE", False),
-          "run_ast_qc would return [] for every input")
-    _found = _mq.run_ast_qc("Klebsiella spp.", {"Ampicillin": "S"}, "Blood")
-    check("modules.qc actually detects a known intrinsic contradiction",
+    _qa = importlib.import_module("ast_qa_engine")
+    _found = _qa.run_ast_qa_engine(organism="Klebsiella spp.",
+                                   sir_map={"Ampicillin": "S"}, specimen="Blood")
+    check("the QA engine detects Klebsiella + Ampicillin=S as intrinsic",
           len(_found) >= 1,
-          "Klebsiella + Ampicillin=S must raise an intrinsic-resistance issue")
-    _mq.run_ast_qc("E. coli", {"Ampicillin": "R"})
-    check("modules.qc accepts the 2-arg and 3-arg call shapes",
-          True)
+          "the canonical engine must flag a textbook intrinsic contradiction")
 except Exception as _exc:
-    check("modules.qc imports and runs", False, str(_exc))
-
-# The reason text and the enforced threshold must name the same number.
-_reason_src = open(APP, encoding="utf-8").read()
-_nf_limit = G.get("Nitrofurantoin", {}).get("renal_limit")
-check("RENAL_BAN_REASONS quotes the threshold the engine enforces",
-      f"CrCl < {_nf_limit}" in _reason_src,
-      f"engine enforces {_nf_limit}; the explanation shown to the clinician "
-      f"names a different number")
+    check("ast_qa_engine imports and runs", False, str(_exc))
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Countersignature queue — reported, never a failure

@@ -147,32 +147,25 @@ for org in ORGANISMS:
     check(f"no beta-lactam disagreement for {org}", not betalactam, f"{sorted(betalactam)}")
 
 print("\n[4] OCR scanner produces no phantom drugs")
+# 2026-08-03: the scanner moved out of streamlit_app.py into ocr_parsing.py.
+# This used to slice the block out of the monolith with two string indexes and
+# exec it in a hand-built namespace — a 25-line stand-in for one import
+# statement, and a stand-in that broke the moment the code moved. Extracting
+# the module is exactly what makes that unnecessary, so the harness is gone.
+# NOTE: deliberately NOT importing streamlit_app here. This suite runs without
+# a Streamlit runtime, and importing the monolith would raise before reaching
+# the scanner — which is the whole reason the scanner now lives in its own
+# module.
 try:
-    _src = (ROOT / "streamlit_app.py").read_text(encoding="utf-8")
-    _start = _src.index("_ABX_ALIAS_SORTED = sorted(")
-    _end = _src.index("def extract_detected_drugs(")
-    _end = _src.index("\n\n", _src.index("return sorted(detected)", _end))
-    _ns: dict = {
-        "ABX_ALIAS_INDEX": ABX_ALIAS_INDEX, "ABX_GUIDELINES": ABX_GUIDELINES,
-        "normalize_abx_key": normalize_abx_key, "List": list, "Tuple": tuple,
-        "Dict": dict, "Optional": type(None), "re": re,
-        "fuzzy_match": lambda a, b: 0.0,
-        # The disk-code path added 2026-08-01 asks whether a line carries an
-        # S/I/R verdict before it will honour a two-letter code. Mirror the
-        # app's vocabulary rather than inventing a second one here.
-        "normalize_sir_value": lambda v: {
-            "S": "S", "I": "I", "R": "R", "SDD": "I", "NS": "R",
-            "SENSITIVE": "S", "SUSCEPTIBLE": "S", "SENS": "S",
-            "INTERMEDIATE": "I", "INTER": "I", "INT": "I",
-            "RESISTANT": "R", "RESIST": "R", "RES": "R",
-        }.get(str(v).strip().upper()),
-    }
-    exec(compile(_src[_start:_end], "scanner", "exec"), _ns)
-    scan = _ns["extract_detected_drugs"]
-    match_one = _ns["match_antibiotic_from_text"]
-except Exception as exc:                                   # pragma: no cover
-    scan = match_one = None
-    check("scanner block is extractable from streamlit_app.py", False, repr(exc))
+    from ocr_parsing import extract_detected_drugs as scan
+except Exception:
+    scan = None
+try:
+    from ocr_parsing import match_antibiotic_from_text as match_one
+except Exception:
+    match_one = None
+check("the OCR scanner is importable as a module", scan is not None,
+      "ocr_parsing.extract_detected_drugs did not import")
 
 if scan:
     PHANTOM_CASES = [
@@ -266,6 +259,64 @@ if predict_esbl:
     check("Klebsiella still calls carbapenemase at high confidence",
           k.get("probability") == "carbapenemase" and k.get("confidence", 0) >= 90,
           f"got {k.get('probability')} / {k.get('confidence')}")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[5] CROSS-LAYER QC COVERAGE — every clinically impossible result must")
+print("    be objected to by at LEAST ONE of the three QC layers.")
+# ═══════════════════════════════════════════════════════════════════════════
+# There are three independent quality layers — ast_reportability (may this be
+# reported?), ast_consistency (do these two facts contradict?) and
+# ast_qa_engine (is this panel internally sound?) — and no single one of them
+# covers everything. During the 2026-08-03 review a probe of the wrong layer
+# made a covered case look silent twice, and there was nothing that asked the
+# only question that matters: does ANY layer object?
+#
+# This is that question, asked once, over results that cannot be true.
+try:
+    import ast_reportability as _RP
+    import ast_qa_engine as _Q
+    from ast_consistency import check_consistency as _CC
+
+    _IMPOSSIBLE = [
+        ("MRSA", {"Oxacillin": "S"}, "MRSA reported oxacillin-susceptible"),
+        ("MRSA", {"Cefoxitin": "S"}, "MRSA reported cefoxitin-susceptible"),
+        ("VRE", {"Vancomycin": "S"}, "VRE reported vancomycin-susceptible"),
+        ("Streptococcus pyogenes (Group A)", {"Penicillin": "R"},
+         "penicillin-resistant Group A Strep (never documented worldwide)"),
+        ("Klebsiella spp.", {"Ampicillin": "S"}, "Klebsiella ampicillin-susceptible"),
+        ("Enterococcus faecalis", {"Ceftriaxone": "S"},
+         "Enterococcus cephalosporin-susceptible"),
+        ("Listeria monocytogenes", {"Ceftriaxone": "S"},
+         "Listeria cephalosporin-susceptible"),
+        ("Stenotrophomonas maltophilia", {"Meropenem": "S"},
+         "Stenotrophomonas carbapenem-susceptible (L1 metallo-enzyme)"),
+        ("Acinetobacter baumannii", {"Ertapenem": "S"}, "Acinetobacter ertapenem-S"),
+        ("Proteus mirabilis", {"Colistin": "S"}, "Proteus colistin-susceptible"),
+        ("Proteus mirabilis", {"Nitrofurantoin": "S"}, "Proteus nitrofurantoin-S"),
+        ("Morganella morganii", {"Tigecycline": "S"}, "Morganella tigecycline-S"),
+        ("Anaerobes (لاهوائيات)", {"Gentamicin": "S"}, "anaerobe aminoglycoside-S"),
+        ("Staphylococcus aureus", {"Colistin": "S"}, "staphylococcus colistin-S"),
+        ("E. coli", {"Vancomycin": "S"}, "E. coli vancomycin-susceptible"),
+        ("Coagulase-negative Staphylococci", {"Aztreonam": "S"}, "CoNS aztreonam-S"),
+        ("Enterococcus faecium", {"Trimethoprim/Sulfamethoxazole": "S"},
+         "enterococcal TMP-SMX (susceptible in vitro, fails in vivo)"),
+        ("Campylobacter jejuni", {"Trimethoprim": "S"}, "Campylobacter trimethoprim-S"),
+        ("Salmonella spp.", {"Gentamicin": "S"},
+         "Salmonella aminoglycoside (susceptible in vitro, fails in vivo)"),
+        ("H. influenzae", {"Vancomycin": "S"}, "H. influenzae vancomycin-susceptible"),
+    ]
+    _silent = []
+    for _o, _s, _d in _IMPOSSIBLE:
+        _r = bool(_RP.check_reportability(_o, _s))
+        _c = bool(_CC(_o, _s))
+        _q = bool(_Q.run_ast_qa_engine(organism=_o, sir_map=_s, specimen="Blood"))
+        if not (_r or _c or _q):
+            _silent.append(f"{_d}  —  no QC layer objects")
+    check(f"all {len(_IMPOSSIBLE)} impossible results are caught by some QC layer",
+          not _silent, "\n".join(_silent))
+except Exception as _e:
+    check("cross-layer QC coverage ran", False, repr(_e))
 
 print("\n" + "=" * 68)
 print(f"{PASSES} passed, {len(FAILURES)} failed")

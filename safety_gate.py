@@ -49,7 +49,6 @@ __all__ = ["apply_safety_gate", "gate_summary_lines", "GATE_VERSION"]
 
 GATE_VERSION = "1.0.0"
 
-_BUCKET_RANK = {"allowed": 0, "warned": 1, "banned": 2}
 
 
 def _name(item: Any) -> str:
@@ -125,16 +124,11 @@ def apply_safety_gate(
     #
     # Months win when supplied — they are the more precise measurement, and
     # carrying them here is the entire purpose of the "أقل من سنة" field.
-    _eff_age = age_years
-    if age_months is not None:
-        try:
-            _m = float(age_months)
-            # Outside 0-11 is a data error, not a patient: fall back to years
-            # rather than trusting it. Mirrors the same guard in the engine.
-            if 0 <= _m <= 11:
-                _eff_age = _m / 12.0
-        except (TypeError, ValueError):
-            pass
+    # Resolution lives in clinical_utils.resolve_age_years — the same helper
+    # get_combination_therapy uses, so the two cannot grow different ideas of
+    # what "six months old" means. Each had its own copy before 2026-08-03.
+    from clinical_utils import resolve_age_years as _resolve_age
+    _eff_age = _resolve_age(age_years, age_months)
     report["age_years_effective"] = _eff_age
 
     host = dict(age_years=_eff_age, is_pregnant=is_pregnant, is_lactating=is_lactating,

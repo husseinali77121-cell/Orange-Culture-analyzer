@@ -33,7 +33,7 @@ _WANT = ["INTRINSIC_RESISTANCE","ESBL_PRODUCERS","AMPC_PRODUCERS","ESBL_MARKERS"
          "_remove_intrinsic_resistance","predict_esbl","is_intrinsically_avoided",
          # Shared helpers introduced with SIR normalisation -- extracted so the
          # re-exec'd predict_esbl can still resolve them.
-         "_SIR_ALIASES","normalize_sir_value","normalize_sir_map"]
+         "normalize_sir_map"]
 def _extract(path, names):
     src = open(path, encoding="utf-8").read(); tree = ast.parse(src); lines = src.splitlines(keepends=True)
     seg = {}
@@ -68,7 +68,14 @@ except Exception as _e:
 
 import re as _re  # _re_ws_collapse (added 2026-08-03) normalises organism
                  # whitespace with a regex, so the exec namespace needs `re`.
-NS: Dict[str, Any] = {"Dict":Dict,"Any":Any,"List":List,"ORGANISM_PROFILE":ORGANISM_PROFILE,
+# 2026-08-03: the S/I/R vocabulary moved to ocr_parsing.py. Seed it from
+# the real module instead of slicing it out of the monolith — an
+# importable module is the whole point of having extracted it.
+from ocr_parsing import (normalize_sir_value as _nsv,
+                         normalize_sir_map as _nsm,
+                         _SIR_ALIASES as _sal)
+NS: Dict[str, Any] = {
+    "normalize_sir_value": _nsv, "normalize_sir_map": _nsm, "_SIR_ALIASES": _sal,"Dict":Dict,"Any":Any,"List":List,"ORGANISM_PROFILE":ORGANISM_PROFILE,
                       "INTRINSIC_RESISTANCE":_CANON_IR, "re":_re}
 for k in _WANT:
     if k in _seg: exec(_seg[k], NS)

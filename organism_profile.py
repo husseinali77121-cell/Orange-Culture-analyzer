@@ -508,6 +508,154 @@ ORGANISM_PROFILE.update({
     },
 })
 
+
+# ════════════════════════════════════════════════════════════════════════════
+#  ORGANISMS THAT HAD RULES BUT NO WAY IN — added 2026-08-03
+#  --------------------------------------------------------------------------
+#  clinical_data.INTRINSIC_RESISTANCE carried complete, correct rows for
+#  Listeria, both pyogenic streptococci, E. faecium and the coagulase-negative
+#  staphylococci — and none of them appeared in this file, so the dropdown never
+#  offered them and not one of those rules could ever fire.
+#
+#  Listeria is the one that matters most: it is intrinsically resistant to EVERY
+#  cephalosporin, and it causes meningitis in exactly the three groups a
+#  ceftriaxone-first protocol is written for — neonates, pregnant women and the
+#  elderly. A lab that reports Listeria to a tool that cannot represent it gets
+#  no warning that the empirical cephalosporin will fail.
+#
+#  CoNS is the opposite problem: the commonest blood-culture isolate in any lab,
+#  and usually a skin contaminant. The clinical question is not "which
+#  antibiotic" but "is this real at all", so its profile leads with that.
+# ════════════════════════════════════════════════════════════════════════════
+ORGANISM_PROFILE.update({
+    "Listeria monocytogenes": {
+        "first_line":  ["Ampicillin", "Amoxicillin", "Penicillin"],
+        "second_line": ["Trimethoprim/Sulfamethoxazole", "Meropenem"],
+        "third_line":  ["Linezolid", "Vancomycin"],
+        # Every cephalosporin. This is the entire point of the entry.
+        "avoid": ["Ceftriaxone", "Cefotaxime", "Ceftazidime", "Cefepime",
+                  "Cefuroxime", "Cefazolin", "Cephalexin", "Cefixime",
+                  "Cefoxitin", "Cefaclor", "Cefadroxil", "Cephradine",
+                  "Cefoperazone", "Ceftaroline", "Cefiderocol"],
+        "urine_note": "Listeria نادرة جداً في البول — أكِّد التعريف قبل أي قرار.",
+        "specimen_context": {
+            "CSF": ("🔴 **التهاب سحايا بالليستيريا.** السيفالوسبورينات **كلها** تفشل — "
+                    "لهذا يُضاف Ampicillin تجريبياً للوليد والحامل ومن تجاوز 50 سنة. "
+                    "أضِف Gentamicin للتآزر في الحالات الشديدة."),
+            "Blood": ("🔴 تجرثم دم بالليستيريا — شائع في الحمل (قد يكون العرض الوحيد) "
+                      "وفي نقص المناعة. Ampicillin ± Gentamicin."),
+            "Pus": "🔬 نادرة — أكِّد التعريف.",
+        },
+        "note": ("🦠 **Listeria monocytogenes** — عصيّة موجبة الجرام داخل خلوية.\n"
+                 "⛔ **مقاومة جوهرية لكل السيفالوسبورينات** (PBP3 منخفضة الألفة) — "
+                 "أي نتيجة حساسية لسيفالوسبورين هنا غير قابلة للتفسير ويجب "
+                 "عدم الاعتماد عليها.\n"
+                 "🤰 الفئات المعرّضة: الحوامل · حديثو الولادة · فوق 50 سنة · "
+                 "نقص المناعة. المصدر الغذائي: الأجبان الطرية والألبان غير المبسترة.\n"
+                 "📋 العلاج: Ampicillin جرعة عالية ± Gentamicin للتآزر. "
+                 "بديل الحساسية للبنسلين: TMP-SMX. (IDSA Meningitis · EUCAST v16.1)"),
+    },
+    "Streptococcus pyogenes (Group A)": {
+        "first_line":  ["Penicillin", "Amoxicillin", "Ampicillin"],
+        "second_line": ["Cefazolin", "Cephalexin", "Clindamycin"],
+        "third_line":  ["Azithromycin", "Clarithromycin", "Vancomycin"],
+        "avoid": ["Trimethoprim/Sulfamethoxazole"],
+        "urine_note": "GAS في البول غير معتاد — استبعد التلوّث.",
+        "specimen_context": {
+            "Wound Swab": ("🔴 التهاب نسيج خلوي / حمرة / التهاب لفافة نخري. "
+                           "أضِف **Clindamycin** في الحالات الغازية لتثبيط "
+                           "إنتاج الذيفان (تأثير Eagle)."),
+            "Pus": "🔴 خراج — الصرف الجراحي أساسي مع البنسلين.",
+            "Blood": "🔴 متلازمة الصدمة السمّية العقدية — Penicillin + Clindamycin + IVIG.",
+        },
+        "note": ("🦠 **Streptococcus pyogenes** (المجموعة A).\n"
+                 "✅ **لم تُوثَّق مقاومة للبنسلين إطلاقاً على مستوى العالم** — "
+                 "أي نتيجة تقول Penicillin = R تعني خطأ في التعريف أو الاختبار "
+                 "ويجب إعادتهما قبل أي قرار.\n"
+                 "⚠️ مقاومة الماكروليدات موجودة وتتفاوت محلياً — لا تُستخدم إلا "
+                 "بنتيجة حساسية.\n"
+                 "📋 في العدوى الغازية أضِف Clindamycin: يوقف تصنيع الذيفان "
+                 "الخارجي ولا يتأثر بكثافة الجراثيم. (CLSI M100 Ed36)"),
+    },
+    "Streptococcus agalactiae (Group B)": {
+        "first_line":  ["Penicillin", "Ampicillin", "Amoxicillin"],
+        "second_line": ["Cefazolin", "Ceftriaxone"],
+        "third_line":  ["Vancomycin", "Clindamycin"],
+        "avoid": ["Trimethoprim/Sulfamethoxazole"],
+        "urine_note": ("🤰 **GBS في بول الحامل = حمل ثقيل بالمستعمرات** مهما كان "
+                       "العدد — يستوجب علاج البيلة الجرثومية **و** وقاية "
+                       "بالبنسلين أثناء المخاض. (CDC/ACOG)"),
+            "specimen_context": {
+            "Blood": "🔴 إنتان وليدي مبكر أو متأخر — Ampicillin + Gentamicin.",
+            "CSF": "🔴 سحايا وليدية — Ampicillin جرعة عالية ± Gentamicin.",
+            "Urine": "🤰 راجع ملاحظة البول — له دلالة خاصة في الحمل.",
+            "Wound Swab": "🔬 عدوى جلد ونسيج رخو، خاصة في السكري.",
+        },
+        "note": ("🦠 **Streptococcus agalactiae** (المجموعة B).\n"
+                 "🤰 **السبب الأول للإنتان الوليدي المبكر.** يُفحص للحوامل في "
+                 "الأسبوع 36–37، والإيجابيات تأخذ وقاية بالبنسلين أثناء المخاض.\n"
+                 "⚠️ عند حساسية البنسلين: **اطلب D-test** — مقاومة الكليندامايسين "
+                 "المُحرَّضة شائعة في GBS، و Erythromycin=R مع Clindamycin=S "
+                 "يعني احتمال فشل الكليندامايسين.\n"
+                 "✅ البنسلين يظل فعّالاً دائماً. (CDC GBS Guidelines · CLSI M100 Ed36)"),
+    },
+    "Enterococcus faecium": {
+        "first_line":  ["Vancomycin", "Linezolid"],
+        "second_line": ["Teicoplanin", "Daptomycin"],
+        "third_line":  ["Tigecycline"],
+        "avoid": ["Ceftriaxone", "Cefotaxime", "Ceftazidime", "Cefepime",
+                  "Cefuroxime", "Cefazolin", "Cephalexin", "Cefoxitin",
+                  "Trimethoprim/Sulfamethoxazole", "Clindamycin"],
+        "urine_note": ("في التهاب المثانة البسيط: Nitrofurantoin أو Fosfomycin "
+                       "حسب الحساسية — تجنّب الأدوية الواسعة."),
+        "specimen_context": {
+            "Blood": ("🔴 تجرثم دم بـ E. faecium — **مقاومة الأمبيسيلين هي القاعدة** "
+                      "(>90% عالمياً)، بعكس E. faecalis. تحقّق من الفانكومايسين."),
+            "Urine": "🔬 شائع في القسطرة — افصل الاستعمار عن العدوى.",
+            "Pus": "🔬 عدوى داخل بطنية — غالباً ضمن فلورا مختلطة.",
+        },
+        "note": ("🦠 **Enterococcus faecium** — يختلف عن *E. faecalis* اختلافاً "
+                 "علاجياً جوهرياً.\n"
+                 "⚠️ **مقاومة الأمبيسيلين هي القاعدة** في *faecium* (>90%) "
+                 "والاستثناء في *faecalis* — لا تعامِلهما ككائن واحد.\n"
+                 "⚠️ معظم عزلات VRE هي *faecium*. VanA = مقاوم للفانكومايسين "
+                 "والتيكوبلانين؛ **VanB = مقاوم للفانكومايسين وحسّاس للتيكوبلانين**.\n"
+                 "⛔ مقاومة جوهرية: كل السيفالوسبورينات · الكليندامايسين · "
+                 "TMP-SMX (فعّال معملياً وفاشل سريرياً) · البوليميكسينات."),
+    },
+    "Coagulase-negative Staphylococci": {
+        "first_line":  ["Vancomycin"],
+        "second_line": ["Teicoplanin", "Linezolid"],
+        "third_line":  ["Daptomycin", "Trimethoprim/Sulfamethoxazole", "Doxycycline"],
+        "avoid": [],
+        "urine_note": ("CoNS في البول: **S. saprophyticus** ممرض حقيقي في الفتيات "
+                       "الشابات؛ باقي الأنواع غالباً تلوّث إلا مع قسطرة أو "
+                       "جسم غريب."),
+        "specimen_context": {
+            "Blood": ("⚠️ **سؤال التلوّث قبل سؤال الدواء.** CoNS أشهر عزلة في مزارع "
+                      "الدم وأغلبها تلوّث جلدي. مؤشرات العدوى الحقيقية: نمو في "
+                      "**زجاجتين منفصلتين أو أكثر** · وجود جهاز داخل وعائي أو "
+                      "صمّام صناعي · نمو خلال أقل من 24 ساعة · صورة سريرية موافقة. "
+                      "زجاجة واحدة من مجموعة واحدة = تلوّث حتى يثبت العكس."),
+            "Wound Swab": "🔬 غالباً فلورا جلدية — فسّر مع الصورة السريرية.",
+            "Pus": "🔬 له وزن حقيقي مع الأجسام الصناعية (مفاصل · شرائح).",
+            "CSF": "⚠️ له وزن حقيقي مع تحويلة بطينية صفاقية؛ وإلا فتلوّث.",
+        },
+        "note": ("🦠 **عنقوديات سالبة التخثّر** (S. epidermidis · S. haemolyticus · "
+                 "S. hominis · S. saprophyticus).\n"
+                 "⚠️ **أشهر عزلة في مزارع الدم، وأغلبها تلوّث.** لا تبدأ علاجاً "
+                 "قبل الإجابة على سؤال الأهمية.\n"
+                 "📋 حين تكون حقيقية: **>70–80% مقاومة للميثيسيلين** — الفانكومايسين "
+                 "هو الخيار التجريبي، وينزل إلى Oxacillin/Cefazolin فقط إذا ثبتت "
+                 "الحساسية.\n"
+                 "🔧 مرتبطة بالأجهزة والأجسام الصناعية عبر الأغشية الحيوية "
+                 "(biofilm) — **نزع الجهاز غالباً شرط للشفاء**، وأضِف Rifampicin "
+                 "للأجسام الصناعية مع دواء فعّال آخر.\n"
+                 "⚠️ **S. lugdunensis استثناء**: يسلك سلوك *S. aureus* في الشراسة "
+                 "ويجب التعامل معه كممرض حقيقي دائماً."),
+    },
+})
+
 # Guarantee a complete schema across all organism records.
 for _payload in ORGANISM_PROFILE.values():
     _payload.setdefault("first_line", [])
