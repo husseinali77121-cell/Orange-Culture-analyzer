@@ -635,6 +635,67 @@ check("safety_gate is registered as CRITICAL in module health, not optional",
       "SAFETY_GATE_AVAILABLE, True)" in _src12,
       "safety_gate must be flagged critical — without it there is no terminal check")
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[13] The combination panel must not offer an agent the organism is")
+print("    INTRINSICALLY resistant to. Raised by external review 2026-08-06 and")
+print("    confirmed at 50 occurrences in 1,500 randomised cases: the CRE panel")
+print("    offered 'Colistin + Meropenem high-dose' for Proteus, Providencia,")
+print("    Morganella and Serratia — all four intrinsically colistin-resistant.")
+print("    They are Enterobacterales, so CRE fires correctly; the panel then")
+print("    named a polymyxin that cannot work against them.")
+print("    This is NOT the same as naming an AST-resistant drug — high-dose")
+print("    extended infusion exists precisely for those. An intrinsic mechanism")
+print("    is different in kind: no dose overcomes a missing target.")
+# ═══════════════════════════════════════════════════════════════════════════
+from clinical_data import INTRINSIC_RESISTANCE as _IR13                    # noqa: E402
+from clinical_utils import org_matches as _om13                            # noqa: E402
+
+_sir13 = {"Meropenem": "R", "Ertapenem": "R", "Colistin": "S",
+          "Amikacin": "S", "Tigecycline": "S"}
+_leak13 = []
+for _org13 in ORGS:
+    _intr13 = set()
+    for _k13, _v13 in _IR13.items():
+        if _om13(_org13, [_k13]):
+            _intr13 |= set(_v13)
+    if not _intr13:
+        continue
+    _r13 = A.run_analysis(Patient(age_years=50, sex="Male"), _org13, "Blood", _sir13)
+    for _c13 in _r13["combinations"]:
+        for _o13 in _c13["data"]["options"]:
+            if str(_o13.get("combo", "")).upper().startswith("AVOID"):
+                continue
+            if _o13.get("intrinsically_inactive"):
+                continue          # correctly annotated
+            _norm13 = str(_o13["combo"]).lower().replace("+", "-").replace("/", "-").replace(" ", "")
+            for _ag13 in sorted(G, key=len, reverse=True):
+                _a13 = _ag13.lower().replace("+", "-").replace("/", "-").replace(" ", "")
+                if _a13 and _a13 in _norm13:
+                    _norm13 = _norm13.replace(_a13, "\x00" * len(_a13))
+                    if _ag13 in _intr13:
+                        _leak13.append(f"{_org13} ({_c13['phenotype']}): "
+                                       f"intrinsically resistant to {_ag13}, panel "
+                                       f"offers {_o13['combo'][:40]!r} unflagged")
+check("no combination option offers an intrinsically inactive agent unflagged",
+      not _leak13, "\n".join(sorted(set(_leak13))[:8]))
+
+# The annotation must land on the RIGHT options only. Ampicillin-Sulbactam is a
+# recommended CRAB agent; matching Acinetobacter's intrinsic "Ampicillin" inside
+# it would wrongly condemn the drug of choice.
+_over13 = []
+_r_ab = A.run_analysis(Patient(age_years=50, sex="Male"),
+                       "Acinetobacter baumannii", "Blood",
+                       {"Meropenem": "R", "Imipenem/Cilastatin": "R",
+                        "Ampicillin/Sulbactam": "S", "Colistin": "S"})
+for _c13 in _r_ab["combinations"]:
+    for _o13 in _c13["data"]["options"]:
+        if "sulbactam" in str(_o13.get("combo", "")).lower() and _o13.get("intrinsically_inactive"):
+            _over13.append(f"ampicillin-sulbactam wrongly condemned for CRAB: "
+                           f"{_o13['intrinsically_inactive']}")
+check("a combination product is not condemned for its lone component",
+      not _over13, "\n".join(_over13))
+
 print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
 if _FAIL:

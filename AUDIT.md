@@ -81,9 +81,9 @@
 ### الملفات الجديدة
 | الملف | الوظيفة |
 |---|---|
-| `clinical_data.py` | مصدر وحيد للـ intrinsic (34 كائن) |
-| `guideline_registry.py` | 36 قاعدة × مصدر مؤرَّخ + لينك + مين راجع وامتى |
-| `scenario_matrix.py` | مولّد 791 سيناريو |
+| `clinical_data.py` | مصدر وحيد للـ intrinsic (50 صف) |
+| `guideline_registry.py` | 50 قاعدة × مصدر مؤرَّخ + لينك + مين راجع وامتى |
+| `scenario_matrix.py` | مولّد 1,344 سيناريو |
 | `test_scenarios.py` | 13 invariant + golden snapshot |
 | `test_intrinsic_sync.py` | 86 تست للجداول والـ OCR |
 | `test_guidelines.py` | تتبّع الاستشهادات |
@@ -99,7 +99,7 @@
 ```bash
 python test_intrinsic_invariant.py    # انحراف الجداول
 python test_intrinsic_sync.py         # 86 تست
-python test_scenarios.py              # 791 سيناريو
+python test_scenarios.py              # 1,344 سيناريو
 python test_guidelines.py             # تتبّع المصادر
 python test_guidelines.py --queue     # اللي لسه محتاج مراجعة
 N_FUZZ=20000 python test_comprehensive.py
@@ -120,11 +120,11 @@ python -m compileall -q .
 ## ٧. الحالة النهائية
 
 ```
-Guard 0  clinical_data موجود          ✅  34 كائن
+Guard 0  clinical_data موجود          ✅  50 صف
 Guard 1  انحراف الجداول                ✅
 Guard 2  التزامن + OCR                ✅  86 passed
-Guard 3  مصفوفة السيناريوهات           ✅  791 × 13 invariant
-Guard 4  تتبّع الـ Guidelines           ✅  36 قاعدة
+Guard 3  مصفوفة السيناريوهات           ✅  1,344 × 15 invariant
+Guard 4  تتبّع الـ Guidelines           ✅  50 قاعدة
 Guard 5  الشامل                       ✅  N=20000
 Guard 6  compileall                   ✅
 fuzz                                  ✅  8000 حالة، صفر أخطاء
@@ -269,3 +269,7 @@ fuzz                                  ✅  8000 حالة، صفر أخطاء
 2. **`data/antibiotics.py` ناقصه `import re`** — كان مسجَّلاً كعيب معروف وفضل مفتوح. النتيجة إن **6 modules** في شجرة `modules/` و `ui/` كانت بتفشل عند الـ import، والـ CI مكانش بيمسكها لأن `compileall` بيـ parse ومش بيـ execute. اتصلّح، واتضاف **Guard 9** بيعمل import حقيقي لكل module.
 
 3. **ESBL و MDR** — الملف والتعليق في `MDR_CATEGORIES` بيقولوا إن ESBL *E. coli* المفروض تُحسب فئة واحدة وترجع **NOT MDR**. ده **غير صحيح**، والكود هو الصح: Magiorakos Table 3 بيعُدّ Penicillins و Penicillins+BLI و Non-extended ceph و Extended ceph **أربع فئات منفصلة**، فالـ ESBL بتوصل 4 = MDR — وده كمان اللي عليه الأدبيات. التعليق اتصحّح في الكود عشان مايتحوّلش لفخ صيانة.
+
+---
+
+_الأرقام أعلاه محدَّثة بتاريخ 2026-08-06 مقابل الكود نفسه: **60 دواء · 30 كائن قابل للاختيار · 50 صف مقاومة جوهرية · 50 استشهاد مُوقَّع · 1,267 حالة في الـ snapshot**. `test_clinical_facts.py` بيفشل لو أي رقم منهم اتغيّر من غير تحديث._

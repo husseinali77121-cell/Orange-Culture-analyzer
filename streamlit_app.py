@@ -1721,6 +1721,7 @@ def run_analysis(
         phenotypes,
         is_pregnant=k["is_preg"], age_years=k["age"], age_months=k["age_months"],
         is_renal=k["is_renal"], cl_cr=k["cl_cr"], is_hepatic=k["is_hepatic"],
+        organism=organism,
     )
 
     severity = suggest_severity(specimen, k["age"], k["sex"], k["is_preg"],
@@ -4269,6 +4270,7 @@ def get_combination_therapy(
     is_renal: bool = False,
     cl_cr: Optional[float] = None,
     is_hepatic: bool = False,
+    organism: str = "",
 ) -> List[Dict]:
     """Combination therapy suggestions -- IDSA AMR Guidance 2026.
 
@@ -4330,6 +4332,72 @@ def get_combination_therapy(
             else:
                 opts.append(opt)
         results.append({"phenotype": ph, "data": {**data, "options": opts}})
+    # ── The organism's OWN intrinsic resistance ─────────────────────────────
+    # DEFECT 2026-08-06, raised by a third-party review and confirmed over 1,500
+    # randomised cases: the CRE panel offered "Colistin + Meropenem high-dose"
+    # for Proteus, Providencia, Morganella and Serratia — all four INTRINSICALLY
+    # colistin-resistant. They are Enterobacterales, so CRE fires correctly; the
+    # panel then recommended a polymyxin that cannot work against them, 50 times
+    # in 1,500 cases.
+    #
+    # This is NOT the same as offering an agent the AST reported R. A salvage
+    # regimen naming an AST-resistant drug is the POINT of high-dose extended
+    # infusion — the strategy exists for isolates where the standard dose
+    # failed. An INTRINSIC mechanism is different in kind: no dose, no infusion
+    # time and no partner overcomes a missing target or a constitutive efflux
+    # pump. It is a dead option printed in the panel a clinician reaches for
+    # when nothing else is left.
+    #
+    # Options are ANNOTATED, not deleted: the reader should see that the
+    # regimen exists and why it does not apply here, rather than wonder whether
+    # the panel simply forgot it.
+    #
+    # Matching claims whole agent names longest-first — the same span-claiming
+    # the OCR scanner uses. Without it "Ampicillin-Sulbactam", a genuine and
+    # recommended CRAB agent, would match Acinetobacter's intrinsic "Ampicillin"
+    # and be wrongly condemned.
+    if organism and results:
+        try:
+            from clinical_data import INTRINSIC_RESISTANCE as _IR_C
+            from clinical_utils import org_matches as _om_c
+        except Exception:
+            _IR_C, _om_c = {}, None
+        _intr = set()
+        if _om_c:
+            for _k, _v in _IR_C.items():
+                if _om_c(organism, [_k]):
+                    _intr |= set(_v)
+        if _intr:
+            _agents = sorted(ABX_GUIDELINES, key=len, reverse=True)
+            for _panel in results:
+                _opts = []
+                for _opt in _panel["data"]["options"]:
+                    _txt = str(_opt.get("combo", ""))
+                    if _txt.upper().startswith("AVOID"):
+                        _opts.append(_opt)
+                        continue
+                    _norm = _txt.lower().replace("+", "-").replace("/", "-").replace(" ", "")
+                    _claimed = []
+                    for _ag in _agents:
+                        _a = _ag.lower().replace("+", "-").replace("/", "-").replace(" ", "")
+                        if _a and _a in _norm:
+                            _claimed.append(_ag)
+                            _norm = _norm.replace(_a, "\x00" * len(_a))
+                    _dead = [d for d in _claimed if d in _intr]
+                    if _dead:
+                        _opt = dict(_opt)
+                        _opt["host_flagged"] = True
+                        _opt["intrinsically_inactive"] = _dead
+                        _opt["caution"] = (
+                            f"⛔ **{organism} مقاوم جوهرياً لـ "
+                            f"{'، '.join(_dead)}** — لا جرعة ولا تسريب ممتد ولا "
+                            f"شريك دوائي يتغلب على مقاومة جوهرية. هذا الخيار غير "
+                            f"صالح لهذه العزلة. " + str(_opt.get("caution", ""))
+                        ).strip()
+                    _opts.append(_opt)
+                _panel["data"] = dict(_panel["data"])
+                _panel["data"]["options"] = _opts
+
     return results
 
 

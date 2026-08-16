@@ -11,12 +11,12 @@ MDR/XDR/PDR، ويُخرج قائمة أدوية مفلترة حسب الكائ�
 
 | | |
 |---|---|
-| **المقاومة الجوهرية** | 34 كائن، مصدر واحد للحقيقة في `clinical_data.py` |
+| **المقاومة الجوهرية** | 50 صف، مصدر واحد للحقيقة في `clinical_data.py` |
 | **استنتاج الآلية** | ESBL · AmpC · carbapenemase · DTR · MRSA · VRE |
 | **التصنيف** | MDR/XDR/PDR بجداول Magiorakos منفصلة لكل مجموعة كائنات |
 | **بوابات الأمان** | حمل · أطفال · حديثو ولادة (بالشهور) · كلوي · كبدي (Child-Pugh) |
 | **QC اللوحة** | تناقضات · تسلسل · فئات مكافئة · أنماط ظاهرية استثنائية · قابلية التبليغ |
-| **التتبّع** | ~38 قاعدة مربوطة بمصادر مؤرَّخة في `guideline_registry.py` |
+| **التتبّع** | 50 قاعدة مربوطة بمصادر مؤرَّخة في `guideline_registry.py` |
 
 ## المصادر
 
@@ -59,7 +59,7 @@ python -c "import streamlit_app as a; print(a.make_password_hash('كلمة-ال�
 ```bash
 python test_intrinsic_invariant.py   # المقاومة الجوهرية تُحترم دائماً
 python test_intrinsic_sync.py        # المحرك العلاجي و QC متفقان
-python test_scenarios.py             # 803 سيناريو + golden snapshot
+python test_scenarios.py             # 1,344 سيناريو + golden snapshot (1,267 حالة)
 python test_comprehensive.py         # فضاء المزارع الكامل
 python test_guidelines.py            # تتبّع الاستشهادات
 python test_clinical_matrix.py       # خريطة القيود السريرية
@@ -80,7 +80,7 @@ python test_scenarios.py --update
 ```
 streamlit_app.py        الواجهة + المحركات السريرية
 clinical_data.py        المقاومة الجوهرية — مصدر الحقيقة الوحيد
-abx_guidelines.py       الدستور الدوائي (51 دواء)
+abx_guidelines.py       الدستور الدوائي (60 دواء)
 organism_profile.py     خطوط العلاج لكل كائن
 specimen_organism_map.py أي كائن يُتوقَّع في أي عيّنة
 ast_reportability.py    قواعد «هل يجوز تبليغ هذه النتيجة؟»
@@ -93,3 +93,7 @@ guideline_registry.py   ربط كل قاعدة بمصدرها المؤرَّخ
 
 > `ui/` و `modules/` و `data/` بقايا إعادة هيكلة سابقة. بتـ import بنجاح لكن
 > **مش موصولة بالتطبيق** — إما تُحذف أو تُوصَّل قبل الاعتماد عليها.
+
+---
+
+_الأرقام أعلاه محدَّثة بتاريخ 2026-08-06 مقابل الكود نفسه: **60 دواء · 30 كائن قابل للاختيار · 50 صف مقاومة جوهرية · 50 استشهاد مُوقَّع · 1,267 حالة في الـ snapshot**. `test_clinical_facts.py` بيفشل لو أي رقم منهم اتغيّر من غير تحديث._

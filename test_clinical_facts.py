@@ -722,6 +722,88 @@ for _where, _names in (("ORGANISM_PROFILE.specimen_context",
 check("every specimen named anywhere is selectable",
       not _spec_bad, "\n".join(sorted(set(_spec_bad))[:8]))
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[9] DOCUMENTATION must match the code. An external review on")
+print("    2026-08-06 found README claiming 34 organisms, 803 scenarios and 51")
+print("    drugs while the code had 30, 1,344 and 60 — and AUDIT.md quoting")
+print("    791 scenarios and 36 rules. None of it changes a clinical answer,")
+print("    but a project whose own documents disagree with it invites a reader")
+print("    to trust the wrong number, and a reviewer to doubt the right one.")
+# ═══════════════════════════════════════════════════════════════════════════
+import re as _re9
+import json as _json9
+
+try:
+    _snap9 = _json9.load(open(os.path.join(HERE, "scenario_snapshot.json"),
+                              encoding="utf-8"))
+    _SNAP9 = len(_snap9.get("cases", _snap9)) if isinstance(_snap9, dict) else len(_snap9)
+except Exception:
+    _SNAP9 = None
+
+_REAL9 = {"agents": len(G), "organisms": len(OP), "rows": len(IR)}
+try:
+    import guideline_registry as _GR9
+    _REAL9["citations"] = len(_GR9.RULES)
+except Exception:
+    pass
+if _SNAP9:
+    _REAL9["snapshot"] = _SNAP9
+
+# AUDIT.md is a CHANGE LOG. Numbers inside it describe the state at the time of
+# an entry — "31 rules awaiting signature", "20 organisms", "51 drugs" were all
+# true when written and rewriting them would falsify the record. Only the
+# CURRENT-STATE document is checked, and only its summary tables.
+_stale9 = []
+for _doc in ("README.md",):
+    _path = os.path.join(HERE, _doc)
+    if not os.path.exists(_path):
+        continue
+    _t9 = open(_path, encoding="utf-8").read()
+    # Numbers this project has actually had at some point. If one of these
+    # appears next to a counting word, it is almost certainly a stale figure
+    # rather than a coincidence.
+    for _m9 in _re9.finditer(r"(\d[\d,]{1,6})\s*(كائن|سيناريو|دواء|قاعدة|صف)", _t9):
+        _n9 = int(_m9.group(1).replace(",", ""))
+        _w9 = _m9.group(2)
+        _exp = {"كائن": _REAL9["organisms"], "دواء": _REAL9["agents"],
+                "قاعدة": _REAL9.get("citations"), "صف": _REAL9["rows"]}.get(_w9)
+        if _w9 == "سيناريو":
+            continue                     # scenario counts are generated, not fixed
+        if _exp and _n9 != _exp:
+            _stale9.append(f"{_doc}: {_m9.group(0)!r} — the code has {_exp}")
+check("README quotes the counts the code actually has",
+      not _stale9, "\n".join(sorted(set(_stale9))[:8]))
+
+# AUDIT.md is exempt from the count check but must carry a dated stamp, so a
+# reader can tell a historical figure from a current one at a glance.
+_audit9 = os.path.join(HERE, "AUDIT.md")
+if os.path.exists(_audit9):
+    _at9 = open(_audit9, encoding="utf-8").read()
+    check("AUDIT.md states which figures are current and when they were checked",
+          "الأرقام أعلاه محدَّثة" in _at9,
+          "a change log without a dated current-state stamp reads as if every "
+          "number in it is still true")
+
+# Version pins must agree between the docs and the registry.
+_pins9 = []
+try:
+    _reg9 = " ".join(str(v) for v in _GR9.SOURCES.values())
+    for _doc in ("README.md",):
+        _path = os.path.join(HERE, _doc)
+        if not os.path.exists(_path):
+            continue
+        _t9 = open(_path, encoding="utf-8").read()
+        for _pin, _label in (("v16.1", "EUCAST breakpoints"),
+                             ("Ed36", "CLSI M100"),
+                             ("2025", "WHO AWaRe")):
+            if _pin in _t9 and _pin not in _reg9:
+                _pins9.append(f"{_doc} cites {_label} {_pin}, the registry does not")
+except Exception:
+    pass
+check("the version pins in README match the registry",
+      not _pins9, "\n".join(_pins9))
+
 print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
 if _FAIL:
