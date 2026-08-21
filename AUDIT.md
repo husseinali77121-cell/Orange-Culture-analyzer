@@ -273,3 +273,46 @@ fuzz                                  ✅  8000 حالة، صفر أخطاء
 ---
 
 _الأرقام أعلاه محدَّثة بتاريخ 2026-08-06 مقابل الكود نفسه: **60 دواء · 30 كائن قابل للاختيار · 50 صف مقاومة جوهرية · 50 استشهاد مُوقَّع · 1,267 حالة في الـ snapshot**. `test_clinical_facts.py` بيفشل لو أي رقم منهم اتغيّر من غير تحديث._
+
+---
+
+# مراجعة 2026-08-21 — Panel Completeness + عيب حقيقي في مسار الـ UI
+
+بعد إضافة `ast_panel_completeness.py` (AST Panel Completeness QC)، عملت مراجعة إضافية بمراجعة ثانية مستقلة، وأعدت فحصها بنفسي بدل التصديق عليها مباشرة. النتيجة: نقطة واحدة كانت false positive من أداة الفحص نفسها، ونقطتان كانتا حقيقيتين وأخطر مما ذُكر.
+
+## ⛔ 1) عيب حقيقي — `get_combination_therapy()` بدون `organism=` في مسار الـ UI/PDF الفعلي
+
+- **الحالة:** الدالة نفسها فيها منطق (موجود من 2026-08-06) بيعلّم أي combination option يحتوي دواء الكائن مقاوم له جوهرياً (مثال موثّق في الكود: Colistin لـ Proteus/Providencia/Morganella/Serratia). لكن نداءي الـ UI (شريط Combination Therapy) ونداء الـ PDF export كانا بينادوا الدالة **من غير** `organism=` — يعني المنطق ده كان بيتخطّى صامتاً على الشاشة اللي الطبيب فعلاً بيشوفها، رغم إن `run_analysis()` (اللي كل الاختبارات القديمة بتمر منه) بينادي الدالة صح.
+- **ليه محدش مسكه:** كل الاختبارات القديمة كانت بتستدعي `run_analysis()` مباشرة أو `get_combination_therapy()` بمعاملات صحيحة — محدش كان بيمشي في المسار الحرفي اللي الـ UI بيمشي فيه.
+- **الإصلاح:** إضافة `organism=organism_type` في الاستدعاءين (سطر الـ UI expander وسطر الـ PDF).
+- **الحارس الجديد:** `test_ui_combination_path.py` — فحص ثابت (static، عبر AST) يتأكد إن كل استدعاء حقيقي لـ `get_combination_therapy(` بيمرّر `organism=`، بالإضافة لسيناريو ديناميكي حقيقي (Proteus/Providencia/Morganella/Serratia + Colistin) يتأكد إن العلامة فعلاً بتظهر. **Guard 12** في الـ CI.
+
+## 🟡 2) القواعد العشرة الجديدة لـ Panel Completeness — تقوية الاستناد العلمي
+
+بناءً على طلب صريح إن اختيار المضادات المتوقعة يبقى مستند لمصادر علمية حقيقية، تم:
+- التحقق من 6 من أصل 10 مجموعات كائنات مقابل جداول CLSI M100 Ed36 (36th ed., 2026) الفعلية عبر تجميع ثانوي (LaboratoryTests.org، فبراير–مارس 2026)، ورفعها من `verified="pending"` إلى `verified="secondary"` في `guideline_registry.py`.
+- تصحيح حقيقي وجدته المراجعة: قائمة Acinetobacter الأصلية كانت حاطة Ampicillin/Sulbactam + Amikacin + TMP-SMX كـ"أساسي" فقط — لكن الجدول الفعلي لـ Ed36 بيحط Cefepime/Ceftazidime/Ciprofloxacin/Gentamicin كـTier 1 (روتيني)، وMeropenem/Imipenem كـTier 2. اتصحّحت.
+- تصحيح ثاني: Minocycline لـ Stenotrophomonas maltophilia كان في القائمة "التكميلية" — مصدر CLSI مباشر (AST News Update) بيأكد إنه Tier 1. اتصحّحت.
+- الأربع مجموعات الباقية (Stenotrophomonas بالكامل، S. pneumoniae، Beta-hemolytic Strep، H. influenzae) لسه `pending` — مش لأن حد ما حاولش، لكن لأنها ما اتفحصتش مقابل نفس المصدر المباشر.
+- **لسه محتاج توقيع د. طارق.** رفع مستوى `verified` من "pending" لـ"secondary" مش نفس معنى "موقّع" — دلوقتي `test_guidelines.py` بيقول **6 قواعد** بقت "checked, awaiting clinician's countersignature" بدل الصمت الكامل اللي كان قبل كده.
+
+## 🟢 3) نظافة QA infrastructure — `sys.exit()` بلا حارس في 13 ملف اختبار
+
+فحص AST شامل (مش grep سطحي) لقى إن 13 من 14 ملف اختبار — **بما فيهم `test_panel_completeness.py` الجديد نفسه** — عندهم `sys.exit()` على مستوى الملف من غير حراسة بـ`if __name__ == "__main__":`. النتيجة: أي محاولة تشغيل `pytest` بشكل عام على المجلد كانت هتفشل في مرحلة الـ collection. الـ CI الحالي مش متأثر (بيشغّل كل حزمة كـscript مباشر)، لكن اتصلّحت الـ 13 ملف بإضافة الحراسة، مع التأكد إن exit code السكريبت **متطابق 100%** زي الأول (اتفحص بتشغيل كل حزمة وقراءة الـ exit code فعلياً، مش افتراض).
+
+## 🟢 4) توثيق قديم — رقم "809 حالة" في تعليق الـ CI
+
+تعليق `.github/workflows/cdss-tests.yml` عند Guard 4 كان لسه بيقول "809 cases" بينما التشغيل الفعلي لـ `test_scenarios.py` بيطلّع **1,344 سيناريو / 1,267 snapshot**. اتصحّح التعليق. (ده تعليق مش رقم بيتفحص آلياً — `test_clinical_facts.py` بيراقب أرقام README.md بس، مش تعليقات الـ workflow.)
+
+## ما اتغيّر — ملخص
+
+| الملف | التغيير |
+|---|---|
+| `streamlit_app.py` | `organism=organism_type` في نداءي الـ UI/PDF لـ `get_combination_therapy()` |
+| `ast_panel_completeness.py` | إعادة بناء 6 من 10 قوائم متوقعة مقابل CLSI M100 Ed36 الفعلي؛ فلترة ديناميكية ضد `INTRINSIC_RESISTANCE` بدل استثناءات يدوية |
+| `guideline_registry.py` | 6 صفوف `panel_*` اتصعّدت لـ`secondary` مع تفاصيل المصدر |
+| `test_ui_combination_path.py` | **جديد** — يحرس مسار الاستدعاء الحرفي (static + dynamic) |
+| 13 ملف `test_*.py` | حراسة `sys.exit()` بـ`if __name__ == "__main__":` |
+| `.github/workflows/cdss-tests.yml` | Guard 12 جديد؛ تصحيح تعليق "809" |
+
+**حالة الاختبارات:** 15 حزمة، كلها exit=0 عدا `test_safety_invariants.py` (متوقّع — منتظر توقيع د. طارق على 6 قواعد Panel Completeness).

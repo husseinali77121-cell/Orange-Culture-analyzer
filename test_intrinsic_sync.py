@@ -322,4 +322,5 @@ print("\n" + "=" * 68)
 print(f"{PASSES} passed, {len(FAILURES)} failed")
 for f in FAILURES:
     print("  ✗", f)
-sys.exit(1 if FAILURES else 0)
+if __name__ == "__main__":
+    sys.exit(1 if FAILURES else 0)

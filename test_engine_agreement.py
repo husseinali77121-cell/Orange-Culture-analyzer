@@ -93,7 +93,8 @@ _WANT = [
 
 if not os.path.exists(APP):
     print(f"ENVIRONMENT INCOMPLETE — {APP} not found.")
-    sys.exit(2)
+    if __name__ == "__main__":
+        sys.exit(2)
 
 from abx_guidelines import ABX_GUIDELINES as G                      # noqa: E402
 from organism_profile import ORGANISM_PROFILE as OP                 # noqa: E402
@@ -896,7 +897,8 @@ print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
 if _FAIL:
     print("\nRESULT: FAILURES — see above")
-    sys.exit(1)
+    if __name__ == "__main__":
+        sys.exit(1)
 print("\nRESULT: ALL GREEN")
 print("\nNOTE: this suite guards ENGINE AGREEMENT and TABLE REACHABILITY.")
 print("      It does not re-check that the tables match EUCAST v16 — that is")

@@ -808,7 +808,8 @@ print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
 if _FAIL:
     print("\nRESULT: FAILURES — see above")
-    sys.exit(1)
+    if __name__ == "__main__":
+        sys.exit(1)
 print("\nRESULT: ALL GREEN")
 print("\nNOTE: this suite asserts what the TABLES SAY. Whether the engine")
 print("      honours them is test_engine_agreement.py; whether the tables match")

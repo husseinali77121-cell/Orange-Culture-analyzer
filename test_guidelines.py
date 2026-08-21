@@ -49,6 +49,7 @@ def engine_rule_ids() -> set:
     ids: set = set()
     import ast_reportability as RP
     import ast_consistency as CN
+    import ast_panel_completeness as PC
 
     for group in ("INTRINSIC_RULES", "NO_BREAKPOINT_RULES", "INEFFECTIVE_INVIVO_RULES"):
         for r in getattr(RP, group, []):
@@ -65,6 +66,11 @@ def engine_rule_ids() -> set:
         for r in getattr(CN, group, []):
             if isinstance(r, dict) and r.get("id"):
                 ids.add(r["id"])
+
+    # ast_panel_completeness.py: one rule id per organism-group expected panel.
+    for r in getattr(PC, "GROUPS", []):
+        if isinstance(r, dict) and r.get("id"):
+            ids.add(r["id"])
 
     app = (ROOT / "streamlit_app.py").read_text(encoding="utf-8")
     ids |= set(re.findall(r'"id":\s*"(QC\d+)"', app))
@@ -199,4 +205,5 @@ else:
     print(f"RESULT: every rule traced. {len(primary)} checked against published "
           f"sources, {len(pending)} not yet checked, {len(unsigned)} awaiting a "
           f"clinician's countersignature. Run --queue for the review list.")
-sys.exit(1 if failures else 0)
+if __name__ == "__main__":
+    sys.exit(1 if failures else 0)

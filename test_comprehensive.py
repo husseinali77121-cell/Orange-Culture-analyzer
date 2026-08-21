@@ -48,7 +48,8 @@ def _extract(path, names):
 
 if not os.path.exists(APP):
     print(f"ENVIRONMENT INCOMPLETE — {APP} not found. Put this test next to streamlit_app.py.")
-    sys.exit(2)
+    if __name__ == "__main__":
+        sys.exit(2)
 _seg = _extract(APP, _WANT)
 
 # Real data modules (for full coverage); fall back gracefully if unavailable.
@@ -64,7 +65,8 @@ try:
     from clinical_data import INTRINSIC_RESISTANCE as _CANON_IR
 except Exception as _e:
     print(f"ENVIRONMENT INCOMPLETE — clinical_data.py not importable ({_e}).")
-    sys.exit(2)
+    if __name__ == "__main__":
+        sys.exit(2)
 
 import re as _re  # _re_ws_collapse (added 2026-08-03) normalises organism
                  # whitespace with a regex, so the exec namespace needs `re`.

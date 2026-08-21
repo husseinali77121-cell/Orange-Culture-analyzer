@@ -228,8 +228,10 @@ if failures:
     print(f"RESULT: {passed} passed, {len(failures)} FAILED")
     for f in failures:
         print("   ✗", f)
-    sys.exit(1)
+    if __name__ == "__main__":
+        sys.exit(1)
 print(f"RESULT: ALL GREEN — {passed} checks passed")
 print("\nNOTE: these proofs show the CODE matches THIS TABLE.")
 print("      They do NOT show the TABLE matches EUCAST v16 — that needs a human.")
-sys.exit(0)
+if __name__ == "__main__":
+    sys.exit(0)

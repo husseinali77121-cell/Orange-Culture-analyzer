@@ -111,12 +111,14 @@ print("Orange Lab — intrinsic-resistance / ESBL-gating invariants\n")
 
 if ANCHOR is None:
     print("RESULT: no source files found in this repo — nothing to verify.")
-    sys.exit(1)
+    if __name__ == "__main__":
+        sys.exit(1)
 
 ir_anchor = _literal(ANCHOR, "INTRINSIC_RESISTANCE")
 if ir_anchor is MISSING:
     print(f"RESULT: INTRINSIC_RESISTANCE not found in anchor {ANCHOR.name} — cannot verify.")
-    sys.exit(1)
+    if __name__ == "__main__":
+        sys.exit(1)
 
 anchor_label = ANCHOR.name
 
@@ -207,8 +209,10 @@ if failures:
     print(f"RESULT: {len(failures)} invariant(s) violated — DRIFT DETECTED.")
     for f in failures:
         print("   \u2717 " + f)
-    sys.exit(1)
+    if __name__ == "__main__":
+        sys.exit(1)
 
 tail = f"  ({len(skips)} check(s) skipped — not applicable to this repo)" if skips else ""
 print(f"RESULT: all invariants hold — tables unified, ESBL gating intact.{tail}")
-sys.exit(0)
+if __name__ == "__main__":
+    sys.exit(0)

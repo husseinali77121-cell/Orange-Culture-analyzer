@@ -112,7 +112,8 @@ except _Stop:
     pass
 except Exception as exc:                                          # pragma: no cover
     print(f"ENVIRONMENT INCOMPLETE — streamlit_app.py did not load: {exc!r}")
-    sys.exit(2)
+    if __name__ == "__main__":
+        sys.exit(2)
 
 from clinical_utils import Patient, NEONATE_MAX_YEARS             # noqa: E402
 
@@ -700,7 +701,8 @@ print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
 if _FAIL:
     print("\nRESULT: FAILURES — see above")
-    sys.exit(1)
+    if __name__ == "__main__":
+        sys.exit(1)
 print("\nRESULT: ALL GREEN")
 print("\nNOTE: this suite walks the COMPOSED pipeline. It proves the parts are")
 print("      wired to each other correctly; whether each part is clinically")

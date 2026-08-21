@@ -542,7 +542,8 @@ if _FAIL:
     print("\nRESULT: FAILED")
     for f in _FAIL:
         print(f"  - {f}")
-    sys.exit(1)
+    if __name__ == "__main__":
+        sys.exit(1)
 
 print("\nRESULT: ALL GREEN")
 print("\nNOTE: this proves the DOSE PATHWAY is internally consistent and fails")

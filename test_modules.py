@@ -444,7 +444,8 @@ print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
 if _FAIL:
     print("\nRESULT: FAILURES — see above")
-    sys.exit(1)
+    if __name__ == "__main__":
+        sys.exit(1)
 print("\nRESULT: ALL GREEN")
 print("\nNOTE: this suite tests each module's OWN contract. Whether the modules")
 print("      compose into a correct clinical answer is test_pipeline.py, and")

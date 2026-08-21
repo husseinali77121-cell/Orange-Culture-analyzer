@@ -66,7 +66,8 @@ import ast  # noqa: E402
 APP = os.path.join(HERE, "streamlit_app.py")
 if not os.path.exists(APP):
     print(f"ENVIRONMENT INCOMPLETE — {APP} not found.")
-    sys.exit(2)
+    if __name__ == "__main__":
+        sys.exit(2)
 
 
 def _extract(path: str, names: list[str]):
@@ -512,7 +513,8 @@ print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
 if _FAIL:
     print("\nRESULT: FAILURES — see above")
-    sys.exit(1)
+    if __name__ == "__main__":
+        sys.exit(1)
 print("\nRESULT: ALL GREEN")
 print("\nNOTE: this suite proves the right SENTENCE reaches the screen. It says")
 print("      nothing about whether the verdict behind it is clinically correct")

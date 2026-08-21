@@ -713,6 +713,143 @@ RULES: Dict[str, Dict[str, Any]] = {
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "EUCAST Table 1 header verbatim: 'Enterobacterales are also intrinsically resistant to benzylpenicillin, glycopeptides, fusidic acid, macrolides, lincosamides, streptogramins, rifampicin, daptomycin and linezolid.' Table 3 header carries the same for non-fermenters.",
     },
+
+    # ── AST Panel Completeness (added 2026-08-20, re-grounded 2026-08-21) ────
+    # GAP THIS CLOSES: ast_panel_completeness.py introduces a new question the
+    # registry had no rows for — "was enough tested at all", as distinct from
+    # every other rule here, which answers "was what WAS tested interpreted
+    # correctly". Six of the ten rows below moved from "pending" to "secondary"
+    # on 2026-08-21 after being checked against the actual CLSI M100 36th ed.
+    # (2026) Table 1 tier assignments — the same edition already cited
+    # everywhere else in this registry — via a secondary tabulation (Giri D.,
+    # LaboratoryTests.org, Feb-Mar 2026, itself citing CLSI M100 36th ed. 2026
+    # directly per organism). "Secondary" here still means Dr. Tarek has not
+    # read it — it means the underlying tier data is no longer guessed. The
+    # remaining four (Stenotrophomonas, S. pneumoniae, beta-haemolytic Strep,
+    # H. influenzae) stay "pending": clinically reasoned, CLSI M100 Table 1
+    # convention-informed, not independently re-verified against Ed36.
+    # See ast_panel_completeness.py's module docstring for the full reasoning,
+    # the curation policy (why "primary" is a trimmed routine set rather than
+    # every CLSI-Tier-1-eligible agent), and the per-group notes.
+    "panel_salmonella_shigella": {
+        "assertion": "Expected AST panel for Salmonella/Shigella spp. (CLSI "
+                     "M100 Ed36): primary = Ampicillin, Trimethoprim/"
+                     "Sulfamethoxazole, Ciprofloxacin, Ceftriaxone; "
+                     "supplemental = Azithromycin.",
+        "source": "CLSI_M100", "locus": "M100 36th ed. (2026), Salmonella/Shigella table",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-08-21",
+        "countersigned_by": "",
+        "note": "Deliberately excludes aminoglycosides and 1st/2nd-gen cephalosporins/cephamycins from both tiers — Ed36 states directly these 'may appear active in vitro but are not effective clinically and should not be reported as susceptible' for Salmonella/Shigella. There is no intrinsic beta-lactam resistance in these genera per the same table. Ceftriaxone included for invasive/enteric-fever presentations; azithromycin scoped to S. Typhi/Shigella per the existing azithromycin-footnote rule elsewhere in this registry.",
+    },
+    "panel_enterobacterales": {
+        "assertion": "Expected AST panel for Enterobacterales (excl. Salmonella/"
+                     "Shigella), CLSI M100 Ed36 Table 1A: primary (curated "
+                     "routine subset of Ed36 Tier 1) = Ampicillin, Ceftriaxone, "
+                     "Gentamicin, Ciprofloxacin, Trimethoprim/Sulfamethoxazole, "
+                     "Piperacillin+Tazobactam; supplemental (remaining Tier 1 "
+                     "alternates + Tier 2) = Amoxicillin+Clavulanic acid, "
+                     "Ampicillin/Sulbactam, Cefotaxime, Levofloxacin, Amikacin, "
+                     "Cefoxitin, Cefepime, Cefuroxime, Ertapenem, Imipenem/"
+                     "Cilastatin, Meropenem, Tetracycline, Tobramycin; "
+                     "urine-specimen addition (Tier 1, urine-scoped in Ed36) = "
+                     "Nitrofurantoin, Fosfomycin, Cefazolin.",
+        "source": "CLSI_M100", "locus": "M100 36th ed. (2026) Table 1A — Enterobacterales",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-08-21",
+        "countersigned_by": "",
+        "note": "Ed36 Table 1A Tier 1 is actually broader than 'primary' here (also lists amox-clav, amp-sulbactam, cefotaxime, levofloxacin) -- trimmed to a non-redundant routine set per this module's curation policy so class-mate alternates (e.g. cefotaxime vs ceftriaxone, cipro vs levo) don't both get flagged as missing; the untrimmed remainder lives in 'supplemental', not dropped.",
+    },
+    "panel_pseudomonas": {
+        "assertion": "Expected AST panel for Pseudomonas aeruginosa, CLSI M100 "
+                     "Ed36 Table 1B-1: primary (curated Tier 1 subset) = "
+                     "Cefepime, Ceftazidime, Ciprofloxacin, Piperacillin+"
+                     "Tazobactam, Tobramycin; supplemental (Tier 1 alternate + "
+                     "Tier 2-4) = Levofloxacin, Amikacin, Imipenem/Cilastatin, "
+                     "Meropenem, Aztreonam, Colistin, Cefiderocol, Ceftazidime+"
+                     "Avibactam, Ceftolozane+Tazobactam.",
+        "source": "CLSI_M100", "locus": "M100 36th ed. (2026) Table 1B-1 — Pseudomonas aeruginosa",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-08-21",
+        "countersigned_by": "",
+    },
+    "panel_acinetobacter": {
+        "assertion": "Expected AST panel for Acinetobacter baumannii, CLSI "
+                     "M100 Ed36 Table 1B-2: primary (Tier 1) = Ampicillin/"
+                     "Sulbactam, Cefepime, Ceftazidime, Ciprofloxacin, "
+                     "Gentamicin; supplemental (Tier 1 alternate + Tier 2) = "
+                     "Levofloxacin, Tobramycin, Amikacin, Imipenem/Cilastatin, "
+                     "Meropenem, Minocycline, Piperacillin+Tazobactam, "
+                     "Trimethoprim/Sulfamethoxazole, Colistin. Cefotaxime/"
+                     "ceftriaxone are Ed36 Tier 4 (on request) for this "
+                     "organism and are excluded from both tiers.",
+        "source": "CLSI_M100", "locus": "M100 36th ed. (2026) Table 1B-2 — Acinetobacter spp.",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-08-21",
+        "countersigned_by": "",
+        "note": "This module's original 2026-08-20 draft placed meropenem supplemental (correctly, on a secondary changelog source) but ALSO had ampicillin/sulbactam+amikacin+TMP-SMX as the only primary agents, missing that cefepime/ceftazidime/ciprofloxacin/gentamicin are the actual Ed36 Tier-1 (routine) set. Corrected 2026-08-21 directly against the Ed36 tabulation. This is the row in the whole batch most worth Dr. Tarek reading against the actual Ed36 Table 1B-2 -- carbapenem-vs-Acinetobacter tier placement is too clinically consequential to leave unread.",
+    },
+    "panel_stenotrophomonas": {
+        "assertion": "Expected AST panel for Stenotrophomonas maltophilia: "
+                     "primary = Trimethoprim/Sulfamethoxazole, Levofloxacin, "
+                     "Minocycline; supplemental = none.",
+        "source": "CLSI_M100", "locus": "M100 Ed36 Table 1B — Stenotrophomonas maltophilia",
+        "verified": "pending", "checked_by": _AI, "checked_on": "2026-08-21",
+        "countersigned_by": "",
+        "note": "Minocycline moved from supplemental to primary on 2026-08-21: CLSI's own 'AST News Update' (Jan 2024, Table Tips) uses this exact organism/agent as its worked example of a Tier-1 gap ('minocycline is in Tier 1' for Stenotrophomonas), which is a primary-adjacent CLSI source, not a guess -- but the rest of this row has not been independently re-verified against the full Ed36 Table 1B, so it stays 'pending' rather than 'secondary'. Deliberately narrow otherwise -- cross-checked against clinical_data.INTRINSIC_RESISTANCE before adding anything, since Stenotrophomonas is intrinsically resistant to carbapenems and most beta-lactams/aminoglycosides and this list must never contradict that table.",
+    },
+    "panel_staphylococcus": {
+        "assertion": "Expected AST panel for Staphylococcus spp. (S. aureus/"
+                     "MRSA/CoNS), CLSI M100 Ed36 table: primary (curated "
+                     "routine subset of Ed36 Tier 1) = Cefoxitin, Clindamycin, "
+                     "Erythromycin, Trimethoprim/Sulfamethoxazole, Vancomycin, "
+                     "Doxycycline; supplemental (remaining Tier 1 alternates + "
+                     "Tier 2-4) = Oxacillin, Azithromycin, Clarithromycin, "
+                     "Minocycline, Tetracycline, Linezolid, Penicillin, "
+                     "Ceftaroline, Ciprofloxacin, Gentamicin, Levofloxacin; "
+                     "urine addition = Nitrofurantoin. Rifampin/Rifampicin is "
+                     "CLSI-eligible (Tier 3) but deliberately not listed: it "
+                     "has no OCR alias in this codebase, so it can never be "
+                     "recognized as tested and would sit permanently flagged.",
+        "source": "CLSI_M100", "locus": "M100 36th ed. (2026) table — Staphylococcus aureus",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-08-21",
+        "countersigned_by": "",
+        "note": "Cefoxitin+Oxacillin both tracked regardless of organism name -- this checks whether the mecA screen was run, not what it showed. Vancomycin moved from supplemental to primary on 2026-08-21: confirmed Ed36 Tier 1, not Tier 2 as this module's original draft assumed. Ed36 Tier 1 actually lists all three macrolides and all three tetracycline-class agents separately -- trimmed to one representative of each redundant class for 'primary' per this module's curation policy; the untrimmed remainder is 'supplemental'.",
+    },
+    "panel_enterococcus": {
+        "assertion": "Expected AST panel for Enterococcus spp. (incl. VRE), "
+                     "CLSI M100 Ed36 table: primary (Tier 1) = Ampicillin, "
+                     "Penicillin, Vancomycin; supplemental (Tier 2) = "
+                     "Linezolid, Daptomycin, Teicoplanin; urine-specimen "
+                     "addition (Tier 2, urine-scoped in Ed36) = Nitrofurantoin, "
+                     "Ciprofloxacin, Levofloxacin.",
+        "source": "CLSI_M100", "locus": "M100 36th ed. (2026) table — Enterococcus spp.",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-08-21",
+        "countersigned_by": "",
+        "note": "Vancomycin confirmed Ed36 Tier 2 (not Tier 1) -- kept in this module's 'primary' anyway as a deliberate Orange Lab curation choice given VRE screening's clinical importance; flagged so the gap between the citation and the code's severity choice is visible, not hidden. High-level aminoglycoside screening (HLAR, 'Gentamicin 120 ug') is confirmed by Ed36 as its own distinct Tier-2 entry, separate from routine gentamicin -- still deliberately excluded here because this codebase's sir_map has no drug-name key distinct from the routine 10 ug disk that a false 'satisfied' match could be built on; see ast_reportability.py's intr_strep_enterococcus_aminoglycosides rule for the full HLAR reasoning. Documented here as a candidate future addition, not silently dropped.",
+    },
+    "panel_strep_pneumoniae": {
+        "assertion": "Expected AST panel for Streptococcus pneumoniae: primary = "
+                     "Penicillin, Ceftriaxone, Erythromycin; supplemental = "
+                     "Clindamycin, Trimethoprim/Sulfamethoxazole, Levofloxacin, "
+                     "Vancomycin.",
+        "source": "CLSI_M100", "locus": "M100 Ed36 Table 1G — Streptococcus pneumoniae",
+        "verified": "pending", "checked_by": _AI, "checked_on": "2026-08-20",
+        "countersigned_by": "",
+    },
+    "panel_beta_hemolytic_strep": {
+        "assertion": "Expected AST panel for beta-haemolytic Streptococcus (Group "
+                     "A/B): primary = Penicillin, Clindamycin, Erythromycin; "
+                     "supplemental = Vancomycin.",
+        "source": "CLSI_M100", "locus": "M100 Ed36 Table 1F — beta-haemolytic streptococci",
+        "verified": "pending", "checked_by": _AI, "checked_on": "2026-08-20",
+        "countersigned_by": "",
+        "note": "Penicillin resistance has never been reported in GAS/GBS; it stays on the panel because CLSI still lists it as test-and-report, and because the erythromycin/clindamycin pair exists for the penicillin-allergic pathway, not as a fallback for penicillin failure.",
+    },
+    "panel_haemophilus": {
+        "assertion": "Expected AST panel for Haemophilus influenzae: primary = "
+                     "Ampicillin, Ceftriaxone; supplemental = Amoxicillin+"
+                     "Clavulanic acid, Azithromycin, Trimethoprim/Sulfamethoxazole.",
+        "source": "CLSI_M100", "locus": "M100 Ed36 Table 1D — Haemophilus spp.",
+        "verified": "pending", "checked_by": _AI, "checked_on": "2026-08-20",
+        "countersigned_by": "",
+    },
 }
 
 # ── Citation strings the engine must NOT use in free text ────────────────────

@@ -90,7 +90,8 @@ _WANT = [
 
 if not os.path.exists(APP):
     print(f"ENVIRONMENT INCOMPLETE — {APP} not found.")
-    sys.exit(2)
+    if __name__ == "__main__":
+        sys.exit(2)
 
 from abx_guidelines import ABX_GUIDELINES as G                     # noqa: E402
 from organism_profile import ORGANISM_PROFILE as OP                # noqa: E402
@@ -581,9 +582,11 @@ if _FAIL:
     for f in _FAIL:
         print(f"  - {f}")
     print("\nRESULT: attention required")
-    sys.exit(1)
+    if __name__ == "__main__":
+        sys.exit(1)
 print("\nRESULT: ALL GREEN")
 print("\nNOTE: this proves the CODE matches the TABLES. It does NOT prove the")
 print("      TABLES match EUCAST v16 / CLSI M100 Ed36 — see guideline_registry.py,")
 print("      where 33 rules are still awaiting a clinician's countersignature.")
-sys.exit(0)
+if __name__ == "__main__":
+    sys.exit(0)

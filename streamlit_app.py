@@ -109,6 +109,17 @@ except Exception as _ast_rules_exc:
     logger.error("ast_reportability/ast_consistency unavailable -- AST QC is "
                  "running on the inline fallback rules only: %s", _ast_rules_exc)
 
+# AST Panel Completeness -- "was enough tested at all", not "was what was
+# tested interpreted correctly" (that's the block above). Same optional-import
+# pattern: absence of this file must never crash the report, only silently
+# drop the summary card below.
+try:
+    from ast_panel_completeness import check_panel_completeness as _check_panel_completeness_ext
+    PANEL_COMPLETENESS_AVAILABLE = True
+except Exception:
+    _check_panel_completeness_ext = None
+    PANEL_COMPLETENESS_AVAILABLE = False
+
 # Terminal safety gate + unified clinical constraint map. This is the layer that
 # adds site penetration (can the drug physically reach the infection?) on top of
 # the organism/host reasoning the main engine already does. Treated as CRITICAL
@@ -6354,6 +6365,60 @@ if uploaded:
                     if not _qc_sir:
                         st.info("أدخل نتائج S/I/R أولاً لتشغيل فحص الجودة.")
                     else:
+                        # ── AST Panel Completeness -- headline card ─────────
+                        # Answers one direct question first, before the mixed
+                        # list of internal-consistency findings below:
+                        # "ينقص هذه المزرعة إيه من المضادات؟" -- what is this
+                        # specific culture's panel missing. Shown separately
+                        # from the general QC list on purpose (see _qa_skip
+                        # below): the same missing drug listed twice, once
+                        # here and once buried in a mixed list, is noise, not
+                        # thoroughness.
+                        if PANEL_COMPLETENESS_AVAILABLE:
+                            _pc = _check_panel_completeness_ext(
+                                organism_type, culture_type, _qc_sir
+                            )
+                            if _pc.status != "not_evaluated":
+                                _pc_missing = _pc.missing_primary + _pc.missing_supplemental
+                                st.markdown("**🧫 AST Panel Completeness**")
+                                st.caption(f"الكائن: {_pc.organism_group}")
+                                _c1, _c2, _c3 = st.columns(3)
+                                _c1.metric("Expected", _pc.expected_total)
+                                _c2.metric("Tested", _pc.tested_count)
+                                _c3.metric("Missing", len(_pc_missing))
+                                if not _pc_missing:
+                                    st.success("✅ Panel adequate -- كل المضادات "
+                                               "المتوقعة لهذا الكائن تم اختبارها.")
+                                else:
+                                    if _pc.status == "critical":
+                                        st.error(
+                                            "🔴 كل المضادات الأساسية اللي اتعملت كانت "
+                                            "Resistant، ومضادات أساسية متوقعة لسه معملتش "
+                                            "-- ممكن يكون فيه خيار علاجي في اللي ناقص. "
+                                            "متقولش 'مفيش خيارات' من لوحة ناقصة."
+                                        )
+                                    else:
+                                        st.warning(
+                                            f"⚠️ Panel incomplete -- "
+                                            f"{len(_pc_missing)} مضاد متوقع غير مُختبَر"
+                                        )
+                                    if _pc.missing_primary:
+                                        st.markdown(
+                                            "**ناقص (أساسي):** " +
+                                            " · ".join(f"⚠️ {d}" for d in _pc.missing_primary)
+                                        )
+                                    if _pc.missing_supplemental:
+                                        st.markdown(
+                                            "**ناقص (تكميلي/اختياري):** " +
+                                            " · ".join(f"🔵 {d}" for d in _pc.missing_supplemental)
+                                        )
+                                    if _pc.rule_id:
+                                        from guideline_registry import citation_line as _pc_cite
+                                        _pc_ref = _pc_cite(_pc.rule_id)
+                                        if _pc_ref:
+                                            st.caption(f"📖 {_pc_ref} -- قيد مراجعة د. طارق")
+                                st.divider()
+
                         _qc_mdr  = classify_mdr(organism_type, _qc_sir)
                         _qc_esbl = predict_esbl(organism_type, _qc_sir)
                         # De-duplication: the AST Quality CONTROL panel below runs
@@ -6364,6 +6429,12 @@ if uploaded:
                         # suppressed here whenever the shared modules are loaded.
                         _qa_skip = ({"Intrinsic Resistance", "Clinical Context"}
                                     if AST_RULES_MODULES_AVAILABLE else set())
+                        # Already shown as its own headline card above (with
+                        # expected/tested/missing counts) -- don't also list
+                        # each missing drug a second time down in the mixed
+                        # findings list below.
+                        if PANEL_COMPLETENESS_AVAILABLE:
+                            _qa_skip = _qa_skip | {"Panel Completeness"}
                         _qc_issues = run_ast_qa_engine(
                             organism=organism_type, specimen=culture_type,
                             sir_map=_qc_sir, esbl_result=_qc_esbl, mdr_result=_qc_mdr,
@@ -7093,10 +7164,20 @@ if uploaded:
                 st.caption(f"📚 {_dur.get('ref','')}")
 
             # ── ② Combination Therapy (auto if MDR phenotype) ────────
+            # organism= restored 2026-08-21: without it, get_combination_therapy()'s
+            # own intrinsic-resistance annotation block (`if organism and results:`)
+            # never runs on THIS call site, even though run_analysis() passes it
+            # correctly. Same defect class as the 2026-08-06 fix documented inside
+            # that function -- a Colistin+Meropenem option could render for
+            # Proteus/Providencia/Morganella/Serratia (intrinsically colistin-
+            # resistant) with no annotation, on the exact screen a clinician reads.
+            # test_pipeline.py never caught it because it exercises run_analysis()
+            # directly, not this inline UI call -- see test_ui_combination_path.py.
             _combos = get_combination_therapy(
                 phenotypes,
                 is_pregnant=is_preg, age_years=age, age_months=age_months,
                 is_renal=is_renal, cl_cr=cl_cr, is_hepatic=is_hepatic,
+                organism=organism_type,
             )
             if _combos:
                 with st.expander(f"🔬 Combination Therapy ({len(_combos)} phenotype)", expanded=True):
@@ -7351,10 +7432,15 @@ if uploaded:
                         age=age, sex=sex, is_renal=is_renal,
                         phenotypes=phenotypes, severity=_sev_pdf,
                     ) if _pdf_dur else None
+                    # organism= restored 2026-08-21 -- see the matching note on
+                    # the UI call site above. Same missing-organism defect, same
+                    # consequence (Colistin/Proteus-class intrinsic annotation
+                    # silently skipped), on the PDF a clinician downloads and keeps.
                     _combo_for_pdf = get_combination_therapy(
                         phenotypes,
                         is_pregnant=is_preg, age_years=age, age_months=age_months,
                         is_renal=is_renal, cl_cr=cl_cr, is_hepatic=is_hepatic,
+                        organism=organism_type,
                     ) if _pdf_combo else None
                     _hep_for_pdf   = (get_hepatic_recommendations(allowed, _cp_pdf)
                                       if is_hepatic else None)

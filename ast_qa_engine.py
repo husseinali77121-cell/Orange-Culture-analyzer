@@ -837,20 +837,17 @@ def _check_ast_completeness(organism: str, sir: Dict[str, str]) -> List[QAIssue]
                     reference="CLSI M100 Ed36",
                 ))
 
-    # Pseudomonas: Ceftazidime should be tested
-    if organism == "Pseudomonas aeruginosa" and "Ceftazidime" not in sir:
-        if any(d in sir for d in ("Meropenem", "Cefepime", "Piperacillin + Tazobactam")):
-            issues.append(QAIssue(
-                level=14, severity="LOW",
-                category="AST Completeness",
-                message="Ceftazidime not tested for Pseudomonas aeruginosa",
-                detail=(
-                    "Ceftazidime is a key anti-pseudomonal agent and should be included "
-                    "in Pseudomonas aeruginosa AST panels per CLSI recommendations."
-                ),
-                drug="Ceftazidime",
-                reference="CLSI M100 Ed36 Pseudomonas panel",
-            ))
+    # NOTE 2026-08-20: the flat "Ceftazidime not tested for Pseudomonas" check
+    # that used to live here was removed. It is now superseded by the
+    # systematic per-organism expected panel in ast_panel_completeness.py
+    # (category "Panel Completeness", level 16) — Ceftazidime is on that
+    # module's Pseudomonas primary list. Keeping both meant the same missing
+    # drug got reported twice, at two different severities (LOW here vs HIGH
+    # there), which is confusing rather than thorough. The D-test and
+    # Oxacillin/Cefoxitin checks above stay here on purpose: they are
+    # conditional on ANOTHER tested result (reflex testing), which a static
+    # expected-panel list cannot express — that is a genuinely different kind
+    # of completeness question from "was this drug tested at all".
 
     return issues
 
@@ -917,6 +914,41 @@ def _check_clinical_context(
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# LEVEL 16 — Panel Completeness
+# ══════════════════════════════════════════════════════════════════════════════
+# A different question from every check above: those all ask "is what WAS
+# tested internally consistent?"; this asks "was enough tested in the first
+# place?". Delegates entirely to ast_panel_completeness.py, which is the
+# single source of truth for expected per-organism panels — see that module's
+# docstring for the HIGH / INFORMATIONAL / CRITICAL design and its guideline
+# status (draft, pending Dr. Tarek's review, same as any other unsigned row
+# in guideline_registry.py).
+try:
+    from ast_panel_completeness import check_panel_completeness as _check_panel_completeness_ext
+    PANEL_COMPLETENESS_LOADED = True
+except Exception:
+    _check_panel_completeness_ext = None
+    PANEL_COMPLETENESS_LOADED = False
+
+
+def _check_panel_completeness(organism: str, specimen: str, sir: Dict[str, str]) -> List[QAIssue]:
+    if not _check_panel_completeness_ext:
+        return []
+    result = _check_panel_completeness_ext(organism, specimen, sir)
+    if result.status == "not_evaluated":
+        return []
+    issues: List[QAIssue] = []
+    for iss in result.issues:
+        issues.append(QAIssue(
+            level=16, severity=iss["severity"],
+            category="Panel Completeness",
+            message=iss["message"], detail=iss["detail"],
+            drug=iss.get("drug", ""), reference=iss.get("reference", ""),
+        ))
+    return issues
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # MAIN ENGINE ENTRY POINT
 # ══════════════════════════════════════════════════════════════════════════════
 def run_ast_qa_engine(
@@ -963,6 +995,7 @@ def run_ast_qa_engine(
     issues += _check_biological_plausibility(organism, sir_map)
     issues += _check_ast_completeness(organism, sir_map)
     issues += _check_clinical_context(organism, specimen, sir_map)
+    issues += _check_panel_completeness(organism, specimen, sir_map)
 
     if skip_categories:
         issues = [i for i in issues if i.category not in skip_categories]
