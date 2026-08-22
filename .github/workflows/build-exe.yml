@@ -1,0 +1,166 @@
+name: Build Windows EXE (offline desktop)
+
+# WHY THIS WORKFLOW EXISTS
+# PyInstaller cannot cross-compile: a Windows .exe can only be built ON
+# Windows. This repo's development and CI both run on Linux (see
+# cdss-tests.yml), so this is the one place in the project that runs on
+# windows-latest specifically. Push to main, or run it manually from the
+# Actions tab, and it produces a downloadable zip under this run's Artifacts
+# -- no local Windows machine required to get a working build.
+#
+# WHAT THIS BUILD DOES NOT PROVE
+# cdss-tests.yml's 21 guards test the CLINICAL ENGINE. This workflow only
+# proves the PACKAGING succeeded -- that PyInstaller could bundle everything
+# and the exe launches far enough to bind a local port. It is not a
+# substitute for running cdss-tests.yml first (see that workflow), and it is
+# not a click-through test of OCR/PDF generation inside the frozen exe --
+# see the manual verification checklist in EXE_BUILD_NOTES.md.
+#
+# THE SINGLE HIGHEST-RISK STEP HERE
+# WeasyPrint's PDF rendering needs the GTK3 runtime (Pango, Cairo, GDK-Pixbuf,
+# HarfBuzz) -- not a Windows-native dependency, historically the hardest part
+# of shipping WeasyPrint on Windows. This workflow stages it from the
+# community-maintained GTK3 Runtime installer for Windows via a silent
+# install, then copies the DLLs out. If this step ever starts failing, that
+# installer having moved or changed its layout is the first thing to check --
+# see EXE_BUILD_NOTES.md for the fallback plan if it does.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "streamlit_app.py"
+      - "launcher.py"
+      - "orange_cdss.spec"
+      - "*.py"
+      - "requirements.txt"
+      - ".github/workflows/build-exe.yml"
+  workflow_dispatch: {}   # manual "Run workflow" button in the Actions tab
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # Run the real clinical-engine test suite FIRST -- there is no reason
+      # to spend 20+ minutes building an exe around a broken engine. This
+      # step runs the same suites as cdss-tests.yml (Linux) on Windows too,
+      # since path-handling bugs (the exact class of thing this build is
+      # about to introduce more of) sometimes only show up on Windows.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Clinical engine tests (Windows sanity pass)
+        run: |
+          python -m pip install --upgrade pip
+          pip install streamlit numpy opencv-python-headless pytesseract Pillow arabic-reshaper python-bidi
+          python test_intrinsic_invariant.py
+          python test_guidelines.py
+          python test_panel_completeness.py
+          python test_ui_combination_path.py
+          python test_qc_data_freshness.py
+        shell: bash
+
+      # ── Stage Tesseract (OCR) ──────────────────────────────────────────
+      - name: Download Tesseract-OCR for Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $url = "https://github.com/UB-Mannheim/tesseract/releases/latest/download/tesseract-ocr-w64-setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile tesseract-setup.exe
+          Start-Process -FilePath .\tesseract-setup.exe -ArgumentList "/S /D=$PWD\tesseract-install" -Wait
+          New-Item -ItemType Directory -Force -Path tesseract, tesseract\tessdata | Out-Null
+          Copy-Item "tesseract-install\tesseract.exe" "tesseract\" -Force
+          Copy-Item "tesseract-install\*.dll" "tesseract\" -Force -ErrorAction SilentlyContinue
+          Copy-Item "tesseract-install\tessdata\eng.traineddata" "tesseract\tessdata\" -Force
+          Copy-Item "tesseract-install\tessdata\ara.traineddata" "tesseract\tessdata\" -Force -ErrorAction SilentlyContinue
+          if (-not (Test-Path "tesseract\tessdata\ara.traineddata")) {
+            # UB-Mannheim's default installer doesn't always include Arabic --
+            # pull it directly from Tesseract's own tessdata repo if missing.
+            Invoke-WebRequest -Uri "https://github.com/tesseract-ocr/tessdata/raw/main/ara.traineddata" -OutFile "tesseract\tessdata\ara.traineddata"
+          }
+          if (-not (Test-Path "tesseract\tesseract.exe")) { throw "Tesseract staging failed -- tesseract.exe missing" }
+          Write-Host "Tesseract staged: $(Get-ChildItem tesseract\tessdata | Measure-Object | Select -ExpandProperty Count) tessdata files"
+
+      # ── Stage GTK3 runtime (WeasyPrint's PDF dependency) ────────────────
+      # See the workflow-level comment above: this is the highest-risk step.
+      - name: Download GTK3 runtime for Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $url = "https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases/latest/download/gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe"
+          try {
+            Invoke-WebRequest -Uri $url -OutFile gtk3-setup.exe
+            Start-Process -FilePath .\gtk3-setup.exe -ArgumentList "/S /D=$PWD\gtk3-install" -Wait
+            New-Item -ItemType Directory -Force -Path "gtk3-runtime\bin" | Out-Null
+            Copy-Item "gtk3-install\bin\*.dll" "gtk3-runtime\bin\" -Force
+            Write-Host "GTK3 runtime staged: $(Get-ChildItem gtk3-runtime\bin | Measure-Object | Select -ExpandProperty Count) DLLs"
+          } catch {
+            Write-Warning "GTK3 runtime staging failed: $_"
+            Write-Warning "Build will continue WITHOUT it -- PDF generation will not work in this build."
+            Write-Warning "See EXE_BUILD_NOTES.md for the manual fallback."
+          }
+
+      # ── Stage fonts (Arabic shaping + PDF/report rendering) ─────────────
+      - name: Stage fonts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path fonts | Out-Null
+          # Windows already ships DejaVu-equivalent fallbacks for most Latin
+          # text, but Arabic shaping specifically needs Amiri/Noto bundled --
+          # Windows has no built-in equivalent guaranteed present.
+          $fonts = @{
+            "NotoNaskhArabic-Regular.ttf" = "https://github.com/notofonts/arabic/raw/main/fonts/NotoNaskhArabic/hinted/ttf/NotoNaskhArabic-Regular.ttf"
+            "Amiri-Regular.ttf"           = "https://github.com/aliftype/amiri/releases/latest/download/Amiri-Regular.ttf"
+          }
+          foreach ($name in $fonts.Keys) {
+            try {
+              Invoke-WebRequest -Uri $fonts[$name] -OutFile "fonts\$name"
+            } catch {
+              Write-Warning "Could not stage font $name -- Arabic text in generated PDFs may fall back to an unshaped font."
+            }
+          }
+
+      # ── Build ─────────────────────────────────────────────────────────
+      - name: Install Python build dependencies
+        run: |
+          pip install pyinstaller weasyprint
+        shell: bash
+
+      - name: Build with PyInstaller
+        run: pyinstaller orange_cdss.spec --clean --noconfirm
+        shell: bash
+
+      # ── Smoke test the frozen exe ────────────────────────────────────
+      # Proves the exe launches, imports its own bundled modules, and binds
+      # a local port -- NOT that OCR/PDF work end to end inside it (that
+      # needs an actual antibiogram image and is a manual step for now, see
+      # EXE_BUILD_NOTES.md).
+      - name: Smoke test — exe starts and serves a page
+        shell: pwsh
+        run: |
+          $exe = "dist\Orange-CDSS\Orange-CDSS.exe"
+          if (-not (Test-Path $exe)) { throw "Build did not produce $exe" }
+          $proc = Start-Process -FilePath $exe -PassThru
+          $ok = $false
+          for ($i = 0; $i -lt 30; $i++) {
+            Start-Sleep -Seconds 2
+            try {
+              $resp = Invoke-WebRequest -Uri "http://127.0.0.1:8501" -UseBasicParsing -TimeoutSec 3
+              if ($resp.StatusCode -eq 200) { $ok = $true; break }
+            } catch {}
+          }
+          Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+          if (-not $ok) { throw "exe did not serve a page within 60s -- see build log above" }
+          Write-Host "Smoke test passed: exe served a page on 127.0.0.1:8501"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Orange-CDSS-Windows
+          path: dist/Orange-CDSS/
+          retention-days: 30
