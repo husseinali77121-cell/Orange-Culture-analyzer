@@ -145,7 +145,52 @@ if _write_back_ln:
               ))
 
 
-print("\n" + "=" * 72)
+print("\n[3] Panel Completeness card is never gated by AST_QA_AVAILABLE")
+# ═══════════════════════════════════════════════════════════════════════════
+# Found 2026-08-22: the card called ast_panel_completeness.py directly (never
+# through run_ast_qa_engine()), yet was nested inside `if AST_QA_AVAILABLE:`
+# purely by accident of where it got inserted -- an unrelated ast_qa_engine.py
+# problem could silently take the card down with zero trace anywhere. Fixed
+# by decoupling; this guard stops the coupling from quietly coming back.
+_tree_pc = ast.parse(_src, filename="streamlit_app.py")
+
+
+def _ancestors_testing_ast_qa_available(tree, target_call_name="check_panel_completeness"):
+    """For every Call node whose func name mentions target_call_name, walk
+    back up the tree and report whether any enclosing If's test references
+    AST_QA_AVAILABLE."""
+    parent = {}
+    for node in ast.walk(tree):
+        for child in ast.iter_child_nodes(node):
+            parent[child] = node
+
+    hits = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            fname = ""
+            if isinstance(node.func, ast.Name):
+                fname = node.func.id
+            elif isinstance(node.func, ast.Attribute):
+                fname = node.func.attr
+            if target_call_name not in fname:
+                continue
+            n = node
+            while n in parent:
+                n = parent[n]
+                if isinstance(n, ast.If) and "AST_QA_AVAILABLE" in ast.dump(n.test):
+                    hits.append(node.lineno)
+                    break
+    return hits
+
+_gated_calls = _ancestors_testing_ast_qa_available(_tree_pc)
+check("the Panel Completeness card's own check_panel_completeness() call is "
+      "not nested inside any `if ...AST_QA_AVAILABLE...:` block",
+      not _gated_calls,
+      f"call(s) at line(s) {_gated_calls} are still gated by AST_QA_AVAILABLE "
+      f"-- the coupling bug is back")
+
+
+
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
 if _FAIL:
     print("\nRESULT: FAILURES — see above")

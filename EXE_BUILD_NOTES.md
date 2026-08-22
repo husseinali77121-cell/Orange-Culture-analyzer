@@ -1,0 +1,47 @@
+# EXE Build Notes — Orange Lab Microbiology CDSS (Offline Desktop)
+
+## What exists now
+
+| File | Purpose |
+|---|---|
+| `launcher.py` | The actual .exe entry point — starts a local Streamlit server pointed at the bundled `streamlit_app.py`, opens the browser, sets env vars so Tesseract/GTK3/fonts resolve to the bundle instead of a system install. |
+| `orange_cdss.spec` | PyInstaller build spec. Bundles every application `.py` module as a loose file (required — see the spec's own header comment for why Streamlit needs this, not the normal frozen-import mechanism), plus `tesseract/`, `gtk3-runtime/`, `fonts/` if present. |
+| `.github/workflows/build-exe.yml` | Runs on `windows-latest` (the only place a `.exe` can actually be built — PyInstaller does not cross-compile). Stages Tesseract, the GTK3 runtime, and fonts; runs a Windows pass of the clinical-engine tests first; builds; smoke-tests that the exe actually serves a page; uploads the result as a downloadable Actions artifact. |
+
+**This was built and verified from a Linux sandbox with no Windows environment and no network access.** Every piece above compiles and is internally consistent, and the clinical-engine logic it wraps is the same code the 21-guard `cdss-tests.yml` suite already covers — but nobody has run `pyinstaller orange_cdss.spec` yet. The first real signal on whether this actually produces a working `.exe` will be the first run of `build-exe.yml` on GitHub's Windows runners.
+
+## How to get the exe
+
+1. Push this to GitHub (or just push `.github/workflows/build-exe.yml` — the `paths:` filter triggers it on changes to the app files too).
+2. Actions tab → "Build Windows EXE (offline desktop)" → wait (~15-25 min, most of it is downloading/installing Tesseract and GTK3 on the runner).
+3. Download the `Orange-CDSS-Windows` artifact from that run → unzip → `Orange-CDSS.exe` is inside, alongside its `_internal/` folder (PyInstaller's onedir layout — keep them together, don't move just the exe).
+
+No local Windows machine needed. If you *do* want to build locally on Windows instead: install Tesseract-OCR-Windows and the GTK3 Runtime for Windows yourself, stage them into `tesseract/` and `gtk3-runtime/` next to this spec (same layout the workflow produces), then `pip install pyinstaller weasyprint` and `pyinstaller orange_cdss.spec --clean`.
+
+## The one thing most likely to need a second pass: WeasyPrint + GTK3
+
+PDF generation (`weasyprint`) needs the GTK3 runtime (Pango, Cairo, GDK-Pixbuf, HarfBuzz) — not a Windows-native dependency. This has historically been the hardest part of shipping WeasyPrint on Windows, full stop, independent of this specific app. The workflow stages it via a silent install of a community-maintained GTK3-for-Windows installer and copies the DLLs out; if that installer's URL or internal layout has changed since this was written, that step (and only that step) will fail or silently produce an incomplete `gtk3-runtime/bin`.
+
+**How you'll know:** the build itself will likely still succeed (PyInstaller doesn't verify DLLs work, just that files exist), but PDF report generation inside the exe will fail or hang. The smoke test in the workflow only proves the app *starts* — it does not generate a PDF.
+
+**If this happens, in order of effort:**
+1. Check the GTK3 staging step's log in the Actions run — did it download/install successfully? Try the URL manually.
+2. Install GTK3 Runtime for Windows on any Windows machine, copy `C:\Program Files\GTK3-Runtime Win64\bin\*.dll` into this repo's `gtk3-runtime/bin/` folder directly, commit it (yes, committing DLLs is unusual, but it removes this entire failure class going forward — weigh that against repo size), and drop the download step from the workflow.
+3. Last resort: swap the PDF backend from WeasyPrint to something with a cleaner Windows story (e.g. `fpdf2`, which `orange_qc_control` already uses successfully for PDF generation with Arabic/Unicode support) for the EXE build specifically. This is a real code change, not a packaging tweak — flagging it as the fallback, not proposing it now.
+
+## Manual verification checklist (do this once, on the actual built exe)
+
+The automated smoke test only proves the server starts. These need a human, once, on a real Windows machine:
+
+- [ ] Double-click `Orange-CDSS.exe` from a fresh folder (not the build machine) — does the browser open automatically?
+- [ ] Upload a real antibiogram image — does OCR detect drugs? (Tests Tesseract bundling.)
+- [ ] Generate a PDF report — does it render, and is Arabic text shaped correctly (connected letters, not disconnected glyphs)? (Tests GTK3 + font bundling together — the single riskiest combination in this whole build.)
+- [ ] Disconnect from the internet entirely, repeat both steps above — confirms nothing silently depends on network access.
+- [ ] Check the page header shows the 🟢 Offline badge.
+- [ ] Close the window / end the process — does it shut down cleanly, or does a Python process linger?
+
+## What deliberately was not attempted
+
+- **Code signing.** An unsigned `.exe` will trigger a Windows SmartScreen warning on first run. Fine for internal lab use; worth revisiting before distributing to other labs (see the earlier discussion about commercializing this).
+- **An installer (Setup.exe / MSI).** The current output is a folder (`Orange-CDSS/` with the exe and its `_internal/` data inside) — copy the whole folder, don't just take the `.exe`. A proper installer (Start Menu entry, uninstaller) is a reasonable next step once the folder-based build is confirmed working, not before.
+- **An app icon.** `orange_cdss.spec` has `icon=None` — drop an `.ico` file in and update that one line whenever there's a logo to use.

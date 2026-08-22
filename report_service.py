@@ -70,6 +70,17 @@ _drop_intrinsic = _hide_urine_only = _esc = _score_color = None
 annotate_regimen_note = get_commercial_name = pdf_glyph_guard = None
 normalize_abx_key = warned_note_for = None
 
+# AST Panel Completeness -- a standalone module (like ast_reportability.py),
+# not part of the monolith, so it is imported directly rather than through
+# bind() below. Optional: absence must never break report generation, only
+# silently drop this one section.
+try:
+    from ast_panel_completeness import check_panel_completeness as _check_panel_completeness_ext
+    _PANEL_COMPLETENESS_AVAILABLE = True
+except Exception:
+    _check_panel_completeness_ext = None
+    _PANEL_COMPLETENESS_AVAILABLE = False
+
 _REQUIRED = (
     "ABX_GUIDELINES", "ORGANISM_PROFILE", "MDR_INFO", "INFECTION_SYNDROMES",
     "RENAL_BAN_REASONS", "ARABIC_SUPPORT", "PIL_AVAILABLE",
@@ -1829,6 +1840,45 @@ def generate_report(
         for drug, result in sorted(sir_map.items()):
             label = {"S": "Sensitive", "R": "Resistant", "I": "Intermediate"}.get(result, result)
             L.append(f"{drug:<40} {label}")
+
+    # AST PANEL COMPLETENESS -- added 2026-08-22, request: this belongs in
+    # the internal report, not just the interactive Streamlit page. Same
+    # question as the UI card: was enough tested at all, not just "was what
+    # WAS tested interpreted correctly". Silently absent (not an empty
+    # section header) when the module isn't available or the organism has
+    # no expected-panel group -- see ast_panel_completeness.py for why
+    # staying silent beats guessing for an organism this module doesn't
+    # cover confidently.
+    if sir_map and _PANEL_COMPLETENESS_AVAILABLE and _check_panel_completeness_ext:
+        _pc_report = _check_panel_completeness_ext(organism, specimen, sir_map)
+        if _pc_report.status != "not_evaluated":
+            L += ["\nAST PANEL COMPLETENESS", sep2,
+                  f"Organism : {_pc_report.organism_group}",
+                  f"Expected : {_pc_report.expected_total}    "
+                  f"Tested: {_pc_report.tested_count}    "
+                  f"Missing: {len(_pc_report.missing_primary) + len(_pc_report.missing_supplemental)}"]
+            if not (_pc_report.missing_primary or _pc_report.missing_supplemental):
+                L.append("Panel adequate -- all expected agents for this organism were tested.")
+            else:
+                if _pc_report.status == "critical":
+                    L.append("!! CRITICAL: every primary agent tested came back Resistant, "
+                             "and expected primary agent(s) were never tested. A therapeutic "
+                             "option may exist among the untested agents -- this panel cannot "
+                             "rule that out. Do not report 'no susceptible options' from an "
+                             "incomplete panel.")
+                if _pc_report.missing_primary:
+                    L.append("Missing (primary)     : " + ", ".join(_pc_report.missing_primary))
+                if _pc_report.missing_supplemental:
+                    L.append("Missing (supplemental): " + ", ".join(_pc_report.missing_supplemental))
+            if _pc_report.rule_id:
+                try:
+                    from guideline_registry import citation_line as _pc_report_cite
+                    _pc_report_ref = _pc_report_cite(_pc_report.rule_id)
+                    if _pc_report_ref:
+                        L.append(f"Reference: {_pc_report_ref} -- see guideline_registry.py "
+                                 f"for verification status")
+                except Exception:
+                    pass
 
     if interactions:
         L += ["\nINTERACTIONS / WARNINGS", sep2]

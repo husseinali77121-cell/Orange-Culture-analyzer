@@ -6386,68 +6386,15 @@ if uploaded:
                     "فحص آلي لاتساق نتائج الـ AST: intrinsic resistance · phenotype "
                     "consistency · cross-resistance · biological plausibility · QC rules"
                 )
-                if not AST_QA_AVAILABLE:
-                    st.caption("⚠️ الملف `ast_qa_engine.py` غير موجود -- ارفعه بجانب "
-                               "`streamlit_app.py` لتفعيل فحص الجودة.")
+                _qc_sir = st.session_state.get("sir_map_edited") or {}
+                if not _qc_sir:
+                    st.info("أدخل نتائج S/I/R أولاً لتشغيل فحص الجودة.")
                 else:
-                    _qc_sir = st.session_state.get("sir_map_edited") or {}
-                    if not _qc_sir:
-                        st.info("أدخل نتائج S/I/R أولاً لتشغيل فحص الجودة.")
+                    # ── AST Quality Check (QC Engine) -- needs ast_qa_engine.py ──
+                    if not AST_QA_AVAILABLE:
+                        st.caption("⚠️ الملف `ast_qa_engine.py` غير موجود -- ارفعه بجانب "
+                                   "`streamlit_app.py` لتفعيل فحص الجودة.")
                     else:
-                        # ── AST Panel Completeness -- headline card ─────────
-                        # Answers one direct question first, before the mixed
-                        # list of internal-consistency findings below:
-                        # "ينقص هذه المزرعة إيه من المضادات؟" -- what is this
-                        # specific culture's panel missing. Shown separately
-                        # from the general QC list on purpose (see _qa_skip
-                        # below): the same missing drug listed twice, once
-                        # here and once buried in a mixed list, is noise, not
-                        # thoroughness.
-                        if PANEL_COMPLETENESS_AVAILABLE:
-                            _pc = _check_panel_completeness_ext(
-                                organism_type, culture_type, _qc_sir
-                            )
-                            if _pc.status != "not_evaluated":
-                                _pc_missing = _pc.missing_primary + _pc.missing_supplemental
-                                st.markdown("**🧫 AST Panel Completeness**")
-                                st.caption(f"الكائن: {_pc.organism_group}")
-                                _c1, _c2, _c3 = st.columns(3)
-                                _c1.metric("Expected", _pc.expected_total)
-                                _c2.metric("Tested", _pc.tested_count)
-                                _c3.metric("Missing", len(_pc_missing))
-                                if not _pc_missing:
-                                    st.success("✅ Panel adequate -- كل المضادات "
-                                               "المتوقعة لهذا الكائن تم اختبارها.")
-                                else:
-                                    if _pc.status == "critical":
-                                        st.error(
-                                            "🔴 كل المضادات الأساسية اللي اتعملت كانت "
-                                            "Resistant، ومضادات أساسية متوقعة لسه معملتش "
-                                            "-- ممكن يكون فيه خيار علاجي في اللي ناقص. "
-                                            "متقولش 'مفيش خيارات' من لوحة ناقصة."
-                                        )
-                                    else:
-                                        st.warning(
-                                            f"⚠️ Panel incomplete -- "
-                                            f"{len(_pc_missing)} مضاد متوقع غير مُختبَر"
-                                        )
-                                    if _pc.missing_primary:
-                                        st.markdown(
-                                            "**ناقص (أساسي):** " +
-                                            " · ".join(f"⚠️ {d}" for d in _pc.missing_primary)
-                                        )
-                                    if _pc.missing_supplemental:
-                                        st.markdown(
-                                            "**ناقص (تكميلي/اختياري):** " +
-                                            " · ".join(f"🔵 {d}" for d in _pc.missing_supplemental)
-                                        )
-                                    if _pc.rule_id:
-                                        from guideline_registry import citation_line as _pc_cite
-                                        _pc_ref = _pc_cite(_pc.rule_id)
-                                        if _pc_ref:
-                                            st.caption(f"📖 {_pc_ref} -- قيد مراجعة د. طارق")
-                                st.divider()
-
                         _qc_mdr  = classify_mdr(organism_type, _qc_sir)
                         _qc_esbl = predict_esbl(organism_type, _qc_sir)
                         # De-duplication: the AST Quality CONTROL panel below runs
@@ -6458,10 +6405,10 @@ if uploaded:
                         # suppressed here whenever the shared modules are loaded.
                         _qa_skip = ({"Intrinsic Resistance", "Clinical Context"}
                                     if AST_RULES_MODULES_AVAILABLE else set())
-                        # Already shown as its own headline card above (with
+                        # Already shown as its own card below (with
                         # expected/tested/missing counts) -- don't also list
-                        # each missing drug a second time down in the mixed
-                        # findings list below.
+                        # each missing drug a second time in this mixed
+                        # findings list.
                         if PANEL_COMPLETENESS_AVAILABLE:
                             _qa_skip = _qa_skip | {"Panel Completeness"}
                         _qc_issues = run_ast_qa_engine(
@@ -6495,6 +6442,72 @@ if uploaded:
                                     st.caption(_iss.detail)
                                 if _iss.reference:
                                     st.caption(f"📖 {_iss.reference}")
+
+                    # ── AST Panel Completeness -- renders AFTER AST QA, ──
+                    # ── per request 2026-08-22 ───────────────────────────
+                    # Answers a different question from everything above:
+                    # "ينقص هذه المزرعة إيه من المضادات؟" -- what is this
+                    # specific culture's panel missing. Shown as its own
+                    # card, separate from the mixed findings list above (see
+                    # _qa_skip there): the same missing drug listed twice,
+                    # once here and once buried in that mixed list, is
+                    # noise, not thoroughness.
+                    #
+                    # Independent of AST_QA_AVAILABLE on purpose: this card
+                    # calls ast_panel_completeness.py directly, never through
+                    # run_ast_qa_engine(), so it has zero real dependency on
+                    # that module. It used to sit inside
+                    # `if AST_QA_AVAILABLE: ...` purely by accident of where
+                    # it got inserted -- an unrelated ast_qa_engine.py
+                    # problem could take it down with zero trace anywhere.
+                    # Visibility now depends on nothing but its OWN import
+                    # (PANEL_COMPLETENESS_AVAILABLE, tracked in Module Health
+                    # above) and having sir data -- checked independently of
+                    # whether the AST QA block above even ran.
+                    if PANEL_COMPLETENESS_AVAILABLE:
+                        _pc = _check_panel_completeness_ext(
+                            organism_type, culture_type, _qc_sir
+                        )
+                        if _pc.status != "not_evaluated":
+                            _pc_missing = _pc.missing_primary + _pc.missing_supplemental
+                            st.divider()
+                            st.markdown("**🧫 AST Panel Completeness**")
+                            st.caption(f"الكائن: {_pc.organism_group}")
+                            _c1, _c2, _c3 = st.columns(3)
+                            _c1.metric("Expected", _pc.expected_total)
+                            _c2.metric("Tested", _pc.tested_count)
+                            _c3.metric("Missing", len(_pc_missing))
+                            if not _pc_missing:
+                                st.success("✅ Panel adequate -- كل المضادات "
+                                           "المتوقعة لهذا الكائن تم اختبارها.")
+                            else:
+                                if _pc.status == "critical":
+                                    st.error(
+                                        "🔴 كل المضادات الأساسية اللي اتعملت كانت "
+                                        "Resistant، ومضادات أساسية متوقعة لسه معملتش "
+                                        "-- ممكن يكون فيه خيار علاجي في اللي ناقص. "
+                                        "متقولش 'مفيش خيارات' من لوحة ناقصة."
+                                    )
+                                else:
+                                    st.warning(
+                                        f"⚠️ Panel incomplete -- "
+                                        f"{len(_pc_missing)} مضاد متوقع غير مُختبَر"
+                                    )
+                                if _pc.missing_primary:
+                                    st.markdown(
+                                        "**ناقص (أساسي):** " +
+                                        " · ".join(f"⚠️ {d}" for d in _pc.missing_primary)
+                                    )
+                                if _pc.missing_supplemental:
+                                    st.markdown(
+                                        "**ناقص (تكميلي/اختياري):** " +
+                                        " · ".join(f"🔵 {d}" for d in _pc.missing_supplemental)
+                                    )
+                                if _pc.rule_id:
+                                    from guideline_registry import citation_line as _pc_cite
+                                    _pc_ref = _pc_cite(_pc.rule_id)
+                                    if _pc_ref:
+                                        st.caption(f"📖 {_pc_ref} -- قيد مراجعة د. طارق")
 
 
     # ─── العمود الأيمن ────────────────────────────────────────────────────────
