@@ -53,7 +53,7 @@ print("Orange Lab CDSS — ast_panel_completeness.py, tested directly")
 print("=" * 72)
 
 from ast_panel_completeness import (                                # noqa: E402
-    GROUPS, check_panel_completeness, _match_group, _nk,
+    GROUPS, ORGANISM_NAMES, check_panel_completeness, _match_group, _nk,
     _intrinsically_resistant_drugs,
 )
 
@@ -108,6 +108,27 @@ for org, want in _spot_checks:
         _bad.append(f"{org!r}: got {got}, want {want}")
 check("every real selectable organism name resolves to its intended group",
       not _bad, "\n".join(_bad))
+
+# 2026-08-22: the explicit ORGANISM_NAMES mapping (added this session so
+# every organism is named directly, not just matched via genus substrings)
+# must cover every organism organism_profile.py can actually produce -- a
+# new organism added there without a matching line here would silently fall
+# through to the substring fallback instead of getting an explicit, auditable
+# entry, quietly reintroducing the exact ambiguity this mapping exists to
+# remove.
+try:
+    import organism_profile as _OP
+    _real_organisms = set(_OP.ORGANISM_PROFILE.keys())
+    _missing_from_names = _real_organisms - set(ORGANISM_NAMES.keys())
+    check("every organism in organism_profile.ORGANISM_PROFILE has an "
+          "explicit entry in ast_panel_completeness.ORGANISM_NAMES",
+          not _missing_from_names, _missing_from_names)
+    _stale_names = set(ORGANISM_NAMES.keys()) - _real_organisms
+    check("no stale entries in ORGANISM_NAMES for organisms that no longer "
+          "exist in organism_profile.py",
+          not _stale_names, _stale_names)
+except Exception as _e:
+    print(f"  SKIP  organism_profile not importable ({_e})")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -293,27 +314,27 @@ if _has_registry:
           "never 'source' (that implies primary-text verification this batch "
           "hasn't done) and never silently promoted to fully verified",
           not _bad_level, _bad_level)
-    # 2026-08-22: Dr. Tarek reviewed and countersigned the 6 "secondary"
-    # (Ed36-checked) rows. A signature can now legitimately be present --
-    # the invariant worth protecting isn't "never signed", it's "never
-    # signed without having been checked against a source first", and
-    # "the rows nobody has reviewed yet stay unsigned".
-    _signed_but_uncheckable = [
-        rid for rid in _registry_panel_ids
-        if str(RULES[rid].get("countersigned_by", "")).strip()
-        and RULES[rid].get("verified") not in ("secondary", "source")
-    ]
-    check("no panel_* row is countersigned without first being checked "
-          "against a source (a signature on a 'pending' row would mean "
-          "Dr. Tarek signed off on an unverified guess)",
-          not _signed_but_uncheckable, _signed_but_uncheckable)
+    # 2026-08-22: Dr. Tarek reviewed and countersigned all 10 rows, including
+    # the 4 that are still verified='pending'. Checked earlier against this
+    # registry's own pre-existing (non-panel_*) rows: signature and
+    # verification-level are orthogonal facts here, not coupled -- several
+    # original rows (e.g. QC003, nobp_cefoperazone) are countersigned while
+    # still 'pending'. His signature means "I've reviewed this claim and it's
+    # reasonable to ship", not "this has been checked against the primary
+    # Ed36 text" -- that second, stronger claim is exactly what 'verified'
+    # tracks, and a signature must never silently upgrade it.
+    _unsigned = [rid for rid in _registry_panel_ids
+                 if not str(RULES[rid].get("countersigned_by", "")).strip()]
+    check("every panel_* row is countersigned (Dr. Tarek reviewed the full "
+          "batch 2026-08-22)", not _unsigned, _unsigned)
     _still_pending = {rid for rid in _registry_panel_ids if RULES[rid].get("verified") == "pending"}
-    _wrongly_signed = [rid for rid in _still_pending
-                        if str(RULES[rid].get("countersigned_by", "")).strip()]
-    check("the 4 still-'pending' rows (Stenotrophomonas, S. pneumoniae, "
-          "beta-haemolytic Strep, H. influenzae) remain unsigned -- nobody "
-          "has reviewed them against Ed36 yet, signed or not",
-          not _wrongly_signed, _wrongly_signed)
+    check("the 4 rows not independently checked against Ed36 (Stenotrophomonas, "
+          "S. pneumoniae, beta-haemolytic Strep, H. influenzae) still say "
+          "'pending', not 'secondary' -- being signed does not mean being "
+          "verified against the primary source",
+          _still_pending == {"panel_stenotrophomonas", "panel_strep_pneumoniae",
+                              "panel_beta_hemolytic_strep", "panel_haemophilus"},
+          _still_pending)
 else:
     print("  SKIP  guideline_registry not importable")
 
@@ -367,9 +388,8 @@ if _FAIL:
     if __name__ == "__main__":
         sys.exit(1)
 print("\nRESULT: ALL GREEN")
-print("\nNOTE: 6 of 10 expected-panel groups in ast_panel_completeness.py are")
-print("      verified='secondary' (checked against actual CLSI M100 Ed36 tier")
-print("      data) AND countersigned by Dr. Tarek (2026-08-22). 4 remain")
-print("      'pending' and unsigned (Stenotrophomonas, S. pneumoniae,")
-print("      beta-haemolytic Strep, H. influenzae) -- clinically reasoned,")
-print("      not independently re-verified, not yet reviewed by him.")
+print("\nNOTE: all 10 expected-panel groups in ast_panel_completeness.py are")
+print("      countersigned by Dr. Tarek (2026-08-22). 6 are verified='secondary'")
+print("      (checked against actual CLSI M100 Ed36 tier data); 4 remain")
+print("      verified='pending' (clinically reasoned, not independently")
+print("      re-verified against the primary text) -- signed, not upgraded.")

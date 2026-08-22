@@ -5139,6 +5139,68 @@ body { font-family:'Segoe UI',Tahoma,Arial,sans-serif; color:#1a1a2e; font-size:
                 '</div>'
             )
 
+    # ── AST Panel Completeness ──────────────────────────────────────────
+    # Added 2026-08-22: this is THE internal QA PDF (confirmed against a
+    # live screenshot -- "تقرير الجودة الداخلي للميكروبيولوجي فقط" is
+    # this document's own header text) -- Panel Completeness had been added
+    # to generate_report()/generate_pdf_html_report() (the CLINICIAN-facing
+    # report) instead, which was the wrong document for an "internal AST
+    # report" request. Kept in both now; this is the one that actually
+    # matters for "was enough tested" as a QA question, not a treatment one.
+    if PANEL_COMPLETENESS_AVAILABLE and _check_panel_completeness_ext and sir_map:
+        _pc_pdf = _check_panel_completeness_ext(organism, specimen, sir_map)
+        if _pc_pdf.status != "not_evaluated":
+            _pc_pdf_missing = _pc_pdf.missing_primary + _pc_pdf.missing_supplemental
+            H.append('<div class="sec-ttl">🧫 AST Panel Completeness</div>')
+            H.append(
+                f'<div style="font-size:9pt;color:#555;margin-bottom:2mm">'
+                f'Organism group: <b>{_esc(_pc_pdf.organism_group)}</b> &nbsp;|&nbsp; '
+                f'Expected: <b>{_pc_pdf.expected_total}</b> &nbsp;|&nbsp; '
+                f'Tested: <b>{_pc_pdf.tested_count}</b> &nbsp;|&nbsp; '
+                f'Missing: <b>{len(_pc_pdf_missing)}</b>'
+                '</div>'
+            )
+            if not _pc_pdf_missing:
+                H.append(
+                    '<div style="font-size:9.5pt;color:#1e8449">'
+                    '✅ Panel adequate -- all expected agents for this organism were tested.'
+                    '</div>'
+                )
+            else:
+                if _pc_pdf.status == "critical":
+                    H.append(
+                        '<div class="issue err">'
+                        '<b>❌ CRITICAL</b><br>'
+                        'Every primary agent tested came back Resistant, and expected '
+                        'primary agent(s) were never tested. A therapeutic option may '
+                        'exist among the untested agents -- this panel cannot rule that '
+                        'out. Do not report &ldquo;no susceptible options&rdquo; from an '
+                        'incomplete panel.'
+                        '</div>'
+                    )
+                if _pc_pdf.missing_primary:
+                    H.append(
+                        f'<div class="issue warn"><b>⚠️ Missing (primary)</b><br>'
+                        f'{_esc(", ".join(_pc_pdf.missing_primary))}</div>'
+                    )
+                if _pc_pdf.missing_supplemental:
+                    H.append(
+                        f'<div style="font-size:8.5pt;color:#555;margin:1mm 0">'
+                        f'🔵 Missing (supplemental): {_esc(", ".join(_pc_pdf.missing_supplemental))}'
+                        '</div>'
+                    )
+            if _pc_pdf.rule_id:
+                _pc_pdf_ref = citation_line(_pc_pdf.rule_id) if 'citation_line' in dir() else ""
+                try:
+                    from guideline_registry import citation_line as _pc_pdf_cite_fn
+                    _pc_pdf_ref = _pc_pdf_cite_fn(_pc_pdf.rule_id)
+                except Exception:
+                    _pc_pdf_ref = ""
+                if _pc_pdf_ref:
+                    H.append(
+                        f'<div style="font-size:7.5pt;color:#888">📖 {_esc(_pc_pdf_ref)}</div>'
+                    )
+
     # ── Full AST Panel ────────────────────────────────────────────────
     H.append('<div class="sec-ttl">🧪 Full AST Panel as Entered</div>')
     if sir_map:
@@ -6874,6 +6936,65 @@ if uploaded:
                             st.warning(f"{issue['message']}  \n✏️ {issue['fix']}")
                 else:
                     st.success("✅ All AST consistency checks passed. No issues detected.")
+
+                # ── AST Panel Completeness ──────────────────────────────
+                # Added HERE 2026-08-22: this is the "AST Quality Control"
+                # expander (run_ast_qc(), EUCAST-based) -- a completely
+                # separate, independent rendering pipeline from the
+                # ast_qa_engine.py-based "🔬 AST Quality Check" expander
+                # elsewhere on this page. Panel Completeness had only been
+                # wired into the LATTER, which meant it never appeared here
+                # at all, no matter how correctly it worked on its own --
+                # this repo has carried two parallel QC systems since before
+                # this feature existed (flagged, not caused, by this work).
+                # Independent of qc_issues/AST_QA_AVAILABLE on purpose, same
+                # reasoning as the other integration point: this card calls
+                # ast_panel_completeness.py directly and has no dependency on
+                # run_ast_qc() succeeding or failing.
+                if PANEL_COMPLETENESS_AVAILABLE:
+                    _pc2 = _check_panel_completeness_ext(
+                        organism_type, culture_type, sir_map
+                    )
+                    if _pc2.status != "not_evaluated":
+                        _pc2_missing = _pc2.missing_primary + _pc2.missing_supplemental
+                        st.divider()
+                        st.markdown("**🧫 AST Panel Completeness**")
+                        st.caption(f"الكائن: {_pc2.organism_group}")
+                        _pc2c1, _pc2c2, _pc2c3 = st.columns(3)
+                        _pc2c1.metric("Expected", _pc2.expected_total)
+                        _pc2c2.metric("Tested", _pc2.tested_count)
+                        _pc2c3.metric("Missing", len(_pc2_missing))
+                        if not _pc2_missing:
+                            st.success("✅ Panel adequate -- كل المضادات "
+                                       "المتوقعة لهذا الكائن تم اختبارها.")
+                        else:
+                            if _pc2.status == "critical":
+                                st.error(
+                                    "🔴 كل المضادات الأساسية اللي اتعملت كانت "
+                                    "Resistant، ومضادات أساسية متوقعة لسه معملتش "
+                                    "-- ممكن يكون فيه خيار علاجي في اللي ناقص. "
+                                    "متقولش 'مفيش خيارات' من لوحة ناقصة."
+                                )
+                            else:
+                                st.warning(
+                                    f"⚠️ Panel incomplete -- "
+                                    f"{len(_pc2_missing)} مضاد متوقع غير مُختبَر"
+                                )
+                            if _pc2.missing_primary:
+                                st.markdown(
+                                    "**ناقص (أساسي):** " +
+                                    " · ".join(f"⚠️ {d}" for d in _pc2.missing_primary)
+                                )
+                            if _pc2.missing_supplemental:
+                                st.markdown(
+                                    "**ناقص (تكميلي/اختياري):** " +
+                                    " · ".join(f"🔵 {d}" for d in _pc2.missing_supplemental)
+                                )
+                            if _pc2.rule_id:
+                                from guideline_registry import citation_line as _pc2_cite
+                                _pc2_ref = _pc2_cite(_pc2.rule_id)
+                                if _pc2_ref:
+                                    st.caption(f"📖 {_pc2_ref}")
 
                 # QA Report PDF — for microbiologist internal archive only
                 st.divider()

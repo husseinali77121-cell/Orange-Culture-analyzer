@@ -587,6 +587,7 @@ if _FAIL:
 print("\nRESULT: ALL GREEN")
 print("\nNOTE: this proves the CODE matches the TABLES. It does NOT prove the")
 print("      TABLES match EUCAST v16 / CLSI M100 Ed36 — see guideline_registry.py,")
-print("      where 33 rules are still awaiting a clinician's countersignature.")
+print("      where guideline_registry.py's own 'awaiting human' count (see")
+print("      test_guidelines.py) tracks who still needs a clinician's countersignature.")
 if __name__ == "__main__":
     sys.exit(0)

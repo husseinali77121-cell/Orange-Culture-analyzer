@@ -791,7 +791,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "Minocycline; supplemental = none.",
         "source": "CLSI_M100", "locus": "M100 Ed36 Table 1B — Stenotrophomonas maltophilia",
         "verified": "pending", "checked_by": _AI, "checked_on": "2026-08-21",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-22",
         "note": "Minocycline moved from supplemental to primary on 2026-08-21: CLSI's own 'AST News Update' (Jan 2024, Table Tips) uses this exact organism/agent as its worked example of a Tier-1 gap ('minocycline is in Tier 1' for Stenotrophomonas), which is a primary-adjacent CLSI source, not a guess -- but the rest of this row has not been independently re-verified against the full Ed36 Table 1B, so it stays 'pending' rather than 'secondary'. Deliberately narrow otherwise -- cross-checked against clinical_data.INTRINSIC_RESISTANCE before adding anything, since Stenotrophomonas is intrinsically resistant to carbapenems and most beta-lactams/aminoglycosides and this list must never contradict that table.",
     },
     "panel_staphylococcus": {
@@ -831,7 +831,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "Vancomycin.",
         "source": "CLSI_M100", "locus": "M100 Ed36 Table 1G — Streptococcus pneumoniae",
         "verified": "pending", "checked_by": _AI, "checked_on": "2026-08-20",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-22",
     },
     "panel_beta_hemolytic_strep": {
         "assertion": "Expected AST panel for beta-haemolytic Streptococcus (Group "
@@ -839,7 +839,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "supplemental = Vancomycin.",
         "source": "CLSI_M100", "locus": "M100 Ed36 Table 1F — beta-haemolytic streptococci",
         "verified": "pending", "checked_by": _AI, "checked_on": "2026-08-20",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-22",
         "note": "Penicillin resistance has never been reported in GAS/GBS; it stays on the panel because CLSI still lists it as test-and-report, and because the erythromycin/clindamycin pair exists for the penicillin-allergic pathway, not as a fallback for penicillin failure.",
     },
     "panel_haemophilus": {
@@ -848,7 +848,7 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "Clavulanic acid, Azithromycin, Trimethoprim/Sulfamethoxazole.",
         "source": "CLSI_M100", "locus": "M100 Ed36 Table 1D — Haemophilus spp.",
         "verified": "pending", "checked_by": _AI, "checked_on": "2026-08-20",
-        "countersigned_by": "",
+        "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-22",
     },
 }
 

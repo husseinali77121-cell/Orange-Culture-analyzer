@@ -367,11 +367,79 @@ GROUPS: List[Dict[str, Any]] = [
     },
 ]
 
+_GROUPS_BY_ID: Dict[str, Dict[str, Any]] = {g["id"]: g for g in GROUPS}
+
+# ── Explicit per-organism mapping ────────────────────────────────────────────
+# Every organism string actually selectable in this app's dropdown
+# (organism_profile.ORGANISM_PROFILE, 30 entries as of 2026-08-22), each named
+# explicitly rather than left to substring "family" matching alone. Requested
+# 2026-08-22 for auditability: Dr. Tarek (or anyone) can read this list and
+# see exactly which panel every real organism resolves to, without having to
+# trace genus-token substring logic to convince themselves a given name
+# actually matches. The five organisms mapped to None are DELIBERATE, not
+# omissions -- see each GROUPS entry's docstring on why routine AST panel
+# testing does not have an established convention for them (Anaerobes,
+# Campylobacter, Legionella, Listeria, Mycoplasma): silence over a guess.
+#
+# The underlying panel DATA (primary/supplemental drug lists, citations,
+# Dr. Tarek's countersignatures) is unchanged by this -- this is a naming
+# layer on top of the same six Ed36-grounded + four pending groups, not a
+# second copy of the clinical content. A future organism added to
+# organism_profile.py without a matching line here still falls through to
+# the substring fallback below (see test_panel_completeness.py's coverage
+# check), so nothing silently goes unevaluated by omission from this table.
+ORGANISM_NAMES: Dict[str, Optional[str]] = {
+    "Acinetobacter baumannii": "panel_acinetobacter",
+    "Anaerobes (لاهوائيات)": None,
+    "Campylobacter jejuni": None,
+    "Citrobacter freundii": "panel_enterobacterales",
+    "Coagulase-negative Staphylococci": "panel_staphylococcus",
+    "E. coli": "panel_enterobacterales",
+    "Enterobacter cloacae": "panel_enterobacterales",
+    "Enterobacterales (unspeciated)": "panel_enterobacterales",
+    "Enterococcus faecalis": "panel_enterococcus",
+    "Enterococcus faecium": "panel_enterococcus",
+    "H. influenzae": "panel_haemophilus",
+    "Hafnia alvei": "panel_enterobacterales",
+    "Klebsiella spp.": "panel_enterobacterales",
+    "Legionella pneumophila": None,
+    "Listeria monocytogenes": None,
+    "MRSA": "panel_staphylococcus",
+    "Morganella morganii": "panel_enterobacterales",
+    "Mycoplasma spp.": None,
+    "Proteus mirabilis": "panel_enterobacterales",
+    "Providencia spp.": "panel_enterobacterales",
+    "Pseudomonas aeruginosa": "panel_pseudomonas",
+    "Salmonella spp.": "panel_salmonella_shigella",
+    "Serratia marcescens": "panel_enterobacterales",
+    "Shigella spp.": "panel_salmonella_shigella",
+    "Staphylococcus aureus": "panel_staphylococcus",
+    "Stenotrophomonas maltophilia": "panel_stenotrophomonas",
+    "Streptococcus agalactiae (Group B)": "panel_beta_hemolytic_strep",
+    "Streptococcus pneumoniae": "panel_strep_pneumoniae",
+    "Streptococcus pyogenes (Group A)": "panel_beta_hemolytic_strep",
+    "VRE": "panel_enterococcus",
+}
+
 
 def _match_group(organism: str) -> Optional[Dict[str, Any]]:
-    org_l = (organism or "").lower().strip()
-    if not org_l:
+    org_raw = (organism or "").strip()
+    if not org_raw:
         return None
+
+    # Primary path: exact name, as it would appear from the organism
+    # dropdown. Covers every organism this app can actually select.
+    if org_raw in ORGANISM_NAMES:
+        gid = ORGANISM_NAMES[org_raw]
+        return _GROUPS_BY_ID[gid] if gid else None
+
+    # Fallback: substring "family" matching, for organism text that never
+    # went through the dropdown (free-text OCR extraction, or a name added
+    # to organism_profile.py that hasn't been added to ORGANISM_NAMES above
+    # yet). Kept deliberately narrow -- see each GROUPS entry's own `match`
+    # tokens -- rather than removed, so a real but unlisted organism name
+    # still gets evaluated instead of silently falling through.
+    org_l = org_raw.lower()
     for g in GROUPS:
         if any(tok in org_l for tok in g["match"]):
             return g
@@ -496,4 +564,4 @@ def check_panel_completeness(
     )
 
 
-__all__ = ["GROUPS", "PanelCompletenessResult", "check_panel_completeness"]
+__all__ = ["GROUPS", "ORGANISM_NAMES", "PanelCompletenessResult", "check_panel_completeness"]
