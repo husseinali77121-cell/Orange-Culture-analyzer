@@ -316,3 +316,35 @@ _الأرقام أعلاه محدَّثة بتاريخ 2026-08-06 مقابل ا�
 | `.github/workflows/cdss-tests.yml` | Guard 12 جديد؛ تصحيح تعليق "809" |
 
 **حالة الاختبارات:** 15 حزمة، كلها exit=0 عدا `test_safety_invariants.py` (متوقّع — منتظر توقيع د. طارق على 6 قواعد Panel Completeness).
+
+---
+
+# مراجعة 2026-08-22 — توقيع د. طارق + عيب حقيقي ثانٍ (بيانات قديمة في كروت QC)
+
+## ✅ توقيع د. طارق على 6 قواعد Panel Completeness
+
+د. طارق راجع ووافق على الـ6 قواعد اللي كانت `verified="secondary"` (Enterobacterales، Salmonella/Shigella، Pseudomonas، Acinetobacter، Staphylococcus، Enterococcus). `countersigned_by` اتحدّث في `guideline_registry.py` لكل واحدة منهم. الـ4 قواعد الباقية (Stenotrophomonas، S. pneumoniae، Beta-hemolytic Strep، H. influenzae) لسه `pending` وغير موقّعة — محدش راجعها لسه.
+
+**النتيجة:** `test_safety_invariants.py` بقى بيفشل بس على الـ4 قواعد الباقية (كان قبل كده بيفشل على 6). ده fail متوقّع ومش عيب.
+
+## ⛔ عيب حقيقي ثانٍ — كروت QC بتقرأ بيانات قديمة (سبق التعديل اليدوي بخطوة)
+
+- **الحالة:** بلاغ من المستخدم (اتراجع مباشرة في الكود قبل ما يتصلّح، مش اتصدّق على طول) لقى إن "🧬 Resistance Profile" و"🔬 AST Quality Check" (وبالتبعية Panel Completeness جواها) بترندر **قبل** بلوك تعديل الـ AST اليدوي في ترتيب السكريبت. يعني لما المستخدم يضيف/يعدّل مضاد، الكروت دي بتقرأ `st.session_state.sir_map_edited` زي ما كانت آخر مرة — يعني متأخرة بخطوة واحدة عن التعديل اللي المستخدم عمله لتوه.
+- **مثال حقيقي:** ضفت Piperacillin+Tazobactam لعزلة Klebsiella، وكارت Panel Completeness فضل يقول "ناقص" لحد ما تعمل تعديل تاني — مع إن كل selectbox فردي بتاع كل مضاد بيتحدّث فوراً (Streamlit بتزامن حالة الـwidgets قبل ما السكريبت يشتغل)، لكن الـdict المجمّع اللي الكروت دي بتقراه مش بيتبني إلا لاحقاً في نفس التشغيلة.
+- **السبب اللي محدش مسكه قبل كده:** نفس النمط ده موجود من قبل إضافة Panel Completeness — أنا استخدمت نفس الـ`_qc_sir` الموجود مسبقاً بدل ما أكتشف المشكلة، وده وسّع نطاق التأثير (كل كروت الـQC، مش بس Panel Completeness).
+- **الإصلاح:** بدل نقل ~150 سطر من widgets معقدة ومترابطة (مخاطرة حقيقية)، ضفت `if edited_sir != previous: st.session_state.sir_map_edited = edited_sir; st.rerun()` مباشرة بعد بناء الـdict النهائي — بنفس الـ`st.rerun()` idiom اللي البلوك ده أصلاً بيستخدمه لعمليات الحذف/الاستعادة. ده بيضمن rerun واحد إضافي بس لما القيمة فعلاً تتغيّر، وبيتقارب (مفيش infinite loop) لأن الكتابة بتحصل قبل الـ rerun.
+- **الحارس الجديد:** `test_qc_data_freshness.py` — فحص static (عبر AST) يتأكد إن نمط "لو اتغيّر → rerun" موجود ومكانه صح بعد الكتابة مباشرة. **Guard 13** في الـ CI. (مينفعش نعمل فحص ديناميكي حقيقي هنا — streamlit نفسه مش متاح في بيئة الاختبار دي.)
+
+## ما اتغيّر
+
+| الملف | التغيير |
+|---|---|
+| `guideline_registry.py` | `countersigned_by` لـ6 قواعد Panel Completeness (توقيع د. طارق، 2026-08-22) |
+| `streamlit_app.py` | rerun-on-change بعد `sir_map_edited` write-back |
+| `test_qc_data_freshness.py` | **جديد** — حارس static لترتيب القراءة/الكتابة |
+| `test_panel_completeness.py` | تحديث invariant التوقيع (كان "لازم فاضي دايماً"، بقى "لازم يبقى موقّع بس لو اتفحص فعلاً") |
+| `.github/workflows/cdss-tests.yml` | Guard 13 جديد؛ إعادة ترقيم كامل ونظيف للحراس |
+
+**حالة الاختبارات:** 16 حزمة، كلها exit=0 عدا `test_safety_invariants.py` (متوقّع — 4 قواعد لسه منتظرة مراجعة د. طارق).
+
+**ملحوظة مهمة:** إصلاح `sir_map_edited` اتفحص static بس (مفيش streamlit في بيئة السحابة دي عشان نجرب rerun حقيقي). لازم click-through يدوي واحد بعد النشر: ضيف مضاد، وتأكد إن عداد Panel Completeness بيتحدّث في نفس اللحظة مش في التعديل اللي بعده.

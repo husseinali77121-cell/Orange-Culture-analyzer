@@ -111,14 +111,25 @@ except Exception as _ast_rules_exc:
 
 # AST Panel Completeness -- "was enough tested at all", not "was what was
 # tested interpreted correctly" (that's the block above). Same optional-import
-# pattern: absence of this file must never crash the report, only silently
-# drop the summary card below.
+# pattern: absence of this file must never crash the report -- but unlike the
+# block above, this one used to swallow the exception completely with no
+# captured message, no log line, and no entry in _MODULE_HEALTH below. That
+# meant an import failure here was PERMANENTLY INVISIBLE: no card, no error,
+# no clue anywhere in the app about why. Found 2026-08-22 when the card
+# simply never appeared and there was nothing to look at to find out why.
 try:
     from ast_panel_completeness import check_panel_completeness as _check_panel_completeness_ext
     PANEL_COMPLETENESS_AVAILABLE = True
-except Exception:
+    PANEL_COMPLETENESS_IMPORT_ERROR = ""
+except Exception as _panel_completeness_exc:
     _check_panel_completeness_ext = None
     PANEL_COMPLETENESS_AVAILABLE = False
+    PANEL_COMPLETENESS_IMPORT_ERROR = (
+        f"{type(_panel_completeness_exc).__name__}: {_panel_completeness_exc}"
+    )
+    logger.error("ast_panel_completeness unavailable -- the Panel Completeness "
+                 "card and its QC findings will not appear anywhere in the "
+                 "report: %s", _panel_completeness_exc)
 
 # Terminal safety gate + unified clinical constraint map. This is the layer that
 # adds site penetration (can the drug physically reach the infection?) on top of
@@ -769,6 +780,13 @@ def get_startup_validation_issues() -> List[str]:
         issues.append(
             "[CRITICAL] ast_qa_engine failed to load -- Level-1 AST QA checks are "
             "disabled."
+        )
+    if not PANEL_COMPLETENESS_AVAILABLE:
+        issues.append(
+            "[WARNING] ast_panel_completeness failed to load -- the '🧫 AST "
+            "Panel Completeness' card will not appear anywhere in the report "
+            f"and no 'missing expected agent' findings will be generated. "
+            f"Reason: {PANEL_COMPLETENESS_IMPORT_ERROR or 'unknown'}"
         )
     if not INTRINSIC_TABLE_OK:
         issues.append(
@@ -5606,6 +5624,7 @@ _MODULE_HEALTH = [
      SAFETY_GATE_AVAILABLE, True),
     ("ast_reportability + ast_consistency  (QC panel)", AST_RULES_MODULES_AVAILABLE, False),
     ("ast_qa_engine.py  (AST quality check)", AST_QA_AVAILABLE, False),
+    ("ast_panel_completeness.py  (Panel Completeness card)", PANEL_COMPLETENESS_AVAILABLE, False),
     ("Arabic shaping  (arabic-reshaper + python-bidi)", ARABIC_SUPPORT, False),
 ]
 _degraded = [(n, crit) for n, ok, crit in _MODULE_HEALTH if not ok]
@@ -5635,6 +5654,16 @@ with st.expander("🧩 Module health", expanded=False):
 
 st.title("🔬 Microbiology CDSS")
 st.caption("AI-Assisted Antibiotic Decision Support -- Egyptian Market Edition")
+
+if os.environ.get("ORANGE_CDSS_OFFLINE_MODE") == "1":
+    # Set by launcher.py only when actually running as the frozen desktop
+    # exe (never in the cloud-deployed version) -- reassurance that this
+    # build works with no internet connection, not a claim about what the
+    # cloud-deployed version does.
+    st.caption(
+        "🟢 **Offline** — Clinical Engine: Local · AST QC: Local · "
+        "OCR: Local · Guidelines: Local copy — no internet connection required"
+    )
 
 # ── إعدادات المعمل -- قابلة للتغيير (النسخة التجارية) ─────────────────────
 # الأولوية: secrets (للنشر) -> session_state (تغيير مباشر) -> default
@@ -6606,7 +6635,28 @@ if uploaded:
         # ── Apply deletions to sir_map ────────────────────────────────
         _deleted = st.session_state.get(_del_key, set())
         edited_sir = {d: v for d, v in edited_sir.items() if d not in _deleted}
+
+        # 2026-08-22: Resistance Profile / AST Quality Check / Panel
+        # Completeness (above, ~line 6267/6355) render BEFORE this block in
+        # script order, so on the run where the user just changed a result
+        # they were reading st.session_state.sir_map_edited as it stood at
+        # the END of the PREVIOUS run -- one edit behind. Each individual
+        # st.selectbox's own session_state[key] is already fresh at this
+        # point (Streamlit syncs those before the script starts), but the
+        # AGGREGATE dict those QC sections actually read is only assembled
+        # here. Rather than relocating ~150 lines of interdependent widget
+        # code above this point (real risk of breaking the column/key/rerun
+        # interactions elsewhere on this page), force one extra rerun exactly
+        # when the aggregate changed -- the same st.rerun() idiom this block
+        # already uses for delete/restore, just keyed off a value change
+        # instead of a button click. sir_map_edited is written BEFORE the
+        # rerun fires, so the follow-up run reads current data and converges
+        # (no loop): a real Piperacillin+Tazobactam entry no longer shows as
+        # missing the moment it's saved, not one edit later.
+        _prev_sir_map_edited = st.session_state.get("sir_map_edited")
         st.session_state.sir_map_edited = edited_sir
+        if edited_sir != _prev_sir_map_edited:
+            st.rerun()
 
         # sir_map = كل الأدوية (OCR + manual) مع نتائجها -- بعد الحذف
         sir_map = dict(edited_sir)

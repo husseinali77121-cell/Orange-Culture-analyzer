@@ -53,15 +53,17 @@ THREE TIERS, NOT A FLAT MISSING LIST
 
 GUIDELINE STATUS — READ BEFORE TRUSTING THIS FILE
 Six of the ten groups below (Enterobacterales, Salmonella/Shigella, Pseudomonas,
-Acinetobacter, Staphylococcus, Enterococcus) are now grounded in the actual
-CLSI M100 36th-edition (2026) Table 1 tier assignments — the same edition this
+Acinetobacter, Staphylococcus, Enterococcus) are grounded in the actual CLSI
+M100 36th-edition (2026) Table 1 tier assignments — the same edition this
 codebase already cites everywhere else — via a secondary tabulation (Giri D.,
 LaboratoryTests.org, Feb-Mar 2026, itself citing CLSI M100 36th ed. 2026
 directly per organism). Each such row is marked verified="secondary" in
-guideline_registry.py. The remaining four (Stenotrophomonas, S. pneumoniae,
-beta-haemolytic Streptococcus, H. influenzae) are still a clinically-reasoned
-DRAFT, informed by CLSI M100 Table 1 conventions but not independently
-re-verified against Ed36 — marked verified="pending".
+guideline_registry.py, and Dr. Tarek countersigned all six on 2026-08-22
+(see countersigned_by on each row). The remaining four (Stenotrophomonas,
+S. pneumoniae, beta-haemolytic Streptococcus, H. influenzae) are still a
+clinically-reasoned DRAFT, informed by CLSI M100 Table 1 conventions but not
+independently re-verified against Ed36 or reviewed by him yet — marked
+verified="pending", unsigned.
 
 "Grounded" does not mean "every CLSI-eligible agent is listed as primary".
 CLSI's Tier 1 lists what is APPROPRIATE for routine testing and reporting —
@@ -75,9 +77,10 @@ ROUTINE panel drawn only from agents CLSI recognizes as Tier-1/routine-
 appropriate for that organism; "supplemental" carries the rest of what CLSI
 recognizes as appropriate (remaining Tier-1 alternates plus Tier 2+) so
 nothing eligible is left unaddressed, just not flagged at HIGH severity for
-an ordinary lab's ordinary panel. This curation choice is Orange Lab's own,
-same as organism_profile.py's treatment-line lists — it needs Dr. Tarek's
-read, not just CLSI's.
+an ordinary lab's ordinary panel. This curation choice was Orange Lab's own,
+same as organism_profile.py's treatment-line lists — Dr. Tarek's sign-off on
+the six countersigned rows covers this curation choice too, not just the
+underlying CLSI tier data.
 
 Two concrete, dated facts drove earlier design choices and are worth stating
 plainly rather than re-deriving from memory each time:
@@ -90,10 +93,9 @@ plainly rather than re-deriving from memory each time:
     Tier-2 (not Tier-1/routine) as of Ed36 — confirmed directly against the
     Ed36 tabulation, not assumed from an older edition's convention.
 Every group is registered in guideline_registry.RULES. See its module
-docstring for what "secondary" vs "pending" verified status means and how
-Dr. Tarek clears either one. Treat every "missing agent" flag this module
-raises as "worth a look", not as an accusation, until he has read it against
-the panels this lab actually runs.
+docstring for what "secondary" vs "pending" verified status means. The four
+still-pending rows raise the exact same "worth a look, not an accusation"
+caveat as before — they just haven't reached him yet.
 
 Architecture:
   OCR → AST parsing → AST-QA (contradictions) → [PANEL COMPLETENESS]

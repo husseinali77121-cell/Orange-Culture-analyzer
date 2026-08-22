@@ -293,11 +293,27 @@ if _has_registry:
           "never 'source' (that implies primary-text verification this batch "
           "hasn't done) and never silently promoted to fully verified",
           not _bad_level, _bad_level)
-    _bad_sign = [rid for rid in _registry_panel_ids
-                 if str(RULES[rid].get("countersigned_by", "")).strip()]
-    check("no panel_* row claims a clinician countersignature that was never "
-          "given -- Dr. Tarek has not reviewed this batch yet",
-          not _bad_sign, _bad_sign)
+    # 2026-08-22: Dr. Tarek reviewed and countersigned the 6 "secondary"
+    # (Ed36-checked) rows. A signature can now legitimately be present --
+    # the invariant worth protecting isn't "never signed", it's "never
+    # signed without having been checked against a source first", and
+    # "the rows nobody has reviewed yet stay unsigned".
+    _signed_but_uncheckable = [
+        rid for rid in _registry_panel_ids
+        if str(RULES[rid].get("countersigned_by", "")).strip()
+        and RULES[rid].get("verified") not in ("secondary", "source")
+    ]
+    check("no panel_* row is countersigned without first being checked "
+          "against a source (a signature on a 'pending' row would mean "
+          "Dr. Tarek signed off on an unverified guess)",
+          not _signed_but_uncheckable, _signed_but_uncheckable)
+    _still_pending = {rid for rid in _registry_panel_ids if RULES[rid].get("verified") == "pending"}
+    _wrongly_signed = [rid for rid in _still_pending
+                        if str(RULES[rid].get("countersigned_by", "")).strip()]
+    check("the 4 still-'pending' rows (Stenotrophomonas, S. pneumoniae, "
+          "beta-haemolytic Strep, H. influenzae) remain unsigned -- nobody "
+          "has reviewed them against Ed36 yet, signed or not",
+          not _wrongly_signed, _wrongly_signed)
 else:
     print("  SKIP  guideline_registry not importable")
 
@@ -353,7 +369,7 @@ if _FAIL:
 print("\nRESULT: ALL GREEN")
 print("\nNOTE: 6 of 10 expected-panel groups in ast_panel_completeness.py are")
 print("      verified='secondary' (checked against actual CLSI M100 Ed36 tier")
-print("      data); 4 remain 'pending' (clinically reasoned, not independently")
-print("      re-verified). NONE carry Dr. Tarek's countersignature yet. Green")
-print("      here means the ENGINEERING is correct, not that the panels are")
-print("      cleared for clinical use. See that module's docstring.")
+print("      data) AND countersigned by Dr. Tarek (2026-08-22). 4 remain")
+print("      'pending' and unsigned (Stenotrophomonas, S. pneumoniae,")
+print("      beta-haemolytic Strep, H. influenzae) -- clinically reasoned,")
+print("      not independently re-verified, not yet reviewed by him.")
