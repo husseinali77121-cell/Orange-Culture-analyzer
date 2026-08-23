@@ -54,15 +54,34 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Clinical engine tests (Windows sanity pass)
+      # 2026-08-22: previously ran a 5-suite subset here (intrinsic invariant,
+      # guidelines, panel completeness, UI combination path, QC freshness).
+      # A second-opinion audit correctly pointed out that left 11 other
+      # suites -- dose adjustment, clinical matrix, render layer, engine
+      # agreement, the full scenario matrix, etc. -- completely unchecked
+      # before a "successful" EXE build. Now runs every suite cdss-tests.yml
+      # runs, in the same order, so a build can only succeed if the full
+      # clinical engine is green on Windows too, not just a sample of it.
+      - name: Clinical engine tests (full suite, Windows sanity pass)
         run: |
           python -m pip install --upgrade pip
-          pip install streamlit numpy opencv-python-headless pytesseract Pillow arabic-reshaper python-bidi
+          pip install streamlit numpy opencv-python-headless pytesseract Pillow arabic-reshaper python-bidi weasyprint
           python test_intrinsic_invariant.py
+          python test_intrinsic_sync.py
+          python test_clinical_matrix.py
           python test_guidelines.py
+          python test_safety_invariants.py
+          python test_dose_adjustment.py
+          python test_clinical_facts.py
+          python test_comprehensive.py
+          python test_engine_agreement.py
+          python test_scenarios.py
           python test_panel_completeness.py
           python test_ui_combination_path.py
           python test_qc_data_freshness.py
+          python test_render_layer.py
+          python test_pipeline.py
+          python test_modules.py
         shell: bash
 
       # ── Stage Tesseract (OCR) ──────────────────────────────────────────
@@ -98,7 +117,7 @@ jobs:
             # not a release asset, so no naming-convention risk here).
             $araUrl = "https://github.com/tesseract-ocr/tessdata/raw/main/ara.traineddata"
             Invoke-WebRequest -Uri $araUrl -OutFile "tesseract\tessdata\ara.traineddata" -UserAgent "Mozilla/5.0"
-            $head = Get-Content "tesseract\tessdata\ara.traineddata" -Encoding Byte -TotalCount 2 -ErrorAction SilentlyContinue
+            $head = [System.IO.File]::ReadAllBytes("tesseract\tessdata\ara.traineddata")
             if (-not $head -or $head.Length -lt 2) {
               Write-Warning "ara.traineddata download looks suspicious (empty/tiny) -- Arabic OCR may not work in this build. Check $araUrl manually."
             }
@@ -125,7 +144,13 @@ jobs:
             # is exactly the failure class that hit the Tesseract step above
             # -- catching it here means a clear error now, not a confusing
             # PowerShell parse error three steps later.
-            $head = Get-Content gtk3-setup.exe -Encoding Byte -TotalCount 2
+            # NOTE 2026-08-22: `-Encoding Byte` (used here originally) was
+            # removed in PowerShell Core / pwsh 7, which is what `shell: pwsh`
+            # actually runs on windows-latest -- it broke this exact check
+            # with "'Byte' is not a supported encoding name". ReadAllBytes()
+            # works identically on Windows PowerShell 5.1 and PowerShell 7+,
+            # so it's used everywhere in this file now instead of Get-Content.
+            $head = [System.IO.File]::ReadAllBytes("gtk3-setup.exe")
             if ($head[0] -ne 0x4D -or $head[1] -ne 0x5A) {
               throw "Downloaded file is not a valid Windows executable (missing MZ header) -- $url likely served an HTML page instead of the installer. Check the URL manually."
             }
@@ -134,9 +159,16 @@ jobs:
             Copy-Item "gtk3-install\bin\*.dll" "gtk3-runtime\bin\" -Force
             Write-Host "GTK3 runtime staged: $(Get-ChildItem gtk3-runtime\bin | Measure-Object | Select -ExpandProperty Count) DLLs"
           } catch {
-            Write-Warning "GTK3 runtime staging failed: $_"
-            Write-Warning "Build will continue WITHOUT it -- PDF generation will not work in this build."
-            Write-Warning "See EXE_BUILD_NOTES.md for the manual fallback."
+            # 2026-08-22: this used to warn and let the build continue
+            # anyway, which meant "Build successful" / "exe created" /
+            # "smoke test passed" could all be true while PDF generation was
+            # silently broken -- the smoke test only proves the app starts,
+            # not that it can generate a report. A build that ships with a
+            # known-broken clinical output is not a successful build. See
+            # EXE_BUILD_NOTES.md's GTK3 fallback plan if this step fails --
+            # fix it there, don't relax this gate.
+            Write-Error "GTK3 runtime staging failed: $_"
+            throw "PDF generation (WeasyPrint/GTK3) could not be staged -- failing the build rather than shipping an exe with silently broken PDF reports. See EXE_BUILD_NOTES.md."
           }
 
       # ── Stage fonts (Arabic shaping + PDF/report rendering) ─────────────
@@ -154,7 +186,7 @@ jobs:
           foreach ($name in $fonts.Keys) {
             try {
               Invoke-WebRequest -Uri $fonts[$name] -OutFile "fonts\$name" -UserAgent "Mozilla/5.0"
-              $bytes = Get-Content "fonts\$name" -Encoding Byte -TotalCount 4 -ErrorAction Stop
+              $bytes = [System.IO.File]::ReadAllBytes("fonts\$name")
               # Real .ttf files start with 00 01 00 00 (or "OTTO" for .otf) --
               # an HTML error page would start with "<" (0x3C).
               if ($bytes[0] -eq 0x3C) {
@@ -171,6 +203,23 @@ jobs:
         run: |
           pip install pyinstaller weasyprint
         shell: bash
+
+      # 2026-08-22: proves the STAGED gtk3-runtime/bin DLLs actually work
+      # with WeasyPrint -- a much stronger signal than the MZ-header check
+      # above, which only proves "we downloaded a real .exe", not "the DLLs
+      # extracted from it actually render a PDF". Fails the build here, with
+      # a clear message, rather than shipping an exe where PDF generation
+      # silently breaks -- the same "make PDF failure a hard gate" principle
+      # as the GTK3 staging step above, one layer deeper.
+      - name: PDF generation smoke test (GTK3 + WeasyPrint)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $env:PATH = "$PWD\gtk3-runtime\bin;" + $env:PATH
+          python -c "import weasyprint; html = '<html><body><h1>Orange Lab CDSS</h1><p>PDF generation smoke test</p></body></html>'; weasyprint.HTML(string=html).write_pdf('smoke_test.pdf'); import os; size = os.path.getsize('smoke_test.pdf'); assert size > 500, f'PDF suspiciously small ({size} bytes) -- GTK3 likely not actually working'; print(f'PDF generation smoke test passed: smoke_test.pdf ({size} bytes)')"
+          if ($LASTEXITCODE -ne 0) {
+            throw "PDF generation smoke test failed -- WeasyPrint could not render a PDF with the staged GTK3 DLLs. This means the shipped exe's PDF reports would not work. Do not relax this gate; fix the GTK3 staging step instead."
+          }
 
       - name: Build with PyInstaller
         run: pyinstaller orange_cdss.spec --clean --noconfirm
