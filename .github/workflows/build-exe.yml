@@ -66,35 +66,69 @@ jobs:
         shell: bash
 
       # ── Stage Tesseract (OCR) ──────────────────────────────────────────
+      # 2026-08-22: the previous version of this step downloaded from
+      # github.com/UB-Mannheim/tesseract/releases/... and failed -- turns out
+      # that repo does NOT publish the Windows installer as a GitHub Release
+      # asset at all (it's hosted on Mannheim University's own server
+      # instead), so GitHub served its own HTML page in place of a binary,
+      # and Invoke-WebRequest happily saved that HTML as "tesseract-setup.exe"
+      # with no error. Installing it then failed with a confusing, unrelated-
+      # looking PowerShell parse error (the HTML got interpreted as a script).
+      # Switched to Chocolatey, which is pre-installed on windows-latest
+      # runners specifically for this kind of case -- it resolves the actual
+      # current download location itself, so this step doesn't need to track
+      # where Tesseract happens to be hosted at all.
       - name: Download Tesseract-OCR for Windows
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $url = "https://github.com/UB-Mannheim/tesseract/releases/latest/download/tesseract-ocr-w64-setup.exe"
-          Invoke-WebRequest -Uri $url -OutFile tesseract-setup.exe
-          Start-Process -FilePath .\tesseract-setup.exe -ArgumentList "/S /D=$PWD\tesseract-install" -Wait
-          New-Item -ItemType Directory -Force -Path tesseract, tesseract\tessdata | Out-Null
-          Copy-Item "tesseract-install\tesseract.exe" "tesseract\" -Force
-          Copy-Item "tesseract-install\*.dll" "tesseract\" -Force -ErrorAction SilentlyContinue
-          Copy-Item "tesseract-install\tessdata\eng.traineddata" "tesseract\tessdata\" -Force
-          Copy-Item "tesseract-install\tessdata\ara.traineddata" "tesseract\tessdata\" -Force -ErrorAction SilentlyContinue
-          if (-not (Test-Path "tesseract\tessdata\ara.traineddata")) {
-            # UB-Mannheim's default installer doesn't always include Arabic --
-            # pull it directly from Tesseract's own tessdata repo if missing.
-            Invoke-WebRequest -Uri "https://github.com/tesseract-ocr/tessdata/raw/main/ara.traineddata" -OutFile "tesseract\tessdata\ara.traineddata"
+          choco install tesseract -y --no-progress
+          $tessDir = "C:\Program Files\Tesseract-OCR"
+          if (-not (Test-Path "$tessDir\tesseract.exe")) {
+            throw "choco install tesseract succeeded but $tessDir\tesseract.exe is missing -- Chocolatey may have changed this package's install layout. Check https://community.chocolatey.org/packages/tesseract for the current path."
           }
-          if (-not (Test-Path "tesseract\tesseract.exe")) { throw "Tesseract staging failed -- tesseract.exe missing" }
+          New-Item -ItemType Directory -Force -Path tesseract, tesseract\tessdata | Out-Null
+          Copy-Item "$tessDir\tesseract.exe" "tesseract\" -Force
+          Copy-Item "$tessDir\*.dll" "tesseract\" -Force -ErrorAction SilentlyContinue
+          Copy-Item "$tessDir\tessdata\eng.traineddata" "tesseract\tessdata\" -Force
+          Copy-Item "$tessDir\tessdata\ara.traineddata" "tesseract\tessdata\" -Force -ErrorAction SilentlyContinue
+          if (-not (Test-Path "tesseract\tessdata\ara.traineddata")) {
+            # The choco package doesn't always bundle Arabic -- pull it
+            # directly from Tesseract's own tessdata repo (a raw file URL,
+            # not a release asset, so no naming-convention risk here).
+            $araUrl = "https://github.com/tesseract-ocr/tessdata/raw/main/ara.traineddata"
+            Invoke-WebRequest -Uri $araUrl -OutFile "tesseract\tessdata\ara.traineddata" -UserAgent "Mozilla/5.0"
+            $head = Get-Content "tesseract\tessdata\ara.traineddata" -Encoding Byte -TotalCount 2 -ErrorAction SilentlyContinue
+            if (-not $head -or $head.Length -lt 2) {
+              Write-Warning "ara.traineddata download looks suspicious (empty/tiny) -- Arabic OCR may not work in this build. Check $araUrl manually."
+            }
+          }
           Write-Host "Tesseract staged: $(Get-ChildItem tesseract\tessdata | Measure-Object | Select -ExpandProperty Count) tessdata files"
 
       # ── Stage GTK3 runtime (WeasyPrint's PDF dependency) ────────────────
       # See the workflow-level comment above: this is the highest-risk step.
+      # Pinned to the exact release tag (2022-01-04, still the latest as of
+      # this writing -- the project has had no release since) rather than
+      # /releases/latest/download/, since that repo's release PAGE was seen
+      # rendering "There was an error while loading" during verification --
+      # a sign its /latest/ alias resolution is worth not depending on even
+      # though the direct tagged URL works fine.
       - name: Download GTK3 runtime for Windows
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $url = "https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases/latest/download/gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe"
+          $url = "https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases/download/2022-01-04/gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe"
           try {
-            Invoke-WebRequest -Uri $url -OutFile gtk3-setup.exe
+            Invoke-WebRequest -Uri $url -OutFile gtk3-setup.exe -UserAgent "Mozilla/5.0"
+            # An HTML error page saved as .exe starts with "<", not the "MZ"
+            # DOS-header magic bytes every real Windows executable has. This
+            # is exactly the failure class that hit the Tesseract step above
+            # -- catching it here means a clear error now, not a confusing
+            # PowerShell parse error three steps later.
+            $head = Get-Content gtk3-setup.exe -Encoding Byte -TotalCount 2
+            if ($head[0] -ne 0x4D -or $head[1] -ne 0x5A) {
+              throw "Downloaded file is not a valid Windows executable (missing MZ header) -- $url likely served an HTML page instead of the installer. Check the URL manually."
+            }
             Start-Process -FilePath .\gtk3-setup.exe -ArgumentList "/S /D=$PWD\gtk3-install" -Wait
             New-Item -ItemType Directory -Force -Path "gtk3-runtime\bin" | Out-Null
             Copy-Item "gtk3-install\bin\*.dll" "gtk3-runtime\bin\" -Force
@@ -119,7 +153,14 @@ jobs:
           }
           foreach ($name in $fonts.Keys) {
             try {
-              Invoke-WebRequest -Uri $fonts[$name] -OutFile "fonts\$name"
+              Invoke-WebRequest -Uri $fonts[$name] -OutFile "fonts\$name" -UserAgent "Mozilla/5.0"
+              $bytes = Get-Content "fonts\$name" -Encoding Byte -TotalCount 4 -ErrorAction Stop
+              # Real .ttf files start with 00 01 00 00 (or "OTTO" for .otf) --
+              # an HTML error page would start with "<" (0x3C).
+              if ($bytes[0] -eq 0x3C) {
+                Remove-Item "fonts\$name" -Force
+                Write-Warning "$name download returned HTML, not a font file -- skipped. Arabic text may fall back to an unshaped font."
+              }
             } catch {
               Write-Warning "Could not stage font $name -- Arabic text in generated PDFs may fall back to an unshaped font."
             }
