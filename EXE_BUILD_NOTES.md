@@ -18,6 +18,12 @@
 
 No local Windows machine needed. If you *do* want to build locally on Windows instead: install Tesseract-OCR-Windows and the GTK3 Runtime for Windows yourself, stage them into `tesseract/` and `gtk3-runtime/` next to this spec (same layout the workflow produces), then `pip install pyinstaller weasyprint` and `pyinstaller orange_cdss.spec --clean`.
 
+## 2026-08-22 update — the first real run found a bug, now fixed
+
+The first actual push to GitHub Actions failed at "Download Tesseract-OCR for Windows" with a confusing PowerShell parse error. Root cause: `github.com/UB-Mannheim/tesseract` does not publish its Windows installer as a GitHub Release asset at all — it's hosted on Mannheim University's own server instead — so the `releases/latest/download/...` URL this step used returned GitHub's own HTML page (which `Invoke-WebRequest` saved as `tesseract-setup.exe` with no error), and PowerShell then choked trying to run HTML as an installer.
+
+Fixed by switching that step to Chocolatey (`choco install tesseract -y`) — pre-installed on `windows-latest` runners specifically for this kind of case, since it resolves wherever the package actually lives instead of this workflow needing to track it. The GTK3 step turned out to already point at a correct, real asset URL (pinned to a specific release tag, not `/latest/`) — it just never got a chance to run because the step before it failed first. Both downloads (and the font downloads) now also check for a valid binary header (`MZ` for `.exe`, `<` for accidental HTML) immediately after downloading, so if a URL ever goes stale again the build fails with a one-line "this URL served HTML, not a binary" error at the exact step, instead of a confusing failure two steps later.
+
 ## The one thing most likely to need a second pass: WeasyPrint + GTK3
 
 PDF generation (`weasyprint`) needs the GTK3 runtime (Pango, Cairo, GDK-Pixbuf, HarfBuzz) — not a Windows-native dependency. This has historically been the hardest part of shipping WeasyPrint on Windows, full stop, independent of this specific app. The workflow stages it via a silent install of a community-maintained GTK3-for-Windows installer and copies the DLLs out; if that installer's URL or internal layout has changed since this was written, that step (and only that step) will fail or silently produce an incomplete `gtk3-runtime/bin`.
