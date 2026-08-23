@@ -41,6 +41,18 @@ jobs:
   build:
     runs-on: windows-latest
     timeout-minutes: 45
+    env:
+      # 2026-08-22: windows-latest's default console codepage (cp1252-style
+      # "charmap") cannot encode most of the Unicode this codebase prints --
+      # checkmarks (\u2717/\u2713), emoji status icons, Arabic text in report
+      # strings. Every python invocation in this job crashed the first time
+      # it tried to print one, with a UnicodeEncodeError that has nothing to
+      # do with test logic. This is a job-level fix rather than editing each
+      # test file's print statements individually, since the same failure
+      # class would recur in any future file (this workflow's own PDF smoke
+      # test step prints Unicode-adjacent text too) -- one environment
+      # variable protects all of them at once, at the source.
+      PYTHONIOENCODING: "utf-8"
     steps:
       - uses: actions/checkout@v4
 
