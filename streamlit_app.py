@@ -42,7 +42,16 @@ except ImportError:
 try:
     import weasyprint as _wp
     WEASYPRINT_AVAILABLE = True
-except ImportError:
+except Exception:
+    # Broad except deliberately, not ImportError: weasyprint's native
+    # dependency (GTK3/Pango/Cairo, via cffi) raises OSError -- not
+    # ImportError -- when the Python package is installed but the native
+    # library is missing or broken (e.g. "cannot load library
+    # 'libgobject-2.0-0'"). An ImportError-only except let that OSError
+    # propagate and crash app startup entirely instead of degrading to "no
+    # PDF generation", on ANY machine with a partial GTK3 install -- found
+    # 2026-08-22 when the Windows EXE build's own test step hit exactly
+    # this before GTK3 had been staged yet.
     WEASYPRINT_AVAILABLE = False
     _wp = None
 
@@ -6617,8 +6626,52 @@ if uploaded:
         manual_prev = [d for d in st.session_state.sir_map_edited.keys()
                        if d not in ocr_drugs]
 
+        # ── إضافة سريعة: دواء + نتيجته مرة واحدة ──────────────────────
+        # Requested 2026-08-22: adding a missing drug through the multiselect
+        # below always lands it at "S" first (that selectbox's own default),
+        # then needs a SEPARATE edit afterward to set the real result --
+        # exactly the two-step flow that made the freshness bug upstream
+        # confusing to reason about (which state was "saved"?). This widget
+        # puts the drug picker and its S/I/R result side by side so one
+        # click adds the drug WITH its actual result already correct --
+        # nothing to go back and fix.
+        _quick_add_pool = [d for d in all_known
+                           if d not in ocr_drugs and d not in ocr_detected_no_sir
+                           and d not in manual_prev]
+        if _quick_add_pool:
+            st.markdown("<small style='color:#1a6b3a'>⚡ إضافة سريعة -- دواء ونتيجته "
+                        "مرة واحدة:</small>", unsafe_allow_html=True)
+            _qa_c1, _qa_c2, _qa_c3 = st.columns([5, 2, 2])
+            _quick_drug = _qa_c1.selectbox(
+                "المضاد الناقص", options=[""] + sorted(_quick_add_pool),
+                key=f"quick_add_drug_{file_hash[:8]}", label_visibility="collapsed",
+                format_func=lambda d: "اختر المضاد الناقص..." if d == "" else d,
+            )
+            _quick_sir = _qa_c2.selectbox(
+                "النتيجة", options=sir_options,
+                key=f"quick_add_sir_{file_hash[:8]}", label_visibility="collapsed",
+            )
+            if _qa_c3.button("➕ إضافة", key=f"quick_add_btn_{file_hash[:8]}",
+                             disabled=not _quick_drug, use_container_width=True):
+                _mkey = f"manual_drugs_{file_hash[:8]}"
+                _current_manual = list(st.session_state.get(_mkey, manual_prev))
+                if _quick_drug not in _current_manual:
+                    _current_manual.append(_quick_drug)
+                st.session_state[_mkey] = _current_manual
+                # Set BOTH the aggregate map (what Panel Completeness/QC read)
+                # and this specific drug's own selectbox key (so it renders
+                # showing the chosen result, not "S", the instant it appears
+                # below) -- same reasoning as the sir_map_edited freshness fix:
+                # write before the rerun, not after, so the very next render
+                # is already correct.
+                _sir_now = dict(st.session_state.sir_map_edited)
+                _sir_now[_quick_drug] = _quick_sir
+                st.session_state.sir_map_edited = _sir_now
+                st.session_state[f"sir_manual_{_quick_drug}_{file_hash[:8]}"] = _quick_sir
+                st.rerun()
+
         manual_extra = st.multiselect(
-            "➕ أضف مضادات يدوياً (فاتها OCR كلياً)",
+            "➕ أو أضف عدة مضادات دفعة واحدة (كلها هتتحط S مبدئياً وتقدر تعدّلها تحت)",
             options=[d for d in all_known if d not in ocr_drugs and d not in ocr_detected_no_sir],
             default=manual_prev,
             key=f"manual_drugs_{file_hash[:8]}",
