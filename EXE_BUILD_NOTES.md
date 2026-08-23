@@ -24,6 +24,15 @@ The first actual push to GitHub Actions failed at "Download Tesseract-OCR for Wi
 
 Fixed by switching that step to Chocolatey (`choco install tesseract -y`) — pre-installed on `windows-latest` runners specifically for this kind of case, since it resolves wherever the package actually lives instead of this workflow needing to track it. The GTK3 step turned out to already point at a correct, real asset URL (pinned to a specific release tag, not `/latest/`) — it just never got a chance to run because the step before it failed first. Both downloads (and the font downloads) now also check for a valid binary header (`MZ` for `.exe`, `<` for accidental HTML) immediately after downloading, so if a URL ever goes stale again the build fails with a one-line "this URL served HTML, not a binary" error at the exact step, instead of a confusing failure two steps later.
 
+### Second run: `-Encoding Byte` and a Unicode console crash
+
+Two more real, narrow bugs surfaced across the next two runs, both fixed:
+
+- **`-Encoding Byte` was removed in PowerShell 7** (what `shell: pwsh` actually runs on `windows-latest`), so the MZ-header/font-header validation added above broke immediately with "'Byte' is not a supported encoding name". Replaced every occurrence with `[System.IO.File]::ReadAllBytes(...)`, which works identically on Windows PowerShell 5.1 and PowerShell 7+.
+- **`UnicodeEncodeError: 'charmap' codec can't encode character '\u2717'`** — Windows' default console codepage cannot represent the checkmarks/emoji this codebase's test suites print (`✗`, `✓`, status icons). Fixed at the job level with `env: PYTHONIOENCODING: "utf-8"`, which protects every Python invocation in the job rather than needing each test file's print statements edited individually.
+
+Also expanded per a second-opinion audit's findings: the pre-build test step now runs all 16 suites (was 5), and GTK3/PDF staging failures now hard-fail the build instead of warning-and-continuing — plus an actual PDF-generation smoke test (not just an HTTP 200 check) using the staged GTK3 DLLs.
+
 ## The one thing most likely to need a second pass: WeasyPrint + GTK3
 
 PDF generation (`weasyprint`) needs the GTK3 runtime (Pango, Cairo, GDK-Pixbuf, HarfBuzz) — not a Windows-native dependency. This has historically been the hardest part of shipping WeasyPrint on Windows, full stop, independent of this specific app. The workflow stages it via a silent install of a community-maintained GTK3-for-Windows installer and copies the DLLs out; if that installer's URL or internal layout has changed since this was written, that step (and only that step) will fail or silently produce an incomplete `gtk3-runtime/bin`.
