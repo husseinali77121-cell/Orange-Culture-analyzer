@@ -345,7 +345,19 @@ SITE_PENETRATION: Dict[str, Dict[str, Tuple[str, str, str]]] = {
                  "Stool": (DENY, "no enteric indication", "لا استطباب معوي"),
                  "CSF": (DENY, "IV colistin does not reach CSF — intrathecal/intraventricular route required",
                          "الكوليستين الوريدي لا يصل للسائل النخاعي — يلزم الحقن داخل القراب/البطين")},
-    "Doxycycline": {"Urine": _NO_URINE, "Blood": (CAUTION, "bacteriostatic — avoid in endovascular infection",
+    "Doxycycline": {"Urine": (DENY,
+                              "urinary levels are real (30-60% renal excretion at normal "
+                              "renal function per product labeling) but unreliable -- "
+                              "elimination shifts toward non-renal (biliary/GI) routes as "
+                              "renal function drops, the same feature that makes this the "
+                              "renal-failure-safe tetracycline -- and it lacks established "
+                              "efficacy data for routine UTI; not a standard UTI agent",
+                              "الإفراز البولي حقيقي (30-60% في وظائف كلوية طبيعية حسب نشرة "
+                              "الدواء) لكنه غير موثوق — يتحول الإخراج لطرق غير كلوية (صفراوية/"
+                              "معوية) كلما قلّت وظائف الكلى، وهو نفس ما يجعله الدواء الآمن من "
+                              "التتراسيكلينات في الفشل الكلوي — كما تنقصه بيانات فعالية "
+                              "مثبتة لعدوى المسالك البولية الروتينية؛ ليس خياراً بولياً معتمداً"),
+                    "Blood": (CAUTION, "bacteriostatic — avoid in endovascular infection",
                                                    "مثبط للنمو — يُتجنب في عدوى داخل الأوعية"),
                     "Sputum": _OK, "Wound Swab": _OK, "Pus": _OK,
                     "Stool": (CAUTION, "cholera / Vibrio only", "للكوليرا والضمّات فقط"),
@@ -426,7 +438,22 @@ SITE_PENETRATION: Dict[str, Dict[str, Tuple[str, str, str]]] = {
                                   "Pus": _OK, "Stool": (CAUTION, "invasive enteric disease only", "للعدوى المعوية الغازية فقط"),
                                   "CSF": (DENY, "inadequate CSF penetration — use meropenem or a 3rd-gen cephalosporin",
                                           "اختراق غير كافٍ للسائل النخاعي — استخدم ميروبينيم أو سيفالوسبورين جيل ثالث")},
-    "Tetracycline": {"Urine": _NO_URINE, "Blood": (CAUTION, "bacteriostatic — avoid in endovascular infection",
+    "Tetracycline": {"Urine": (CAUTION,
+                               "reaches substantial urinary concentrations (50-80% of "
+                               "an absorbed dose recovered in urine per standard PK "
+                               "references) -- unlike doxycycline, this is NOT a PK "
+                               "reason to avoid it for UTI. Not first-line today because "
+                               "of resistance patterns and displacement by better-studied "
+                               "options (nitrofurantoin, fosfomycin, TMP-SMX); base the "
+                               "decision on susceptibility and clinical context, not a "
+                               "blanket site-penetration denial",
+                               "يصل لتركيزات بولية كبيرة (50-80% من الجرعة الممتصة تُستعاد "
+                               "في البول حسب المراجع الدوائية القياسية) — بعكس الدوكسيسيكلين، "
+                               "هذا مش سبب دوائي لمنعه في عدوى المسالك البولية. مش خط أول "
+                               "حالياً بسبب أنماط المقاومة وتفضيل خيارات أوثق دراسة "
+                               "(نيتروفيورانتوين، فوسفومايسين، TMP-SMX) — القرار لازم يعتمد "
+                               "على الحساسية الفعلية والسياق السريري، مش منع مطلق حسب الموقع"),
+                     "Blood": (CAUTION, "bacteriostatic — avoid in endovascular infection",
                                                     "مثبط للنمو — يُتجنب في عدوى داخل الأوعية"),
                      "Sputum": (CAUTION, "doxycycline preferred", "يُفضل الدوكسيسيكلين"),
                      "Wound Swab": (CAUTION, "doxycycline preferred", "يُفضل الدوكسيسيكلين"),

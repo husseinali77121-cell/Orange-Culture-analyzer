@@ -47,6 +47,8 @@ def check(cond: bool, label: str, detail: str = "") -> None:
 # ── load the monolith's engine without starting Streamlit ────────────────────
 class _Mock:
     def __call__(self, *a, **k): return _Mock()
+    def __iter__(self): return iter([_Mock() for _ in range(6)])
+    def __getitem__(self, i): return _Mock()
     def __getattr__(self, n): return _Mock()
     def __enter__(self): return _Mock()
     def __exit__(self, *a): return False
@@ -221,6 +223,42 @@ for drug, org, spec, host in MUST_STAY:
     v = CM.evaluate(drug, org, spec, **host)
     check(v.level == CM.ALLOW, f"still ALLOWED: {drug} / {org} / {spec}",
           f"got {v.level}: {[r['en'] for r in v.reasons][:2]}")
+
+# 2026-08-22: Tetracycline and Doxycycline shared the identical _NO_URINE
+# ("negligible urinary excretion") verdict/reason for the Urine site --
+# factually wrong for plain tetracycline, which reaches substantial urinary
+# concentrations (50-80% of an absorbed dose per standard PK references;
+# it was historically used for UTI specifically for this reason). Corrected
+# to CAUTION with an accurate reason -- not full ALLOW, since resistance
+# patterns and displacement by better-studied agents are still real reasons
+# for caution, just not a pharmacokinetic one. Doxycycline stays DENY (its
+# elimination genuinely shifts non-renal as renal function drops, making
+# urinary levels less reliable), but with an accurate reason instead of
+# the same false "negligible" claim.
+_tet_v = CM.evaluate("Tetracycline", "E. coli", "Urine")
+check(_tet_v.level == CM.CAUTION,
+      "Tetracycline/Urine is no longer wrongly DENY (pharmacokinetically it "
+      "reaches the urine; the old reason was factually wrong)",
+      f"got {_tet_v.level}")
+check(not any("negligible" in r["en"].lower() for r in _tet_v.reasons),
+      "Tetracycline/Urine's reason no longer claims negligible excretion",
+      [r["en"] for r in _tet_v.reasons])
+
+_doxy_v = CM.evaluate("Doxycycline", "E. coli", "Urine")
+check(_doxy_v.level == CM.DENY,
+      "Doxycycline/Urine stays DENY (genuinely less reliable, not first-line)",
+      f"got {_doxy_v.level}")
+check(not any("negligible" in r["en"].lower() for r in _doxy_v.reasons),
+      "Doxycycline/Urine's reason no longer claims negligible excretion "
+      "either -- it should say WHY (non-renal elimination shift), not just "
+      "assert a PK failure that isn't accurate for this drug at normal "
+      "renal function",
+      [r["en"] for r in _doxy_v.reasons])
+check(_tet_v.level != _doxy_v.level or
+      {r["en"] for r in _tet_v.reasons} != {r["en"] for r in _doxy_v.reasons},
+      "Tetracycline and Doxycycline no longer share an identical urine "
+      "verdict+reason (they have different PK and should be judged "
+      "differently)")
 
 # ═════════════════════════════════════════════════════════════════════════
 print("\n" + "=" * 72)

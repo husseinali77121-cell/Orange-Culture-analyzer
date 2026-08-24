@@ -104,6 +104,8 @@ print("\n[2] DYNAMIC — the actual Proteus/CRE/Colistin scenario")
 # ═══════════════════════════════════════════════════════════════════════════
 class _Mock:
     def __call__(self, *a, **k): return _Mock()
+    def __iter__(self): return iter([_Mock() for _ in range(6)])
+    def __getitem__(self, i): return _Mock()
     def __getattr__(self, n): return _Mock()
     def __enter__(self): return _Mock()
     def __exit__(self, *a): return False

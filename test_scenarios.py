@@ -45,6 +45,8 @@ VERBOSE = "--verbose" in sys.argv
 # ── Load the monolith's logic without starting Streamlit ─────────────────────
 class _Mock:
     def __call__(self, *a, **k): return _Mock()
+    def __iter__(self): return iter([_Mock() for _ in range(6)])
+    def __getitem__(self, i): return _Mock()
     def __getattr__(self, n): return _Mock()
     def __enter__(self): return _Mock()
     def __exit__(self, *a): return False
@@ -63,7 +65,10 @@ class _StreamlitStub(types.ModuleType):
 _stub = _StreamlitStub("streamlit")
 _stub.session_state = _SessionState()
 _stub.secrets = {}
-sys.modules["streamlit"] = _stub
+# setdefault, not unconditional assignment -- see test_intrinsic_sync.py's
+# 2026-08-22 note for why (pytest collection-order cross-contamination
+# between this file and that one, found by a second-opinion audit).
+sys.modules.setdefault("streamlit", _stub)
 
 _src = (ROOT / "streamlit_app.py").read_text(encoding="utf-8")
 _cut = _src.index("if not st.session_state.authenticated:")

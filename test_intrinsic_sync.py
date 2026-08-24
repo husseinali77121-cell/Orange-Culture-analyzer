@@ -14,6 +14,18 @@ Each of these tests exists because the corresponding bug shipped:
   3. extract_detected_drugs() matched drug names by plain containment, so
      "Ampicillin/Sulbactam" manufactured a phantom "Ampicillin" row that then
      tripped the intrinsic-resistance alert for an untested agent.
+
+2026-08-22: this file's streamlit stub is installed with sys.modules.setdefault(),
+not unconditional assignment. A second-opinion audit found that `pytest -q`
+collecting every test_*.py in one process crashed test_modules.py/test_pipeline.py
+with "TypeError: cannot unpack non-iterable _M object" -- traced to this file's
+_M-based stub unconditionally overwriting an earlier file's stub during
+collection (and test_scenarios.py doing the same in the other direction),
+leaving whichever file ran next holding a stub it never installed. All 5 files
+that touch sys.modules["streamlit"] now use setdefault uniformly, so collection
+order stops mattering. This repo's actual CI (cdss-tests.yml) runs each suite
+as `python test_X.py` -- a fresh process per file -- so this never affected a
+real build; it only matters if someone runs the full suite via bare pytest.
 """
 from __future__ import annotations
 
@@ -207,6 +219,8 @@ try:
     _stub = types.ModuleType("streamlit")
     class _M:
         def __call__(self, *a, **k): return _M()
+        def __iter__(self): return iter([_M() for _ in range(6)])
+        def __getitem__(self, i): return _M()
         def __getattr__(self, n): return _M()
         def __enter__(self): return _M()
         def __exit__(self, *a): return False
@@ -215,7 +229,13 @@ try:
         def __getattr__(self, n): return _M()
     _stub = _S("streamlit"); _stub.session_state = type("x", (dict,), {
         "__getattr__": lambda s, n: s.get(n)})(); _stub.secrets = {}
-    sys.modules["streamlit"] = _stub
+    # setdefault, not unconditional assignment -- see the 2026-08-22 note at
+    # the top of this file on why. Every file's stub here is functionally
+    # interchangeable (a generic "swallow any attribute access" Mock), so
+    # whichever test file collects first installing its stub and everyone
+    # else reusing it is safe and correct, unlike two files each clobbering
+    # the other's mid-collection.
+    sys.modules.setdefault("streamlit", _stub)
     _ns: dict = {"__name__": "app_core"}
     exec(compile(_app[:_cut], "app_core", "exec"), _ns)
     predict_esbl = _ns["predict_esbl"]
