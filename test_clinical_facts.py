@@ -804,6 +804,47 @@ except Exception:
 check("the version pins in README match the registry",
       not _pins9, "\n".join(_pins9))
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+print("\n[X] ABX_GUIDELINES['organisms'] never contradicts INTRINSIC_RESISTANCE")
+# ═══════════════════════════════════════════════════════════════════════════
+# 2026-08-22: found by systematic cross-check, not by symptom. A drug's own
+# "organisms" list (which organisms it's presented as treating) is
+# independent, hand-maintained content from clinical_data.INTRINSIC_RESISTANCE
+# (the authoritative table the rest of the engine defers to) -- nothing
+# enforced they agree. Found two real contradictions this way:
+#   - Cefepime listed Enterococcus faecalis (cephalosporins have no reliable
+#     Enterococcus activity as a class -- well-established, unambiguous)
+#   - Doxycycline listed Acinetobacter baumannii (EUCAST Intrinsic Resistance
+#     and Unusual Phenotypes v3.3: "Acinetobacter is intrinsically resistant
+#     to tetracycline and doxycycline but not to minocycline and tigecycline"
+#     -- the same authoritative source this registry already cites elsewhere).
+# Both fixed by removing the organism from the drug's list, not by touching
+# INTRINSIC_RESISTANCE (which was independently confirmed correct against
+# EUCAST's own table before either change was made).
+_contradictions = []
+for _drug, _v in G.items():
+    for _org in _v.get("organisms", []):
+        _ok = _org.lower().strip()
+        for _k, _lst in IR.items():
+            if _k and (_k in _ok or (len(_ok) >= 4 and _ok in _k)):
+                if _drug in _lst:
+                    _contradictions.append(f"{_drug} lists '{_org}' as treatable but "
+                                           f"is intrinsically resistant per IR['{_k}']")
+check("no drug's organisms[] list includes an organism it's intrinsically "
+      "resistant against", not _contradictions, "\n".join(_contradictions))
+
+check("Cefepime no longer lists Enterococcus faecalis",
+      "Enterococcus faecalis" not in G["Cefepime"]["organisms"])
+check("Doxycycline no longer lists Acinetobacter baumannii",
+      "Acinetobacter baumannii" not in G["Doxycycline"]["organisms"])
+# Minocycline/Tigecycline correctly keep Acinetobacter -- EUCAST's own
+# sentence names them as the exception, not the rule, within this class.
+if "Minocycline" in G:
+    check("Minocycline still correctly lists Acinetobacter baumannii "
+          "(EUCAST's stated exception within the tetracycline class)",
+          "Acinetobacter baumannii" in G["Minocycline"].get("organisms", []))
+
 print("\n" + "=" * 72)
 print(f"{len(_PASS)} passed, {len(_FAIL)} failed")
 if _FAIL:

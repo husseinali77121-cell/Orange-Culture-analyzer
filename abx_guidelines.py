@@ -319,7 +319,7 @@ ABX_GUIDELINES = {
         "aliases": ["maxipime"],
         "organisms": ["Pseudomonas aeruginosa","E. coli","Klebsiella spp.",
                       "Proteus mirabilis","Staphylococcus aureus",
-                      "Enterococcus faecalis","Acinetobacter baumannii"],
+                      "Acinetobacter baumannii"],
         "specimen_notes": {
             "Blood":  "🛑 sepsis شديد مع اشتباه Pseudomonas.",
             "Sputum": "🛑 VAP/HAP الحرجة.",
@@ -747,7 +747,6 @@ ABX_GUIDELINES = {
         # kept in child_note and specimen_notes, where it belongs, because that
         # disease is diagnosed serologically and never reaches this workflow.
         "organisms": ["Mycoplasma spp.","Staphylococcus aureus","H. influenzae",
-                      "Acinetobacter baumannii",
                       "Stenotrophomonas maltophilia","Legionella pneumophila"],
         "specimen_notes": {
             "Sputum":     "✅ atypical pneumonia (Mycoplasma/Legionella).",

@@ -226,7 +226,20 @@ try:
         def __exit__(self, *a): return False
         def __bool__(self): return False
     class _S(types.ModuleType):
-        def __getattr__(self, n): return _M()
+        def __getattr__(self, n):
+            # See test_clinical_matrix.py's 2026-08-22 note for why
+            # columns/tabs and cache_data/cache_resource/fragment/dialog
+            # need real handling here, not a generic Mock -- a pytest-
+            # collection cross-file bug a second-opinion audit found.
+            if n in ("cache_data", "cache_resource"):
+                return lambda f=None, **k: (f if f else (lambda g: g))
+            if n in ("fragment", "dialog"):
+                return lambda *a, **k: (lambda f: f)
+            if n == "columns":
+                return lambda spec, **k: [_M() for _ in range(spec if isinstance(spec, int) else len(spec))]
+            if n == "tabs":
+                return lambda names, **k: [_M() for _ in names]
+            return _M()
     _stub = _S("streamlit"); _stub.session_state = type("x", (dict,), {
         "__getattr__": lambda s, n: s.get(n)})(); _stub.secrets = {}
     # setdefault, not unconditional assignment -- see the 2026-08-22 note at

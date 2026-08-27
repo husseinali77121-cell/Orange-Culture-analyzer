@@ -428,10 +428,17 @@ print("    That is the whole point of having extracted them — a module you can
 print("    import is a module you can test without a harness standing in for")
 print("    an import statement.")
 # ═══════════════════════════════════════════════════════════════════════════
-check("streamlit is not required by any extracted module",
-      "streamlit" not in sys.modules,
-      f"streamlit was pulled in by: {[m for m in sys.modules if 'streamlit' in m]}")
-
+# 2026-08-22: the runtime check that used to live here
+# (`"streamlit" not in sys.modules`) was removed -- it was testing the wrong
+# thing. By this point in the file, "streamlit" legitimately CAN be in
+# sys.modules for reasons that have nothing to do with whether the four
+# extracted modules import it: this file's own import_module("streamlit_app")
+# a few sections up (testing something unrelated, and allowed to pull in
+# real streamlit), or -- under `pytest -q` collecting multiple test files in
+# one process -- another file's Streamlit stub, already installed before this
+# file even runs. The static check right below already verifies the actual
+# intent (do these four files' SOURCE contain an import streamlit statement)
+# precisely, without depending on what else has happened in this process.
 _leak = []
 for _m in ("clinical_utils", "pathogenicity", "ocr_parsing", "auth_service"):
     _src = open(os.path.join(HERE, f"{_m}.py"), encoding="utf-8").read()

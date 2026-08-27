@@ -458,7 +458,23 @@ SITE_PENETRATION: Dict[str, Dict[str, Tuple[str, str, str]]] = {
                      "Sputum": (CAUTION, "doxycycline preferred", "يُفضل الدوكسيسيكلين"),
                      "Wound Swab": (CAUTION, "doxycycline preferred", "يُفضل الدوكسيسيكلين"),
                      "Pus": (CAUTION, "doxycycline preferred", "يُفضل الدوكسيسيكلين"),
-                     "Stool": (CAUTION, "cholera / Vibrio only", "للكوليرا والضمّات فقط"), "CSF": _NO_CSF},
+                     "Stool": (CAUTION, "cholera / Vibrio only", "للكوليرا والضمّات فقط"),
+                     "CSF": (DENY,
+                             "does cross into CSF at adequate parenteral doses (historically "
+                             "used to treat purulent meningitis before better options "
+                             "existed) -- this is NOT a penetration failure like most other "
+                             "drugs sharing this site verdict. Denied because far better, "
+                             "less toxic, better-studied modern options exist (3rd-gen "
+                             "cephalosporins, vancomycin, meropenem), and bacteriostatic "
+                             "activity is a poor fit for CNS infection generally -- not "
+                             "because it cannot reach the CSF",
+                             "بيوصل للسائل النخاعي بجرعات وريدية كافية (استُخدم تاريخياً لعلاج "
+                             "التهاب السحايا القيحي قبل ظهور خيارات أفضل) — ده مختلف عن أغلب "
+                             "الأدوية المشاركة له نفس تصنيف الموقع ده. الرفض هنا بسبب وجود "
+                             "خيارات حديثة أفضل وأقل سمية وأوثق دراسة (سيفالوسبورينات الجيل "
+                             "الثالث، فانكومايسين، ميروبينيم)، ولأن التأثير المثبط للنمو مش "
+                             "مناسب لعدوى الجهاز العصبي المركزي عمومًا — مش لأنه مايوصلش "
+                             "للسائل النخاعي")},
     "Tinidazole": {"Urine": _NO_URINE, "Blood": (CAUTION, "anaerobes/protozoa only", "للاهوائيات والأوالي فقط"),
                    "Sputum": (DENY, "no respiratory indication", "لا استطباب تنفسي"),
                    "Wound Swab": (CAUTION, "anaerobic cover only", "تغطية لاهوائية فقط"),

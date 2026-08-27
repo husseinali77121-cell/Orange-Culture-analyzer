@@ -61,7 +61,28 @@ class _SessionState(dict):
 
 
 class _Stub(types.ModuleType):
-    def __getattr__(self, n): return _Mock()
+    def __getattr__(self, n):
+        # 2026-08-22: st.columns()/st.tabs() get unpacked into an EXACT
+        # number of names (`_, col2, _ = st.columns([1, 2, 1])`) -- a plain
+        # Mock with __iter__ yielding a fixed count breaks any unpacking
+        # target of a different size ("too many/few values to unpack").
+        # st.cache_data/cache_resource/fragment/dialog are decorators; a
+        # generic Mock used as one DISCARDS the real function it decorates,
+        # replacing it with a Mock instance -- silently breaking any code
+        # that later calls that function expecting real results. Both are
+        # real defects a second-opinion audit found via `pytest -q`
+        # collecting this file's stub instead of test_pipeline.py's (which
+        # already had this right) when this file's stub won the setdefault
+        # race. Matching test_pipeline.py's handling here closes that gap.
+        if n in ("cache_data", "cache_resource"):
+            return lambda f=None, **k: (f if f else (lambda g: g))
+        if n in ("fragment", "dialog"):
+            return lambda *a, **k: (lambda f: f)
+        if n == "columns":
+            return lambda spec, **k: [_Mock() for _ in range(spec if isinstance(spec, int) else len(spec))]
+        if n == "tabs":
+            return lambda names, **k: [_Mock() for _ in names]
+        return _Mock()
 
 
 _stub = _Stub("streamlit"); _stub.session_state = _SessionState(); _stub.secrets = {}
@@ -259,6 +280,26 @@ check(_tet_v.level != _doxy_v.level or
       "Tetracycline and Doxycycline no longer share an identical urine "
       "verdict+reason (they have different PK and should be judged "
       "differently)")
+
+# 2026-08-22 (second finding, same review pass): Tetracycline's CSF entry
+# had the same class of error -- it shared the generic _NO_CSF reason
+# ("does not reach therapeutic CSF concentrations") with 22 other drugs,
+# but a historical clinical PK study (75 mg/kg/day IV/IM tetracycline
+# successfully treated 18/19 purulent meningitis patients with documented
+# therapeutic CSF levels -- tetracycline was a real meningitis drug before
+# better options existed) shows this specific claim is false for
+# tetracycline. The DENY verdict itself stays correct -- nobody uses it for
+# meningitis today -- but for the real reason (better modern alternatives,
+# bacteriostatic activity), not a fabricated PK failure.
+_tet_csf = CM.evaluate("Tetracycline", "E. coli", "CSF")
+check(_tet_csf.level == CM.DENY,
+      "Tetracycline/CSF still correctly denied (no modern role in "
+      "meningitis therapy)", f"got {_tet_csf.level}")
+check(not any("does not reach therapeutic csf" in r["en"].lower()
+              for r in _tet_csf.reasons),
+      "Tetracycline/CSF's reason no longer falsely claims it cannot reach "
+      "the CSF (it does, at adequate parenteral doses)",
+      [r["en"] for r in _tet_csf.reasons])
 
 # ═════════════════════════════════════════════════════════════════════════
 print("\n" + "=" * 72)

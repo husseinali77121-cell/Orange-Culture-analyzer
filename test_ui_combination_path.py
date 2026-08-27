@@ -118,7 +118,20 @@ class _SessionState(dict):
 
 
 class _Stub(types.ModuleType):
-    def __getattr__(self, n): return _Mock()
+    def __getattr__(self, n):
+        # See test_clinical_matrix.py's 2026-08-22 note for why columns/tabs
+        # and cache_data/cache_resource/fragment/dialog need real handling
+        # here, not a generic Mock -- a pytest-collection cross-file bug a
+        # second-opinion audit found.
+        if n in ("cache_data", "cache_resource"):
+            return lambda f=None, **k: (f if f else (lambda g: g))
+        if n in ("fragment", "dialog"):
+            return lambda *a, **k: (lambda f: f)
+        if n == "columns":
+            return lambda spec, **k: [_Mock() for _ in range(spec if isinstance(spec, int) else len(spec))]
+        if n == "tabs":
+            return lambda names, **k: [_Mock() for _ in names]
+        return _Mock()
 
 
 _stub = _Stub("streamlit")
