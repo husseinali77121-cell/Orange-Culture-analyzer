@@ -5738,7 +5738,23 @@ if os.environ.get("ORANGE_CDSS_OFFLINE_MODE") == "1":
 
 # ── إعدادات المعمل -- قابلة للتغيير (النسخة التجارية) ─────────────────────
 # الأولوية: secrets (للنشر) -> session_state (تغيير مباشر) -> default
-_lab_from_secrets = hasattr(st, "secrets") and bool(st.secrets.get("lab_name", ""))
+#
+# 2026-08-22: hasattr(st, "secrets") only proves the ATTRIBUTE exists -- it
+# is always True, since `secrets` is a normal attribute of the streamlit
+# module regardless of whether a secrets.toml file is present anywhere.
+# Accessing it (even via .get()) is what can fail: if NO secrets.toml exists
+# at all (not even an empty one -- exactly the case in CI, where none is
+# ever committed), Streamlit raises StreamlitSecretNotFoundError. That is
+# not a KeyError, so .get()'s own internal exception handling does not catch
+# it -- every OTHER st.secrets call site in this file already wraps the
+# access in `try/except Exception`; this was the one bare call left, and it
+# crashed app startup the moment real streamlit (installed for the Windows
+# EXE build's test step) actually tried to import this file with no
+# secrets.toml deployed.
+try:
+    _lab_from_secrets = bool(st.secrets.get("lab_name", ""))
+except Exception:
+    _lab_from_secrets = False
 
 if _lab_from_secrets:
     # Deployed lab: name fixed via Streamlit secrets (no UI override needed)
