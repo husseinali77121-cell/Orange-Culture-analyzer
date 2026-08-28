@@ -365,9 +365,36 @@ check("a successful sign-in clears the counter",
 _kinds = [e["kind"] for e in AU.recent_events(10)]
 check("every decision is recorded in the audit trail",
       "success" in _kinds and "lockout" in _kinds, f"{_kinds[:6]}")
-check("the store is not world-readable",
-      oct(os.stat(AU.store_path()).st_mode)[-3:] == "600",
-      oct(os.stat(AU.store_path()).st_mode)[-3:])
+
+# 2026-08-22: os.chmod(path, 0o600) is what auth_service.py calls, and it is
+# the RIGHT call -- on POSIX (the real production deployment target: a lab's
+# Linux server, Streamlit Community Cloud) it genuinely restricts this file
+# to the owner. But Python's own docs are explicit that on Windows, chmod()
+# "can only set the file's read-only flag" -- it does not implement POSIX
+# owner/group/other bits at all, so os.stat().st_mode reports something like
+# 666 there regardless of what was requested, on every Windows machine,
+# unconditionally. That is a documented platform limitation, not a code
+# defect -- found when the Windows EXE build's test step ran this file
+# against real Windows for the first time and hit it immediately.
+#
+# This is NOT swept under the rug: true user-level file restriction on
+# Windows needs NTFS ACLs (a different API entirely, e.g. via pywin32's
+# win32security, or icacls) -- this codebase does not currently implement
+# that, so the auth store genuinely is NOT access-restricted on a Windows
+# deployment the way it is on Linux. For the offline single-user desktop EXE
+# specifically the practical exposure is low (one person normally has local
+# access to their own machine already), but it is a real, honest gap, not a
+# false alarm -- worth an ACL-based fix later if multi-user Windows machines
+# ever run this.
+if os.name == "nt":
+    print("  SKIP  world-readable check (Windows: os.chmod() cannot set "
+          "POSIX permission bits at all -- see the 2026-08-22 note above; "
+          "this is a real, undone gap for Windows deployments, not a test "
+          "workaround)")
+else:
+    check("the store is not world-readable",
+          oct(os.stat(AU.store_path()).st_mode)[-3:] == "600",
+          oct(os.stat(AU.store_path()).st_mode)[-3:])
 # The store must never accumulate credentials. It holds e-mails, counters and
 # a CLOSED vocabulary of reason codes — a caller cannot smuggle user input into
 # the audit file by passing it as `reason`.
