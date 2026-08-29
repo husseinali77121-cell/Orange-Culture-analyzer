@@ -166,10 +166,59 @@ jobs:
             if ($head[0] -ne 0x4D -or $head[1] -ne 0x5A) {
               throw "Downloaded file is not a valid Windows executable (missing MZ header) -- $url likely served an HTML page instead of the installer. Check the URL manually."
             }
-            Start-Process -FilePath .\gtk3-setup.exe -ArgumentList "/S /D=$PWD\gtk3-install" -Wait
+
+            # 2026-08-22: the previous version of this step ran
+            #   Start-Process ... -ArgumentList "/S /D=$PWD\gtk3-install" -Wait
+            # -- a SINGLE combined string. Start-Process's -ArgumentList is
+            # documented to sometimes pass a combined string through as ONE
+            # argument rather than splitting it, which NSIS's installer does
+            # not parse the way `/S /D=...` looks like it should -- the
+            # install can silently proceed to its DEFAULT location instead of
+            # $PWD\gtk3-install, or silently fail to actually be silent. No
+            # exception was thrown either way, so this step reported success
+            # while gtk3-install\bin never actually existed -- the PDF smoke
+            # test only caught the consequence three steps later. Fixed two
+            # ways: (a) pass arguments as a proper ARRAY, the form
+            # Start-Process is documented to handle correctly, and (b) use
+            # ONLY the officially-documented, confirmed-working silent switch
+            # (winget/wingetly both document "/S" alone for this exact
+            # installer) and read from its real default install location
+            # instead of trying to redirect it -- removing the /D= parsing
+            # risk entirely rather than trying to get it right blind.
+            $proc = Start-Process -FilePath .\gtk3-setup.exe -ArgumentList @("/S") -Wait -PassThru
+            if ($proc.ExitCode -ne 0) {
+              throw "gtk3-setup.exe /S exited with code $($proc.ExitCode) -- the silent install itself reported failure."
+            }
+
+            $gtkSrc = "${env:ProgramFiles}\GTK3-Runtime Win64\bin"
+            if (-not (Test-Path $gtkSrc)) {
+              # 32-bit fallback path, in case a future runner image differs
+              $gtkSrc = "${env:ProgramFiles(x86)}\GTK3-Runtime Win64\bin"
+            }
+            if (-not (Test-Path $gtkSrc)) {
+              throw "GTK3 install directory not found at the expected default " +
+                    "location after a silent install that reported success. " +
+                    "The installer's actual install path may have changed -- " +
+                    "check Program Files manually on a real Windows machine."
+            }
+            $dllCount = (Get-ChildItem "$gtkSrc\*.dll" -ErrorAction SilentlyContinue | Measure-Object).Count
+            if ($dllCount -lt 20) {
+              # A real GTK3 runtime install has 50+ DLLs in bin\ -- catches a
+              # partial/corrupted install early with a clear count, instead of
+              # silently proceeding with (as happened here) zero files.
+              throw "Only $dllCount DLLs found in $gtkSrc -- expected 50+ for a " +
+                    "complete GTK3 runtime install. The silent install likely " +
+                    "did not fully complete."
+            }
+
             New-Item -ItemType Directory -Force -Path "gtk3-runtime\bin" | Out-Null
-            Copy-Item "gtk3-install\bin\*.dll" "gtk3-runtime\bin\" -Force
-            Write-Host "GTK3 runtime staged: $(Get-ChildItem gtk3-runtime\bin | Measure-Object | Select -ExpandProperty Count) DLLs"
+            Copy-Item "$gtkSrc\*.dll" "gtk3-runtime\bin\" -Force
+            $copied = (Get-ChildItem "gtk3-runtime\bin\*.dll" | Measure-Object).Count
+            if ($copied -lt 20) {
+              throw "Copy step only produced $copied DLLs in gtk3-runtime\bin -- " +
+                    "expected 50+. Something failed silently during the copy."
+            }
+            Write-Host "GTK3 runtime staged from $gtkSrc -- $copied DLLs"
           } catch {
             # 2026-08-22: this used to warn and let the build continue
             # anyway, which meant "Build successful" / "exe created" /
