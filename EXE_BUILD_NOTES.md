@@ -33,6 +33,22 @@ Two more real, narrow bugs surfaced across the next two runs, both fixed:
 
 Also expanded per a second-opinion audit's findings: the pre-build test step now runs all 16 suites (was 5), and GTK3/PDF staging failures now hard-fail the build instead of warning-and-continuing — plus an actual PDF-generation smoke test (not just an HTTP 200 check) using the staged GTK3 DLLs.
 
+### Fourth run: `hasattr(st, "secrets")` and a Windows-only permission check
+
+Two more real, narrow issues, both fixed — and the first one only became visible once the test suite got far enough for real Streamlit (installed via pip earlier in this same step) to actually import `streamlit_app.py`:
+
+- **`StreamlitSecretNotFoundError`** — `hasattr(st, "secrets")` only proves the attribute exists (always true); accessing it (even via `.get()`) raises when no `secrets.toml` file exists anywhere, which is exactly the CI's condition (no lab-specific config is ever committed) and is *correct* — the bug was one unwrapped `st.secrets.get(...)` call among six, the other five already `try/except`-wrapped. Fixed by wrapping the sixth the same way.
+- **`test_modules.py`'s file-permission check** — expected `os.stat(...).st_mode` to read `600` after `auth_service.py` calls `os.chmod(path, 0o600)`. Python's own docs say `os.chmod()` on Windows can only toggle the read-only flag, not real POSIX permission bits, so this reads `666` on every Windows machine regardless of the app code (which is correct and unchanged). The test is now platform-aware: skipped on Windows with an explicit, honest note that the auth store is NOT actually access-restricted there (real fix would need NTFS ACLs via `pywin32`/`icacls`, not attempted) — not silently glossed over.
+
+### Fifth run: GTK3 silent install used a combined `-ArgumentList` string
+
+The GTK3 staging step ran `Start-Process ... -ArgumentList "/S /D=$PWD\gtk3-install" -Wait` — a single combined string. `Start-Process` is documented to sometimes pass a combined argument string through as ONE token rather than splitting it, which NSIS installers (like this one) do not reliably parse as two separate switches. No exception was thrown either way, so the step reported success while `gtk3-install\bin` never actually existed — the PDF smoke test three steps later was the first thing to notice, exactly as designed (that gate existing is why this got caught before shipping, not despite it).
+
+**Fixed two ways:**
+1. Arguments now passed as a proper array (`-ArgumentList @("/S")`), the form `Start-Process` is documented to handle correctly.
+2. Dropped the `/D=` redirect entirely and used only the officially-documented, confirmed-working switch (winget and the installer's own wingetly listing both document `/S` alone for this exact installer) — reading the DLLs from the installer's real default location (`%ProgramFiles%\GTK3-Runtime Win64\bin`) instead of trying to redirect it.
+3. Added explicit post-install validation — exit code check, directory-exists check, and a DLL-count check (a real install has 50+; anything under 20 throws immediately with the actual count) — so a silent, empty "success" like this one cannot happen again undetected. If the GTK3 step ever goes green now, `gtk3-runtime/bin` genuinely has the DLLs in it.
+
 ## The one thing most likely to need a second pass: WeasyPrint + GTK3
 
 PDF generation (`weasyprint`) needs the GTK3 runtime (Pango, Cairo, GDK-Pixbuf, HarfBuzz) — not a Windows-native dependency. This has historically been the hardest part of shipping WeasyPrint on Windows, full stop, independent of this specific app. The workflow stages it via a silent install of a community-maintained GTK3-for-Windows installer and copies the DLLs out; if that installer's URL or internal layout has changed since this was written, that step (and only that step) will fail or silently produce an incomplete `gtk3-runtime/bin`.
