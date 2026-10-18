@@ -354,7 +354,22 @@ jobs:
           else { Write-Host "(the exe wrote no log file at all -- it died before logging started; see 'Verify bundle contents' output and check for a missing VC++ runtime / blocked DLL)" }
           Write-Host "===== end of log ====="
           if (-not $finished) { throw "Frozen self-test did not finish within 5 minutes" }
-          if ($p.ExitCode -ne 0) { throw "Frozen self-test failed (exit code $($p.ExitCode)) -- details in the log above" }
+          if ($p.ExitCode -ne 0) {
+            # Repeat each failure WITH its traceback at the very end, so it is
+            # the first thing visible instead of being buried in the log above.
+            Write-Host "===== FAILURE DETAILS ====="
+            if (Test-Path $log) {
+              $lines = @(Get-Content $log -Encoding UTF8)
+              for ($i = 0; $i -lt $lines.Count; $i++) {
+                if ($lines[$i] -match '^\[selftest\] FAIL ') {
+                  $end = [Math]::Min($i + 25, $lines.Count - 1)
+                  $lines[$i..$end] | ForEach-Object { Write-Host $_ }
+                  Write-Host "-----"
+                }
+              }
+            }
+            throw "Frozen self-test failed (exit code $($p.ExitCode)) -- see FAILURE DETAILS above"
+          }
           Write-Host "Frozen self-test passed."
 
       # ── Smoke test the frozen exe ────────────────────────────────────
@@ -407,7 +422,11 @@ jobs:
           else { Write-Host "(the exe wrote no log file -- it died before logging started)" }
           Write-Host "===== end of log ====="
           Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-          if (-not $ok) { throw "exe did not serve a page: $why (waited ${secs}s) -- see the exe log above" }
+          if (-not $ok) {
+            Write-Host "===== LAST 30 LINES OF THE EXE LOG ====="
+            if (Test-Path $log) { Get-Content $log -Tail 30 -Encoding UTF8 | ForEach-Object { Write-Host $_ } }
+            throw "exe did not serve a page: $why (waited ${secs}s) -- see the exe log above"
+          }
           Write-Host "Smoke test passed in ${secs}s: exe served a page on 127.0.0.1:$port"
 
       # Keep the exe's own logs even when a step above failed -- they are the
