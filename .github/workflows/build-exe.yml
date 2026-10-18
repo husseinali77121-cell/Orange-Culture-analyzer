@@ -8,13 +8,19 @@ name: Build Windows EXE (offline desktop)
 # Actions tab, and it produces a downloadable zip under this run's Artifacts
 # -- no local Windows machine required to get a working build.
 #
-# WHAT THIS BUILD DOES NOT PROVE
-# cdss-tests.yml's 21 guards test the CLINICAL ENGINE. This workflow only
-# proves the PACKAGING succeeded -- that PyInstaller could bundle everything
-# and the exe launches far enough to bind a local port. It is not a
-# substitute for running cdss-tests.yml first (see that workflow), and it is
-# not a click-through test of OCR/PDF generation inside the frozen exe --
-# see the manual verification checklist in EXE_BUILD_NOTES.md.
+# WHAT THIS BUILD PROVES (updated 2026-10-19)
+# cdss-tests.yml's 21 guards test the CLINICAL ENGINE. This workflow proves
+# the PACKAGING succeeded, in three layers:
+#   1. "Verify bundle contents"  -- the files the exe cannot live without
+#      (Streamlit's web frontend + metadata, the app modules, Tesseract, GTK3)
+#      are physically inside dist/.
+#   2. "Frozen self-test"        -- the exe, run with --selftest, imports
+#      every bundled module, runs the bundled Tesseract and renders a PDF
+#      (incl. Arabic) from INSIDE the frozen process.
+#   3. "Smoke test"              -- the exe starts, binds a port and serves
+#      Streamlit's start page. On failure it prints the exe's own log.
+# It is still not a click-through test with a real antibiogram image -- see
+# the manual verification checklist in EXE_BUILD_NOTES.md.
 #
 # THE SINGLE HIGHEST-RISK STEP HERE
 # WeasyPrint's PDF rendering needs the GTK3 runtime (Pango, Cairo, GDK-Pixbuf,
@@ -286,28 +292,136 @@ jobs:
         run: pyinstaller orange_cdss.spec --clean --noconfirm
         shell: bash
 
-      # ── Smoke test the frozen exe ────────────────────────────────────
-      # Proves the exe launches, imports its own bundled modules, and binds
-      # a local port -- NOT that OCR/PDF work end to end inside it (that
-      # needs an actual antibiogram image and is a manual step for now, see
-      # EXE_BUILD_NOTES.md).
-      - name: Smoke test — exe starts and serves a page
+      # ── Verify the bundle BEFORE launching it ─────────────────────────
+      # 2026-10-19: a launch failure inside a windowed exe is hard to read,
+      # but "this file is not in the bundle" is easy -- so check the files
+      # the exe cannot work without, and say exactly which one is missing.
+      - name: Verify bundle contents
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $root = "dist\Orange-CDSS"
+          if (-not (Test-Path "$root\Orange-CDSS.exe")) { throw "Build did not produce $root\Orange-CDSS.exe" }
+          # PyInstaller 6 keeps everything under _internal\; PyInstaller 5 beside the exe.
+          $int = if (Test-Path "$root\_internal") { "$root\_internal" } else { $root }
+          Write-Host "Bundle data directory: $int"
+          $size = (Get-ChildItem $root -Recurse -File | Measure-Object Length -Sum).Sum / 1MB
+          Write-Host ("Bundle size: {0:N0} MB" -f $size)
+
+          $required = @(
+            "streamlit_app.py", "commercial_names.txt", "clinical_data.py", "report_service.py",
+            "streamlit\static\index.html",
+            "tesseract\tesseract.exe", "tesseract\tessdata\eng.traineddata",
+            "gtk3-runtime\bin"
+          )
+          $missing = @()
+          foreach ($r in $required) {
+            if (-not (Test-Path (Join-Path $int $r))) { $missing += $r }
+          }
+          $meta = Get-ChildItem $int -Directory -Filter "streamlit-*.dist-info" -ErrorAction SilentlyContinue
+          if (-not $meta) { $missing += "streamlit-*.dist-info (Streamlit package metadata)" }
+          $dllCount = (Get-ChildItem "$int\gtk3-runtime\bin\*.dll" -ErrorAction SilentlyContinue | Measure-Object).Count
+          Write-Host "GTK3 DLLs in bundle: $dllCount"
+          if ($dllCount -lt 20) { $missing += "gtk3-runtime\bin\*.dll (only $dllCount found)" }
+          if (-not (Test-Path (Join-Path $int "tesseract\tessdata\ara.traineddata"))) {
+            Write-Warning "ara.traineddata is not in the bundle -- Arabic OCR will not work."
+          }
+          if ($missing.Count -gt 0) {
+            Write-Host "Top-level entries actually present in ${int}:"
+            Get-ChildItem $int | Select-Object -First 80 | ForEach-Object { Write-Host "  $($_.Name)" }
+            throw "Bundle is missing: $($missing -join ', ')"
+          }
+          Write-Host "Bundle contents verified."
+
+      # ── Self-test INSIDE the frozen exe ───────────────────────────────
+      # An HTTP 200 on the start page cannot tell you whether OCR, PDF or
+      # an application module will work. `Orange-CDSS.exe --selftest` checks
+      # those from inside the frozen process and exits 0/1; its log is
+      # printed here whether it passes or fails.
+      - name: Frozen self-test (imports, Tesseract, PDF inside the exe)
         shell: pwsh
         run: |
           $exe = "dist\Orange-CDSS\Orange-CDSS.exe"
+          $log = Join-Path $PWD "selftest-launcher.log"
+          $env:ORANGE_CDSS_LOG = $log
+          $env:ORANGE_CDSS_NO_BROWSER = "1"
+          $p = Start-Process -FilePath $exe -ArgumentList @("--selftest") -PassThru
+          $null = $p.Handle          # cache the handle so ExitCode is readable after exit
+          $finished = $p.WaitForExit(300000)
+          if (-not $finished) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
+          Write-Host "===== exe self-test log ====="
+          if (Test-Path $log) { Get-Content $log -Encoding UTF8 | ForEach-Object { Write-Host $_ } }
+          else { Write-Host "(the exe wrote no log file at all -- it died before logging started; see 'Verify bundle contents' output and check for a missing VC++ runtime / blocked DLL)" }
+          Write-Host "===== end of log ====="
+          if (-not $finished) { throw "Frozen self-test did not finish within 5 minutes" }
+          if ($p.ExitCode -ne 0) { throw "Frozen self-test failed (exit code $($p.ExitCode)) -- details in the log above" }
+          Write-Host "Frozen self-test passed."
+
+      # ── Smoke test the frozen exe ────────────────────────────────────
+      # Proves the exe launches, binds a local port and serves Streamlit's
+      # start page (which also proves the bundled web frontend is there).
+      # Not a click-through of OCR/PDF with a real image -- see
+      # EXE_BUILD_NOTES.md for that manual checklist.
+      #
+      # 2026-10-19: the previous version gave the exe 60 s and printed
+      # nothing about WHY it failed. Now: up to 4 min (the first launch of a
+      # fresh bundle is slow while antivirus scans it), gives up at once if
+      # the process dies, uses a private port, and always prints the exe's own
+      # log so the failure explains itself.
+      - name: Smoke test — exe starts and serves a page
+        shell: pwsh
+        run: |
+          $exe  = "dist\Orange-CDSS\Orange-CDSS.exe"
+          $log  = Join-Path $PWD "smoke-launcher.log"
+          $port = 8765
           if (-not (Test-Path $exe)) { throw "Build did not produce $exe" }
+          $env:ORANGE_CDSS_LOG = $log
+          $env:ORANGE_CDSS_PORT = "$port"
+          $env:ORANGE_CDSS_NO_BROWSER = "1"
           $proc = Start-Process -FilePath $exe -PassThru
+          $null = $proc.Handle
           $ok = $false
-          for ($i = 0; $i -lt 30; $i++) {
-            Start-Sleep -Seconds 2
+          $why = "no response before the 4-minute deadline"
+          $started = Get-Date
+          $deadline = $started.AddSeconds(240)
+          while ((Get-Date) -lt $deadline) {
+            Start-Sleep -Seconds 3
+            if ($proc.HasExited) { $why = "the exe EXITED early with code $($proc.ExitCode)"; break }
             try {
-              $resp = Invoke-WebRequest -Uri "http://127.0.0.1:8501" -UseBasicParsing -TimeoutSec 3
+              $resp = Invoke-WebRequest -Uri "http://127.0.0.1:$port/" -UseBasicParsing -TimeoutSec 5
               if ($resp.StatusCode -eq 200) { $ok = $true; break }
-            } catch {}
+              $why = "start page returned HTTP $($resp.StatusCode)"
+            } catch {
+              $why = "last probe failed: $($_.Exception.Message)"
+            }
           }
+          $secs = [int]((Get-Date) - $started).TotalSeconds
+          if ($ok) {
+            try {
+              $h = Invoke-WebRequest -Uri "http://127.0.0.1:$port/_stcore/health" -UseBasicParsing -TimeoutSec 5
+              Write-Host "Health endpoint: HTTP $($h.StatusCode) '$($h.Content)'"
+            } catch { Write-Host "Health endpoint not reachable (informational only): $($_.Exception.Message)" }
+          }
+          Write-Host "===== exe log (smoke test) ====="
+          if (Test-Path $log) { Get-Content $log -Encoding UTF8 | ForEach-Object { Write-Host $_ } }
+          else { Write-Host "(the exe wrote no log file -- it died before logging started)" }
+          Write-Host "===== end of log ====="
           Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-          if (-not $ok) { throw "exe did not serve a page within 60s -- see build log above" }
-          Write-Host "Smoke test passed: exe served a page on 127.0.0.1:8501"
+          if (-not $ok) { throw "exe did not serve a page: $why (waited ${secs}s) -- see the exe log above" }
+          Write-Host "Smoke test passed in ${secs}s: exe served a page on 127.0.0.1:$port"
+
+      # Keep the exe's own logs even when a step above failed -- they are the
+      # only record of what happened inside the windowed process.
+      - name: Upload exe logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Orange-CDSS-exe-logs
+          path: |
+            selftest-launcher.log
+            smoke-launcher.log
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
