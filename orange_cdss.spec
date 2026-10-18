@@ -21,8 +21,29 @@
 # compiled-into-the-exe module cache. So every application module is listed
 # under `datas` below (bundled as loose files) in addition to being picked up
 # by PyInstaller's own import analysis for their third-party dependencies.
+#
+# 2026-10-19 — what changed and why (first run that reached the frozen exe
+# failed with "exe did not serve a page"):
+#   1. Packages with data files / metadata / native pieces are collected
+#      WHOLE (collect_all): streamlit (its static/ web frontend and its
+#      dist-info metadata — without the frontend the server answers 404 and
+#      without the metadata importlib.metadata.version("streamlit") raises),
+#      weasyprint (its built-in CSS), pyphen (hyphenation dictionaries),
+#      arabic_reshaper (default-config.ini), bidi (native extension), cv2.
+#   2. pandas is no longer excluded. It is unused by THIS repo, but it is a
+#      hard dependency of Streamlit itself; excluding it can break
+#      `import streamlit` inside the bundle. ~40 MB is the price of a server
+#      that starts.
+#   3. The app modules are also passed to Analysis as hidden imports, so
+#      PyInstaller traces THEIR imports too (stdlib modules such as difflib
+#      that nothing else imports would otherwise be left out of the bundle and
+#      only fail later, inside the script, as ModuleNotFoundError).
+#   The exe stays windowed (console=False); launcher.py writes a log file
+#   instead — see its header.
 
 import os
+
+from PyInstaller.utils.hooks import collect_all, copy_metadata
 
 block_cipher = None
 ROOT = os.path.dirname(os.path.abspath(SPEC))
@@ -69,6 +90,41 @@ for folder, dest in (("tesseract", "tesseract"), ("gtk3-runtime", "gtk3-runtime"
             for fn in filenames:
                 datas.append((os.path.join(dirpath, fn), rel))
 
+# ── Third-party packages that must be bundled WHOLE ────────────────────────
+# collect_all = data files + native libs + every submodule + dist-info
+# metadata. A package that is not installed on the build machine is skipped
+# with a warning instead of failing the build (some of these are
+# version-dependent, e.g. WeasyPrint <65 uses html5lib, >=65 uses tinyhtml5).
+COLLECT_ALL_PACKAGES = [
+    "streamlit",         # static/ frontend + metadata: the server needs both
+    "weasyprint",        # built-in UA stylesheets
+    "pyphen",            # hyphenation dictionaries
+    "tinycss2", "cssselect2", "tinyhtml5", "html5lib", "webencodings",
+    "pydyf", "fontTools",
+    "arabic_reshaper",   # default-config.ini
+    "bidi",              # python-bidi: native extension
+    "cv2",
+    "pytesseract",
+]
+
+collected_datas, collected_binaries, collected_hidden = [], [], []
+for _pkg in COLLECT_ALL_PACKAGES:
+    try:
+        _d, _b, _h = collect_all(_pkg)
+    except Exception as _exc:
+        print(f"[orange_cdss.spec] note: collect_all({_pkg!r}) skipped: {_exc}")
+        continue
+    collected_datas += _d
+    collected_binaries += _b
+    collected_hidden += _h
+
+# Streamlit reads its own version through importlib.metadata at startup;
+# make doubly sure its dist-info is present.
+try:
+    collected_datas += copy_metadata("streamlit")
+except Exception as _exc:
+    print(f"[orange_cdss.spec] WARNING: copy_metadata('streamlit') failed: {_exc}")
+
 hiddenimports = [
     # Modules imported inside try/except ImportError blocks in
     # streamlit_app.py -- PyInstaller's static analysis usually catches
@@ -82,13 +138,18 @@ hiddenimports = [
     "streamlit.runtime.scriptrunner.magic_funcs",
     "pytesseract", "cv2", "PIL", "weasyprint",
     "arabic_reshaper", "bidi", "bidi.algorithm",
+    "_cffi_backend",     # WeasyPrint loads Pango/Cairo through cffi
 ]
+# Trace the application modules' own imports (loose copies in `datas` are
+# invisible to Analysis). launcher.py is the entry script, so it is skipped.
+hiddenimports += [m[:-3] for m in APP_MODULES if m != "launcher.py"]
+hiddenimports += collected_hidden
 
 a = Analysis(
     ["launcher.py"],
     pathex=[ROOT],
-    binaries=[],
-    datas=datas,
+    binaries=collected_binaries,
+    datas=datas + collected_datas,
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
@@ -99,7 +160,10 @@ a = Analysis(
         # widen the exe for nothing. Excluding them here (rather than just
         # not installing them) protects against PyInstaller pulling one in
         # transitively through some other package's optional dependency.
-        "fpdf", "pandas", "sklearn", "reportlab",
+        #
+        # pandas is deliberately NOT in this list any more (2026-10-19):
+        # the app never imports it, but Streamlit itself requires it.
+        "fpdf", "sklearn", "reportlab",
     ],
     noarchive=False,
     cipher=block_cipher,
@@ -117,7 +181,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,          # UPX + antivirus false-positives on lab workstations
-    console=False,       # windowed -- the browser tab IS the UI
+    console=False,       # windowed -- the browser tab IS the UI; launcher.py logs to a file
     icon=None,            # add an .ico path here once Hussein has one
 )
 

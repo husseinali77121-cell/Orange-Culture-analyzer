@@ -49,6 +49,40 @@ The GTK3 staging step ran `Start-Process ... -ArgumentList "/S /D=$PWD\gtk3-inst
 2. Dropped the `/D=` redirect entirely and used only the officially-documented, confirmed-working switch (winget and the installer's own wingetly listing both document `/S` alone for this exact installer) — reading the DLLs from the installer's real default location (`%ProgramFiles%\GTK3-Runtime Win64\bin`) instead of trying to redirect it.
 3. Added explicit post-install validation — exit code check, directory-exists check, and a DLL-count check (a real install has 50+; anything under 20 throws immediately with the actual count) — so a silent, empty "success" like this one cannot happen again undetected. If the GTK3 step ever goes green now, `gtk3-runtime/bin` genuinely has the DLLs in it.
 
+## 2026-10-19 update — the exe built, but did not serve a page (sixth run)
+
+**What the run showed.** Everything up to and including "Build with PyInstaller" went green (so GTK3 staging, the PDF smoke test and the PyInstaller build itself are fine). The step "Smoke test — exe starts and serves a page" then failed after ~2 minutes: nothing answered on `127.0.0.1:8501`. The ~2-minute duration (30 polls x ~4 s) means the port was simply never opened — the exe either crashed at startup or hung before binding.
+
+**Why that was impossible to diagnose.** `orange_cdss.spec` builds a *windowed* exe (`console=False`). In a windowed PyInstaller exe `sys.stdout` / `sys.stderr` are `None`, so every traceback and every Streamlit log line was discarded. The smoke test's "see build log above" pointed at a log that did not exist.
+
+**Root cause: not confirmed.** This was fixed from a Linux sandbox again; nobody has seen the exe's own error yet. What was done instead is (a) remove every cause that is known to produce exactly this symptom, and (b) make the *next* failure — if there is one — explain itself. Candidates, most likely first:
+
+1. **Streamlit's web frontend / package metadata not in the bundle.** Without `streamlit/static/` the server answers 404 (the smoke test needs HTTP 200); without the `streamlit-*.dist-info` folder `importlib.metadata.version("streamlit")` raises at startup. Spec now uses `collect_all("streamlit")` + `copy_metadata("streamlit")`.
+2. **Streamlit thinking it is in development mode.** It decides that by looking for `site-packages` in its own file path, which a PyInstaller bundle does not have. In that mode a custom `server.port` is rejected and the frontend is expected from a dev server on :3000. The launcher already set the env var; it now also passes `--global.developmentMode false` and `--server.fileWatcherType none` as flags.
+3. **pandas excluded in the spec.** Unused by this repo, but a hard dependency of Streamlit itself. Removed from `excludes`.
+4. **No stdout/stderr in a windowed exe** — can crash code that writes to them, and hides every error. Streams are now redirected to a log file (see below).
+5. **Too little patience.** A first launch of a ~300-500 MB bundle on a CI runner is slow (antivirus scans every file once). 60 s was tight; the smoke test now waits up to 4 minutes but fails immediately if the process dies.
+
+**A separate bug found on the way (would have broken OCR even with the server up).** The launcher exported a `TESSERACT_CMD` variable and its comments said pytesseract reads it. It does not — pytesseract finds `tesseract` through `PATH` (or `pytesseract.pytesseract.tesseract_cmd`), and the app never sets either. The bundled Tesseract folder is now put on `PATH` and `tesseract_cmd` is set explicitly. `TESSDATA_PREFIX` already pointed at the `tessdata` folder, which is correct for Tesseract 5.x.
+
+**New in `launcher.py`**
+- Frozen runs log stdout/stderr (plus `faulthandler`, for native DLL crashes) to `%LOCALAPPDATA%\Orange-CDSS\launcher.log`, or to the path in `ORANGE_CDSS_LOG`. **If the exe ever "does nothing" on a lab PC, that file is the first thing to look at.**
+- Any startup exception is logged with a full traceback and, on a real desktop, shown in a message box.
+- `Orange-CDSS.exe --selftest` — runs *inside* the frozen exe: Streamlit metadata + frontend present + not in dev mode; imports of numpy / cv2 / PIL / pytesseract / arabic_reshaper / bidi / weasyprint; every bundled application module imports; Tesseract runs and has `eng` (missing `ara` is a warning); a real OCR round-trip on a synthetic image (warning only); a PDF with Arabic text is rendered through the bundled GTK3. Exit code 0/1.
+- `ORANGE_CDSS_PORT`, `ORANGE_CDSS_NO_BROWSER`, `multiprocessing.freeze_support()`, and a 120 s (was 30 s) wait before opening the browser.
+
+**New in `orange_cdss.spec`:** `collect_all` for streamlit, weasyprint, pyphen, tinycss2, cssselect2, tinyhtml5/html5lib, pydyf, fontTools, arabic_reshaper, bidi, cv2 and pytesseract (a package that is not installed is skipped with a note, not an error); app modules also passed as hidden imports so PyInstaller traces *their* imports (stdlib modules such as `difflib` that only the app uses); pandas no longer excluded.
+
+**New in `build-exe.yml`** (after "Build with PyInstaller"):
+1. **Verify bundle contents** — fails with the exact missing path (`streamlit\static\index.html`, `tesseract\tesseract.exe`, `gtk3-runtime\bin` with >= 20 DLLs, the Streamlit dist-info, ...).
+2. **Frozen self-test** — runs `--selftest` and prints its log.
+3. **Smoke test** — private port 8765, 4-minute deadline, stops early if the exe exits, prints the exe's log on success *and* failure.
+4. **Upload exe logs** (`if: always()`) — the two log files are kept as the `Orange-CDSS-exe-logs` artifact even when a step fails.
+
+**How to read the next run.** Open the failing step and read the block between `===== exe ... log =====` and `===== end of log =====`. If the log says "the exe wrote no log file at all", the process died before Python started — look for a missing Visual C++ runtime or a blocked DLL, not at the app. If "Verify bundle contents" fails, the message names the missing file and the fix belongs in `orange_cdss.spec`. If the self-test fails on a single line (for example `PDF generation inside the exe`), that line is the whole task.
+
+**Still unverified (unchanged):** everything in the manual checklist below, in particular Arabic text shaping in the PDF and fonts. The bundled `fonts/` folder is staged, but nothing here proves WeasyPrint/Pango on Windows actually *finds* Amiri/Noto from it — check an Arabic PDF by eye on the first working build.
+
 ## The one thing most likely to need a second pass: WeasyPrint + GTK3
 
 PDF generation (`weasyprint`) needs the GTK3 runtime (Pango, Cairo, GDK-Pixbuf, HarfBuzz) — not a Windows-native dependency. This has historically been the hardest part of shipping WeasyPrint on Windows, full stop, independent of this specific app. The workflow stages it via a silent install of a community-maintained GTK3-for-Windows installer and copies the DLLs out; if that installer's URL or internal layout has changed since this was written, that step (and only that step) will fail or silently produce an incomplete `gtk3-runtime/bin`.
