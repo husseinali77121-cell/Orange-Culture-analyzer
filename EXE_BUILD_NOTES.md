@@ -83,6 +83,12 @@ The GTK3 staging step ran `Start-Process ... -ArgumentList "/S /D=$PWD\gtk3-inst
 
 **Still unverified (unchanged):** everything in the manual checklist below, in particular Arabic text shaping in the PDF and fonts. The bundled `fonts/` folder is staged, but nothing here proves WeasyPrint/Pango on Windows actually *finds* Amiri/Noto from it — check an Arabic PDF by eye on the first working build.
 
+### Seventh run: the self-test worked — and narrowed it down
+
+The first run with the diagnostics in place got further than any before it. Inside the frozen exe, these all **passed**: Tesseract binary with `eng` + `ara`, a real OCR round-trip, Arabic text shaping, every bundled application module, and PDF generation through the bundled GTK3 (5.7 KB PDF). Exactly **one** critical check failed: the combined `streamlit` check (metadata + frontend + development mode). So the PDF/OCR/GTK3 worries in this file's older sections are now retired for the build machine; what remains is Streamlit inside the bundle.
+
+That single check was then split into five separate steps (package metadata, `import streamlit`, frontend `static/index.html`, `streamlit.web.cli`/`bootstrap` import, and whether Streamlit accepts the launcher's exact config flags — plus an informational "does the env var alone switch development mode off"). Every failure is also repeated as a one-line reason at the very end of the log and in a `FAILURE DETAILS` block at the end of the workflow step, so the cause is the last thing on screen instead of buried above.
+
 ## The one thing most likely to need a second pass: WeasyPrint + GTK3
 
 PDF generation (`weasyprint`) needs the GTK3 runtime (Pango, Cairo, GDK-Pixbuf, HarfBuzz) — not a Windows-native dependency. This has historically been the hardest part of shipping WeasyPrint on Windows, full stop, independent of this specific app. The workflow stages it via a silent install of a community-maintained GTK3-for-Windows installer and copies the DLLs out; if that installer's URL or internal layout has changed since this was written, that step (and only that step) will fail or silently produce an incomplete `gtk3-runtime/bin`.

@@ -301,24 +301,66 @@ def _selftest(base: str) -> int:
             tag = "FAIL" if critical else "WARN"
             print(f"[selftest] {tag}  {name}: {exc!r}", flush=True)
             traceback.print_exc()
-            (failures if critical else warnings).append(name)
+            reason = "".join(traceback.format_exception_only(type(exc), exc)).strip()
+            (failures if critical else warnings).append((name, reason))
 
     print(f"[selftest] frozen={getattr(sys, 'frozen', False)} "
           f"python={sys.version.split()[0]} base={base}", flush=True)
 
-    # ── Streamlit itself: metadata, static frontend, not in dev mode ─────
-    def chk_streamlit():
+    # ── Streamlit itself, one small step per thing that can go wrong ──────
+    # (2026-10-19, second run: a single combined "streamlit" check failed and
+    # the reason was off-screen. Each part reports on its own now.)
+    def chk_st_metadata():
         import importlib.metadata as md
+        return f"streamlit {md.version('streamlit')}"       # PackageNotFoundError if dist-info missing
+    step("Streamlit package metadata (dist-info)", chk_st_metadata)
+
+    def chk_st_import():
         import streamlit
-        from streamlit import config
-        ver = md.version("streamlit")        # PackageNotFoundError if dist-info not bundled
+        return f"{streamlit.__version__} from {streamlit.__file__}"
+    step("import streamlit", chk_st_import)
+
+    def chk_st_static():
+        import streamlit
         static = os.path.join(os.path.dirname(streamlit.__file__), "static", "index.html")
         if not os.path.exists(static):
             raise FileNotFoundError(f"Streamlit frontend missing from bundle: {static}")
-        if config.get_option("global.developmentMode"):
-            raise RuntimeError("global.developmentMode is still True inside the exe")
-        return f"streamlit {ver}; static/index.html present; developmentMode off"
-    step("streamlit", chk_streamlit)
+        return static
+    step("Streamlit web frontend (static/index.html)", chk_st_static)
+
+    def chk_st_cli():
+        from streamlit.web import cli as _cli          # noqa: F401  (what _serve() calls)
+        from streamlit.web import bootstrap as _bs     # noqa: F401
+        return "streamlit.web.cli and streamlit.web.bootstrap import"
+    step("import streamlit.web.cli / bootstrap (what the launcher runs)", chk_st_cli)
+
+    def chk_st_config_env_only():
+        # Informational: does the env var ALONE switch development mode off?
+        from streamlit import config
+        config.get_config_options(force_reparse=True)
+        dev = config.get_option("global.developmentMode")
+        if dev:
+            raise RuntimeError(f"global.developmentMode == {dev!r} with only the env var set "
+                               f"(harmless: the launcher also passes the CLI flag)")
+        return "env var alone is enough"
+    step("developmentMode off via env var alone", chk_st_config_env_only, critical=False)
+
+    def chk_st_config_flags():
+        # The exact call `streamlit run` makes, with the exact flags _serve() passes.
+        from streamlit import config
+        flags = {"global.developmentMode": False, "server.port": 8765,
+                 "server.address": "127.0.0.1", "server.headless": True,
+                 "server.fileWatcherType": "none"}
+        try:
+            from streamlit.web import bootstrap
+            bootstrap.load_config_options(flags)
+        except AttributeError:
+            config.get_config_options(force_reparse=True, options_from_flags=flags)
+        dev = config.get_option("global.developmentMode")
+        if dev:
+            raise RuntimeError(f"global.developmentMode == {dev!r} even with the CLI flag")
+        return f"launcher flags accepted; developmentMode={dev!r}, port={config.get_option('server.port')}"
+    step("Streamlit accepts the launcher's config flags", chk_st_config_flags)
 
     # ── Third-party imports the app needs ────────────────────────────────
     for mod in ("numpy", "cv2", "PIL", "pytesseract", "arabic_reshaper",
@@ -410,8 +452,11 @@ def _selftest(base: str) -> int:
 
     print(f"[selftest] SUMMARY: {len(failures)} critical failure(s), "
           f"{len(warnings)} warning(s)", flush=True)
+    for name, reason in warnings:
+        print(f"[selftest]   warning : {name} -> {reason}", flush=True)
     if failures:
-        print(f"[selftest] FAILED: {failures}", flush=True)
+        for name, reason in failures:
+            print(f"[selftest]   FAILED  : {name} -> {reason}", flush=True)
         return 1
     print("[selftest] PASSED", flush=True)
     return 0
