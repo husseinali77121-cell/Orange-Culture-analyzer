@@ -188,6 +188,10 @@ jobs:
       - name: Guard 17c — round-2 review (2026-11-10) regression suite
         run: python test_round2.py
 
+      # Fuzz / property tests + pathogenicity PDF, Gram gate, final checklist.
+      - name: "Guard 17d — round-3 fuzz and property tests (2026-11-11)"
+        run: python test_round3.py
+
       # A suite nobody runs is a suite that does not exist. Every one of the
       # three suites above sat green and unexecuted for weeks precisely because
       # nothing checked this.

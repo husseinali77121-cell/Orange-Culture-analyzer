@@ -108,6 +108,7 @@ jobs:
           python test_modules.py
           python test_review_fixes.py
           python test_round2.py
+          python test_round3.py
         shell: bash
 
       # ── Stage Tesseract (OCR) ──────────────────────────────────────────
