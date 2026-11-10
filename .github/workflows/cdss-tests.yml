@@ -174,6 +174,12 @@ jobs:
       - name: "Guard 17 — clinical facts (the data, by value)"
         run: python test_clinical_facts.py
 
+      # 2026-11-10 line-by-line guideline review (CLSI M100 Ed33-36, EUCAST
+      # v16, IDSA AMR 2026, IDSA cUTI 2025, ATS/IDSA, ACOG, AAP). Each check is
+      # a defect reproduced on the old code, pinned to the guideline answer.
+      - name: "Guard 17b — 2026-11-10 guideline-review regressions"
+        run: python test_review_fixes.py
+
       # A suite nobody runs is a suite that does not exist. Every one of the
       # three suites above sat green and unexecuted for weeks precisely because
       # nothing checked this.
