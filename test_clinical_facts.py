@@ -103,11 +103,20 @@ PREG_ABSOLUTE = [
     ("Tetracycline", "tetracycline — fetal teeth and bone"),
     ("Minocycline", "tetracycline — fetal teeth and bone"),
     ("Tigecycline", "glycylcycline — tetracycline class effect"),
-    ("Gentamicin", "aminoglycoside — irreversible fetal ototoxicity"),
-    ("Amikacin", "aminoglycoside — irreversible fetal ototoxicity"),
-    ("Tobramycin", "aminoglycoside — irreversible fetal ototoxicity"),
     ("Chloramphenicol", "grey baby syndrome"),
 ]
+# 2026-11-10 (guideline review H13): aminoglycosides were listed here as
+# ABSOLUTE. That is not the obstetric standard -- ampicillin + gentamicin is
+# first-line for intra-amniotic infection (ACOG) and gentamicin is used for
+# severe pyelonephritis in pregnancy; the documented fetal ototoxicity is with
+# streptomycin and kanamycin. They are now AVOIDED-tier (Warn) and the check
+# below makes sure they never drop to Safe/Caution and keep an explanatory note.
+PREG_OBSTETRIC_CAUTION = ["Gentamicin", "Amikacin", "Tobramycin"]
+_ag = [f"{d}: preg_status={G[d].get('preg_status')!r}, note={bool(G[d].get('preg_note'))}"
+       for d in PREG_OBSTETRIC_CAUTION
+       if d in G and (G[d].get("preg_status") != "Warn" or not G[d].get("preg_note"))]
+check("aminoglycosides are pregnancy 'Warn' with an obstetric-use note (ACOG)",
+      not _ag, "\n".join(_ag))
 _bad = [f"{d}: preg_status={G[d].get('preg_status')!r}, must be 'Banned' — {why}"
         for d, why in PREG_ABSOLUTE
         if d in G and G[d].get("preg_status") != "Banned"]
@@ -152,8 +161,16 @@ _cs = [f"{d}: child_safe={G[d].get('child_safe')!r}, must be True"
 check("agents used routinely in children are marked child_safe",
       not _cs, "\n".join(_cs))
 
-CHILD_UNSAFE = ["Doxycycline", "Tetracycline", "Minocycline", "Tigecycline",
+# Doxycycline left this list on 2026-11-10 (guideline review): AAP Red Book
+# (2018 onward; 2024 ed.) permits short courses (<= 21 days) at ANY age -- no
+# dental staining has been shown with doxycycline. The age matrix still adds a
+# CAUTION under 8 years. It is pinned the other way below so it cannot drift.
+CHILD_UNSAFE = ["Tetracycline", "Minocycline", "Tigecycline",
                 "Ciprofloxacin", "Levofloxacin", "Moxifloxacin"]
+check("doxycycline is child_safe (AAP Red Book 2024) with an explanatory note",
+      G["Doxycycline"].get("child_safe") is True
+      and "AAP" in str(G["Doxycycline"].get("child_note", "")),
+      f"child_safe={G['Doxycycline'].get('child_safe')!r}")
 _cu = [f"{d}: child_safe={G[d].get('child_safe')!r}, must be False"
        for d in CHILD_UNSAFE if d in G and G[d].get("child_safe") is not False]
 check("age-restricted agents are NOT marked child_safe",
@@ -658,6 +675,16 @@ check("every reportability token resolves case-insensitively or is declared",
 _ph_bad = []
 for _ph, _rule in _sa8.PHENOTYPE_RULES.items():
     _marks = _rule.get("markers") or []
+    if _rule.get("derived"):
+        # 2026-11-10: ESBL / AMPC / STENO are emitted from predict_esbl() or
+        # from the organism, not from markers. This harness has no engine to
+        # fire them with, so it checks they carry a therapy panel and the text
+        # the banner needs; test_review_fixes.py FIRES each one end to end.
+        if _ph not in _NS8.get("COMBINATION_THERAPY", {}):
+            _ph_bad.append(f"{_ph}: derived phenotype with no therapy panel")
+        if not (_rule.get("label") and _rule.get("action")):
+            _ph_bad.append(f"{_ph}: derived phenotype with no label/action")
+        continue
     if not _marks:
         _ph_bad.append(f"{_ph}: no markers — the rule can never fire")
         continue

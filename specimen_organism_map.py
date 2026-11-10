@@ -128,6 +128,21 @@ for _sp in ("Urine", "Blood", "Pus", "Wound Swab"):
     if "Enterococcus faecium" not in SPECIMEN_ORGANISM_MAP.get(_sp, []):
         SPECIMEN_ORGANISM_MAP.setdefault(_sp, []).append("Enterococcus faecium")
 
+# ── Organisms added 2026-11-10 (review H14) ──────────────────────────────────
+# Previously OCR collapsed them onto a neighbour with a different intrinsic
+# profile (koseri -> freundii, vulgaris -> mirabilis, saprophyticus /
+# lugdunensis -> CoNS). See organism_profile.py for the clinical reasons.
+for _sp, _orgs in (
+        ("Urine", ("Citrobacter koseri", "Proteus vulgaris", "Staphylococcus saprophyticus",
+                   "Staphylococcus lugdunensis")),
+        ("Blood", ("Citrobacter koseri", "Proteus vulgaris", "Staphylococcus lugdunensis")),
+        ("CSF", ("Citrobacter koseri",)),
+        ("Wound Swab", ("Citrobacter koseri", "Proteus vulgaris", "Staphylococcus lugdunensis")),
+        ("Pus", ("Citrobacter koseri", "Proteus vulgaris", "Staphylococcus lugdunensis"))):
+    for _o in _orgs:
+        if _o not in SPECIMEN_ORGANISM_MAP.get(_sp, []):
+            SPECIMEN_ORGANISM_MAP.setdefault(_sp, []).append(_o)
+
 # CoNS everywhere it is actually reported — which is everywhere, because the
 # question it raises (contaminant or not) is a question at every site.
 for _sp in ("Blood", "Urine", "Wound Swab", "Pus", "CSF"):

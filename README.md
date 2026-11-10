@@ -11,18 +11,21 @@ MDR/XDR/PDR، ويُخرج قائمة أدوية مفلترة حسب الكائ�
 
 | | |
 |---|---|
-| **المقاومة الجوهرية** | 50 صف، مصدر واحد للحقيقة في `clinical_data.py` |
+| **المقاومة الجوهرية** | 51 صف، مصدر واحد للحقيقة في `clinical_data.py` |
 | **استنتاج الآلية** | ESBL · AmpC · carbapenemase · DTR · MRSA · VRE |
 | **التصنيف** | MDR/XDR/PDR بجداول Magiorakos منفصلة لكل مجموعة كائنات |
 | **بوابات الأمان** | حمل · أطفال · حديثو ولادة (بالشهور) · كلوي · كبدي (Child-Pugh) |
 | **QC اللوحة** | تناقضات · تسلسل · فئات مكافئة · أنماط ظاهرية استثنائية · قابلية التبليغ |
-| **التتبّع** | 60 قاعدة مربوطة بمصادر مؤرَّخة في `guideline_registry.py` (10 منها — AST Panel Completeness — قيد مراجعة د. طارق) |
+| **التتبّع** | 64 قاعدة مربوطة بمصادر مؤرَّخة في `guideline_registry.py` (60 موقَّعة + 4 أُضيفت في مراجعة 2026-11-10 وتنتظر توقيع الطبيب) |
+| **أنواع الكاربابينيميز** | KPC · OXA-48 · MBL — تحدد العامل الحديث المناسب (IDSA AMR 2026) |
 
 ## المصادر
 
 EUCAST Breakpoint Tables v16.1 · EUCAST Intrinsic Resistance v3.3 ·
 EUCAST Expert Rules v3.1 · CLSI M100 Ed36 · CLSI M39 ·
-IDSA AMR Guidance 2026 · WHO AWaRe 2025 ·
+IDSA AMR Guidance 2026 (doi:10.1093/cid/ciag481) · IDSA cUTI 2025 ·
+ATS/IDSA HAP/VAP 2016 · BALANCE (NEJM 2025) · ACOG CO 717/797 · AAP Red Book 2024 ·
+WHO AWaRe 2025 ·
 Magiorakos et al., *Clin Microbiol Infect* 2012;18:268-281
 
 ## التشغيل
@@ -80,7 +83,8 @@ python test_scenarios.py --update
 ```
 streamlit_app.py        الواجهة + المحركات السريرية
 clinical_data.py        المقاومة الجوهرية — مصدر الحقيقة الوحيد
-abx_guidelines.py       الدستور الدوائي (60 دواء)
+abx_guidelines.py       الدستور الدوائي (62 دواء)
+therapy_rules.py        قواعد مراجعة 2026-11-10: العوامل الحديثة حسب نوع الإنزيم، الحساسية، Proteeae
 organism_profile.py     خطوط العلاج لكل كائن
 specimen_organism_map.py أي كائن يُتوقَّع في أي عيّنة
 ast_reportability.py    قواعد «هل يجوز تبليغ هذه النتيجة؟»
@@ -96,4 +100,4 @@ guideline_registry.py   ربط كل قاعدة بمصدرها المؤرَّخ
 
 ---
 
-_الأرقام أعلاه محدَّثة بتاريخ 2026-08-20 مقابل الكود نفسه: **60 دواء · 30 كائن قابل للاختيار · 50 صف مقاومة جوهرية · 60 قاعدة (50 موقَّعة + 10 قيد المراجعة) · 1,267 حالة في الـ snapshot**. `test_clinical_facts.py` بيفشل لو أي رقم منهم اتغيّر من غير تحديث._
+_الأرقام أعلاه محدَّثة بتاريخ 2026-11-10 مقابل الكود نفسه: **62 دواء · 34 كائن قابل للاختيار · 51 صف مقاومة جوهرية · 64 قاعدة (60 موقَّعة + 4 تنتظر التوقيع) · 1,379 حالة في الـ snapshot**. `test_clinical_facts.py` بيفشل لو أي رقم منهم اتغيّر من غير تحديث. تفاصيل مراجعة 2026-11-10 في `CHANGELOG_2026-11-10.md`._

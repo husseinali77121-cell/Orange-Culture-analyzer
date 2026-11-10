@@ -181,7 +181,7 @@ INTRINSIC_RESISTANCE = {
         "Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
         "Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin", "Cefaclor",
         "Cefuroxime", "Cefuroxime sodium", "Cefoxitin",
-        "Cefotaxime", "Ceftriaxone", "Ertapenem", "Aztreonam",
+        "Cefotaxime", "Ceftriaxone", "Ertapenem", "Aztreonam", "Aztreonam + Avibactam",
         "Trimethoprim", "Fosfomycin", "Nitrofurantoin", "Chloramphenicol", "Oxacillin", "Penicillin",
     ],
 
@@ -303,6 +303,16 @@ INTRINSIC_RESISTANCE["mycoplasma"] = [
     "Vancomycin", "Teicoplanin", "Fosfomycin", "Trimethoprim/Sulfamethoxazole",
 ]
 INTRINSIC_RESISTANCE["ureaplasma"] = list(INTRINSIC_RESISTANCE["mycoplasma"])
+# 2026-11-10 (review item 22): species differences inside the genus.
+#   M. hominis -- intrinsically resistant to 14/15-membered macrolides
+#                 (erythromycin, clarithromycin, azithromycin); clindamycin works.
+#   Ureaplasma -- intrinsically resistant to lincosamides (clindamycin).
+# Keys are species-specific, so they never match "Mycoplasma spp." and do not
+# remove azithromycin from M. pneumoniae.
+INTRINSIC_RESISTANCE["mycoplasma hominis"] = list(dict.fromkeys(
+    INTRINSIC_RESISTANCE["mycoplasma"] + ["Erythromycin", "Clarithromycin", "Azithromycin"]))
+INTRINSIC_RESISTANCE["ureaplasma"] = list(dict.fromkeys(
+    INTRINSIC_RESISTANCE["ureaplasma"] + ["Clindamycin"]))
 
 # Family-level fallback for an unspeciated Enterobacterales report.
 INTRINSIC_RESISTANCE["enterobacterales"] = list(_GP_ONLY)
@@ -351,7 +361,10 @@ _GRAM_POS_ONLY_ENTERIC = ["Erythromycin", "Clarithromycin", "Azithromycin",
 # streptococcal rows already carried these; the three enterococcal rows and VRE
 # carried Aztreonam alone, so Colistin reported S on an Enterococcus faecalis
 # blood isolate was RECOMMENDED.
-_GRAM_NEG_ONLY_CORE = ["Colistin", "Polymyxin B", "Aztreonam", "Nalidixic acid"]
+# Aztreonam + Avibactam added 2026-11-10: the monobactam has no Gram-positive
+# activity and avibactam does not change that.
+_GRAM_NEG_ONLY_CORE = ["Colistin", "Polymyxin B", "Aztreonam", "Aztreonam + Avibactam",
+                       "Nalidixic acid"]
 
 _ENTERIC_AND_NONFERMENTER = [
     "escherichia coli", "e. coli",
@@ -421,7 +434,7 @@ for _k in _ENTEROCOCCAL_ROWS:
 # inactive in an anaerobic environment regardless of what the disk shows.
 # (Aztreonam and TMP-SMX were already covered by clinical_matrix.INTRINSIC_
 # ADDENDA; they are repeated here so the QA engine sees them too.)
-_merge_row("anaerobes", ["Colistin", "Polymyxin B", "Aztreonam",
+_merge_row("anaerobes", ["Colistin", "Polymyxin B", "Aztreonam", "Aztreonam + Avibactam",
                          "Gentamicin", "Amikacin", "Tobramycin",
                          "Trimethoprim", "Trimethoprim/Sulfamethoxazole"])
 
@@ -492,8 +505,9 @@ for _k in ("coagulase-negative staphylococci", "coagulase negative staphylococci
     _merge_row(_k, _GRAM_NEG_ONLY_CORE)
 
 # S. saprophyticus is the one CoNS with a real urinary niche, and EUCAST notes
-# it is intrinsically resistant to fosfomycin and novobiocin — the novobiocin
-# resistance is how the lab identifies it in the first place.
-_merge_row("staphylococcus saprophyticus", ["Fosfomycin"])
+# it is intrinsically resistant to fosfomycin, fusidic acid and novobiocin —
+# the novobiocin resistance is how the lab identifies it in the first place.
+# (Fusidic acid added 2026-11-10: EUCAST Expected Resistant Phenotypes.)
+_merge_row("staphylococcus saprophyticus", ["Fosfomycin", "Fusidic acid"])
 
 del _k

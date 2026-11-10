@@ -73,7 +73,7 @@ def engine_rule_ids() -> set:
             ids.add(r["id"])
 
     app = (ROOT / "streamlit_app.py").read_text(encoding="utf-8")
-    ids |= set(re.findall(r'"id":\s*"(QC\d+)"', app))
+    ids |= set(re.findall(r'"id":\s*"(QC\d+[a-z]?)"', app))
     ids |= set(re.findall(r'f"(SPEC-URN|REP-GPO-GN):', app))
     return ids
 

@@ -294,16 +294,23 @@ def _check_cross_resistance(sir: Dict[str, str]) -> List[QAIssue]:
             reference="EUCAST Breakpoint Tables v16.1",
         ))
 
-    # Quinolones: Levofloxacin R → Ciprofloxacin should be R (≥ resistance)
+    # Quinolones: Levofloxacin R with Ciprofloxacin S.
+    # FIX 2026-11-10: the detail said "levofloxacin has higher intrinsic
+    # activity than ciprofloxacin" -- true for Gram-POSITIVES, false for
+    # Gram-negatives, where ciprofloxacin is the more potent agent (levo MICs
+    # run ~2-fold higher). The pattern is uncommon but possible near the
+    # breakpoints, so it is a MEDIUM verification prompt, not a HIGH error.
     if _is_R("Levofloxacin", sir) and _is_S("Ciprofloxacin", sir) and "Ciprofloxacin" in sir:
         issues.append(QAIssue(
-            level=3, severity="HIGH",
+            level=3, severity="MEDIUM",
             category="Cross Resistance",
-            message="Levofloxacin=R but Ciprofloxacin=S — unexpected pattern",
+            message="Levofloxacin=R but Ciprofloxacin=S — uncommon, verify",
             detail=(
-                "Levofloxacin has higher intrinsic activity than Ciprofloxacin. "
-                "Levofloxacin=R with Ciprofloxacin=S is microbiologically inconsistent "
-                "for most Gram-negative organisms. Review AST methodology."
+                "Both share gyrA/parC resistance. Against Gram-negatives ciprofloxacin is the "
+                "more potent agent, so Levofloxacin=R with Ciprofloxacin=S can occur near the "
+                "breakpoints, but it is uncommon: check the MICs / zone diameters and the "
+                "breakpoint version before reporting. A low-level FQ mechanism is likely — "
+                "avoid ciprofloxacin monotherapy for invasive infection until confirmed."
             ),
             drug="Levofloxacin, Ciprofloxacin",
             reference="EUCAST Breakpoint Tables v16.1 · CLSI M100 Ed36",
@@ -405,28 +412,58 @@ def _check_betalactam_patterns(sir: Dict[str, str]) -> List[QAIssue]:
 # ══════════════════════════════════════════════════════════════════════════════
 # LEVEL 5 — Carbapenem Pattern
 # ══════════════════════════════════════════════════════════════════════════════
-def _check_carbapenem_patterns(sir: Dict[str, str]) -> List[QAIssue]:
+def _check_carbapenem_patterns(sir: Dict[str, str], organism: str = "") -> List[QAIssue]:
+    """Carbapenem discordance checks, now ORGANISM-AWARE (2026-11-10).
+
+    Two false alarms came from ignoring the organism:
+      * Proteeae (Proteus / Morganella / Providencia) have intrinsically
+        elevated imipenem MICs, so Imipenem R + Meropenem S is the EXPECTED
+        pattern there (CDC CRE definition excludes imipenem for them).
+      * Non-fermenters (P. aeruginosa, Acinetobacter, Stenotrophomonas) are
+        intrinsically resistant to ertapenem, so "Ertapenem R + Imipenem S"
+        produced an "early CRE/KPC" warning on every P. aeruginosa panel
+        that carried ertapenem. CRE is an Enterobacterales concept.
+    """
     issues = []
+    org_l = (organism or "").lower()
+    proteeae = any(t in org_l for t in ("proteus", "morganella", "providencia"))
+    nonfermenter = any(t in org_l for t in ("pseudomonas", "acinetobacter",
+                                            "stenotrophomonas", "burkholderia"))
 
     imi  = _r("Imipenem/Cilastatin", sir)
     mero = _r("Meropenem", sir)
     erta = _r("Ertapenem", sir)
 
-    # Imipenem R + Meropenem S → needs verification
+    # Imipenem R + Meropenem S
     if imi == "R" and mero == "S" and _both_tested("Imipenem/Cilastatin", "Meropenem", sir):
-        issues.append(QAIssue(
-            level=5, severity="HIGH",
-            category="Carbapenem Pattern",
-            message="Imipenem=R but Meropenem=S — verify",
-            detail=(
-                "Imipenem and Meropenem share carbapenem class resistance mechanisms. "
-                "Isolated Imipenem resistance with Meropenem susceptibility may occur with "
-                "OprD porin loss in Pseudomonas (without carbapenemase), but requires careful review. "
-                "Perform carbapenemase testing (CarbaNP / mCIM) to clarify."
-            ),
-            drug="Imipenem/Cilastatin, Meropenem",
-            reference="EUCAST Breakpoint Tables v16.1 · CLSI M100 Ed36",
-        ))
+        if proteeae:
+            issues.append(QAIssue(
+                level=5, severity="LOW",
+                category="Carbapenem Pattern",
+                message="Imipenem=R with Meropenem=S in Proteeae — expected",
+                detail=(
+                    "Proteus, Morganella and Providencia have intrinsically elevated imipenem "
+                    "MICs. This pattern is NOT a CRE or carbapenemase marker (CDC CRE definition "
+                    "requires resistance to a carbapenem other than imipenem for these genera). "
+                    "Report Meropenem/Ertapenem for therapy; imipenem is not a reliable agent here."
+                ),
+                drug="Imipenem/Cilastatin, Meropenem",
+                reference="EUCAST Expected Resistant Phenotypes v1.2 · CDC CRE definition",
+            ))
+        else:
+            issues.append(QAIssue(
+                level=5, severity="HIGH",
+                category="Carbapenem Pattern",
+                message="Imipenem=R but Meropenem=S — verify",
+                detail=(
+                    "Imipenem and Meropenem share carbapenem class resistance mechanisms. "
+                    "Isolated Imipenem resistance with Meropenem susceptibility may occur with "
+                    "OprD porin loss in Pseudomonas (without carbapenemase), but requires careful review. "
+                    "Perform carbapenemase testing (CarbaNP / mCIM) to clarify."
+                ),
+                drug="Imipenem/Cilastatin, Meropenem",
+                reference="EUCAST Breakpoint Tables v16.1 · CLSI M100 Ed36",
+            ))
 
     # Meropenem R + Imipenem S → strong alert
     if mero == "R" and imi == "S" and _both_tested("Meropenem", "Imipenem/Cilastatin", sir):
@@ -443,16 +480,17 @@ def _check_carbapenem_patterns(sir: Dict[str, str]) -> List[QAIssue]:
             reference="EUCAST Breakpoint Tables v16.1",
         ))
 
-    # Ertapenem R + Imipenem S → clinically significant (early CRE warning)
-    if erta == "R" and imi == "S" and _both_tested("Ertapenem", "Imipenem/Cilastatin", sir):
+    # Ertapenem R + Imipenem S → early CRE warning (Enterobacterales only)
+    if (erta == "R" and imi == "S" and not nonfermenter
+            and _both_tested("Ertapenem", "Imipenem/Cilastatin", sir)):
         issues.append(QAIssue(
             level=5, severity="MEDIUM",
             category="Carbapenem Pattern",
-            message="Ertapenem=R + Imipenem=S — possible early CRE/KPC",
+            message="Ertapenem=R + Imipenem=S — possible carbapenemase (OXA-48-like) or porin loss",
             detail=(
-                "Ertapenem=R with Imipenem=S can occur with low-level KPC production or "
-                "porin loss + AmpC combinations. This is an early CRE warning. "
-                "Perform carbapenemase detection immediately (CarbaNP/mCIM/PCR). "
+                "Ertapenem=R with Imipenem=S can occur with OXA-48-like or low-level KPC "
+                "production, or with porin loss + ESBL/AmpC. "
+                "Perform carbapenemase detection (mCIM/eCIM, NG-Test CARBA-5 or PCR). "
                 "Do not dismiss — may progress to full carbapenem resistance."
             ),
             drug="Ertapenem, Imipenem/Cilastatin",
@@ -576,7 +614,10 @@ _ORG_IMPLAUSIBLE: Dict[str, List[Tuple[str, str, str]]] = {
     "Staphylococcus aureus": [
         ("Aztreonam",     "S", "Aztreonam has no activity against Gram-positive organisms"),
         ("Colistin",      "S", "Colistin is inactive against Gram-positives"),
-        ("Nitrofurantoin","S", "Nitrofurantoin=S in Staph lacks systemic clinical relevance outside UTI"),
+        # Nitrofurantoin removed 2026-11-10: S. aureus IS usually nitrofurantoin-S
+        # and the drug treats staphylococcal cystitis; an S result is expected,
+        # not "implausible". (Its site limitation is handled by the
+        # clinical-context check and the site matrix.)
     ],
     "MRSA": [
         ("Aztreonam",     "S", "Aztreonam inactive against Gram-positives"),
@@ -865,11 +906,17 @@ def _check_clinical_context(
         issues.append(QAIssue(
             level=15, severity="MEDIUM",
             category="Clinical Context",
-            message="Colistin=S in Urine: not recommended as first-line despite susceptibility",
+            message="Colistin in Urine: reserve agent — not first-line",
+            # FIX 2026-11-10: the detail said colistin reaches "poor urinary
+            # concentrations". The reverse is true: colistimethate is renally
+            # cleared and converted in urine, which is why IDSA names colistin
+            # (not polymyxin B) as the polymyxin for lower UTI.
             detail=(
-                "Colistin achieves poor urinary concentrations (renal metabolism) and "
-                "is not appropriate for UTI treatment despite in-vitro susceptibility. "
-                "Use only as last resort for XDR organisms with no alternatives."
+                "Colistimethate is renally cleared, so urinary concentrations are adequate — "
+                "that is why colistin (not polymyxin B) is the polymyxin for lower UTI (IDSA). "
+                "It remains a Reserve agent: nephrotoxic, no 'S' category in CLSI (I ≤2 / R ≥4), "
+                "and valid only by broth microdilution. Use it only when no safer active "
+                "agent (including a single aminoglycoside dose or a novel beta-lactam) exists."
             ),
             drug="Colistin",
             reference="IDSA AMR Guidance 2026 / EUCAST Breakpoint Tables v16.1",
@@ -986,7 +1033,7 @@ def run_ast_qa_engine(
     issues += _check_phenotype_consistency(organism, sir_map, esbl_result, mdr_result)
     issues += _check_cross_resistance(sir_map)
     issues += _check_betalactam_patterns(sir_map)
-    issues += _check_carbapenem_patterns(sir_map)
+    issues += _check_carbapenem_patterns(sir_map, organism)
     issues += _check_aminoglycoside_patterns(sir_map)
     issues += _check_glycopeptide_patterns(sir_map)
     issues += _check_organism_plausibility(organism, sir_map)

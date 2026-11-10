@@ -1159,14 +1159,25 @@ def detect_organism(text_lower: str) -> Optional[str]:
     "enterococcus".
     """
     t = str(text_lower or "").lower()
+
+    # FIX 2026-11-10: plain substring matching read "gas" inside "gastric" /
+    # "gastroenteritis" as Group A Streptococcus and "cons" inside
+    # "consistent" / "consultant" as CoNS. Every alias is now matched on
+    # letter boundaries (digits and punctuation still count as a boundary).
+    def _hits(needle: str) -> int:
+        n = needle.lower()
+        if not n:
+            return 0
+        return len(re.findall(r"(?<![a-z])" + re.escape(n) + r"(?![a-z])", t))
+
     counts: Dict[str, int] = {}
     for organism in BACTERIA_TYPES:
-        c = t.count(organism.lower())
+        c = _hits(organism)
         if c > 0:
             counts[organism] = counts.get(organism, 0) + c
     if not counts:
         for alias in sorted(ORGANISM_OCR_ALIASES, key=len, reverse=True):
-            if alias in t:
+            if _hits(alias):
                 mapped = ORGANISM_OCR_ALIASES[alias]
                 if mapped in ORGANISM_PROFILE:
                     return mapped
@@ -1443,12 +1454,22 @@ def extract_all_data_cached(file_bytes: bytes) -> Dict[str, Any]:
 # =========================================================
 # التحليل السريري
 # =========================================================
-def is_intrinsically_avoided(organism_type: str, drug_name: str, drug_info: Dict[str, Any]) -> bool:
+def is_intrinsically_avoided(organism_type: str, drug_name: str, drug_info: Dict[str, Any],
+                             return_source: bool = False):
+    """True if the drug is on the organism's avoid list.
+
+    With return_source=True: 'intrinsic' | 'profile' | None -- WHY it is avoided.
+
+    2026-11-10: split out so the UI can say "intrinsic resistance" only when it
+    is true. The ORGANISM_PROFILE avoid lists also hold "not recommended"
+    entries (poor clinical efficacy despite in-vitro activity), and every one
+    of them used to be shown to the physician as intrinsic resistance.
+    """
     # ── FIX: authoritative EUCAST intrinsic-resistance table first ────────────
     # The per-organism ORGANISM_PROFILE["avoid"] list was incomplete for
     # P. aeruginosa (missing Doxycycline and the intrinsically-inactive
     # cephalosporins), so drugs like Doxycycline (reported I) leaked into
-    # "Use with caution" and Cephalexin was mis-tagged via the β-lactamase path
+    # "Use with caution" and Cephalexin was mis-tagged via the beta-lactamase path
     # instead of being flagged as intrinsic. Checking INTRINSIC_RESISTANCE here
     # guarantees a name-level intrinsic hit routes straight to Avoid, and keeps
     # a single source of truth shared with MDR-stripping and mechanism inference.
@@ -1461,19 +1482,24 @@ def is_intrinsically_avoided(organism_type: str, drug_name: str, drug_info: Dict
             continue
         if (_org_key in _org_l or (len(_org_l) >= 4 and _org_l in _org_key)) \
                 and drug_name in _drug_list:
-            return True
+            return "intrinsic" if return_source else True
 
-    organism_avoid = (ORGANISM_PROFILE.get(organism_type) or {}).get("avoid", [])
+    _prof = ORGANISM_PROFILE.get(organism_type) or {}
+    # 2026-11-10: a class-wide avoid ("Cephalosporins" for MRSA) must not
+    # catch the deliberate exception (Ceftaroline binds PBP2a).
+    if drug_name in (_prof.get("avoid_exempt") or []):
+        return None if return_source else False
+    organism_avoid = _prof.get("avoid", [])
     d_low   = drug_name.lower()
-    d_class = drug_info.get("class", "").lower()
+    d_class = (drug_info or {}).get("class", "").lower()
     for avoid_item in organism_avoid:
         av_low = avoid_item.lower().strip()
         if av_low in d_low or d_low in av_low:
-            return True
+            return "profile" if return_source else True
         mapped = ORGANISM_AVOID_CLASS_MAP.get(av_low)
         if mapped and any(cls in d_class for cls in mapped):
-            return True
-    return False
+            return "profile" if return_source else True
+    return None if return_source else False
 
 def build_banned_item(name: str, category: str, reason_short: str, reason_detail: str) -> Dict[str, str]:
     return {"name": name, "category": category,
@@ -1572,7 +1598,7 @@ HEPATIC_DOSING: Dict[str, Dict] = {
     "Doxycycline":                   {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Avoid","Avoid in severe hepatic failure"), "note": "Biliary excretion pathway"},
     "Amoxicillin + Clavulanic acid": {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Avoid","Avoid -- Clavulanate-associated DILI risk"), "note": "Clavulanate linked to drug-induced liver injury"},
     "Piperacillin + Tazobactam":     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal (renal)","No hepatic adjustment -- monitor renal"), "note": "Primarily renal elimination"},
-    "Tigecycline":                   {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Reduce","100mg loading then 12.5mg q12h in Child-Pugh C"), "note": "Biliary excretion -- adjust in severe impairment [MDR/REF only]"},
+    "Tigecycline":                   {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Reduce","100mg loading then 25mg q12h in Child-Pugh C (label; FIX 2026-11-10 — was 12.5mg)"), "note": "Biliary excretion -- adjust in severe impairment [MDR/REF only]"},
     "Colistin":                      {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Renal-based","Based on CrCl -- primarily renal"), "note": "Primarily renal elimination"},
     "Nitrofurantoin":                {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Avoid","Avoid in hepatic failure"), "note": "Cholestatic hepatitis risk"},
     "Chloramphenicol":               {"A": ("Caution","Use with caution"), "B": ("Avoid","Avoid"), "C": ("Avoid","Avoid -- gray syndrome risk"), "note": "Hepatic glucuronidation -- accumulates [MDR/REF only]"},
@@ -1652,6 +1678,16 @@ _PREG_ALIASES = {
 }
 
 
+# ═══════════════════════════════════════════════════════════════════════
+# 2026-11-10 REVIEW FIXES live in therapy_rules.py (importable, so the
+# AST-extraction harnesses can reach them -- see that module's docstring).
+# ═══════════════════════════════════════════════════════════════════════
+from therapy_rules import (                                      # noqa: E402
+    CLINICAL_NOTE_REASONS, NOVEL_BL_AGENTS, CARBAPENEMASE_TYPE_OPTIONS,
+    UTI_SYNDROME_OPTIONS, normalize_carbapenemase_type, resolve_uti_syndrome,
+)
+
+
 def validate_patient_context(age: int, sex: str, is_preg: bool,
                              cl_cr: float, age_months: Optional[int] = None
                              ) -> List[str]:
@@ -1725,12 +1761,19 @@ def run_analysis(
     drugs: Optional[List[str]] = None,
     *,
     apply_gate: bool = True,
+    carbapenemase_type: Optional[str] = None,
+    uti_syndrome: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Run the full clinical pipeline and return every panel the UI shows.
 
     Returns a dict with: allowed / warned / banned / preg_warn / interactions,
     gate_report, phenotypes, mdr, mechanism, ranked, combinations, syndrome,
     duration, severity, patient_warnings.
+
+    `carbapenemase_type` (KPC / OXA-48 / MBL, from NG-Test CARBA-5, Xpert or
+    PCR) and `uti_syndrome` (cystitis / upper / None) were added 2026-11-10:
+    without the first the engine cannot choose between the novel agents, and
+    without the second it cannot tell a cystitis from a pyelonephritis.
     """
     drugs = list(drugs if drugs is not None else sir_map.keys())
     k = patient.as_kwargs()
@@ -1739,6 +1782,8 @@ def run_analysis(
         drugs, organism, specimen, k["age"], k["sex"], k["is_renal"],
         k["cl_cr"], k["is_preg"], k["is_hepatic"], k["current_meds"], sir_map,
         k["child_pugh"], k["age_months"],
+        carbapenemase_type=carbapenemase_type, uti_syndrome=uti_syndrome,
+        allergies=list(getattr(patient, "allergies", None) or []),
     )
 
     gate_report: Dict[str, Any] = {}
@@ -1759,13 +1804,15 @@ def run_analysis(
         phenotypes,
         is_pregnant=k["is_preg"], age_years=k["age"], age_months=k["age_months"],
         is_renal=k["is_renal"], cl_cr=k["cl_cr"], is_hepatic=k["is_hepatic"],
-        organism=organism,
+        organism=organism, carbapenemase_type=carbapenemase_type,
     )
 
     severity = suggest_severity(specimen, k["age"], k["sex"], k["is_preg"],
                                 k["is_renal"], k["cl_cr"] or 95)
     syndrome = get_infection_syndrome(specimen, organism, k["age"], k["is_preg"])
     _syn_key = syndrome.get("syndrome", "") if isinstance(syndrome, dict) else (syndrome or "")
+    if uti_syndrome == "upper" and classify_specimen(specimen) == "urine":
+        _syn_key = "pyelonephritis"
     duration = get_treatment_duration(
         specimen, organism, _syn_key, k["age"], k["sex"], k["is_renal"],
         phenotypes, severity.get("suggested", "moderate"),
@@ -1843,60 +1890,79 @@ def warned_note_for(item: Dict[str, Any], lang: str = "ar") -> str:
     Returns "" only when the item genuinely carries no explanation, which the
     render layer surfaces explicitly rather than printing a blank bullet.
     """
-    if not isinstance(item, dict):
-        return ""
-    ar = (lang or "ar").lower().startswith("ar")
+    # 2026-11-10: an item can carry a second, independent fact (a novel-agent
+    # note, an organism caution, a CLSI breakpoint restriction) under
+    # `clinical_note` while its primary warning_reason is something else --
+    # renal dosing, say. It is appended so neither fact hides the other.
+    def _primary() -> str:
+        if not isinstance(item, dict):
+            return ""
+        ar = (lang or "ar").lower().startswith("ar")
 
-    def pick(*keys) -> str:
-        for k in keys:
-            v = item.get(k)
-            if v and str(v).strip():
-                return str(v).strip()
-        return ""
+        def pick(*keys) -> str:
+            for k in keys:
+                v = item.get(k)
+                if v and str(v).strip():
+                    return str(v).strip()
+            return ""
 
-    reason = item.get("warning_reason") or ""
-    category = item.get("category") or ""
+        reason = item.get("warning_reason") or ""
+        category = item.get("category") or ""
 
-    if reason in ("esbl_bli_uti_only", "possible_carbapenemase"):
-        return pick("esbl_note", "esbl_note_en") if ar else pick("esbl_note_en", "esbl_note")
+        if reason in ("esbl_bli_uti_only", "possible_carbapenemase"):
+            return pick("esbl_note", "esbl_note_en") if ar else pick("esbl_note_en", "esbl_note")
 
-    if reason == "hepatic_adjustment":
-        lvl, rec = item.get("hepatic_level"), item.get("hepatic_rec")
-        if lvl or rec:
-            head = f"🫀 Child-Pugh: {lvl}" if lvl else "🫀 قصور كبدي"
-            body = f" — {rec}" if rec else ""
-            extra = pick("hepatic_note", "hepatic_note_en")
-            return f"{head}{body}" + (f"  \n{extra}" if extra else "")
-        return pick("hepatic_note", "hepatic_note_en")
+        if reason == "hepatic_adjustment":
+            lvl, rec = item.get("hepatic_level"), item.get("hepatic_rec")
+            if lvl or rec:
+                head = f"🫀 Child-Pugh: {lvl}" if lvl else "🫀 قصور كبدي"
+                body = f" — {rec}" if rec else ""
+                extra = pick("hepatic_note", "hepatic_note_en")
+                return f"{head}{body}" + (f"  \n{extra}" if extra else "")
+            return pick("hepatic_note", "hepatic_note_en")
 
-    if reason == "renal_adjustment":
-        return pick("renal_note", "renal_note_en") if ar else pick("renal_note_en", "renal_note")
+        if reason == "renal_adjustment":
+            return pick("renal_note", "renal_note_en") if ar else pick("renal_note_en", "renal_note")
 
-    if reason == "possible_mrsa":
-        return pick("possible_mrsa_note")
+        if reason == "possible_mrsa":
+            return pick("possible_mrsa_note")
 
-    if reason == "safety_gate":
-        return pick("gate_note", "gate_note_en") if ar else pick("gate_note_en", "gate_note")
+        if reason == "safety_gate":
+            return pick("gate_note", "gate_note_en") if ar else pick("gate_note_en", "gate_note")
 
-    if reason == "neonate" or category == "neonate":
-        short, detail = pick("reason_short"), pick("reason_detail")
-        return f"{short}  \n{detail}" if short and detail else (short or detail)
+        if reason == "neonate" or category == "neonate":
+            short, detail = pick("reason_short"), pick("reason_detail")
+            return f"{short}  \n{detail}" if short and detail else (short or detail)
 
-    if reason == "intermediate_culture":
-        return ("النتيجة Intermediate (I) — حسب EUCAST تعني حساسية عند تعرّض أعلى: "
-                "لا تُستخدم إلا بجرعة أعلى/تسريب ممتد وبعد استبعاد بديل حسّاس (S).")
+        if reason == "intermediate_culture":
+            return ("النتيجة Intermediate (I) — حسب EUCAST تعني حساسية عند تعرّض أعلى: "
+                    "لا تُستخدم إلا بجرعة أعلى/تسريب ممتد وبعد استبعاد بديل حسّاس (S).")
 
-    if reason == "interaction" or category == "interaction":
-        return pick("interaction_note", "reason_detail", "reason_short")
+        if reason == "interaction" or category == "interaction":
+            return pick("interaction_note", "reason_detail", "reason_short")
 
-    if reason == "pregnancy" or category == "pregnancy":
-        return pick("preg_note", "preg_note_en", "reason_detail", "reason_short")
+        if reason == "pregnancy" or category == "pregnancy":
+            return pick("preg_note", "preg_note_en", "reason_detail", "reason_short")
 
-    # Unknown reason: try every explanation slot that exists before giving up,
-    # and NEVER fall back to renal_note -- that silent substitution is the whole
-    # defect this function replaces.
-    return pick("reason_short", "reason_detail", "gate_note", "esbl_note",
-                "hepatic_rec", "note")
+        # Warnings added by the 2026-11-10 review fixes carry their explanation
+        # under ONE key, `clinical_note` (literal set: this function is lifted
+        # by name into bare test namespaces, so it must not depend on a global).
+        if reason in ("novel_agent", "organism_caution", "allergy", "uti_upper",
+                      "aminoglycoside_pseudomonas", "colistin", "penicillinase_unconfirmed",
+                      "no_breakpoint", "ampc_sdd", "ampc_cefepime"):
+            return pick("clinical_note", "reason_detail", "reason_short")
+
+        # Unknown reason: try every explanation slot that exists before giving up,
+        # and NEVER fall back to renal_note -- that silent substitution is the whole
+        # defect this function replaces.
+        return pick("reason_short", "reason_detail", "gate_note", "esbl_note",
+                    "hepatic_rec", "note")
+
+    base = _primary()
+    extra = str(item.get("clinical_note") or "").strip() if isinstance(item, dict) else ""
+    if extra and extra not in base:
+        return f"{base}  \n{extra}" if base else extra
+    return base
 
 
 def analyze_antibiotics(
@@ -1913,6 +1979,10 @@ def analyze_antibiotics(
     sir_map: Dict[str, str],
     child_pugh: str = "C",
     age_months: Optional[int] = None,
+    *,
+    carbapenemase_type: Optional[str] = None,
+    uti_syndrome: Optional[str] = None,
+    allergies: Optional[List[str]] = None,
 ) -> Tuple[List[Dict], List[Dict], List[Dict], List[Dict], List[str]]:
     # child_pugh defaults to the WORST grade on purpose. If the caller knows the
     # grade it passes it; if it does not, the engine must not silently assume the
@@ -1924,6 +1994,12 @@ def analyze_antibiotics(
     # flag is set, and every message below that quotes the number says whether it
     # was measured or assumed. Passing 100.0 for "unknown" — which is what the
     # sidebar used to do — silently disabled the entire renal pathway.
+    # 2026-11-10 review rules -- imported here, not at module level, so the
+    # AST-extraction harnesses that exec this function in a bare namespace
+    # still resolve them (see therapy_rules.py).
+    from therapy_rules import (NOVEL_BL_AGENTS, novel_agent_verdict as _novel_agent_verdict,
+                               normalize_carbapenemase_type, allergy_profile as _allergy_profile,
+                               carb_tx_text as _carb_tx_text)
     _crcl, _crcl_measured = resolve_crcl(cl_cr, is_renal)
     _crcl_src = ("" if _crcl_measured else
                  " (CrCl مفترضة — لم يُقَس الكرياتينين؛ أدخِله لضبط الجرعة)")
@@ -1962,6 +2038,28 @@ def analyze_antibiotics(
     # suspicion into a full beta-lactam lockdown.
     _is_carbapenemase = _mech_prob == "carbapenemase"
     _is_possible_carb = _mech_prob == "possible_carbapenemase"
+    _carb_type = normalize_carbapenemase_type(carbapenemase_type)
+    _mech_label = ("Carbapenemase" if _is_carbapenemase
+                   else "AmpC" if _mech_prob in ("ampc", "ampc_plasmid") else "ESBL")
+    _allergy = _allergy_profile(allergies)
+    # (level, note, reason) applied AFTER the loop, so a note never pre-empts a
+    # hard ban that a later branch (pregnancy, renal, hepatic) would apply.
+    _post_notes: Dict[str, Tuple[str, str, str]] = {}
+
+    def _add_note(_d: str, _lvl: str, _txt: str, _rsn: str) -> None:
+        """Merge, never overwrite: an allergy caution must survive a later
+        novel-agent note on the same drug. 'warn' beats 'allow'; the reason of
+        the first WARNING is kept as the primary one; texts are joined."""
+        if _d not in _post_notes:
+            _post_notes[_d] = (_lvl, _txt, _rsn)
+            return
+        _ol, _ot, _or = _post_notes[_d]
+        _nl = "warn" if "warn" in (_ol, _lvl) else "allow"
+        _nr = _or if (_ol == "warn" or _lvl != "warn") else _rsn
+        _post_notes[_d] = (_nl, _ot if _txt in _ot else f"{_ot}  \n{_txt}", _nr)
+    _spec_cat_aa = classify_specimen(culture_type)
+    _uti_upper = (_spec_cat_aa == "urine" and str(uti_syndrome or "").lower()
+                  in ("upper", "pyelonephritis", "urosepsis"))
 
     # ── Detect MRSA from AST markers (Oxacillin/Cefoxitin R), not just name ────
     # A S. aureus with Oxacillin-R or Cefoxitin-R IS MRSA -> ALL beta-lactams fail
@@ -2079,11 +2177,62 @@ def analyze_antibiotics(
         if is_hepatic and info.get("hepatic_caution"):
             interactions_alerts.append(f"🏥 تحذير كبدي: {drug} — يحتاج متابعة أو تعديل حسب الحالة.")
 
-        if is_intrinsically_avoided(organism_type, drug, info):
+        # ── Drug allergy (2026-11-10). Patient.allergies existed and nothing
+        # read it. A documented allergy is a hard stop for the class itself;
+        # cross-reactive classes are cautions with the real numbers.
+        _cn = _cls_and_name(info, drug)
+        # Sulbactam-durlobactam is a beta-lactam but not an aminopenicillin:
+        # it gets the cross-reactivity caution, not the class ban.
+        _is_pen = (any(k in _cn for k in ("penicillin", "cillin")) or "sulbactam" in _cn) \
+            and "cephalosporin" not in _cn and "cef" not in d_low \
+            and "durlobactam" not in d_low
+        _is_ceph = "cephalosporin" in _cn or d_low.startswith("cef") or d_low.startswith("ceph")
+        _is_carb = "carbapenem" in _cn or "penem" in d_low
+        _allergy_ban = None
+        if _allergy["penicillin"] and _is_pen:
+            _allergy_ban = "حساسية مسجّلة للبنسلين."
+        elif _allergy["cephalosporin"] and _is_ceph:
+            _allergy_ban = "حساسية مسجّلة للسيفالوسبورينات."
+        elif _allergy["sulfa"] and ("sulfamethox" in d_low or "sulfonamide" in cls):
+            _allergy_ban = "حساسية مسجّلة للسلفوناميد."
+        elif _allergy["fluoroquinolone"] and "fluoroquinolone" in cls:
+            _allergy_ban = "حساسية مسجّلة للفلوروكينولونات."
+        elif _allergy["macrolide"] and "macrolide" in cls:
+            _allergy_ban = "حساسية مسجّلة للماكروليدات."
+        if _allergy_ban:
+            banned.append(build_banned_item(
+                drug, "allergy", _allergy_ban,
+                f"{drug}: {_allergy_ban} لا يُعطى نفس الصنف. راجع نوع التفاعل السابق "
+                "(تأقي فوري أم طفح متأخر) قبل اختيار البديل."))
+            continue
+        if _allergy["penicillin"] and (_is_ceph or _is_carb or "durlobactam" in d_low):
+            _add_note(drug, "warn", (
+                "حساسية بنسلين: التفاعل المتصالب مع الكاربابينيم < 1%، ومع "
+                "السيفالوسبورينات ذات السلاسل الجانبية المختلفة منخفض. "
+                + ("الحساسية مسجّلة كشديدة/فورية — يُعطى تحت مراقبة أو بعد استشارة حساسية."
+                   if _allergy["penicillin_severe"] else
+                   "مع تاريخ طفح خفيف غير فوري يُعطى عادة بأمان.")), "allergy")
+        elif _allergy["cephalosporin"] and (_is_pen or _is_carb):
+            _add_note(drug, "warn", "حساسية سيفالوسبورين: تفاعل متصالب منخفض — راجع السلسلة الجانبية للدواء المسبب.", "allergy")
+        elif _allergy["ceftazidime"] and "aztreonam" in d_low:
+            _add_note(drug, "warn", "Aztreonam يشارك Ceftazidime نفس السلسلة الجانبية — تفاعل متصالب ممكن.", "allergy")
+
+        _avoid_src = is_intrinsically_avoided(organism_type, drug, info, return_source=True)
+        if _avoid_src == "intrinsic":
             banned.append(build_banned_item(
                 drug, "organism",
                 f"غير فعال لـ {organism_type} طبيعياً.",
                 f"{drug} لديه مقاومة طبيعية أو عدم فعالية ضد {organism_type}.",
+            ))
+            continue
+        if _avoid_src == "profile":
+            # FIX 2026-11-10: a profile "avoid" is a CLINICAL recommendation,
+            # not intrinsic resistance, and must not be worded as one.
+            banned.append(build_banned_item(
+                drug, "organism",
+                f"غير موصى به لـ {organism_type}.",
+                f"{drug}: مدرج في قائمة التجنّب السريرية لهذا الكائن (ملف الكائن). "
+                "ليس مقاومة جوهرية — راجع الملاحظة الخاصة بالكائن.",
             ))
             continue
 
@@ -2104,7 +2253,9 @@ def analyze_antibiotics(
         # mecA/PBP2a is an ALTERED TARGET, not a beta-lactamase: no inhibitor
         # rescues any beta-lactam. Match on class AND name, and include the
         # inhibitor tokens.
-        if _is_mrsa and any(k in _cls_and_name(info, drug)
+        # FIX 2026-11-10: Ceftaroline binds PBP2a and is THE anti-MRSA
+        # cephalosporin; the "cef" token banned it on every MRSA.
+        if _is_mrsa and drug != "Ceftaroline" and any(k in _cls_and_name(info, drug)
                             for k in ("penicillin", "cephalosporin", "carbapenem",
                                       "cillin", "cef", "ceph", "penem",
                                       "monobactam", "aztreonam", *_BLI_TOKENS)):
@@ -2117,7 +2268,7 @@ def analyze_antibiotics(
             continue
 
         # Unconfirmed MRSA: caution, never silent approval. See _possible_mrsa.
-        if _possible_mrsa and any(k in _cls_and_name(info, drug)
+        if _possible_mrsa and drug != "Ceftaroline" and any(k in _cls_and_name(info, drug)
                                   for k in ("penicillin", "cephalosporin",
                                             "carbapenem", "cillin", "cef",
                                             "ceph", "penem", *_BLI_TOKENS)):
@@ -2135,40 +2286,172 @@ def analyze_antibiotics(
             warned.append(_w)
             continue
 
-        # ── Cefepime (4th-gen) + ESBL: special handling (NOT a hard ban) ──────
-        # EUCAST Breakpoint Tables v16.1 reports as-tested; IDSA AMR Guidance 2026: Cefepime-S acceptable
-        # ONLY for uncomplicated lower UTI, AVOID in bacteremia/serious infection.
-        # Mirrors BLI-combo handling -- warn, don't ban, don't free-allow.
-        if (_is_esbl_like and not _is_carbapenemase
-                and drug == "Cefepime"
-                and sir_map.get("Cefepime") == "S"):
-            _wc = dict(info)
-            _wc["warning_reason"] = "esbl_bli_uti_only"
-            _wc["esbl_note"] = (
-                "كائن ESBL: Cefepime (4th-gen) قد يبقى حساسًا، لكنه فعّال فقط "
-                "لعدوى المسالك البولية البسيطة عند ثبوت الحساسية. تجنّبه في تجرثم "
-                "الدم أو التهاب الكلية الصاعد (IDSA AMR Guidance 2026 -- ارتفاع الوفيات) -- "
-                "Carbapenem هو الخيار الأول للعدوى الشديدة."
-            )
-            _wc["esbl_note_en"] = (
-                "ESBL organism: Cefepime (4th-gen) may remain susceptible but is "
-                "effective ONLY for uncomplicated lower UTI when proven S. Avoid in "
-                "bacteremia or pyelonephritis (IDSA AMR Guidance 2026 -- higher mortality) -- "
-                "Carbapenem is first-line for serious infection."
-            )
-            warned.append({"name": drug, **_wc})
+        # ── Novel beta-lactams / BLIs (2026-11-10) ─────────────────────────────
+        # Judged on their OWN activity, never by the old-beta-lactam mechanism
+        # bans below (see _novel_agent_verdict for the defect this closes).
+        _skip_mech = False
+        if drug in NOVEL_BL_AGENTS:
+            _nv, _nn = _novel_agent_verdict(drug, organism_type, _mech, _carb_type, sir_map)
+            if _nv == "ban":
+                banned.append(build_banned_item(drug, "organism", _nn[:170], _nn))
+                continue
+            _add_note(drug, _nv, _nn, "novel_agent")
+            _skip_mech = True
+
+        # ── P. aeruginosa + aminoglycosides (CLSI M100 Ed33, 2023) ────────────
+        # CLSI eliminated gentamicin as a treatment option for P. aeruginosa
+        # (suppress or report R) and limited amikacin to urinary isolates.
+        if "pseudomonas" in _org_l_aa and drug == "Gentamicin":
+            banned.append(build_banned_item(
+                drug, "no_breakpoint",
+                "CLSI 2023: Gentamicin لم يعد خياراً ضد P. aeruginosa.",
+                "CLSI M100 Ed33 (2023) ألغى Gentamicin كخيار علاجي لـ P. aeruginosa "
+                "(أقصى MIC يحقق التثبيط 0.5 µg/mL، أقل بكثير من الـ ECV). "
+                "يُحجب من التقرير أو يُبلَّغ R. البديل من نفس الصنف: Tobramycin."))
+            continue
+        if ("pseudomonas" in _org_l_aa and drug == "Amikacin"
+                and _spec_cat_aa != "urine"):
+            _add_note(drug, "warn", (
+                "CLSI M100 Ed33: breakpoints الأميكاسين لـ P. aeruginosa على عزلات البول فقط. "
+                "خارج البول لا يُستخدم الأمينوجليكوزيد إلا في توليفة مع بيتا-لاكتام فعّال."),
+                "aminoglycoside_pseudomonas")
+
+        # ── Organism-specific clinical cautions (2026-11-10) ──────────────────
+        # Not intrinsic resistance: an agent that tests S and works, but whose
+        # use depends on the infection (e.g. a 3rd-gen cephalosporin against a
+        # moderate-risk AmpC organism, IDSA AMR Guidance 2026).
+        # The mechanism blocks below still run: an ESBL/carbapenemase verdict
+        # is stronger than an organism caution and must not be skipped.
+        _prof_aa = ORGANISM_PROFILE.get(organism_type) or {}
+        _pcaut = _prof_aa.get("caution") or {}
+        if drug in _pcaut and culture_result in ("S", "I"):
+            # IDSA 2026: for AmpC organisms the 3rd-gen caution is about
+            # INVASIVE infection -- in uncomplicated cystitis the S agent is
+            # reasonable, so it stays recommended with the note attached.
+            _cyst = (_spec_cat_aa == "urine" and not _uti_upper
+                     and "AmpC" in str(_pcaut[drug]))
+            _add_note(drug, "allow" if _cyst else "warn", _pcaut[drug], "organism_caution")
+        _pnote = (_prof_aa.get("agent_notes") or {}).get(drug)
+        if _pnote and culture_result in ("S", "I", None):
+            _add_note(drug, "allow", _pnote, "organism_note")
+
+        # ── Colistin: no S category, BMD only (CLSI M100 / EUCAST) ───────────
+        if drug == "Colistin" and culture_result in ("S", "I"):
+            _add_note(drug, "warn", (
+                "Colistin: لا توجد فئة S في CLSI (I ≤ 2 / R ≥ 4 µg/mL) والاختبار بـ broth "
+                "microdilution فقط — نتيجة القرص أو الشريط غير صالحة. دواء Reserve يُستخدم في "
+                "توليفة مع مراقبة الكلى، و IDSA لا تفضّله لـ CRE أو DTR-PA عند توفر بديل حديث."),
+                "colistin")
+
+        # ── Oral fosfomycin outside E. coli (CLSI / EUCAST) ───────────────────
+        if (drug == "Fosfomycin" and culture_result in ("S", "I")
+                and not any(k in _org_l_aa for k in ("e. coli", "escherichia", "e.coli",
+                                                     "enterococcus faecalis"))):
+            _add_note(drug, "warn", (
+                "Fosfomycin الفموي: breakpoints في CLSI و EUCAST لـ E. coli (و E. faecalis في "
+                "CLSI) فقط. Klebsiella تحمل fosA كروموسومياً — النتيجة هنا غير مُعايَرة."),
+                "no_breakpoint")
+
+        # ── Penicillin-S S. aureus needs a negative penicillinase test ────────
+        if (drug == "Penicillin" and culture_result == "S"
+                and ("staph" in _org_l_aa or "mssa" in _org_l_aa)):
+            _bz = str(sir_map.get("Penicillinase") or sir_map.get("Beta-lactamase")
+                      or sir_map.get("blaZ") or "").strip().upper()
+            if _bz != "NEGATIVE":
+                _add_note(drug, "warn", (
+                    "Penicillin = S في Staphylococcus يحتاج تأكيد سلبية البنسليناز (zone-edge "
+                    "أو nitrocefin أو blaZ PCR) قبل الاعتماد عليه — CLSI M100."),
+                    "penicillinase_unconfirmed")
+
+        # ── Beta-haemolytic streptococci + TMP-SMX (CLSI M100 Ed36) ───────────
+        if (("trimethoprim" in d_low or "sulfamethox" in d_low)
+                and any(k in _org_l_aa for k in ("streptococcus pyogenes",
+                                                 "streptococcus agalactiae"))):
+            if _spec_cat_aa not in ("wound", "pus"):
+                banned.append(build_banned_item(
+                    drug, "no_breakpoint",
+                    "CLSI 2026: breakpoints لعدوى الجلد فقط.",
+                    "CLSI M100 Ed36 أضاف breakpoints لـ TMP-SMX مع المكورات الحالّة بيتا "
+                    "لعدوى الجلد والأنسجة الرخوة فقط — لا تُبلَّغ في البلعوم أو البول أو الدم."))
+                continue
+            _add_note(drug, "warn", "CLSI M100 Ed36: مقبول لعدوى الجلد والأنسجة الرخوة فقط.",
+                                 "no_breakpoint")
+
+        # ── AmpC + Cefepime (IDSA AMR Guidance 2024 / 2026) ───────────────────
+        # FIX 2026-11-10: AmpC was routed through the ESBL branch below and
+        # cefepime was demoted with an "ESBL ... avoid in bacteraemia" note.
+        # IDSA suggests cefepime for moderate/high-risk AmpC organisms when the
+        # isolate is susceptible; an SDD/I result raises the possibility of a
+        # co-produced ESBL, and then a carbapenem is preferred.
+        if (not _skip_mech and _mech_prob in ("ampc", "ampc_plasmid")
+                and drug == "Cefepime" and culture_result in ("S", "I")):
+            if culture_result == "S":
+                _add_note(drug, "allow", (
+                    "AmpC: Cefepime ثابت أمام AmpC وهو الخيار المقترح للعدوى الغازية "
+                    "(IDSA 2026) طالما النتيجة S (MIC ≤ 2)."), "ampc_cefepime")
+            else:
+                _add_note(drug, "warn", (
+                    "AmpC مع Cefepime SDD/I: احتمال ESBL مرافق — فضّل الكاربابينيم في "
+                    "العدوى الغازية (IDSA 2026)."), "ampc_sdd")
+            _skip_mech = True
+
+        # ── Mechanism-driven beta-lactam handling (rewritten 2026-11-10) ──────
+        # R is already handled above; here the drug is S / I / untested.
+        # EUCAST v16 / CLSI: report AS TESTED -- an S result is never edited to R.
+        # What changes with the mechanism is the TREATMENT recommendation, and
+        # that depends on the mechanism and on the site:
+        #   ESBL  : IDSA 2026 -- carbapenem for invasive infection; TMP-SMX / FQ
+        #           preferred for pyelonephritis/cUTI, pip-tazo an alternative
+        #           for cUTI; a beta-lactam that tests S is acceptable for cystitis.
+        #           MERINO (2018) is ESBL bacteraemia evidence only.
+        #   AmpC  : cefepime (S) is the suggested agent -- handled above; 3rd-gen
+        #           cephalosporins and pip-tazo are not suggested for invasive
+        #           infection (selection of derepressed mutants).
+        #   Carbapenemase (confirmed): every old beta-lactam is avoided; the
+        #           definitive agent depends on the enzyme class.
+        # The previous text cited MERINO and recommended a carbapenem for AmpC,
+        # and recommended "Colistin / Ceftazidime-Avibactam" for every
+        # carbapenemase -- wrong for MBL, and colistin is not preferred.
+        _urine_lower = (_spec_cat_aa == "urine" and not _uti_upper)
+        if _mech_prob in ("ampc", "ampc_plasmid"):
+            _invasive_tx = ("Cefepime إذا كانت النتيجة S (MIC ≤ 2)، وإلا Carbapenem "
+                            "(IDSA 2026 — AmpC)")
+            _invasive_why = ("AmpC: الـ 3rd-gen cephalosporins و Pip-Tazo غير مقترحة للعدوى الغازية "
+                             "لخطر انتقاء طفرات مُفرِطة الإنتاج أثناء العلاج")
+        else:
+            _invasive_tx = "Carbapenem (Meropenem / Ertapenem)"
+            _invasive_why = ("ESBL: البيتا-لاكتام الحساس معملياً أقل موثوقية في العدوى الغازية "
+                             "(inoculum effect؛ MERINO 2018 لتجرثم الدم)")
+
+        # Cefepime + ESBL (IDSA AMR 2024/2026): not suggested for pyelonephritis,
+        # cUTI or bloodstream infection even when S; acceptable for cystitis.
+        # FIX 2026-11-10: was WARNED on blood while S pip-tazo on the same blood
+        # culture was BANNED -- the weaker agent got the softer verdict.
+        if (not _skip_mech and _is_esbl_like and not _is_carbapenemase
+                and _mech_prob not in ("ampc", "ampc_plasmid")
+                and drug == "Cefepime" and culture_result in ("S", "I")):
+            if _urine_lower:
+                _wc = dict(info)
+                _wc["warning_reason"] = "esbl_bli_uti_only"
+                _wc["esbl_note"] = (
+                    "كائن ESBL: Cefepime حسّاس معملياً ويُبلَّغ كما هو. مقبول لالتهاب المثانة البسيط "
+                    "فقط. غير مقترح لالتهاب الحويضة أو cUTI أو تجرثم الدم (IDSA 2026).")
+                _wc["esbl_note_en"] = (
+                    "ESBL organism: cefepime is susceptible and reported as tested. Acceptable "
+                    "for uncomplicated cystitis only; not suggested for pyelonephritis, cUTI "
+                    "or bacteraemia (IDSA AMR Guidance 2026).")
+                warned.append({"name": drug, **_wc})
+                continue
+            banned.append(build_banned_item(
+                drug, "organism", "ESBL: Cefepime غير مقترح لهذه العدوى (IDSA 2026).",
+                "كائن منتج لـ ESBL: Cefepime غير مقترح لالتهاب الحويضة أو cUTI أو تجرثم الدم "
+                "حتى مع الحساسية المعملية (IDSA AMR Guidance 2026). تُبلَّغ النتيجة كما هي. "
+                + ("البديل في البول العلوي: TMP-SMX أو Ciprofloxacin/Levofloxacin إذا كانت حساسة، وإلا Carbapenem."
+                   if _spec_cat_aa == "urine" else f"البديل: {_invasive_tx}.")))
             continue
 
-        # ── ESBL / AmpC / Carbapenemase: penicillins & cephalosporins ─────────
-        # R is already handled above; here the drug is S / I / untested.
-        # EUCAST v16 report-as-tested (QC006 is corrected to this stance): an S
-        # cephalosporin is NOT edited to R on mechanism detection -- that is the
-        # pre-2017 practice, withdrawn. Treatment nuance is specimen-dependent
-        # and is the prescriber's call, mirroring the Cefepime + BLI blocks:
-        #   * Carbapenemase             -> avoid all beta-lactams (ban), even if S.
-        #   * ESBL/AmpC + urine + S/I   -> UTI-only caution (warn), reported as tested.
-        #   * ESBL/AmpC + anything else -> avoid; carbapenem preferred (ban).
-        if _is_possible_carb and _is_penicillin_or_ceph(info, drug) and culture_result in ("S", "I"):
+        if (not _skip_mech and _is_possible_carb and _is_penicillin_or_ceph(info, drug)
+                and culture_result in ("S", "I")):
             _w = dict(info)
             _w["warning_reason"] = "possible_carbapenemase"
             _w["esbl_note"] = (
@@ -2181,126 +2464,130 @@ def analyze_antibiotics(
             warned.append({"name": drug, **_w})
             continue
 
-        if (_is_esbl_like or _is_carbapenemase) and _is_penicillin_or_ceph(info, drug):
-            _mech_name = ("Carbapenemase" if _is_carbapenemase
-                          else "AmpC" if _mech_prob == "ampc" else "ESBL")
-            _spec_cat = classify_specimen(culture_type)
-            if (not _is_carbapenemase and culture_result in ("S", "I")
-                    and _spec_cat == "urine"):
+        if (not _skip_mech and (_is_esbl_like or _is_carbapenemase)
+                and _is_penicillin_or_ceph(info, drug)):
+            if (not _is_carbapenemase and culture_result in ("S", "I") and _urine_lower):
                 _w = dict(info)
                 _w["warning_reason"] = "esbl_bli_uti_only"
                 _w["esbl_note"] = (
-                    f"كائن {_mech_name}: هذا السيفالوسبورين/البنسلين حسّاس معملياً -- "
-                    "يُبلَّغ **كما هو** (EUCAST v16؛ لا تُحوّل الحساس إلى R). خيار ممكن "
-                    "لعدوى المسالك البولية البسيطة فقط عند ثبوت الحساسية (يُفضَّل "
-                    "Nitrofurantoin/Fosfomycin/TMP-SMX). تجنّبه في تجرثم الدم أو "
-                    "التهاب الكلية الصاعد -- Carbapenem أولاً (IDSA AMR / MERINO)."
+                    f"كائن {_mech_label}: هذا البيتا-لاكتام حسّاس معملياً -- يُبلَّغ **كما هو** "
+                    "(EUCAST v16؛ لا تُحوّل الحساس إلى R). خيار ممكن لالتهاب المثانة البسيط فقط "
+                    "(المفضّل: Nitrofurantoin أو TMP-SMX؛ Fosfomycin لـ E. coli). تجنّبه في "
+                    f"التهاب الحويضة وتجرثم الدم -- {_invasive_tx}."
                 )
                 _w["esbl_note_en"] = (
-                    f"{_mech_name} organism: this penicillin/cephalosporin is "
-                    "susceptible in vitro -- report it AS TESTED (EUCAST v16; do not "
-                    "edit S to R). Option for uncomplicated lower UTI only when proven "
-                    "S (prefer Nitrofurantoin/Fosfomycin/TMP-SMX). Avoid in bacteremia "
-                    "or pyelonephritis -- Carbapenem is first-line (IDSA AMR / MERINO)."
+                    f"{_mech_label} organism: this beta-lactam is susceptible in vitro -- report "
+                    "it AS TESTED (EUCAST v16). An option for uncomplicated cystitis only "
+                    "(preferred: nitrofurantoin or TMP-SMX; fosfomycin for E. coli). Avoid in "
+                    "pyelonephritis and bacteraemia (IDSA AMR Guidance 2026)."
                 )
                 warned.append({"name": drug, **_w})
                 continue
-            banned.append(build_banned_item(
-                drug, "organism",
-                f"غير مُوصى به -- كائن منتج لـ {_mech_name}.",
-                f"الكائن منتج لـ {_mech_name}. الحساسية المعملية تُبلَّغ كما هي، لكن "
-                f"لا يُنصح بالبنسلينات/السيفالوسبورينات في العدوى الجهازية بـ ESBL/AmpC "
-                f"(أو مع Carbapenemase) حتى لو أظهرت المزرعة حساسية -- تأثير اللقاح "
-                f"(inoculum effect) في العينات غير البولية. الخيار العلاجي = "
-                f"{'Colistin / Ceftazidime-Avibactam' if _is_carbapenemase else 'Carbapenem (Meropenem/Ertapenem)'}.",
-            ))
+            if _is_carbapenemase:
+                banned.append(build_banned_item(
+                    drug, "organism", "غير مُوصى به -- كائن منتج لـ Carbapenemase.",
+                    "الكائن منتج لـ Carbapenemase: لا يُعتمد على البنسلينات أو السيفالوسبورينات "
+                    "التقليدية حتى لو ظهرت حساسة. العلاج النهائي: " + _carb_tx_text(_carb_type) + "."))
+            else:
+                banned.append(build_banned_item(
+                    drug, "organism", f"غير مُوصى به -- كائن منتج لـ {_mech_label}.",
+                    f"الكائن منتج لـ {_mech_label}. الحساسية المعملية تُبلَّغ كما هي، لكن "
+                    f"{_invasive_why}. الخيار العلاجي: {_invasive_tx}."))
             continue
 
         # ── Carbapenemase: also suppress carbapenems ──────────────────────────
-        if _is_carbapenemase and _is_carbapenem(info):
+        if not _skip_mech and _is_carbapenemase and _is_carbapenem(info):
             banned.append(build_banned_item(
                 drug, "organism",
                 "غير فعّال -- كائن منتج لـ Carbapenemase.",
-                "الكائن منتج لإنزيم Carbapenemase (KPC/MBL/OXA): مقاوم للكاربابينيمات. "
-                "استخدم Colistin أو Ceftazidime-Avibactam (± Aztreonam لـ MBL) حسب الحساسية.",
+                "الكائن منتج لإنزيم Carbapenemase: لا يُعتمد على الكاربابينيم منفرداً. "
+                "العلاج النهائي: " + _carb_tx_text(_carb_type) + ".",
             ))
             continue
 
-        # ── ESBL + BLI combos (Amox-Clav, Pip-Tazo): UTI-only caution ─────────
-        # Not banned outright (effective for uncomplicated ESBL UTI if S),
-        # but NOT for bacteremia/serious infection (MERINO 2018).
-        # A *suspicion* of carbapenemase is handled the same way for BLI combos as
-        # it already is for cephalosporins: warn and ask for confirmation, do not
-        # ban. Previously the two branches contradicted each other -- on a blood
-        # culture with a single Ertapenem-R, an S cephalosporin was merely WARNED
-        # while S Piperacillin-Tazobactam was BANNED. That is backwards: pip-tazo
-        # is the more robust of the two against a porin-loss/AmpC phenotype, which
-        # is the commonest benign explanation for isolated ertapenem resistance.
-        # Confirmed ESBL / confirmed carbapenemase keep the off-urine ban (MERINO).
-        if _is_possible_carb and not (_is_esbl_like or _is_carbapenemase) \
-                and _is_bli_combo(info, drug) and culture_result in ("S", "I"):
+        # ── BLI combinations (Amox-Clav, Amp-Sulb, Pip-Tazo, Cefop-Sulb) ──────
+        # A *suspicion* of carbapenemase: warn and ask for confirmation, never
+        # ban (pip-tazo is the more robust agent against the porin-loss/AmpC
+        # phenotype that most often explains an isolated ertapenem R).
+        if (not _skip_mech and _is_possible_carb
+                and not (_is_esbl_like or _is_carbapenemase)
+                and _is_bli_combo(info, drug) and culture_result in ("S", "I")):
             _w = dict(info)
             _w["warning_reason"] = "possible_carbapenemase"
-            _systemic = classify_specimen(culture_type) != "urine"
-            if _systemic:
+            if not _urine_lower:
                 _w["esbl_note"] = (
                     "⛔ لا تستخدمه كعلاج نهائي منفرد في هذه العينة. اشتباه كاربابينيميز "
-                    "غير مؤكد (كاربابينيم واحد R أو Meropenem I) في عينة جهازية. "
-                    "التوليفة حسّاسة معملياً وتُبلَّغ كما هي (EUCAST v16)، لكن MERINO 2018 "
-                    "أظهرت وفيات أعلى مع BLI مقابل الكاربابينيم في تجرثم الدم. "
+                    "غير مؤكد (كاربابينيم واحد R أو Meropenem I). "
+                    "التوليفة حسّاسة معملياً وتُبلَّغ كما هي (EUCAST v16). "
                     "ابدأ بالكاربابينيم وأكّد بـ mCIM أو PCR، ولا تنزل لهذه التوليفة إلا "
                     "بعد نفي الإنزيم واستشارة الأمراض المعدية."
                 )
                 _w["esbl_note_en"] = (
-                    "DO NOT use as definitive monotherapy for this specimen. "
-                    "Unconfirmed carbapenemase suspicion on a systemic site. Susceptible "
-                    "in vitro and reported as tested (EUCAST v16), but MERINO 2018 showed "
-                    "higher mortality with BLI versus meropenem in bacteraemia. Start a "
-                    "carbapenem, confirm with mCIM/PCR, and de-escalate to this agent only "
-                    "once the enzyme is excluded and ID has been consulted."
+                    "DO NOT use as definitive monotherapy for this specimen. Unconfirmed "
+                    "carbapenemase suspicion. Susceptible in vitro and reported as tested "
+                    "(EUCAST v16). Start a carbapenem, confirm with mCIM/PCR, and de-escalate "
+                    "only once the enzyme is excluded and ID has been consulted."
                 )
             else:
                 _w["esbl_note"] = (
                     "⚠️ اشتباه كاربابينيميز غير مؤكد (كاربابينيم واحد R أو Meropenem I). "
                     "هذه التوليفة حسّاسة معملياً وتُبلَّغ كما هي (EUCAST v16). خيار مقبول "
-                    "لعدوى المسالك البولية البسيطة عند ثبوت الحساسية؛ أكّد بـ mCIM أو PCR."
+                    "لالتهاب المثانة البسيط عند ثبوت الحساسية؛ أكّد بـ mCIM أو PCR."
                 )
                 _w["esbl_note_en"] = (
                     "Unconfirmed carbapenemase suspicion. Susceptible in vitro and reported "
-                    "as tested (EUCAST v16). Acceptable for uncomplicated lower UTI when "
-                    "proven S; confirm with mCIM or PCR."
+                    "as tested (EUCAST v16). Acceptable for uncomplicated cystitis when proven "
+                    "S; confirm with mCIM or PCR."
                 )
             warned.append({"name": drug, **_w})
             continue
 
-        if (_is_esbl_like or _is_carbapenemase) \
-                and _is_bli_combo(info, drug):
-            # SPECIMEN GATING. The "UTI-only caution" is only a caution when the
-            # specimen IS urine. MERINO 2018 randomised ESBL BLOODSTREAM infection
-            # and found piperacillin-tazobactam inferior to meropenem (30-day
-            # mortality 12.3% vs 3.7%) even where pip-tazo tested susceptible --
-            # so on blood, CSF or any deep site a BLI combination is refused, not
-            # merely annotated. Hardening the class matching briefly moved these
-            # agents from banned to warned; this restores the ban off-urine.
-            if classify_specimen(culture_type) != "urine":
+        if (not _skip_mech and (_is_esbl_like or _is_carbapenemase)
+                and _is_bli_combo(info, drug)):
+            _is_pt = "piperacillin" in d_low
+            if _is_carbapenemase:
                 banned.append({**info, **build_banned_item(
                     name=drug, category="organism",
-                    reason_short="ESBL + عينة غير بولية -- BLI غير كافٍ (MERINO 2018).",
+                    reason_short="Carbapenemase -- المثبط التقليدي غير كافٍ.",
+                    reason_detail=("Tazobactam و Sulbactam و Clavulanate لا تثبّط الكاربابينيميز. "
+                                   "العلاج النهائي: " + _carb_tx_text(_carb_type) + "."))})
+                continue
+            # cUTI / pyelonephritis: IDSA AMR Guidance 2026 lists pip-tazo as an
+            # ALTERNATIVE for ESBL-E cUTI (TMP-SMX / FQ preferred); not amox-clav.
+            if (_spec_cat_aa == "urine" and _uti_upper and _is_pt
+                    and culture_result in ("S", "I")):
+                _w = dict(info)
+                _w["warning_reason"] = "esbl_bli_uti_only"
+                _w["esbl_note"] = (
+                    (f"كائن {_mech_label} + التهاب حويضة / cUTI: Pip-Tazo بديل مقبول (IDSA 2026) "
+                     "بجرعة 4.5 g q6h وتسريب ممتد، والمفضّل TMP-SMX أو Ciprofloxacin/Levofloxacin إذا كانت "
+                     "حساسة. في حالة الصدمة أو تجرثم الدم: Carbapenem.")
+                    if _mech_label == "ESBL" else
+                    ("AmpC + التهاب حويضة: Cefepime (إذا S) مقدَّم على Pip-Tazo (IDSA 2026)."))
+                warned.append({"name": drug, **_w})
+                continue
+            if not _urine_lower:
+                banned.append({**info, **build_banned_item(
+                    name=drug, category="organism",
+                    reason_short=(f"{_mech_label} + عدوى غازية/علوية -- BLI غير مقترح."),
                     reason_detail=(
-                        "كائن منتج لـ ESBL في عينة غير بولية: توليفة المثبط (BLI) "
-                        "أظهرت وفيات أعلى من الكاربابينيم في تجرثم الدم "
-                        "(MERINO 2018: 12.3% مقابل 3.7%) حتى مع ثبوت الحساسية "
-                        "معملياً. استخدم Carbapenem."),
+                        (f"كائن منتج لـ ESBL في {'التهاب حويضة / cUTI' if _spec_cat_aa == 'urine' else 'عينة غير بولية'}: "
+                         + ("Amoxicillin-clavulanate / Ampicillin-sulbactam لالتهاب المثانة فقط (IDSA 2026). "
+                            if not _is_pt else
+                            "Pip-Tazo أظهر وفيات أعلى من Meropenem في تجرثم الدم (MERINO 2018: 12.3% مقابل 3.7%). ")
+                         + f"البديل: {_invasive_tx}.")
+                        if _mech_label == "ESBL" else
+                        (f"{_invasive_why}. البديل: {_invasive_tx}.")),
                 )})
                 continue
             _w = dict(info)
             _w["warning_reason"] = "esbl_bli_uti_only"
-            _w["esbl_note"] = ("كائن ESBL: هذا المثبط (BLI) فعّال فقط لعدوى المسالك "
-                               "البولية البسيطة عند ثبوت الحساسية. لا يُستخدم في تجرثم الدم "
-                               "أو العدوى الشديدة (دراسة MERINO 2018) -- استخدم Carbapenem.")
-            _w["esbl_note_en"] = ("ESBL organism: this BLI combination is effective ONLY for "
-                                  "uncomplicated lower UTI when proven susceptible. Do NOT use "
-                                  "in bacteremia or serious infection (MERINO 2018) -- use Carbapenem.")
+            _w["esbl_note"] = (f"كائن {_mech_label}: هذه التوليفة مقبولة لالتهاب المثانة البسيط عند "
+                               "ثبوت الحساسية (IDSA 2026). لا تُستخدم في تجرثم الدم أو العدوى الشديدة "
+                               f"-- {_invasive_tx}.")
+            _w["esbl_note_en"] = (f"{_mech_label} organism: this BLI combination is acceptable for "
+                                  "uncomplicated cystitis when proven susceptible (IDSA 2026). Not "
+                                  "for bacteraemia or serious infection.")
             warned.append({"name": drug, **_w})
             continue
 
@@ -2322,27 +2609,26 @@ def analyze_antibiotics(
                 # rationale that is the whole point of the restriction, and
                 # losing the fact that AAP Red Book 2024 and CLSI now accept
                 # short courses of doxycycline (<21 days) at any age.
-                _tet_reason = CHILD_BAN_REASONS["tetracycline"]
-                if age >= 8:
-                    _tet_reason += (
-                        "\n\nملاحظة (AAP Red Book 2024): بعد سن 8 سنوات لم يعد "
-                        "التصبغ السني عائقاً، و Doxycycline لدورات قصيرة (< 21 يوم) "
-                        "مقبول في هذه الفئة العمرية عند وجود دواعٍ واضحة "
-                        "(rickettsial / atypical / MRSA بالجلد). القرار للطبيب المعالج."
-                    )
+                # FIX 2026-11-10: the tooth-staining restriction is an UNDER-8
+                # rule. An 8-17 year old was banned from every tetracycline
+                # ("needs a physician decision"), which no guideline says --
+                # from 8 years they are ordinary agents. Doxycycline itself is
+                # child_safe now (AAP Red Book 2024) and never reaches here.
+                if age < 8:
+                    banned.append(build_banned_item(
+                        drug, "child", "غير مناسب < 8 سنوات.",
+                        CHILD_BAN_REASONS["tetracycline"]
+                        + "\n\nملاحظة (AAP Red Book 2024): Doxycycline لدورة قصيرة (≤ 21 يوم) "
+                          "مقبول في أي عمر — هو البديل من نفس الصنف."))
+                    continue
+                # age 8-17: no paediatric ban -- fall through to the remaining checks
+            else:
                 banned.append(build_banned_item(
-                    drug, "child",
-                    f"غير مناسب < 8 سنوات." if age < 8
-                    else "يحتاج قرار طبيب — تتراسيكلين في عمر 8-17 سنة.",
-                    _tet_reason,
+                    drug, "child", "غير مفضل للأطفال.",
+                    f"{drug}: يحتاج تقييم متخصص أو لا يُنصح به روتينياً في عمر {age} سنة. "
+                    f"{info.get('child_note', '')}".strip(),
                 ))
                 continue
-            banned.append(build_banned_item(
-                drug, "child", "غير مفضل للأطفال.",
-                f"{drug}: يحتاج تقييم متخصص أو لا يُنصح به روتينياً في عمر {age} سنة. "
-                f"{info.get('child_note', '')}".strip(),
-            ))
-            continue
 
         # ── NEONATAL / YOUNG-INFANT gate ──────────────────────────────────────
         # Runs only when the patient is inside the first year, and only when we
@@ -2519,35 +2805,43 @@ def analyze_antibiotics(
                 ))
                 continue
 
-            # ── 2. Aminoglycosides: ALWAYS BANNED (class-based) ──────────────
+            # ── 2. Aminoglycosides: USE WITH CAUTION (2026-11-10) ─────────────
+            # FIX: was an absolute ban. Gentamicin is standard obstetric therapy
+            # (ampicillin + gentamicin for chorioamnionitis / intra-amniotic
+            # infection, ACOG; severe pyelonephritis and sepsis in pregnancy).
+            # Documented fetal eighth-nerve toxicity is with streptomycin and
+            # kanamycin; gentamicin/tobramycin/amikacin carry a theoretical risk
+            # managed by once-daily dosing, levels and short courses.
             if "aminoglycoside" in cls:
-                preg_note = info.get("preg_note") or (
-                    "⛔ ممنوع في الحمل -- Aminoglycosides.\n"
-                    "يعبر المشيمة -> سُمية للأذن الجنينية (ototoxicity) -> فقدان سمع دائم.\n"
-                    "FDA Category D / ACOG: contraindication."
-                )
-                banned.append(build_banned_item(
-                    drug, "pregnancy",
-                    preg_note.splitlines()[0],
-                    preg_note,
-                ))
+                preg_warn_items.append({
+                    "name": drug, **info,
+                    "preg_note": (
+                        f"⚠️ Use with Caution — {drug} في الحمل:\n"
+                        "يعبر المشيمة. خطر السمية السمعية الجنينية موثّق أساساً مع Streptomycin و "
+                        "Kanamycin؛ مع Gentamicin نظري ونادر.\n"
+                        "مقبول عند الحاجة (التهاب المشيمة: Ampicillin + Gentamicin؛ التهاب حويضة "
+                        "شديد أو إنتان) بجرعة يومية واحدة ومراقبة المستوى ولأقصر مدة.\n"
+                        ">>> القرار النهائي للطبيب المعالج حصراً. <<<"),
+                })
                 continue
 
-            # ── 3. TMP-SMX & Sulfonamides: BANNED ────────────────────────────
-            if (preg_status_of(info) == "Banned"
-                    and ("sulfonamide" in cls or "trimethoprim" in d_low
-                         or "sulfamethox" in d_low)):
-                preg_note = info.get("preg_note") or (
-                    "⛔ ممنوع في الحمل -- TMP/SMX.\n"
-                    "Trimethoprim: مضاد حمض الفوليك -> neural tube defects (1st trim).\n"
-                    "Sulfonamides: تنافس bilirubin -> kernicterus نووي (3rd trim).\n"
-                    "البديل: Nitrofurantoin (1st/2nd trim) | Fosfomycin | Cephalexin."
-                )
-                banned.append(build_banned_item(
-                    drug, "pregnancy",
-                    preg_note.splitlines()[0],
-                    preg_note,
-                ))
+            # ── 3. TMP-SMX: USE WITH CAUTION, trimester-dependent (2026-11-10) ─
+            # FIX: was an absolute ban. ACOG Committee Opinion 717 (reaffirmed):
+            # sulfonamides remain appropriate in the 1st trimester when no
+            # suitable alternative exists; avoid near term (kernicterus). It is
+            # also the alternative for Listeria in penicillin allergy.
+            if ("sulfonamide" in cls or "trimethoprim" in d_low
+                    or "sulfamethox" in d_low):
+                preg_warn_items.append({
+                    "name": drug, **info,
+                    "preg_note": (
+                        "⚠️ TMP-SMX — Use with Caution في الحمل:\n"
+                        "الثلث الأول: مضاد للفولات — يُستخدم فقط عند غياب بديل مناسب (ACOG CO 717) "
+                        "مع حمض الفوليك.\n"
+                        "قرب الولادة (≥ 32-36 أسبوع): تجنّب — خطر kernicterus.\n"
+                        "الثلث الثاني: مقبول.\n"
+                        ">>> القرار النهائي للطبيب المعالج حسب الـ trimester. <<<"),
+                })
                 continue
 
             # ── 4. Clarithromycin: BANNED ─────────────────────────────────────
@@ -2678,6 +2972,51 @@ def analyze_antibiotics(
 
         allowed.append({"name": drug, **info})
 
+    # ── Upper UTI / pyelonephritis: lower-tract-only agents (2026-11-10) ──────
+    # Nitrofurantoin, oral fosfomycin and norfloxacin do not reach renal tissue
+    # or serum; IDSA cUTI 2025 and the IDSA AMR guidance restrict them to
+    # cystitis. They used to be offered for pyelonephritis because the engine
+    # only knew "urine", not which part of the urinary tract was infected.
+    if _uti_upper:
+        _lower_only = {"Nitrofurantoin", "Fosfomycin", "Norfloxacin"}
+        _hit = ({d["name"] for d in allowed if d.get("name") in _lower_only}
+                | {d["name"] for d in warned if d.get("name") in _lower_only}
+                | {d["name"] for d in preg_warn_items if d.get("name") in _lower_only})
+        allowed = [d for d in allowed if d.get("name") not in _lower_only]
+        warned = [d for d in warned if d.get("name") not in _lower_only]
+        preg_warn_items = [d for d in preg_warn_items if d.get("name") not in _lower_only]
+        for _nm in sorted(_hit):
+            banned.append(build_banned_item(
+                _nm, "uti_upper",
+                "التهاب حويضة / cUTI -- عامل للمثانة فقط.",
+                f"{_nm}: لا يحقق تركيزاً علاجياً في نسيج الكلى أو الدم، فلا يُستخدم لالتهاب "
+                "الحويضة أو cUTI أو الإنتان البولي (IDSA cUTI 2025). الخيارات: TMP-SMX أو "
+                "Ciprofloxacin/Levofloxacin إذا كانت حساسة، أو بيتا-لاكتام وريدي حسب المزرعة."))
+
+    # ── Post-loop clinical notes (2026-11-10) ─────────────────────────────────
+    # Applied after every hard ban has had its chance: a note never rescues a
+    # drug from `banned`, and a "warn" note only DEMOTES allowed -> warned.
+    if _post_notes:
+        _banned_names = {b.get("name") for b in banned if isinstance(b, dict)}
+        _new_allowed = []
+        for _it in allowed:
+            _nm = _it.get("name")
+            if _nm in _post_notes and _nm not in _banned_names:
+                _lvl, _note, _rsn = _post_notes[_nm]
+                _it = dict(_it)
+                _it["clinical_note"] = _note
+                if _lvl == "warn":
+                    _it["warning_reason"] = _rsn
+                    warned.append(_it)
+                    continue
+            _new_allowed.append(_it)
+        allowed = _new_allowed
+        for _bucket in (warned, preg_warn_items):
+            for _it in _bucket:
+                _nm = _it.get("name")
+                if _nm in _post_notes and not _it.get("clinical_note"):
+                    _it["clinical_note"] = _post_notes[_nm][1]
+
     # ── The Intermediate fact is INDEPENDENT of warning_reason ───────────────
     # DEFECT 2026-08-01: `warning_reason` is a single slot and the branches above
     # are ordered hard-ban -> hepatic -> renal -> intermediate, each ending in
@@ -2795,9 +3134,16 @@ MDR_CATEGORIES = {
     "Folate PI":               ["Trimethoprim/Sulfamethoxazole"],
     "Penicillins+BLI":         ["Amoxicillin + Clavulanic acid","Ampicillin/Sulbactam"],
     "Polymyxins":              ["Colistin"],
-    "Glycopeptides":           ["Vancomycin"],
+    # Teicoplanin added 2026-11-10 (Magiorakos Tables 1-2 list it).
+    "Glycopeptides":           ["Vancomycin", "Teicoplanin"],
     "Oxazolidinones":          ["Linezolid"],
+    # Kept for any external caller; no organism set counts it any more --
+    # nitrofurantoin appears in NO Magiorakos table (2026-11-10).
     "Nitrofurans":             ["Nitrofurantoin"],
+    # Categories added 2026-11-10 -- in the Magiorakos tables and now stocked:
+    "Glycylcyclines":          ["Tigecycline"],
+    "Lipopeptides":            ["Daptomycin"],
+    "Anti-MRSA Cephalosporins": ["Ceftaroline"],
     "Fosfomycins":             ["Fosfomycin"],
     "Tetracyclines":           ["Doxycycline", "Tetracycline", "Minocycline"],
     "Macrolides":              ["Azithromycin", "Clarithromycin", "Erythromycin"],
@@ -2826,12 +3172,15 @@ MDR_CATEGORIES = {
 }
 
 # Categories meaningful for Gram-negative organisms (Enterobacterales / non-fermenters)
+# FIX 2026-11-10: "Nitrofurans" removed (in no Magiorakos table -- it padded
+# the denominator and could push an isolate away from an XDR call);
+# "Glycylcyclines" (tigecycline, Magiorakos Table 3) added.
 MDR_CATEGORIES_GRAM_NEG = frozenset([
     "Aminoglycosides", "Antipseudomonal Penics", "Extended-Sp Cephalosporins",
     "Carbapenems", "Fluoroquinolones", "Folate PI", "Penicillins+BLI",
     "Polymyxins", "Non-Extended-Sp Cephalosporins", "Cephamycins",
-    "Monobactams", "Penicillins",
-    "Nitrofurans", "Fosfomycins", "Tetracyclines",
+    "Monobactams", "Penicillins", "Glycylcyclines",
+    "Fosfomycins", "Tetracyclines",
 ])
 # ── Gram-positive category sets — ONE SET PER ORGANISM GROUP ────────────────
 # A single flat "Gram-positive" set cannot be correct, because Magiorakos builds
@@ -2852,6 +3201,8 @@ MDR_CATEGORIES_STAPH = frozenset([
     "Anti-staphylococcal Beta-lactams", "Aminoglycosides", "Fluoroquinolones",
     "Folate PI", "Fusidanes", "Glycopeptides", "Lincosamides", "Macrolides",
     "Oxazolidinones", "Tetracyclines", "Rifamycins", "Fosfomycins",
+    # 2026-11-10: Magiorakos Table 1 categories now stocked in the formulary.
+    "Anti-MRSA Cephalosporins", "Lipopeptides", "Glycylcyclines",
 ])
 
 # Table 2 — Enterococcus spp.
@@ -2862,6 +3213,8 @@ MDR_CATEGORIES_STAPH = frozenset([
 MDR_CATEGORIES_ENTEROCOCCUS = frozenset([
     "Penicillins", "Aminoglycosides", "Carbapenems", "Fluoroquinolones",
     "Glycopeptides", "Oxazolidinones", "Tetracyclines",
+    # 2026-11-10: Magiorakos Table 2 categories now stocked.
+    "Lipopeptides", "Glycylcyclines",
 ])
 
 # Streptococci (incl. S. pneumoniae) — NOT a Magiorakos organism.
@@ -2883,11 +3236,13 @@ MDR_CATEGORIES_GRAM_POS = frozenset([
     "Penicillins", "Aminoglycosides", "Carbapenems", "Fluoroquinolones",
     "Folate PI", "Fusidanes", "Glycopeptides", "Lincosamides", "Macrolides",
     "Oxazolidinones", "Tetracyclines", "Rifamycins", "Fosfomycins",
+    "Anti-MRSA Cephalosporins", "Lipopeptides", "Glycylcyclines",
 ])
 
 GRAM_POSITIVE_ORGANISMS = frozenset([
     "staphylococcus aureus", "mrsa", "mssa",
     "staphylococcus epidermidis", "staphylococcus saprophyticus",
+    "staphylococcus lugdunensis", "coagulase-negative staphylococci",
     "enterococcus faecalis", "enterococcus faecium", "enterococcus spp.", "vre",
     "streptococcus pneumoniae", "streptococcus pyogenes",
     "streptococcus agalactiae", "streptococcus viridans",
@@ -3251,7 +3606,7 @@ MDR_INFO = {
 ESBL_PRODUCERS = frozenset([
     "escherichia coli", "e. coli", "e.coli",
     "klebsiella pneumoniae", "klebsiella spp.", "klebsiella oxytoca",
-    "proteus mirabilis", "proteus spp.",
+    "proteus mirabilis", "proteus spp.", "proteus vulgaris",
     "enterobacter cloacae", "enterobacter spp.", "enterobacter aerogenes",
     "citrobacter freundii", "citrobacter koseri", "citrobacter spp.",
     "serratia marcescens", "serratia spp.",
@@ -3318,6 +3673,7 @@ ESBL_MARKERS = {
 }
 CARBAPENEMS = ["Imipenem/Cilastatin", "Meropenem", "Ertapenem"]
 
+
 def predict_esbl(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
     """
     Predict ESBL / AmpC / Carbapenemase from the resistance phenotype.
@@ -3367,7 +3723,11 @@ def predict_esbl(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
     primary_tested = [d for d in ESBL_MARKERS["primary"] if d in sir_map]
     _thin_panel = len(primary_tested) < 2
 
-    carb_R_list = [d for d in CARBAPENEMS if _r(d)]
+    # FIX 2026-11-10: Proteeae imipenem R is expected, not a carbapenemase marker.
+    from therapy_rules import is_proteeae
+    _proteeae = is_proteeae(organism)
+    carb_R_list = [d for d in CARBAPENEMS if _r(d)
+                   and not (_proteeae and d == "Imipenem/Cilastatin")]
     erta_R   = _r("Ertapenem")
     mero_R   = _r("Meropenem")
     mero_I   = sir_map.get("Meropenem") == "I"
@@ -3479,7 +3839,11 @@ def predict_esbl(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
             "mechanism": "Carbapenemase (KPC / MBL / OXA-48-like) — Predicted",
             "markers_R": carb_R_list + primary_R,
             "detail": f"مقاومة لـ ≥2 كاربابينيم ({', '.join(carb_R_list)}) -- نمط Carbapenemase صريح.",
-            "action": "أرسل للمختبر المرجعي فوراً (PCR/mCIM). عزل صارم. Colistin/Ceftazidime-Avibactam.",
+            "action": ("أرسل للمختبر المرجعي فوراً وحدّد نوع الإنزيم (NG-Test CARBA-5 أو PCR). عزل صارم. "
+                       "KPC: Ceftazidime-avibactam أو Meropenem-vaborbactam أو Imipenem-relebactam؛ "
+                       "OXA-48: Ceftazidime-avibactam؛ NDM/VIM/IMP: Aztreonam-avibactam أو "
+                       "Ceftazidime-avibactam + Aztreonam أو Cefiderocol (IDSA 2026). "
+                       "Colistin ليس خياراً مفضّلاً."),
         }
     if erta_R and (sir_map.get("Meropenem") in ("S", "I")) and not mero_R:
         # Ertapenem-R with Meropenem-S/I. Suggestive of OXA-48 (common in Egypt /
@@ -3653,35 +4017,42 @@ from pathogenicity import (                                          # noqa: E40
 # ═══════════════════════════════════════════════════════════════════════
 # ENGINE 1 -- Treatment Duration Engine
 # IDSA AMR Guidance 2026 | Sanford Guide 2025 | ATS/IDSA CAP 2019
-# IDSA UTI 2022 | IDSA SSTI 2014 | STOP-IT trial 2015
+# IDSA cUTI 2025 | IDSA SSTI 2014 | STOP-IT trial 2015
 # ═══════════════════════════════════════════════════════════════════════
+# Durations re-read 2026-11-10 against IDSA cUTI 2025, BALANCE (NEJM 2025),
+# ATS/IDSA HAP/VAP 2016 and IDSA bacterial meningitis. Defects fixed: cUTI and
+# pyelonephritis were 10-14 days (14 for men), GNB bacteraemia was a flat 14
+# days IV with no oral step-down, HAP/VAP sent non-fermenters to 14 days, and
+# every CSF isolate that was not a pneumococcus got the 21-day GNB course --
+# including N. meningitidis and H. influenzae (7 days). "IDSA UTI 2022" was
+# not a real citation.
 TREATMENT_DURATION_DB: Dict[str, Any] = {
     "UTI_uncomplicated_female": {
-        "label": "Uncomplicated UTI (Female)",
-        "days": (3, 7), "standard": 5, "iv_days": 0, "po_days": 5,
-        # Empiric drug menu removed: on a culture report it duplicates and can
-        # contradict the AST-directed ranked list (quoting an agent that is
-        # Resistant or was never tested). Duration is what matters here.
-        "notes": "",
-        "follow_up_culture": False, "ref": "IDSA UTI Guidelines 2022",
+        "label": "Uncomplicated cystitis (Female)",
+        "days": (1, 7), "standard": 5, "iv_days": 0, "po_days": 5,
+        "notes": "Agent-dependent: Nitrofurantoin 5d | TMP-SMX 3d | Fosfomycin 3 g single dose | "
+                 "beta-lactam 3-7d.",
+        "follow_up_culture": False, "ref": "IDSA/ESCMID uncomplicated cystitis 2011",
     },
     "UTI_complicated": {
-        "label": "Complicated UTI",
-        "days": (7, 14), "standard": 10, "iv_days": 3, "po_days": 7,
-        "notes": "7d if rapid response | 14d for males or catheter-associated",
-        "follow_up_culture": True, "ref": "IDSA 2022",
+        "label": "Complicated UTI (incl. men, catheter-associated)",
+        "days": (5, 14), "standard": 7, "iv_days": 0, "po_days": 7,
+        "notes": "7d if prompt response (FQ 5-7d) -- men included. 10-14d only for delayed "
+                 "response or an unresolved urological source. Oral step-down once improving.",
+        "follow_up_culture": False, "ref": "IDSA cUTI Guideline 2025",
     },
     "Pyelonephritis_outpatient": {
         "label": "Pyelonephritis (Outpatient)",
-        "days": (7, 14), "standard": 7, "iv_days": 0, "po_days": 7,
-        "notes": "7d FQ | 14d if beta-lactam used. Verify sensitivities.",
-        "follow_up_culture": True, "ref": "IDSA 2022",
+        "days": (5, 7), "standard": 7, "iv_days": 0, "po_days": 7,
+        "notes": "FQ 5-7d | TMP-SMX or beta-lactam 7d. Verify sensitivities.",
+        "follow_up_culture": False, "ref": "IDSA cUTI Guideline 2025",
     },
     "Pyelonephritis_inpatient": {
-        "label": "Pyelonephritis (Inpatient)",
-        "days": (10, 14), "standard": 14, "iv_days": 3, "po_days": 11,
-        "notes": "IV until afebrile 24-48h -> step-down to high-bioavailability oral",
-        "follow_up_culture": True, "ref": "IDSA 2022",
+        "label": "Pyelonephritis / cUTI (Inpatient)",
+        "days": (7, 14), "standard": 7, "iv_days": 2, "po_days": 5,
+        "notes": "7d total if prompt response (incl. urinary-source bacteraemia); IV until "
+                 "afebrile 24-48h -> high-bioavailability oral step-down.",
+        "follow_up_culture": False, "ref": "IDSA cUTI Guideline 2025",
     },
     "CAP_mild": {
         "label": "CAP -- Mild (Outpatient)",
@@ -3703,21 +4074,47 @@ TREATMENT_DURATION_DB: Dict[str, Any] = {
     },
     "HAP_VAP": {
         "label": "HAP / VAP",
-        "days": (7, 14), "standard": 8, "iv_days": 8, "po_days": 0,
-        "notes": "8d adequate for most HAP/VAP. Non-fermenters (Pseudomonas, CRAB) -> 14d.",
-        "follow_up_culture": True, "ref": "ATS/IDSA HAP/VAP 2016",
+        "days": (7, 14), "standard": 7, "iv_days": 7, "po_days": 0,
+        "notes": "7d for HAP and VAP, non-fermenters included (ATS/IDSA 2016). Longer only for "
+                 "slow response, abscess, empyema or immunosuppression.",
+        "follow_up_culture": False, "ref": "ATS/IDSA HAP/VAP 2016",
     },
     "Bacteremia_GNB": {
         "label": "GNB Bacteremia",
-        "days": (7, 14), "standard": 14, "iv_days": 14, "po_days": 0,
-        "notes": "14d IV. Source control mandatory. Echo if Staph aureus.",
-        "follow_up_culture": True, "ref": "IDSA AMR Guidance 2026",
+        "days": (7, 14), "standard": 7, "iv_days": 3, "po_days": 4,
+        "notes": "7d if the source is controlled and the patient is improving (BALANCE, NEJM 2025); "
+                 "14d for uncontrolled source, severe immunosuppression or slow response. Oral "
+                 "step-down (FQ / TMP-SMX / high-bioavailability beta-lactam) once stable.",
+        "follow_up_culture": False, "ref": "BALANCE 2025 | IDSA cUTI 2025",
+    },
+    "Bacteremia_Enterococcus": {
+        "label": "Enterococcal Bacteremia",
+        "days": (7, 14), "standard": 7, "iv_days": 7, "po_days": 0,
+        "notes": "7-14d if uncomplicated and the source is removed. E. faecalis: assess for "
+                 "endocarditis (DENOVA score / echo) -- endocarditis needs 4-6 weeks.",
+        "follow_up_culture": True, "ref": "Expert consensus | ESC Endocarditis 2023",
+    },
+    "Bacteremia_Strep": {
+        "label": "Streptococcal Bacteremia",
+        "days": (10, 14), "standard": 10, "iv_days": 5, "po_days": 5,
+        "notes": "10-14d (oral step-down possible once stable). Exclude endocarditis if persistent "
+                 "or viridans group.",
+        "follow_up_culture": False, "ref": "Expert consensus",
+    },
+    "Bacteremia_CoNS": {
+        "label": "Coagulase-negative Staphylococcal Bacteremia",
+        "days": (5, 14), "standard": 7, "iv_days": 7, "po_days": 0,
+        "notes": "Treat only if TRUE infection (>=2 sets / device). 5-7d after catheter removal; "
+                 "10-14d with catheter retention + lock therapy. Single positive bottle = "
+                 "contaminant until proven otherwise.",
+        "follow_up_culture": True, "ref": "IDSA CRBSI 2009",
     },
     "Bacteremia_MSSA": {
         "label": "MSSA Bacteremia",
         "days": (14, 42), "standard": 14, "iv_days": 14, "po_days": 0,
-        "notes": "Min 14d IV (uncomplicated) | 28-42d (complicated/endovascular). Echo mandatory.",
-        "follow_up_culture": True, "ref": "IDSA Bacteremia 2025",
+        "notes": "Min 14d from first negative culture (uncomplicated) | 28-42d (complicated/"
+                 "endovascular). Echo + repeat blood cultures mandatory. ID consult.",
+        "follow_up_culture": True, "ref": "IDSA MRSA 2011 (SAB principles) | expert consensus",
     },
     "Bacteremia_MRSA": {
         "label": "MRSA Bacteremia",
@@ -3728,14 +4125,38 @@ TREATMENT_DURATION_DB: Dict[str, Any] = {
     "Meningitis_pneumococcal": {
         "label": "Pneumococcal Meningitis",
         "days": (10, 14), "standard": 14, "iv_days": 14, "po_days": 0,
-        "notes": "Dexamethasone 0.15mg/kg q6h x4d adjunct. IV throughout.",
-        "follow_up_culture": True, "ref": "IDSA Meningitis Guidelines",
+        "notes": "Dexamethasone 0.15 mg/kg q6h x 2-4d, started before or with the first "
+                 "antibiotic dose. IV throughout.",
+        "follow_up_culture": True, "ref": "IDSA Bacterial Meningitis 2004",
+    },
+    "Meningitis_meningococcal": {
+        "label": "Meningococcal Meningitis",
+        "days": (7, 7), "standard": 7, "iv_days": 7, "po_days": 0,
+        "notes": "7d IV. Chemoprophylaxis for close contacts.",
+        "follow_up_culture": False, "ref": "IDSA Bacterial Meningitis 2004",
+    },
+    "Meningitis_haemophilus": {
+        "label": "H. influenzae Meningitis",
+        "days": (7, 7), "standard": 7, "iv_days": 7, "po_days": 0,
+        "notes": "7d IV. Dexamethasone in children (before/with first dose).",
+        "follow_up_culture": False, "ref": "IDSA Bacterial Meningitis 2004",
+    },
+    "Meningitis_listeria": {
+        "label": "Listeria Meningitis",
+        "days": (21, 42), "standard": 21, "iv_days": 21, "po_days": 0,
+        "notes": ">=21d IV (longer for rhombencephalitis/abscess). Ampicillin +/- gentamicin.",
+        "follow_up_culture": True, "ref": "IDSA Bacterial Meningitis 2004",
+    },
+    "Meningitis_GBS": {
+        "label": "Group B Streptococcal Meningitis",
+        "days": (14, 21), "standard": 14, "iv_days": 14, "po_days": 0,
+        "notes": "14-21d IV.", "follow_up_culture": True, "ref": "IDSA Bacterial Meningitis 2004",
     },
     "Meningitis_GNB": {
         "label": "Gram-Negative Meningitis",
         "days": (21, 21), "standard": 21, "iv_days": 21, "po_days": 0,
-        "notes": "21d IV for GNB meningitis. Verify CSF sterilization.",
-        "follow_up_culture": True, "ref": "IDSA Meningitis Guidelines",
+        "notes": "21d IV for aerobic Gram-negative bacillary meningitis. Verify CSF sterilization.",
+        "follow_up_culture": True, "ref": "IDSA Bacterial Meningitis 2004",
     },
     "SSTI_mild": {
         "label": "SSTI -- Mild (Cellulitis)",
@@ -3798,7 +4219,7 @@ def suggest_severity(
 ) -> Dict[str, Any]:
     """
     Auto-suggest infection severity based on patient risk factors.
-    Clinical basis: IDSA UTI 2022 | IDSA CAP 2019 | Sanford 2025 |
+    Clinical basis: IDSA cUTI 2025 | IDSA CAP 2019 | Sanford 2025 |
                     AHA Infective Endocarditis 2015 | SCCM Sepsis-3 2016.
 
     Returns:
@@ -3827,7 +4248,7 @@ def suggest_severity(
     if _cat == "urine":
         # IDSA: complicated UTI = male, pregnant, elderly, renal, catheter
         if sex == "Male":
-            reasons_moderate.append("Male UTI -> always complicated (IDSA 2022)")
+            reasons_moderate.append("Male UTI -> complicated (IDSA cUTI 2025)")
         if is_preg:
             reasons_moderate.append("Pregnancy -> complicated UTI")
         if age >= 65:
@@ -3843,7 +4264,7 @@ def suggest_severity(
             reasons_moderate.append("Upper UTI symptoms -> pyelonephritis")
         if not reasons_moderate and not reasons_severe:
             if sex == "Female" and age < 65 and not is_preg and not is_renal:
-                reasons_mild.append("Young healthy female -> uncomplicated cystitis (IDSA 2022)")
+                reasons_mild.append("Young healthy female -> uncomplicated cystitis (IDSA/ESCMID 2011)")
 
     elif _cat == "sputum":
         # CURB-65 proxy: Age ≥65, renal, altered mentation
@@ -3983,15 +4404,31 @@ def get_treatment_duration(
         elif severity == "severe": key = "CAP_severe"
         else:                      key = "CAP_moderate"
     elif _cat == "blood":
+        # 2026-11-10: every non-S. aureus isolate used to get the GNB course
+        # (CoNS, enterococci and streptococci included).
         if has_mrsa or "mrsa" in org:           key = "Bacteremia_MRSA"
-        elif "staphylococcus aureus" in org:     key = "Bacteremia_MSSA"
+        elif ("staphylococcus aureus" in org or "lugdunensis" in org):
+            key = "Bacteremia_MSSA"            # S. lugdunensis behaves like S. aureus
+        elif "coagulase" in org or "staphylococc" in org:
+            key = "Bacteremia_CoNS"
+        elif "enterococc" in org or org.strip() == "vre":
+            key = "Bacteremia_Enterococcus"
+        elif "streptococc" in org:               key = "Bacteremia_Strep"
         else:                                    key = "Bacteremia_GNB"
     elif _cat == "csf":
         # Match pneumococcus explicitly so Klebsiella *pneumoniae* (a GNB) is not
         # mis-routed to the pneumococcal-meningitis protocol.
         _is_pneumococcus = ("streptococcus pneumoniae" in org
                             or "s. pneumoniae" in org or "pneumococc" in org)
-        key = "Meningitis_pneumococcal" if _is_pneumococcus else "Meningitis_GNB"
+        if _is_pneumococcus:                     key = "Meningitis_pneumococcal"
+        elif "meningitidis" in org or "meningococc" in org:
+            key = "Meningitis_meningococcal"
+        elif "influenzae" in org or "haemophilus" in org:
+            key = "Meningitis_haemophilus"
+        elif "listeria" in org:                  key = "Meningitis_listeria"
+        elif "agalactiae" in org or "group b" in org:
+            key = "Meningitis_GBS"
+        else:                                    key = "Meningitis_GNB"
     elif _cat in ("wound", "pus"):
         if any(k in synd for k in ["necrotiz", "fasciitis", "gangrene"]): key = "SSTI_severe"
         elif "osteomyelitis" in synd or "bone" in synd:                    key = "Osteomyelitis"
@@ -4013,8 +4450,10 @@ def get_treatment_duration(
     mn, mx = d["days"]
     notes_extra = []
     if has_mdr:
-        mx = max(mx, 14)
-        notes_extra.append("MDR organism: extended duration may be required.")
+        # 2026-11-10: was `mx = max(mx, 14)`. Once an ACTIVE agent is given,
+        # duration does not differ for resistant organisms (IDSA AMR 2026).
+        notes_extra.append("MDR organism: same duration as for a susceptible isolate once on an "
+                           "active agent (IDSA AMR 2026); the clock starts at active therapy.")
     if is_renal: notes_extra.append("Renal impairment: monitor drug levels closely.")
     if age > 65:  notes_extra.append("Elderly: monitor for toxicity; shorter courses if responding.")
     if notes_extra:
@@ -4041,8 +4480,12 @@ HIGH_BIOAVAILABILITY: Dict[str, int] = {
     "Nitrofurantoin": 85, "Fosfomycin": 36, "Azithromycin": 37,
     "Clarithromycin": 52, "Erythromycin": 35, "Trimethoprim": 90,
 }
+# "bacteremia" removed 2026-11-10: oral step-down is standard for
+# uncomplicated Gram-negative and streptococcal bacteraemia once the patient
+# is stable (BALANCE 2025; IDSA cUTI 2025). S. aureus bacteraemia and
+# endocarditis keep IV-only through their own entries.
 ALWAYS_IV_SYNDROMES = frozenset([
-    "endocarditis", "meningitis", "septic shock", "bacteremia",
+    "endocarditis", "meningitis", "septic shock", "staphylococcus aureus bacteremia",
     "necrotizing fasciitis", "osteomyelitis (acute)", "vap",
 ])
 
@@ -4107,41 +4550,77 @@ def get_hepatic_recommendations(allowed_drugs: List[Dict], child_pugh: str) -> L
 # ENGINE 4 -- Combination Therapy Suggester
 # IDSA AMR Guidance 2026 | WHO Priority Pathogens | ESCAPE organisms
 # ═══════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════
+# COMBINATION / DEFINITIVE-THERAPY PANELS — rewritten 2026-11-10
+# ----------------------------------------------------------------------
+# Re-read against IDSA AMR Guidance 2026 (Gram-negatives) and the primary
+# trials. Defects in the previous table:
+#   * CRAB led with "Ampicillin-Sulbactam + Colistin" citing ATTACK. ATTACK
+#     (Kaye, Lancet Infect Dis 2023) tested SULBACTAM-DURLOBACTAM vs colistin;
+#     sulbactam-durlobactam + a carbapenem is now IDSA's priority regimen and
+#     was absent. "Colistin + Rifampicin + Meropenem" cited AIDA, which tested
+#     colistin +/- meropenem and found no benefit (as did OVERCOME 2023);
+#     rifampicin added nothing in Durante-Mangoni (CID 2013). Both are now
+#     listed as AVOID with their real evidence.
+#   * CRE listed agents without the enzyme class that decides between them
+#     (KPC / OXA-48 / MBL), cited RECAPTURE (a cUTI trial, not CRE) and had no
+#     aztreonam-avibactam. Options now carry `for_types`.
+#   * CRPA led with "Ceftolozane-Tazobactam + Amikacin". IDSA: a carbapenem-R
+#     isolate still S to a traditional beta-lactam is treated with that agent
+#     (high dose, extended infusion); routine aminoglycoside combination is not
+#     suggested once susceptibility is known.
+#   * ESBL called ertapenem "carbapenem-sparing" (it is a carbapenem) and had
+#     no urinary pathway (TMP-SMX / FQ preferred for pyelonephritis/cUTI).
+#   * MRSA / VRE options cited "IDSA AMR Guidance 2026", which covers
+#     Gram-negatives only; "AVOID: Vancomycin + Pip-Tazo" cited a "NINJA trial"
+#     -- the evidence is observational, and the ACORN RCT (JAMA 2023) found no
+#     AKI difference between pip-tazo and cefepime. Now a monitoring note.
+#   * No AmpC or S. maltophilia panel existed.
+# ═══════════════════════════════════════════════════════════════════════
 COMBINATION_THERAPY: Dict[str, Dict] = {
     "CRAB": {
         "title": "Carbapenem-Resistant A. baumannii (CRAB)",
         "urgency": "CRITICAL",
         "options": [
-            {"combo": "Ampicillin-Sulbactam (high-dose 9g q8h) + Colistin", "evidence": "★★★",
-             "indication": "Sulbactam has intrinsic activity vs A. baumannii -- first-line combination",
-             "caution": "", "ref": "ATTACK trial 2023 | IDSA AMR Guidance 2026"},
-            {"combo": "Cefiderocol ± Sulbactam", "evidence": "★★★",
-             "indication": "Novel siderophore cephalosporin -- active against CRAB if susceptible",
-             "caution": "", "ref": "CREDIBLE-CR trial | IDSA AMR Guidance 2026"},
-            {"combo": "Colistin + Meropenem (2g q8h extended infusion 3h)", "evidence": "★★",
-             "indication": "When novel agents unavailable -- carbapenem synergy",
-             "caution": "CAUTION: Monitor renal function closely", "ref": "IDSA AMR Guidance 2026"},
-            {"combo": "Colistin + Rifampicin + Meropenem (Triple)", "evidence": "★★",
-             "indication": "XDR CRAB -- triple therapy as last resort",
-             "caution": "CAUTION: Monitor LFTs (Rifampicin)", "ref": "AIDA trial | IDSA AMR Guidance 2026"},
+            {"combo": "Sulbactam-Durlobactam + Meropenem or Imipenem", "evidence": "★★★",
+             "indication": "Preferred regimen for CRAB (durlobactam protects sulbactam from OXA-23/24/58)",
+             "caution": "Not active against MBL-producing Acinetobacter. If resistant: two "
+                        "non-sulbactam agents, or sulbactam-durlobactam + cefiderocol (IDSA 2026)",
+             "ref": "ATTACK (Kaye, Lancet Infect Dis 2023) | IDSA AMR Guidance 2026"},
+            {"combo": "High-dose Ampicillin-Sulbactam (9 g sulbactam/day) + second active agent "
+                      "(Polymyxin B, Minocycline, Tigecycline or Cefiderocol)", "evidence": "★★",
+             "indication": "When sulbactam-durlobactam is unavailable -- at least two active agents",
+             "caution": "Polymyxin B preferred over colistin outside the urinary tract",
+             "ref": "IDSA AMR Guidance 2026"},
+            {"combo": "Cefiderocol as part of a combination", "evidence": "★",
+             "indication": "Intolerance or resistance to the regimens above",
+             "caution": "CREDIBLE-CR: excess mortality in the Acinetobacter subgroup -- never as monotherapy",
+             "ref": "CREDIBLE-CR (Bassetti, Lancet Infect Dis 2021) | IDSA AMR Guidance 2026"},
+            {"combo": "AVOID: Colistin + Meropenem as the backbone", "evidence": "AVOID",
+             "indication": "",
+             "caution": "AIDA (Paul, Lancet Infect Dis 2018) and OVERCOME (Kaye, NEJM Evid 2023): "
+                        "adding meropenem to colistin did not improve outcome",
+             "ref": "AIDA 2018 | OVERCOME 2023"},
+            {"combo": "AVOID: Rifampicin added to a polymyxin", "evidence": "AVOID",
+             "indication": "",
+             "caution": "No mortality benefit (Durante-Mangoni, Clin Infect Dis 2013)",
+             "ref": "Durante-Mangoni 2013"},
         ]
     },
     "CRPA": {
-        "title": "Carbapenem-Resistant Pseudomonas aeruginosa (CRPA)",
-        "urgency": "CRITICAL",
+        "title": "Carbapenem-Resistant Pseudomonas aeruginosa (CRPA, not DTR)",
+        "urgency": "HIGH",
         "options": [
-            {"combo": "Ceftolozane-Tazobactam + Amikacin", "evidence": "★★★",
-             "indication": "If Ceftolozane-Taz susceptible -- preferred for CRPA",
-             "caution": "", "ref": "IDSA AMR Guidance 2026"},
-            {"combo": "Aztreonam + Ceftazidime-Avibactam", "evidence": "★★★",
-             "indication": "MBL/NDM-producing CRPA -- complementary beta-lactam mechanism",
-             "caution": "Susceptibility testing for combination required", "ref": "IDSA AMR Guidance 2026"},
-            {"combo": "Cefiderocol monotherapy", "evidence": "★★",
-             "indication": "XDR CRPA -- if no other options available",
-             "caution": "", "ref": "IDSA AMR Guidance 2026"},
-            {"combo": "Colistin + Meropenem (extended infusion)", "evidence": "★★",
-             "indication": "When novel agents unavailable",
-             "caution": "CAUTION: Mandatory renal monitoring", "ref": "IDSA AMR Guidance 2026"},
+            {"combo": "Traditional beta-lactam that tests S (Pip-Tazo, Ceftazidime, Cefepime or "
+                      "Aztreonam) -- high dose, extended infusion", "evidence": "★★★",
+             "indication": "Carbapenem-R but still S to a traditional agent -- treat with that agent",
+             "caution": "Repeat AST if the isolate is from a relapse",
+             "ref": "IDSA AMR Guidance 2026"},
+            {"combo": "Ceftolozane-Tazobactam / Ceftazidime-Avibactam / Imipenem-Relebactam",
+             "evidence": "★★",
+             "indication": "Only if no traditional beta-lactam tests S (then the isolate is usually DTR)",
+             "caution": "Reserve agents -- see the DTR-PA panel",
+             "ref": "IDSA AMR Guidance 2026"},
         ]
     },
     "DTR_PA": {
@@ -4149,23 +4628,23 @@ COMBINATION_THERAPY: Dict[str, Dict] = {
         "urgency": "CRITICAL",
         "options": [
             {"combo": "Ceftolozane-Tazobactam", "evidence": "★★★",
-             "indication": "DTR-PA -- preferred agent where susceptible",
+             "indication": "Preferred; favoured over ceftazidime-avibactam for pneumonia",
              "caution": "", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Ceftazidime-Avibactam", "evidence": "★★★",
-             "indication": "DTR-PA -- alternative first-line novel beta-lactam",
+             "indication": "Preferred alternative (not active if the isolate produces an MBL)",
              "caution": "", "ref": "IDSA AMR Guidance 2026"},
-            {"combo": "Imipenem-Relebactam", "evidence": "★★",
-             "indication": "DTR-PA -- where ceftolozane/ceftazidime-avibactam unavailable",
-             "caution": "", "ref": "IDSA AMR Guidance 2026"},
+            {"combo": "Imipenem-Relebactam", "evidence": "★★★",
+             "indication": "Preferred alternative (not active against MBL producers)",
+             "caution": "High risk of resistance emerging on therapy, as with ceftazidime-avibactam (IDSA 2026)",
+             "ref": "IDSA AMR Guidance 2026"},
             {"combo": "Cefiderocol", "evidence": "★★",
-             "indication": "DTR-PA -- salvage when all novel beta-lactams fail",
+             "indication": "Preferred when an MBL (VIM/NDM) is detected; otherwise when the above are inactive",
              "caution": "", "ref": "IDSA AMR Guidance 2026"},
             {"combo": "AVOID: Colistin-based combination as first choice",
              "evidence": "AVOID",
              "indication": "",
-             "caution": "IDSA v4.0 prefers the novel beta-lactams over polymyxins "
-                        "for DTR-PA -- lower nephrotoxicity and better outcomes. "
-                        "Reserve colistin for when none of the above is available.",
+             "caution": "IDSA prefers the novel beta-lactams over polymyxins for DTR-PA -- lower "
+                        "nephrotoxicity and better outcomes. Reserve polymyxins for when none is active.",
              "ref": "IDSA AMR Guidance 2026"},
         ]
     },
@@ -4173,18 +4652,98 @@ COMBINATION_THERAPY: Dict[str, Dict] = {
         "title": "Carbapenem-Resistant Enterobacterales (CRE)",
         "urgency": "CRITICAL",
         "options": [
+            {"combo": "Identify the carbapenemase class (NG-Test CARBA-5 / PCR)", "evidence": "★★★",
+             "indication": "The enzyme class decides the agent -- NDM and OXA-48 are the commonest in Egypt",
+             "caution": "", "ref": "IDSA AMR Guidance 2026", "for_types": ["UNKNOWN"]},
             {"combo": "Ceftazidime-Avibactam", "evidence": "★★★",
-             "indication": "KPC-producing CRE -- first-line therapy",
-             "caution": "", "ref": "RECAPTURE trial | IDSA AMR Guidance 2026"},
+             "indication": "KPC or OXA-48 producers -- preferred",
+             "caution": "Inactive alone against MBL (NDM/VIM/IMP)", "ref": "IDSA AMR Guidance 2026",
+             "for_types": ["KPC", "OXA-48", "UNKNOWN"]},
             {"combo": "Meropenem-Vaborbactam", "evidence": "★★★",
-             "indication": "KPC-producing CRE -- alternative to Ceft-Avib",
-             "caution": "", "ref": "TANGO-II trial | IDSA AMR Guidance 2026"},
-            {"combo": "Ceftazidime-Avibactam + Aztreonam", "evidence": "★★★",
-             "indication": "MBL-producing CRE (NDM, VIM, IMP) -- synergistic combination",
+             "indication": "KPC producers -- preferred",
+             "caution": "Inactive against OXA-48 and MBL", "ref": "TANGO-II 2018 | IDSA AMR Guidance 2026",
+             "for_types": ["KPC", "UNKNOWN"]},
+            {"combo": "Imipenem-Relebactam", "evidence": "★★★",
+             "indication": "KPC producers -- preferred",
+             "caution": "Inactive against OXA-48 and MBL", "ref": "RESTORE-IMI 1 2020 | IDSA AMR Guidance 2026",
+             "for_types": ["KPC", "UNKNOWN"]},
+            {"combo": "Aztreonam-Avibactam", "evidence": "★★★",
+             "indication": "NDM / VIM / IMP (MBL) producers -- preferred",
+             "caution": "Breakpoints for Enterobacterales (CLSI M100 Ed36)",
+             "ref": "ASSEMBLE / REVISIT | IDSA AMR Guidance 2026", "for_types": ["MBL", "UNKNOWN"]},
+            {"combo": "Ceftazidime-Avibactam + Aztreonam (given together)", "evidence": "★★★",
+             "indication": "MBL producers -- preferred alternative where aztreonam-avibactam is unavailable",
+             "caution": "Synergy test (e.g. disk-stacking) advisable",
+             "ref": "Falcone, Clin Infect Dis 2021 | IDSA AMR Guidance 2026", "for_types": ["MBL", "UNKNOWN"]},
+            {"combo": "Cefiderocol", "evidence": "★★",
+             "indication": "MBL producers (alternative); KPC / OXA-48 when the preferred agents are inactive",
+             "caution": "", "ref": "IDSA AMR Guidance 2026", "for_types": ["MBL", "KPC", "OXA-48", "UNKNOWN"]},
+            {"combo": "Polymyxin B or Colistin-based combination", "evidence": "★",
+             "indication": "Only when no novel agent is active",
+             "caution": "Nephrotoxicity; not for intrinsically polymyxin-R genera (Proteeae, Serratia)",
+             "ref": "IDSA AMR Guidance 2026"},
+        ]
+    },
+    "ESBL": {
+        "title": "ESBL-Producing Enterobacterales",
+        "urgency": "MODERATE",
+        "options": [
+            {"combo": "Cystitis: Nitrofurantoin or TMP-SMX", "evidence": "★★★",
+             "indication": "Preferred for uncomplicated cystitis if S (fosfomycin oral for E. coli only)",
+             "caution": "Not for pyelonephritis or bacteraemia", "ref": "IDSA AMR Guidance 2026"},
+            {"combo": "Pyelonephritis / cUTI: TMP-SMX, Ciprofloxacin or Levofloxacin", "evidence": "★★★",
+             "indication": "Preferred if S; carbapenem if resistant. Pip-Tazo an alternative for cUTI",
              "caution": "", "ref": "IDSA AMR Guidance 2026"},
-            {"combo": "Colistin + Meropenem high-dose (2g q8h 3h infusion)", "evidence": "★★",
-             "indication": "When novel agents unavailable -- heteroresistance approach",
-             "caution": "CAUTION: Nephrotoxicity risk", "ref": "IDSA AMR Guidance 2026"},
+            {"combo": "Outside the urinary tract: Meropenem, Imipenem or Ertapenem", "evidence": "★★★",
+             "indication": "Preferred for bacteraemia and serious infection; oral TMP-SMX/FQ step-down once stable",
+             "caution": "Ertapenem: avoid in hypoalbuminaemia (<2.5 g/dL) and critical illness",
+             "ref": "MERINO 2018 | IDSA AMR Guidance 2026"},
+            {"combo": "AVOID: Piperacillin-Tazobactam for bacteremia", "evidence": "AVOID",
+             "indication": "Inferior to meropenem for ESBL bloodstream infection",
+             "caution": "MERINO (Harris, JAMA 2018): 30-day mortality 12.3% vs 3.7%", "ref": "MERINO 2018"},
+            {"combo": "AVOID: Cefepime for pyelonephritis, cUTI or bacteraemia", "evidence": "AVOID",
+             "indication": "Even when cefepime tests S", "caution": "", "ref": "IDSA AMR Guidance 2026"},
+        ]
+    },
+    "AMPC": {
+        "title": "AmpC-producing Enterobacterales (derepressed / plasmid)",
+        "urgency": "MODERATE",
+        "options": [
+            {"combo": "Cefepime (if MIC <= 2 / S)", "evidence": "★★★",
+             "indication": "Preferred for invasive infection -- stable to AmpC",
+             "caution": "If cefepime is SDD/I, suspect ESBL co-production -- use a carbapenem",
+             "ref": "IDSA AMR Guidance 2026"},
+            {"combo": "Carbapenem (Meropenem / Ertapenem)", "evidence": "★★★",
+             "indication": "Cefepime SDD/I or R, or critical illness", "caution": "",
+             "ref": "IDSA AMR Guidance 2026"},
+            {"combo": "Oral step-down: TMP-SMX or a fluoroquinolone", "evidence": "★★",
+             "indication": "After clinical response, if S", "caution": "", "ref": "IDSA AMR Guidance 2026"},
+            {"combo": "AVOID: Ceftriaxone or Pip-Tazo to START invasive therapy (E. cloacae, "
+                      "K. aerogenes, C. freundii)", "evidence": "AVOID",
+             "indication": "Selection of derepressed mutants on therapy",
+             "caution": "Acceptable for cystitis; continuing ceftriaxone is reasonable in a non-severe "
+                        "infection that is already responding (IDSA 2026)",
+             "ref": "IDSA AMR Guidance 2026"},
+        ]
+    },
+    "STENO": {
+        "title": "Stenotrophomonas maltophilia (invasive)",
+        "urgency": "HIGH",
+        "options": [
+            {"combo": "Cefiderocol monotherapy", "evidence": "★★★",
+             "indication": "Preferred for invasive infection", "caution": "",
+             "ref": "IDSA AMR Guidance 2026"},
+            {"combo": "Aztreonam-Avibactam (or Ceftazidime-Avibactam + Aztreonam) + second agent",
+             "evidence": "★★",
+             "indication": "Alternative -- no CLSI breakpoint for this organism",
+             "caution": "", "ref": "IDSA AMR Guidance 2026"},
+            {"combo": "TMP-SMX + Minocycline or Levofloxacin", "evidence": "★★",
+             "indication": "When cefiderocol is unavailable; monotherapy acceptable only for mild infection or step-down",
+             "caution": "TMP-SMX: high dose (8-12 mg/kg/day TMP); monitor potassium",
+             "ref": "IDSA AMR Guidance 2026"},
+            {"combo": "AVOID: Ceftazidime", "evidence": "AVOID",
+             "indication": "CLSI removed the ceftazidime breakpoints for S. maltophilia (2024)",
+             "caution": "L1/L2 beta-lactamases", "ref": "CLSI M100 Ed34"},
         ]
     },
     "MRSA": {
@@ -4193,49 +4752,49 @@ COMBINATION_THERAPY: Dict[str, Dict] = {
         "options": [
             {"combo": "Vancomycin -- AUC/MIC target 400-600", "evidence": "★★★",
              "indication": "MRSA bacteremia | endocarditis | pneumonia -- first-line",
-             "caution": "TDM mandatory: AUC/MIC-guided (not trough-only)", "ref": "IDSA MRSA 2011 (updated 2025)"},
-            {"combo": "Daptomycin (8-10 mg/kg) + Ceftaroline", "evidence": "★★★",
-             "indication": "Persistent MRSA bacteremia | refractory endocarditis",
-             "caution": "Daptomycin INEFFECTIVE for pneumonia (inactivated by surfactant)", "ref": "IDSA AMR Guidance 2026"},
-            {"combo": "Vancomycin + Rifampicin", "evidence": "★★★",
-             "indication": "Biofilm infections: prosthetic joint, CIED, vascular graft",
-             "caution": "NEVER use Rifampicin as monotherapy -- rapid resistance", "ref": "IDSA AMR Guidance 2026"},
+             "caution": "AUC-guided TDM (not trough-only)",
+             "ref": "IDSA MRSA 2011 | ASHP/IDSA/PIDS/SIDP vancomycin TDM 2020"},
+            {"combo": "Daptomycin (8-10 mg/kg)", "evidence": "★★★",
+             "indication": "MRSA bacteremia / right-sided endocarditis -- alternative to vancomycin",
+             "caution": "Daptomycin INEFFECTIVE for pneumonia (inactivated by surfactant); weekly CK",
+             "ref": "Fowler, NEJM 2006 | IDSA MRSA 2011"},
             {"combo": "Linezolid 600mg q12h", "evidence": "★★★",
-             "indication": "MRSA pneumonia -- superior to Vancomycin (ZEPHyR trial)",
-             "caution": "Avoid >2 weeks | Weekly CBC monitoring | Serotonin syndrome risk", "ref": "ZEPHyR trial 2012 | IDSA AMR Guidance 2026"},
-            {"combo": "AVOID: Vancomycin + Piperacillin-Tazobactam", "evidence": "AVOID",
-             "indication": "Contraindicated combination -- increased AKI without efficacy benefit",
-             "caution": "NINJA trial 2020: increased nephrotoxicity", "ref": "NINJA trial 2020"},
+             "indication": "MRSA pneumonia -- equivalent alternative to vancomycin",
+             "caution": "ZEPHyR showed higher clinical cure but no mortality difference; avoid >2 weeks, "
+                        "weekly CBC, serotonin syndrome risk",
+             "ref": "ZEPHyR (Wunderink, CID 2012) | IDSA MRSA 2011"},
+            {"combo": "Daptomycin + Ceftaroline", "evidence": "★★",
+             "indication": "Persistent MRSA bacteremia (salvage)",
+             "caution": "Small RCT / observational evidence", "ref": "Geriak, AAC 2019 | expert consensus"},
+            {"combo": "Vancomycin + Rifampicin", "evidence": "★★",
+             "indication": "Retained prosthetic material only (prosthetic joint, valve, CIED) -- after bacteraemia clears",
+             "caution": "Not for uncomplicated S. aureus bacteraemia (ARREST, Lancet 2018: no benefit); "
+                        "never rifampicin monotherapy",
+             "ref": "IDSA PJI 2013 | ARREST 2018"},
+            {"combo": "Vancomycin + Piperacillin-Tazobactam -- monitor creatinine", "evidence": "★",
+             "indication": "Not contraindicated",
+             "caution": "Observational AKI signal; the ACORN RCT (JAMA 2023) found no AKI difference "
+                        "between pip-tazo and cefepime. Daily creatinine; use AUC dosing",
+             "ref": "ACORN (Qian, JAMA 2023)"},
         ]
     },
     "VRE": {
         "title": "Vancomycin-Resistant Enterococcus (VRE)",
         "urgency": "HIGH",
         "options": [
+            {"combo": "Ampicillin (if the isolate tests S -- usually E. faecalis)", "evidence": "★★★",
+             "indication": "Drug of choice whenever ampicillin is S", "caution": "",
+             "ref": "AHA 2015 / ESC 2023 endocarditis guidance"},
             {"combo": "Linezolid 600mg q12h", "evidence": "★★★",
-             "indication": "VRE -- drug of choice for serious infections",
-             "caution": "Weekly CBC monitoring; myelosuppression risk", "ref": "IDSA AMR Guidance 2026"},
-            {"combo": "Daptomycin (8-12 mg/kg) + Ampicillin", "evidence": "★★★",
-             "indication": "VRE bacteremia | endocarditis -- Ampicillin restores Daptomycin activity even for VRE",
-             "caution": "Weekly CK monitoring", "ref": "IDSA AMR Guidance 2026 | Synergy studies"},
-            {"combo": "Daptomycin high-dose (≥10 mg/kg) monotherapy", "evidence": "★★",
-             "indication": "VRE bacteremia when Ampicillin not available",
-             "caution": "Monitor CK weekly", "ref": "IDSA AMR Guidance 2026"},
-        ]
-    },
-    "ESBL": {
-        "title": "ESBL-Producing Enterobacterales",
-        "urgency": "MODERATE",
-        "options": [
-            {"combo": "Ertapenem (definitive therapy)", "evidence": "★★★",
-             "indication": "ESBL UTI/intraabdominal -- carbapenem-sparing for bacteremia (if MIC allows)",
-             "caution": "", "ref": "IDSA AMR Guidance 2026"},
-            {"combo": "Meropenem (severe / bacteremia)", "evidence": "★★★",
-             "indication": "ESBL bacteremia -- superior to Pip-Taz (MERINO trial)",
-             "caution": "", "ref": "MERINO trial 2018 | IDSA AMR Guidance 2026"},
-            {"combo": "AVOID: Piperacillin-Tazobactam for bacteremia", "evidence": "AVOID",
-             "indication": "Inferior to carbapenems for ESBL bacteremia -- inoculum effect",
-             "caution": "MERINO trial 2018: Pip-Taz inferior for ESBL bloodstream infections", "ref": "MERINO trial 2018"},
+             "indication": "VRE -- serious infections when ampicillin is R",
+             "caution": "Weekly CBC monitoring; myelosuppression risk",
+             "ref": "Expert consensus (no IDSA guideline)"},
+            {"combo": "Daptomycin high-dose (>=10 mg/kg)", "evidence": "★★",
+             "indication": "VRE bacteremia", "caution": "Monitor CK weekly",
+             "ref": "Britt, Clin Infect Dis 2017 (cohort)"},
+            {"combo": "Daptomycin + Ampicillin (or Ceftaroline)", "evidence": "★",
+             "indication": "Persistent VRE bacteremia / endocarditis -- beta-lactam potentiates daptomycin",
+             "caution": "In-vitro / observational evidence", "ref": "Synergy studies"},
         ]
     },
 }
@@ -4246,10 +4805,10 @@ COMBINATION_THERAPY: Dict[str, Dict] = {
 # Colistin"), not formulary keys.
 _COMBO_HOST_FLAGS: List[Tuple[str, List[str], str, str]] = [
     ("pregnancy", ["amikacin", "gentamicin", "tobramycin", "plazomicin"],
-     "⚠️ حمل: أمينوجليكوزيد — سمّية أذنية جنينية. لا يُستخدم إلا لعدوى مهددة "
-     "للحياة بلا بديل، وبموافقة استشاري وTDM.",
-     "PREGNANCY: aminoglycoside — fetal ototoxicity. Life-threatening infection "
-     "with no alternative only, with consultant sign-off and TDM."),
+     "⚠️ حمل: أمينوجليكوزيد — سمية أذنية جنينية نظرية (موثّقة مع Streptomycin). "
+     "يُستخدم عند الحاجة بجرعة يومية واحدة ومراقبة المستوى ولأقصر مدة (ACOG).",
+     "PREGNANCY: aminoglycoside — theoretical fetal ototoxicity (documented with "
+     "streptomycin). Use when needed: once-daily dosing, levels, shortest course (ACOG)."),
     ("pregnancy", ["tigecycline", "minocycline", "doxycycline", "eravacycline"],
      "⛔ حمل: تتراسيكلين — مضاد استطباب مطلق (تلوّن الأسنان، تثبيط نمو العظم).",
      "PREGNANCY: tetracycline — absolute contraindication."),
@@ -4280,7 +4839,7 @@ _COMBO_HOST_FLAGS: List[Tuple[str, List[str], str, str]] = [
     # neonatal sepsis therapy and colistin has real neonatal experience. Adding
     # them would flag the two agents a neonatologist is most likely to need.
     ("neonate", ["cefiderocol", "relebactam", "vaborbactam", "avibactam",
-                 "ceftolozane", "ceftaroline", "daptomycin"],
+                 "ceftolozane", "ceftaroline", "daptomycin", "durlobactam"],
      "⚠️ وليد: بيانات السلامة والجرعة في حديثي الولادة محدودة أو غير متوفرة "
      "لهذا الدواء. لا يُستخدم إلا بعد استشارة حديثي الولادة والأمراض المعدية، "
      "وبتوثيق سبب غياب البديل.",
@@ -4309,6 +4868,7 @@ def get_combination_therapy(
     cl_cr: Optional[float] = None,
     is_hepatic: bool = False,
     organism: str = "",
+    carbapenemase_type: Optional[str] = None,
 ) -> List[Dict]:
     """Combination therapy suggestions -- IDSA AMR Guidance 2026.
 
@@ -4345,11 +4905,25 @@ def get_combination_therapy(
         states.add("hepatic")
 
     # DTR_PA before CRPA: when both fire, the narrower finding carries the
-    # more specific therapeutic instruction and should read first.
-    for ph in ["CRAB", "DTR_PA", "CRPA", "CRE", "MRSA", "VRE", "ESBL", "MDR"]:
+    # more specific therapeutic instruction and should read first. (The CRPA
+    # panel now says "use the traditional beta-lactam that tests S", which is
+    # moot for a DTR isolate, so it is not shown alongside DTR_PA.)
+    if "DTR_PA" in ph_names:
+        ph_names = [p for p in ph_names if p != "CRPA"]
+    # CRE options are filtered by enzyme class when it is known (2026-11-10):
+    # showing meropenem-vaborbactam for an NDM producer is a wrong answer, not
+    # a neutral one.
+    from therapy_rules import normalize_carbapenemase_type as _nct
+    _ctype = _nct(carbapenemase_type) or "UNKNOWN"
+    for ph in ["CRAB", "DTR_PA", "CRPA", "CRE", "STENO", "AMPC", "ESBL", "MRSA", "VRE", "MDR"]:
         if ph not in ph_names or ph not in COMBINATION_THERAPY:
             continue
         data = COMBINATION_THERAPY[ph]
+        if ph == "CRE":
+            _kept = [o for o in data["options"]
+                     if not o.get("for_types") or _ctype in o["for_types"]]
+            _title = data["title"] + ("" if _ctype == "UNKNOWN" else f" — {_ctype}")
+            data = {**data, "title": _title, "options": _kept}
         if not states:
             results.append({"phenotype": ph, "data": data})
             continue
@@ -4494,6 +5068,33 @@ def evaluate_deescalation(
 # المرجع: EUCAST Breakpoint Tables v16.1, CLSI M100 Ed36, CDC/ECDC 2017
 # =========================================================
 PHENOTYPE_RULES = {
+    # ── DERIVED phenotypes (2026-11-10) ──────────────────────────────────────
+    # Not marker rules: emitted from predict_esbl() / the organism itself at
+    # the end of detect_resistance_phenotypes(). Registered here so every
+    # name a detector emits is a real key (and the marker loop skips them).
+    "ESBL": {
+        "derived": True, "organisms": [], "markers": [],
+        "icon": "🟠", "label": "ESBL -- Extended-Spectrum β-Lactamase (predicted)",
+        "detail": "مقاومة للجيل الثالث في Enterobacterale — نمط ESBL متوقع.",
+        "action": ("المثانة: Nitrofurantoin/TMP-SMX؛ الحويضة: TMP-SMX/FQ؛ تجرثم الدم: "
+                   "Carbapenem (IDSA 2026). أكّد بـ DDST حسب سياسة المعمل."),
+        "isolation": False,
+    },
+    "AMPC": {
+        "derived": True, "organisms": [], "markers": [],
+        "icon": "🟠", "label": "AmpC β-lactamase (predicted)",
+        "detail": "مقاومة للجيل الثالث مع نمط AmpC (كروموسومي مُفرط أو بلازميدي).",
+        "action": ("Cefepime إذا S (MIC ≤ 2)؛ Carbapenem إذا SDD/I أو حالة حرجة "
+                   "(IDSA 2026). لا Ceftriaxone ولا Pip-Tazo للعدوى الغازية."),
+        "isolation": False,
+    },
+    "STENO": {
+        "derived": True, "organisms": ["Stenotrophomonas maltophilia"], "markers": [],
+        "icon": "🟠", "label": "S. maltophilia -- intrinsically carbapenem-resistant",
+        "detail": "L1 metallo-β-lactamase + L2 — مقاومة جوهرية لكل الكاربابينيمات.",
+        "action": "العدوى الغازية: Cefiderocol منفرداً (IDSA 2026) — راجع لوحة العلاج.",
+        "isolation": False,
+    },
     "MRSA": {
         "organisms": ["Staphylococcus aureus","MRSA"],
         "markers":   [("Oxacillin","R"), ("Cefoxitin","R")],
@@ -4534,7 +5135,8 @@ PHENOTYPE_RULES = {
         # the species profile added earlier that day matched nothing.
         "organisms": ["Klebsiella spp.", "E. coli", "Escherichia coli",
                       "Enterobacter cloacae", "Enterobacter spp.",
-                      "Proteus mirabilis", "Klebsiella pneumoniae",
+                      "Proteus mirabilis", "Proteus vulgaris", "Proteus spp.",
+                      "Klebsiella pneumoniae", "Klebsiella oxytoca",
                       "Serratia marcescens", "Citrobacter spp.",
                       "Citrobacter freundii", "Citrobacter koseri",
                       "Morganella morganii", "Providencia spp.",
@@ -4543,9 +5145,18 @@ PHENOTYPE_RULES = {
         "markers":   [("Imipenem/Cilastatin","R"),("Meropenem","R"),("Ertapenem","R")],
         "require_any": 1,  # واحد كافٍ
         "icon":  "🚨",
-        "label": "CRE -- Carbapenem-Resistant Enterobacteriaceae",
+        # Proteeae: imipenem R alone does not qualify (CDC CRE definition).
+        "exclude_markers_for": {("proteus", "morganella", "providencia"): ["Imipenem/Cilastatin"]},
+        "label": "CRE -- Carbapenem-Resistant Enterobacterales",
         "detail": "مقاوم للكاربابينيم -- أخطر أنماط المقاومة في العالم.",
-        "action": "Colistin + Fosfomycin أو Ceftazidime-Avibactam. أرسل للمختبر المرجعي فوراً.",
+        # FIX 2026-11-10: was "Colistin + Fosfomycin أو Ceftazidime-Avibactam"
+        # for every CRE. The choice depends on the enzyme class (IDSA 2026),
+        # and polymyxin combinations are not preferred.
+        "action": ("حدّد نوع الكاربابينيميز (NG-Test CARBA-5 أو PCR) — العلاج يتوقف عليه: "
+                   "KPC ← Ceftazidime-avibactam / Meropenem-vaborbactam / Imipenem-relebactam؛ "
+                   "OXA-48 ← Ceftazidime-avibactam؛ NDM/VIM/IMP ← Aztreonam-avibactam أو "
+                   "Ceftazidime-avibactam + Aztreonam أو Cefiderocol (IDSA 2026). "
+                   "Colistin ليس خياراً مفضّلاً. أرسل للمختبر المرجعي."),
         "isolation": True,
     },
     "CRAB": {
@@ -4555,7 +5166,12 @@ PHENOTYPE_RULES = {
         "icon":  "🚨",
         "label": "CRAB -- Carbapenem-Resistant Acinetobacter baumannii",
         "detail": "XDR/PDR Acinetobacter -- أصعب الكائنات علاجاً في ICU.",
-        "action": "Colistin ± Rifampicin. بروتوكول ICU خاص. استشارة معدية.",
+        # FIX 2026-11-10: was "Colistin ± Rifampicin". IDSA 2026 prioritises
+        # sulbactam-durlobactam + a carbapenem; rifampicin adds nothing (AIDA).
+        "action": ("IDSA 2026: Sulbactam-durlobactam + Meropenem أو Imipenem هو المفضّل. "
+                   "إن لم يتوفر: Ampicillin-sulbactam جرعة عالية (9 g sulbactam يومياً) + دواء "
+                   "ثانٍ فعّال (Polymyxin B أو Minocycline أو Tigecycline أو Cefiderocol). "
+                   "لا Rifampicin. استشارة الأمراض المعدية."),
         "isolation": True,
     },
     "CRPA": {
@@ -4659,6 +5275,8 @@ def detect_resistance_phenotypes(
     org_lower = _re_ws_collapse(organism)
 
     for ph_name, rule in PHENOTYPE_RULES.items():
+        if rule.get("derived"):
+            continue          # emitted below, not by markers
         # Is this organism a candidate for this phenotype?
         # FIX 2026-08-03: this was an unguarded two-way substring test, the same
         # trap already fixed in is_esbl_producer(). `"" in "klebsiella spp."` is
@@ -4672,6 +5290,9 @@ def detect_resistance_phenotypes(
             continue
 
         markers   = rule.get("markers", [])
+        for _toks, _excl in (rule.get("exclude_markers_for") or {}).items():
+            if any(t in org_lower for t in _toks):
+                markers = [(d, e) for d, e in markers if d not in _excl]
         req_any   = rule.get("require_any", len(markers))  # default: كل الـ markers
 
         # عدد الـ markers المطابقة
@@ -4704,6 +5325,31 @@ def detect_resistance_phenotypes(
                     drug for drug, exp in markers if sir_map.get(drug) == exp
                 ],
             })
+
+    # ── Mechanism phenotypes from the predictor (added 2026-11-10) ──────────
+    # The ESBL therapy panel existed but no detector ever emitted "ESBL", so
+    # it could never be shown; AmpC and S. maltophilia had no panel at all.
+    # Isolation is False: these change THERAPY, not the isolation protocol
+    # (local IPC policy decides contact precautions for ESBL).
+    _have = {d["phenotype"] for d in detected}
+
+    def _derived(_name: str) -> Dict[str, Any]:
+        _r = PHENOTYPE_RULES[_name]
+        return {"phenotype": _name, "icon": _r["icon"], "label": _r["label"],
+                "detail": _r["detail"], "action": _r["action"],
+                "isolation": _r["isolation"], "matched_markers": []}
+
+    if not ({"CRE", "CRAB", "CRPA", "DTR_PA"} & _have):
+        try:
+            _pm = (predict_esbl(organism, sir_map) or {}).get("probability")
+        except Exception:          # harnesses that lift this function alone
+            _pm = None
+        if _pm == "high":
+            detected.append(_derived("ESBL"))
+        elif _pm in ("ampc", "ampc_plasmid"):
+            detected.append(_derived("AMPC"))
+    if "stenotrophomonas" in org_lower:
+        detected.append(_derived("STENO"))
 
     # MRSA fallback: لو S. aureus + Vancomycin S + Linezolid S -> اشتباه MRSA
     if "staphylococcus aureus" in org_lower and "MRSA" not in [d["phenotype"] for d in detected]:
@@ -4835,13 +5481,33 @@ AST_QC_RULES = [
         "id": "QC004",
         "organisms": ["E. coli", "Escherichia", "Klebsiella", "Proteus", "Enterobacter",
                       "Citrobacter", "Serratia", "Enterobacterales"],
+        # FIX 2026-11-10: split by marker. Imipenem R is EXPECTED in Proteeae
+        # (intrinsically elevated MICs), so it cannot trigger the carbapenemase
+        # prompt for Proteus / Morganella / Providencia. Meropenem/Ertapenem R
+        # still does (QC004 below); imipenem R does for the rest (QC004b).
         "condition": lambda s: (
             any(s.get(d) == "S" for d in ["Ceftriaxone", "Cefotaxime", "Cefepime"]) and
-            any(s.get(d) == "R" for d in ["Imipenem/Cilastatin", "Meropenem", "Ertapenem"])
+            any(s.get(d) == "R" for d in ["Meropenem", "Ertapenem"])
         ),
         "severity": "warning",
         "message": "⚠️ A carbapenem is Resistant while a cephalosporin is Susceptible. This pattern is "
                    "uncommon (it may reflect an OXA-48-like carbapenemase or porin loss) and should be confirmed.",
+        "fix": "Confirm with a carbapenemase assay (e.g., mCIM / PCR) before reporting.  \n"
+               "📖 EUCAST Guidance on detection of resistance mechanisms",
+    },
+    {
+        "id": "QC004b",
+        "organisms": ["E. coli", "Escherichia", "Klebsiella", "Enterobacter",
+                      "Citrobacter", "Serratia", "Enterobacterales"],
+        "not_organisms": ["proteus", "morganella", "providencia"],
+        "condition": lambda s: (
+            any(s.get(d) == "S" for d in ["Ceftriaxone", "Cefotaxime", "Cefepime"]) and
+            s.get("Imipenem/Cilastatin") == "R"
+            and s.get("Meropenem") != "R" and s.get("Ertapenem") != "R"
+        ),
+        "severity": "warning",
+        "message": "⚠️ Imipenem is Resistant while a cephalosporin is Susceptible. This pattern is "
+                   "uncommon (it may reflect a carbapenemase or porin loss) and should be confirmed.",
         "fix": "Confirm with a carbapenemase assay (e.g., mCIM / PCR) before reporting.  \n"
                "📖 EUCAST Guidance on detection of resistance mechanisms",
     },
@@ -5335,10 +6001,15 @@ INFECTION_SYNDROMES = {
             "Uncomplicated UTI"
         ),
         "first_choice": ["Nitrofurantoin","Fosfomycin","Trimethoprim/Sulfamethoxazole"],
-        "duration": {"Uncomplicated UTI": "3-5 أيام", "Complicated UTI": "7-14 يوم",
-                     "Pregnancy-associated UTI": "7 أيام"},
-        "escalation": "لو فشل الخط الأول أو CrCl < 30 -> Ciprofloxacin أو Cefixime",
-        "culture_threshold": "≥ 10³ CFU/mL للأعراض، ≥ 10⁵ بدون أعراض",
+        # 2026-11-10: cUTI 7 days (IDSA cUTI 2025); the culture threshold read
+        # "10^3 symptomatic / 10^5 asymptomatic" for every patient -- the
+        # 10^3 figure applies to symptomatic women and men specifically.
+        "duration": {"Uncomplicated UTI": "1-7 أيام حسب الدواء (Nitrofurantoin 5 · TMP-SMX 3 · Fosfomycin جرعة)",
+                     "Complicated UTI": "7 أيام عند الاستجابة السريعة (FQ 5-7) — 10-14 للاستجابة البطيئة",
+                     "Pregnancy-associated UTI": "5-7 أيام"},
+        "escalation": "لو فشل الخط الأول أو CrCl < 45 (Nitrofurantoin) -> حسب الحساسية: Cefixime / Ciprofloxacin",
+        "culture_threshold": ("≥ 10³ CFU/mL مع أعراض (نساء ورجال)؛ ≥ 10⁵ للبيلة اللاعرضية "
+                              "(تُعالج فقط في الحمل وقبل إجراء بولي جراحي)"),
     },
     ("Blood", None): {
         "syndrome":  "Bloodstream Infection (BSI) / Bacteremia",
@@ -5346,8 +6017,10 @@ INFECTION_SYNDROMES = {
             "Catheter-Related BSI (CRBSI)" if is_cath else "Community/Hospital BSI"
         ),
         "first_choice": ["Ceftriaxone","Piperacillin-Tazobactam","Meropenem (MDR/severe)"],
-        "duration": {"Community/Hospital BSI": "14-21 يوم (حسب المصدر)",
-                     "Catheter-Related BSI (CRBSI)": "14 يوم + إزالة الكاتيتر"},
+        "duration": {"Community/Hospital BSI": ("GNB: 7 أيام مع السيطرة على المصدر (BALANCE 2025) · "
+                                                 "S. aureus: ≥14 يوم · حسب الكائن والمصدر"),
+                     "Catheter-Related BSI (CRBSI)": ("إزالة الكاتيتر + GNB 7-14 · CoNS 5-7 · "
+                                                      "S. aureus ≥14 يوم")},
         "escalation": "MDR/XDR -> Meropenem ± Amikacin. Endocarditis اشتباه -> اتشاور",
         "culture_threshold": "2 sets blood cultures قبل المضاد",
     },
@@ -5357,9 +6030,12 @@ INFECTION_SYNDROMES = {
             "HAP/VAP" if is_cath else ("Severe CAP" if age > 65 else "CAP")
         ),
         "first_choice": ["Amoxicillin + Clavulanic acid","Levofloxacin","Azithromycin"],
-        "duration": {"CAP": "5-7 أيام", "Severe CAP": "7-10 أيام (>65y)", "HAP/VAP": "7-14 يوم"},
+        "duration": {"CAP": "5 أيام كحد أدنى حتى الاستقرار", "Severe CAP": "5-7 أيام (أطول لـ MRSA/Pseudomonas)",
+                     "HAP/VAP": "7 أيام (ATS/IDSA 2016)"},
         "escalation": "Pseudomonas/Acinetobacter -> anti-pseudomonal mandatory",
-        "culture_threshold": "≥ 10⁵ CFU/mL BAL أو ≥ 10⁶ في Sputum",
+        # FIX 2026-11-10: BAL threshold is 10^4 CFU/mL (10^3 for PSB, 10^5-10^6
+        # for endotracheal aspirate) -- the line read BAL 10^5.
+        "culture_threshold": "BAL ≥ 10⁴ CFU/mL · PSB ≥ 10³ · شفط رغامي ≥ 10⁵–10⁶ (ATS/IDSA 2016)",
     },
     ("Wound Swab", None): {
         "syndrome":  "Skin & Soft Tissue Infection (SSTI)",
@@ -5404,8 +6080,9 @@ INFECTION_SYNDROMES = {
         "syndrome":  "Central Nervous System Infection (Meningitis)",
         "classify":  lambda age, is_preg, is_cath: "Bacterial Meningitis",
         "first_choice": ["Ceftriaxone","Meropenem"],
-        "duration": {"Bacterial Meningitis": "10-14 يوم (7 لـ N. meningitidis)"},
-        "escalation": "ابدأ تجريبياً فوراً ولا تنتظر culture. Dexamethasone قبل المضاد",
+        "duration": {"Bacterial Meningitis": ("N. meningitidis 7 · H. influenzae 7 · S. pneumoniae 10-14 · "
+                                              "GBS 14-21 · Listeria ≥21 · GNB 21 يوم")},
+        "escalation": "ابدأ تجريبياً فوراً ولا تنتظر culture. Dexamethasone قبل المضاد أو معه",
         "culture_threshold": "CSF culture + Gram stain + Ag testing",
     },
 }
@@ -6083,6 +6760,29 @@ if uploaded:
                      "unreachable outside 15-55 rather than merely unticked.")
 
         current_meds = st.multiselect("💊 Current Medications", COMMON_MEDS)
+
+        # ─── Added 2026-11-10 (guideline review) ─────────────────────────────
+        # Three facts the engine could not know, and which change the answer:
+        # the allergy (Patient.allergies existed and nothing filled it), the
+        # carbapenemase CLASS (decides between the novel agents, IDSA 2026),
+        # and whether a urine isolate is cystitis or pyelonephritis.
+        allergies = st.multiselect(
+            "🚫 Drug allergies",
+            ["Penicillin — mild / delayed rash", "Penicillin — severe / anaphylaxis",
+             "Cephalosporin", "Ceftazidime", "Sulfonamide (sulfa)",
+             "Fluoroquinolone", "Macrolide"],
+            key="allergies_input",
+            help="الحساسية المسجّلة تحظر الصنف نفسه، وتضيف تحذير تفاعل متصالب للأصناف القريبة.")
+        carbapenemase_choice = st.selectbox(
+            "🧬 Carbapenemase type (if tested)", list(CARBAPENEMASE_TYPE_OPTIONS),
+            key="carb_type_input",
+            help="من NG-Test CARBA-5 أو Xpert Carba-R أو PCR. يحدد أي عامل حديث يعمل "
+                 "(KPC / OXA-48 / MBL) — IDSA AMR Guidance 2026.")
+        uti_syndrome_choice = st.selectbox(
+            "🫘 UTI syndrome (urine only)", list(UTI_SYNDROME_OPTIONS),
+            key="uti_syndrome_input",
+            help="تلقائي: حمى أو ألم الخاصرة ← التهاب حويضة/cUTI. Nitrofurantoin و Fosfomycin "
+                 "الفموي و Norfloxacin لا تصلح للحويضة.")
 
         # ─── New clinical/lab fields ──────────────────────────────────────────
         with st.expander("🏥 Lab Report Fields", expanded=False):
@@ -6839,9 +7539,18 @@ if uploaded:
             is_pregnant=is_preg, is_renal=is_renal, cl_cr=cl_cr,
             is_hepatic=is_hepatic, child_pugh=_child_pugh_now,
             current_meds=list(current_meds or []),
+            allergies=list(allergies or []),
         )
+        _carb_type_now = normalize_carbapenemase_type(carbapenemase_choice)
+        _uti_syn_now = resolve_uti_syndrome(uti_syndrome_choice,
+                                            st.session_state.get("patho_symptoms") or [])
+        st.session_state["carb_type_now"] = _carb_type_now
         _res = run_analysis(_patient, organism_type, culture_type, sir_map,
-                            drugs=final_drugs)
+                            drugs=final_drugs, carbapenemase_type=_carb_type_now,
+                            uti_syndrome=_uti_syn_now)
+        if _uti_syn_now == "upper" and classify_specimen(culture_type) == "urine":
+            st.info("🫘 التهاب حويضة / cUTI — Nitrofurantoin و Fosfomycin الفموي و Norfloxacin "
+                    "مُستبعدة (لا تصل لنسيج الكلى).")
         allowed              = _res["allowed"]
         warned               = _res["warned"]
         banned               = _res["banned"]
@@ -7240,6 +7949,8 @@ if uploaded:
                     c1.write(f"**Class:** {item.get('class','-')}")
                     c2.write(f"**Route:** {get_route_label(item)}")
                     st.write(f"**Note:** {item.get('note','-')}")
+                    if item.get("clinical_note"):
+                        st.info(f"🧭 {item['clinical_note']}")
                     spec_note = (item.get("specimen_notes") or {}).get(culture_type, "")
                     if spec_note:
                         st.info(f"**{culture_type} Note:** {spec_note}")
@@ -7431,6 +8142,7 @@ if uploaded:
                 is_pregnant=is_preg, age_years=age, age_months=age_months,
                 is_renal=is_renal, cl_cr=cl_cr, is_hepatic=is_hepatic,
                 organism=organism_type,
+                carbapenemase_type=st.session_state.get("carb_type_now"),
             )
             if _combos:
                 with st.expander(f"🔬 Combination Therapy ({len(_combos)} phenotype)", expanded=True):
@@ -7694,6 +8406,7 @@ if uploaded:
                         is_pregnant=is_preg, age_years=age, age_months=age_months,
                         is_renal=is_renal, cl_cr=cl_cr, is_hepatic=is_hepatic,
                         organism=organism_type,
+                        carbapenemase_type=st.session_state.get("carb_type_now"),
                     ) if _pdf_combo else None
                     _hep_for_pdf   = (get_hepatic_recommendations(allowed, _cp_pdf)
                                       if is_hepatic else None)

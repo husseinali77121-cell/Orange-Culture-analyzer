@@ -155,6 +155,7 @@ _ORG_CANON: Dict[str, str] = {
     "acinetobacter baumannii": "Acinetobacter baumannii", "acinetobacter": "Acinetobacter baumannii",
     "staphylococcus aureus": "Staphylococcus aureus", "s. aureus": "Staphylococcus aureus",
     "mssa": "Staphylococcus aureus", "mrsa": "MRSA",
+    "proteus vulgaris": "Proteus vulgaris", "p. vulgaris": "Proteus vulgaris",
     "proteus mirabilis": "Proteus mirabilis", "proteus": "Proteus mirabilis",
     "enterococcus faecalis": "Enterococcus faecalis", "enterococcus": "Enterococcus faecalis",
     "vre": "VRE",
@@ -179,6 +180,9 @@ _ORG_CANON: Dict[str, str] = {
     "klebsiella aerogenes": "Enterobacter cloacae",
     "enterobacter aerogenes": "Enterobacter cloacae",
     "serratia marcescens": "Serratia marcescens", "serratia": "Serratia marcescens",
+    # exact species keys first (2026-11-10): "citrobacter koseri" must not fall
+    # through to the generic "citrobacter" -> C. freundii substring match.
+    "citrobacter koseri": "Citrobacter koseri", "c. koseri": "Citrobacter koseri",
     "citrobacter freundii": "Citrobacter freundii", "citrobacter": "Citrobacter freundii",
     "morganella morganii": "Morganella morganii", "morganella": "Morganella morganii",
     "providencia spp.": "Providencia spp.", "providencia": "Providencia spp.",
@@ -192,6 +196,10 @@ _ORG_CANON: Dict[str, str] = {
     "streptococcus agalactiae (group b)": "Streptococcus agalactiae (Group B)",
     "group b streptococcus": "Streptococcus agalactiae (Group B)",
     "enterococcus faecium": "Enterococcus faecium",
+    "staphylococcus saprophyticus": "Staphylococcus saprophyticus",
+    "s. saprophyticus": "Staphylococcus saprophyticus",
+    "staphylococcus lugdunensis": "Staphylococcus lugdunensis",
+    "s. lugdunensis": "Staphylococcus lugdunensis",
     "staphylococcus epidermidis": "Coagulase-negative Staphylococci",
     "coagulase negative staphylococci": "Coagulase-negative Staphylococci",
     "coagulase-negative staphylococci": "Coagulase-negative Staphylococci",
@@ -234,9 +242,15 @@ _AG_PUS = (CAUTION, "aminoglycoside inactivated at low pH / low O2 of abscess �
            "الأمينوجلايكوزيد يُثبَّط في الوسط الحمضي قليل الأكسجين للخراج — لا يُستخدم منفرداً")
 _AG_LUNG = (CAUTION, "poor epithelial lining fluid penetration — never monotherapy for pneumonia",
             "اختراق ضعيف لسائل بطانة الرئة — لا يُستخدم منفرداً في الالتهاب الرئوي")
+# CLSI M100 Ed33 (2023) comment: aminoglycoside monotherapy is appropriate for
+# urinary infection only; for systemic infection use it with an active
+# beta-lactam. Added 2026-11-10 (Blood was _OK).
+_AG_BSI = (CAUTION, "not as monotherapy for bacteraemia — combine with an active beta-lactam "
+                    "(monotherapy only for a urinary source; CLSI M100 Ed33)",
+           "لا يُستخدم منفرداً في تجرثم الدم — مع بيتا-لاكتام فعّال (المنفرد لمصدر بولي فقط؛ CLSI 2023)")
 
 SITE_PENETRATION: Dict[str, Dict[str, Tuple[str, str, str]]] = {
-    "Amikacin": {"Urine": _OK, "Blood": _OK, "Sputum": _AG_LUNG, "Wound Swab": _AG_PUS,
+    "Amikacin": {"Urine": _OK, "Blood": _AG_BSI, "Sputum": _AG_LUNG, "Wound Swab": _AG_PUS,
                  "Pus": _AG_PUS, "Stool": (DENY, "no role in enteric infection", "لا دور له في عدوى الأمعاء"),
                  "CSF": _NO_CSF},
     "Amoxicillin": {"Urine": _OK, "Blood": (CAUTION, "oral — adequate only for mild disease, not bacteraemia",
@@ -384,7 +398,7 @@ SITE_PENETRATION: Dict[str, Dict[str, Tuple[str, str, str]]] = {
                      "Stool": (DENY, "no enteric indication", "لا استطباب معوي"), "CSF": _NO_CSF},
     "Gatifloxacin": {"Urine": _OK, "Blood": _OK, "Sputum": _OK, "Wound Swab": _OK, "Pus": _OK,
                      "Stool": _OK, "CSF": (CAUTION, "adjunct only", "كعلاج مساعد فقط")},
-    "Gentamicin": {"Urine": _OK, "Blood": _OK, "Sputum": _AG_LUNG, "Wound Swab": _AG_PUS, "Pus": _AG_PUS,
+    "Gentamicin": {"Urine": _OK, "Blood": _AG_BSI, "Sputum": _AG_LUNG, "Wound Swab": _AG_PUS, "Pus": _AG_PUS,
                    "Stool": (DENY, "no role in enteric infection", "لا دور له في عدوى الأمعاء"), "CSF": _NO_CSF},
     "Imipenem/Cilastatin": {"Urine": _OK, "Blood": _OK, "Sputum": _OK, "Wound Swab": _OK, "Pus": _OK,
                             "Stool": (CAUTION, "invasive enteric disease only", "للعدوى المعوية الغازية فقط"),
@@ -480,7 +494,7 @@ SITE_PENETRATION: Dict[str, Dict[str, Tuple[str, str, str]]] = {
                    "Wound Swab": (CAUTION, "anaerobic cover only", "تغطية لاهوائية فقط"),
                    "Pus": (CAUTION, "anaerobic cover only", "تغطية لاهوائية فقط"), "Stool": _OK,
                    "CSF": (CAUTION, "metronidazole is the established agent", "الميترونيدازول هو الدواء المعتمد")},
-    "Tobramycin": {"Urine": _OK, "Blood": _OK, "Sputum": _AG_LUNG, "Wound Swab": _AG_PUS, "Pus": _AG_PUS,
+    "Tobramycin": {"Urine": _OK, "Blood": _AG_BSI, "Sputum": _AG_LUNG, "Wound Swab": _AG_PUS, "Pus": _AG_PUS,
                    "Stool": (DENY, "no role in enteric infection", "لا دور له في عدوى الأمعاء"), "CSF": _NO_CSF},
     "Trimethoprim/Sulfamethoxazole": {"Urine": _OK, "Blood": _OK, "Sputum": _OK, "Wound Swab": _OK,
                                       "Pus": _OK, "Stool": _OK, "CSF": _OK},
@@ -588,32 +602,39 @@ INTRINSIC_ADDENDA: Dict[str, Dict[str, Tuple[str, str, str]]] = {
 # 5. LAYER D — HOST STATE
 # ═══════════════════════════════════════════════════════════════════════════
 PREGNANCY_DENY: Dict[str, Tuple[str, str]] = {
-    "Ciprofloxacin": ("fluoroquinolone — cartilage toxicity in animal studies",
-                      "فلوروكينولون — سمية غضروفية في الدراسات الحيوانية"),
-    "Levofloxacin": ("fluoroquinolone — cartilage toxicity in animal studies",
-                     "فلوروكينولون — سمية غضروفية في الدراسات الحيوانية"),
-    "Ofloxacin": ("fluoroquinolone — cartilage toxicity in animal studies",
-                  "فلوروكينولون — سمية غضروفية في الدراسات الحيوانية"),
-    "Norfloxacin": ("fluoroquinolone — cartilage toxicity in animal studies",
-                    "فلوروكينولون — سمية غضروفية في الدراسات الحيوانية"),
-    "Moxifloxacin": ("fluoroquinolone — cartilage toxicity in animal studies",
-                     "فلوروكينولون — سمية غضروفية في الدراسات الحيوانية"),
-    "Gatifloxacin": ("fluoroquinolone — cartilage toxicity in animal studies",
-                     "فلوروكينولون — سمية غضروفية في الدراسات الحيوانية"),
+    # 2026-11-10: fluoroquinolones and aminoglycosides moved to CAUTION, to
+    # match analyze_antibiotics (FQ: ENTIS / ACOG -- avoid as first line, not
+    # contraindicated; aminoglycosides: standard obstetric use, e.g. ampicillin
+    # + gentamicin for intra-amniotic infection). Clarithromycin added: the
+    # engine bans it and the matrix allowed it -- the two layers disagreed.
+    "Clarithromycin": ("macrolide — teratogenic in animal studies, miscarriage signal; use azithromycin",
+                       "ماكروليد — مُشوِّه في الدراسات الحيوانية وإشارة إجهاض؛ استخدم Azithromycin"),
     "Doxycycline": ("tetracycline — fetal tooth staining and bone growth inhibition after 15 weeks",
                     "تتراسيكلين — تصبّغ أسنان الجنين وتثبيط نمو العظام بعد الأسبوع 15"),
     "Minocycline": ("tetracycline — fetal tooth staining and bone growth inhibition",
                     "تتراسيكلين — تصبّغ أسنان الجنين وتثبيط نمو العظام"),
     "Tetracycline": ("tetracycline — fetal tooth staining, bone growth inhibition, maternal hepatotoxicity",
                      "تتراسيكلين — تصبّغ الأسنان وتثبيط نمو العظام وسمية كبدية للأم"),
-    "Gentamicin": ("aminoglycoside — fetal eighth-nerve (ototoxic) damage",
-                   "أمينوجلايكوزيد — تلف العصب الثامن للجنين (سمية سمعية)"),
-    "Amikacin": ("aminoglycoside — fetal eighth-nerve (ototoxic) damage",
-                 "أمينوجلايكوزيد — تلف العصب الثامن للجنين (سمية سمعية)"),
-    "Tobramycin": ("aminoglycoside — fetal eighth-nerve (ototoxic) damage",
-                   "أمينوجلايكوزيد — تلف العصب الثامن للجنين (سمية سمعية)"),
 }
 PREGNANCY_CAUTION: Dict[str, Tuple[str, str]] = {
+    "Ciprofloxacin": ("fluoroquinolone — not first line; use only without a safer alternative (ENTIS / ACOG)",
+        "فلوروكينولون — ليس خطاً أول؛ فقط عند غياب بديل أكثر أماناً"),
+    "Levofloxacin": ("fluoroquinolone — not first line; use only without a safer alternative (ENTIS / ACOG)",
+        "فلوروكينولون — ليس خطاً أول؛ فقط عند غياب بديل أكثر أماناً"),
+    "Ofloxacin": ("fluoroquinolone — not first line; use only without a safer alternative (ENTIS / ACOG)",
+        "فلوروكينولون — ليس خطاً أول؛ فقط عند غياب بديل أكثر أماناً"),
+    "Norfloxacin": ("fluoroquinolone — not first line; use only without a safer alternative (ENTIS / ACOG)",
+        "فلوروكينولون — ليس خطاً أول؛ فقط عند غياب بديل أكثر أماناً"),
+    "Moxifloxacin": ("fluoroquinolone — not first line; use only without a safer alternative (ENTIS / ACOG)",
+        "فلوروكينولون — ليس خطاً أول؛ فقط عند غياب بديل أكثر أماناً"),
+    "Gatifloxacin": ("fluoroquinolone — not first line; use only without a safer alternative (ENTIS / ACOG)",
+        "فلوروكينولون — ليس خطاً أول؛ فقط عند غياب بديل أكثر أماناً"),
+    "Gentamicin": ("aminoglycoside — theoretical fetal ototoxicity; once-daily dosing, levels, shortest course",
+        "أمينوجلايكوزيد — سمية سمعية جنينية نظرية؛ جرعة يومية واحدة ومراقبة المستوى وأقصر مدة"),
+    "Amikacin": ("aminoglycoside — theoretical fetal ototoxicity; once-daily dosing, levels, shortest course",
+        "أمينوجلايكوزيد — سمية سمعية جنينية نظرية؛ جرعة يومية واحدة ومراقبة المستوى وأقصر مدة"),
+    "Tobramycin": ("aminoglycoside — theoretical fetal ototoxicity; once-daily dosing, levels, shortest course",
+        "أمينوجلايكوزيد — سمية سمعية جنينية نظرية؛ جرعة يومية واحدة ومراقبة المستوى وأقصر مدة"),
     "Trimethoprim/Sulfamethoxazole": (
         "avoid 1st trimester (folate antagonism / neural tube defects) and at term (kernicterus)",
         "يُتجنب في الثلث الأول (مضاد للفولات/عيوب الأنبوب العصبي) وقرب الولادة (اليرقان النووي)"),
@@ -658,19 +679,25 @@ RENAL_RULES: Dict[str, Tuple[Optional[float], Optional[float], str, str]] = {
                                       "خطر ارتفاع البوتاسيوم وتبلور البول"),
     "Fosfomycin": (40, 10, "single 3 g oral dose stays adequate to CrCl 10; avoid repeated IV dosing below 40",
                    "الجرعة الفموية الواحدة 3 جم تبقى كافية حتى CrCl 10؛ تُتجنب الجرعات الوريدية المتكررة تحت 40"),
-    "Levofloxacin": (50, None, "renally cleared — halve the dose", "يُطرح كلوياً — تُنصّف الجرعة"),
+    "Levofloxacin": (50, None, "renally cleared — reduce per label (750 mg q48h, or 500 mg then 250 mg q24h at CrCl 20-49)",
+                     "يُطرح كلوياً — حسب النشرة (750mg q48h، أو 500mg ثم 250mg q24h عند CrCl 20-49)"),
     "Ciprofloxacin": (30, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Ofloxacin": (50, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Norfloxacin": (30, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Meropenem": (50, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
-    "Imipenem/Cilastatin": (70, None, "accumulation lowers the seizure threshold",
-                            "التراكم يخفض عتبة التشنجات"),
+    "Imipenem/Cilastatin": (89, None, "reduce below CrCl 90 (current label); accumulation lowers the seizure "
+                            "threshold; not recommended below 15 unless dialysis starts within 48 h",
+                            "خفض الجرعة تحت CrCl 90 (النشرة الحالية)؛ التراكم يخفض عتبة التشنجات؛ "
+                            "لا يُستخدم تحت 15 إلا مع بدء الغسيل خلال 48 ساعة"),
     "Ertapenem": (30, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Cefepime": (60, None, "accumulation causes neurotoxicity/encephalopathy",
                  "التراكم يسبب سمية عصبية/اعتلال دماغي"),
     "Ceftazidime": (50, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Cefotaxime": (50, None, "renally cleared — extend the interval to q12h", "يُطرح كلوياً — تُمدد الفترة إلى q12h"),
-    "Cefazolin": (35, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
+    "Cefazolin": (54, None, "renally cleared — half dose q12h at CrCl 11-34, q18-24h at <=10",
+                  "يُطرح كلوياً — نصف الجرعة q12h عند CrCl 11-34، و q18-24h عند ≤10"),
+    "Cefoperazone + Sulbactam": (30, None, "sulbactam is renally cleared — cap it at 1 g q12h (CrCl 15-30), 500 mg q12h (<15)",
+                                 "السولباكتام يُطرح كلوياً — أقصاه 1 g q12h (CrCl 15-30) و 500mg q12h (<15)"),
     "Cefuroxime sodium": (20, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Cefuroxime": (30, None, "renally cleared — reduce the dose", "يُطرح كلوياً — تُخفض الجرعة"),
     "Cephalexin": (30, None, "renally cleared — extend the interval", "يُطرح كلوياً — تُمدد الفترة"),
@@ -730,6 +757,24 @@ SITE_PENETRATION.update({
         "Wound Swab": ("allow", "", ""),
         "CSF": ("caution", "meropenem component penetrates; vaborbactam data limited",
                 "الميروبينيم ينفذ لكن بيانات الـ vaborbactam محدودة"),
+        "Stool": ("caution", "systemic agent", "دواء جهازي"),
+    },
+    "Aztreonam + Avibactam": {
+        "Urine": ("allow", "", ""), "Blood": ("allow", "", ""),
+        "Sputum": ("allow", "", ""), "Pus": ("allow", "", ""),
+        "Wound Swab": ("allow", "", ""),
+        "CSF": ("caution", "limited CSF data; not established for meningitis",
+                "بيانات سحائية محدودة — غير مُثبت في السحايا"),
+        "Stool": ("caution", "systemic agent", "دواء جهازي"),
+    },
+    "Sulbactam + Durlobactam": {
+        "Urine": ("caution", "studied in pneumonia/bacteraemia; urinary data limited",
+                  "دُرس في الالتهاب الرئوي وتجرثم الدم — بيانات البول محدودة"),
+        "Blood": ("allow", "", ""),
+        "Sputum": ("allow", "", ""), "Pus": ("allow", "", ""),
+        "Wound Swab": ("allow", "", ""),
+        "CSF": ("caution", "limited CSF data; not established for meningitis",
+                "بيانات سحائية محدودة — غير مُثبت في السحايا"),
         "Stool": ("caution", "systemic agent", "دواء جهازي"),
     },
     "Imipenem + Relebactam": {
@@ -811,6 +856,10 @@ RENAL_RULES.update({
                                 "يلزم خفض الجرعة تحت CrCl 50"),
     "Imipenem + Relebactam": (90, 15, "dose reduction required below CrCl 90",
                               "يلزم خفض الجرعة تحت CrCl 90"),
+    "Aztreonam + Avibactam": (50, None, "dose reduction below CrCl 50 (loading + maintenance)",
+                              "خفض الجرعة تحت CrCl 50 (تحميل + صيانة)"),
+    "Sulbactam + Durlobactam": (44, None, "interval extension below CrCl 45; q4h if CrCl >=130",
+                                "إطالة الفترة تحت CrCl 45؛ وكل 4 ساعات إذا CrCl ≥130"),
     "Cefiderocol": (60, 15, "dose reduction below CrCl 60; INCREASE if CrCl >=120",
                     "خفض الجرعة تحت CrCl 60؛ وزيادتها إذا CrCl ≥120"),
     "Ceftaroline": (50, 15, "dose reduction required below CrCl 50",
@@ -885,8 +934,10 @@ AGE_RULES: Dict[str, Tuple[Optional[float], str, str, str]] = {
                      "سمية غضروفية ولا توجد جرعة أطفال معتمدة"),
     "Gatifloxacin": (18, DENY, "cartilage toxicity and dysglycaemia",
                      "سمية غضروفية واضطراب سكر الدم"),
-    "Doxycycline": (8, CAUTION, "permanent tooth discoloration under 8 years — permitted for rickettsial disease at any age",
-                    "تصبّغ دائم للأسنان تحت 8 سنوات — مسموح في أمراض الريكتسيا بأي عمر"),
+    "Doxycycline": (8, CAUTION, "under 8: short courses (<=21 d) acceptable at any age (AAP Red Book 2024 — "
+                                "no staining shown with doxycycline); prefer an alternative outside rickettsial disease",
+                    "تحت 8 سنوات: الدورة القصيرة (≤21 يوم) مقبولة (AAP 2024 — لا تصبغ مثبت مع Doxycycline)؛ "
+                    "يُفضَّل بديل لغير الريكتسيا"),
     "Minocycline": (8, DENY, "permanent tooth discoloration", "تصبّغ دائم للأسنان"),
     "Tetracycline": (8, DENY, "permanent tooth discoloration and enamel hypoplasia",
                      "تصبّغ دائم للأسنان ونقص تنسج المينا"),

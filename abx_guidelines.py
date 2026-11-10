@@ -28,11 +28,15 @@ ABX_GUIDELINES = {
         "organisms": ["E. coli","Klebsiella spp.","Staphylococcus aureus",
                       "Proteus mirabilis","Streptococcus pneumoniae","H. influenzae"],
         "specimen_notes": {
-            "Blood":      "✅ فعال في bacteremia الموجبات والسالبات البسيطة.",
+            # FIX 2026-11-10: "first choice for uncomplicated UTI" and
+            # "effective in bacteraemia" overstated an ORAL beta-lactam: IDSA
+            # ranks beta-lactams second-line for cystitis, and oral amox-clav
+            # serum levels are not a bacteraemia regimen.
+            "Blood":      "⚠️ الفموي ليس علاجاً لتجرثم الدم — يصلح للتنزيل الفموي بعد الاستقرار فقط.",
             "Sputum":     "✅ خيار أول لـ CAP وexacerbation COPD.",
             "Wound Swab": "✅ فعال للعدوى الجلدية المختلطة.",
             "Pus":        "✅ جيد للخراجات والعدوى المختلطة.",
-            "Urine":      "✅ خيار أول للمسالك غير المعقدة.",
+            "Urine":      "⚠️ خط ثانٍ لالتهاب المثانة (بعد Nitrofurantoin / TMP-SMX / Fosfomycin) — IDSA.",
         },
     },
     "Ampicillin/Sulbactam": {
@@ -170,9 +174,14 @@ ABX_GUIDELINES = {
         # dose, interval or band — the clinician was told to adjust but not how.
   # limit 30 -> 20: reconciled with clinical_matrix.RENAL_RULES
         "renal_limit": 20,
-        "renal_note": "Normal: 750mg-1.5g q8h IV. CrCl 10-20: 750mg-1.5g q12h. CrCl <10: 750mg-1.5g q24h. HD: جرعة بعد dialysis. BNF 2025.",
-        "renal_note_en": "Normal: 750mg-1.5g q8h IV. CrCl 10-20: 750mg-1.5g q12h. CrCl <10: 750mg-1.5g q24h. HD: dose after dialysis. BNF 2025.",
-        "dose_countersigned": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03 · verified vs BNF 2025 / product label (renal band added 2026-07-30)",
+        # FIX 2026-11-10: the 10-20 and <10 bands read "750mg-1.5g"; the
+        # Zinacef label and BNF give 750 mg (q12h / q24h). The 2026-08-03
+        # countersignature covered the wrong text, so it is withdrawn here and
+        # recorded rather than silently deleted.
+        "renal_note": "Normal: 750mg-1.5g q8h IV. CrCl 10-20: 750mg q12h. CrCl <10: 750mg q24h. HD: جرعة إضافية بعد كل جلسة. Zinacef label / BNF.",
+        "renal_note_en": "Normal: 750mg-1.5g q8h IV. CrCl 10-20: 750mg q12h. CrCl <10: 750mg q24h. HD: extra dose after each session. Zinacef label / BNF.",
+        "dose_signature_withdrawn": "2026-08-03 signature withdrawn 2026-11-10: the signed text gave 750mg-1.5g at CrCl 10-20 and <10; label is 750 mg.",
+        "dose_review": "2026-11-10 review: renal band rewritten against the product label — awaiting clinician countersignature",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -285,11 +294,22 @@ ABX_GUIDELINES = {
     },
     "Cefoperazone + Sulbactam": {
         "priority": 4, "class": "3rd Gen Cephalosporin + Beta-lactamase Inhibitor (IV)",
+        # FIX 2026-11-10: the note called it "a strong combination against MDR
+        # Gram-negatives ... an important alternative to meropenem". It is not
+        # in IDSA guidance, has no CLSI/EUCAST breakpoint as a combination, and
+        # its sulbactam dose (<= 4 g/day) is below the 6-9 g/day IDSA uses for
+        # CRAB. The renal note said "renally safe": sulbactam IS renally
+        # cleared and the label caps it below CrCl 30.
         "note": (
-            "🛑 (مثل Sulperazone/Bakperazone) IV فقط. مزيج قوي ضد MDR gram-negatives "
-            "بما فيها Acinetobacter baumannii. بديل مهم لـ Meropenem في بروتوكولات MDR المصرية."
+            "💉 (مثل Sulperazone) IV فقط. لا breakpoints للتوليفة في CLSI أو EUCAST، وغير مذكور "
+            "في إرشادات IDSA. جرعة السولباكتام فيه (≤ 4 g/يوم) أقل من الجرعة العالية المطلوبة "
+            "لـ CRAB (6-9 g/يوم) — لا يُعتمد عليه منفرداً في العدوى الغازية بـ Acinetobacter. "
+            "⚠️ يسبب نقص فيتامين K (راقب INR)."
         ),
-        "renal_limit": 0, "renal_note": "🟢 آمن كلوياً — يُطرح صفراوياً أساساً.", "renal_note_en": "🟢 renally safe — primarily biliary elimination.",
+        "renal_limit": 30,
+        "renal_note": "Cefoperazone لا يحتاج تعديل، لكن Sulbactam يُطرح كلوياً: CrCl 15-30: أقصى Sulbactam 1 g q12h. CrCl <15: أقصى Sulbactam 500mg q12h. Sulperazon label.",
+        "renal_note_en": "Cefoperazone needs no adjustment, but sulbactam is renally cleared: CrCl 15-30: sulbactam max 1 g q12h. CrCl <15: sulbactam max 500 mg q12h. Sulperazon label.",
+        "dose_review": "2026-11-10 review: renal band rewritten against the product label — awaiting clinician countersignature",
         "hepatic_caution": True, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True,
@@ -312,7 +332,12 @@ ABX_GUIDELINES = {
         "note": "🛑 (مثل Maxipime) IV فقط — للحالات الحرجة. Bioavailability فموي = صفر.",
         # renal_limit 50 -> 60: own band starts at 60
         "renal_limit": 60,
-        "renal_note": "CrCl 30-60: 1-2g q12h. CrCl 11-29: 500mg-1g q12h. CrCl <11: 250-500mg q24h. ⚠️ خطر encephalopathy عند تراكم الدواء — راقب الأعراض العصبية.", "renal_note_en": "CrCl 30-60: 1-2g q12h. CrCl 11-29: 500mg-1g q12h. CrCl <11: 250-500mg q24h. ⚠️ risk of encephalopathy with drug accumulation — monitor for neurological symptoms.",
+        # FIX 2026-11-10: the 11-29 band read "q12h"; every label regimen at
+        # CrCl 11-29 is once daily, and the <11 band was understated for the
+        # 2 g q8h regimen.
+        "renal_note": "حسب الجرعة الأصلية (label): CrCl 30-60: 500mg-2g q12h-q24h (2g q8h ← 2g q12h). CrCl 11-29: 500mg-2g q24h. CrCl <11: 250mg-1g q24h. HD: 1g يوم 1 ثم 500mg-1g q24h بعد الغسيل. ⚠️ خطر encephalopathy عند تراكم الدواء — راقب الأعراض العصبية.",
+        "renal_note_en": "Per original regimen (label): CrCl 30-60: 500mg-2g q12h-q24h (2g q8h -> 2g q12h). CrCl 11-29: 500mg-2g q24h. CrCl <11: 250mg-1g q24h. HD: 1g day 1 then 500mg-1g q24h after dialysis. ⚠️ risk of encephalopathy with accumulation — monitor neurological symptoms.",
+        "dose_review": "2026-11-10 review: renal band rewritten against the product label — awaiting clinician countersignature",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Safe", "preg_note": "",
         "child_safe": True, "interacts_with": [],
@@ -353,7 +378,9 @@ ABX_GUIDELINES = {
         "specimen_notes": {
             "Urine":      "⚠️ فعال لكن يُحفظ للمسالك المعقدة.",
             "Blood":      "⚠️ bacteremia في الحالات المتوسطة.",
-            "Sputum":     "⚠️ الفلوروكينولون الوحيد الفعال ضد Pseudomonas في الصدر.",
+            # FIX 2026-11-10: "the only FQ active against Pseudomonas" is wrong --
+            # levofloxacin 750 mg is anti-pseudomonal too (IDSA HAP/VAP 2016).
+            "Sputum":     "⚠️ فعّال ضد Pseudomonas (مثل Levofloxacin 750mg)، لكنه ضعيف ضد المكورات الرئوية — ليس خياراً لـ CAP.",
             "Wound Swab": "⚠️ عدوى الجروح المعقدة.",
             "Stool":      "⚠️ Shigellosis والحالات الشديدة من Campylobacter.",
         },
@@ -364,7 +391,13 @@ ABX_GUIDELINES = {
             "⚠️ (مثل Tavanic) Oral وIV. Bioavailability فموي ~99%. "
             "أفضل respiratory quinolone متاح."
         ),
-        "renal_limit": 50, "renal_note": "CrCl 20-49: 500mg q24h (loading 500mg). CrCl 10-19: 250mg q24h. HD: 250mg q48h. BNF 2025.", "renal_note_en": "CrCl 20-49: 500mg q24h (loading 500mg). CrCl 10-19: 250mg q24h. HD: 250mg q48h. BNF 2025.",
+        # FIX 2026-11-10: "CrCl 20-49: 500mg q24h" is no reduction at all;
+        # label: 750 mg regimen -> 750 mg q48h; 500 mg regimen -> 500 mg then
+        # 250 mg q24h. 10-19 / HD dosing is q48h, not q24h.
+        "renal_limit": 50,
+        "renal_note": "نظام 750mg: CrCl 20-49 ← 750mg q48h؛ CrCl 10-19 أو HD ← 750mg ثم 500mg q48h. نظام 500mg: CrCl 20-49 ← 500mg ثم 250mg q24h؛ CrCl 10-19 أو HD ← 500mg ثم 250mg q48h. FDA label.",
+        "renal_note_en": "750 mg regimen: CrCl 20-49 -> 750 mg q48h; CrCl 10-19 or HD -> 750 mg then 500 mg q48h. 500 mg regimen: CrCl 20-49 -> 500 mg then 250 mg q24h; CrCl 10-19 or HD -> 500 mg then 250 mg q48h. FDA label.",
+        "dose_review": "2026-11-10 review: renal band rewritten against the product label — awaiting clinician countersignature",
         "hepatic_caution": True, "aware": "Watch", "high_po": True,
         "preg_status": "Warn",
         "preg_note": (
@@ -514,16 +547,23 @@ ABX_GUIDELINES = {
         "note": "💉 (مثل Garamycin) IV/IM فقط — لا bioavailability فموي. سام للكلى والأذن.",
         "renal_limit": 60, "renal_note": "Extended interval: 5-7mg/kg q24h ثم تعديل حسب levels. CrCl <60: تمديد الفترة + trough <1 mcg/mL. KDIGO 2024.", "renal_note_en": "Extended interval: 5-7mg/kg q24h then adjust according to levels. CrCl <60: extend the interval + trough <1 mcg/mL. KDIGO 2024.",
         "hepatic_caution": False, "aware": "Access", "high_po": False,
-        "preg_status": "Banned",
+        "preg_status": "Warn",
+        # 2026-11-10: was "Banned". Gentamicin is standard obstetric therapy
+        # (ampicillin + gentamicin for intra-amniotic infection, ACOG; severe
+        # pyelonephritis). Documented fetal ototoxicity is with streptomycin /
+        # kanamycin. Caution, once-daily dosing, levels, shortest course.
         "preg_note": (
-            "ممنوع في الحمل — Gentamicin:\n"
-            "  سُمية للأذن الجنينية (ototoxicity) — FDA Category D.\n"
-            "  يعبر المشيمة — خطر فقدان السمع الدائم للجنين."
+            "⚠️ Use with Caution — Gentamicin في الحمل:\n"
+            "  يعبر المشيمة؛ خطر السمية السمعية الجنينية موثّق أساساً مع Streptomycin/Kanamycin.\n"
+            "  مقبول عند الحاجة (التهاب المشيمة، التهاب حويضة شديد، إنتان) بجرعة يومية واحدة\n"
+            "  ومراقبة المستوى ولأقصر مدة. ACOG."
         ),
         "child_safe": True,
         "interacts_with": ["NSAIDs (مسكنات الألم)"],
         "aliases": ["garamycin","genta"],
-        "organisms": ["E. coli","Klebsiella spp.","Pseudomonas aeruginosa",
+        # 2026-11-10: Pseudomonas aeruginosa removed -- CLSI M100 Ed33 (2023)
+        # eliminated gentamicin as a treatment option for it.
+        "organisms": ["E. coli","Klebsiella spp.",
                       "Proteus mirabilis","Staphylococcus aureus"],
         "specimen_notes": {
             "Blood":      "💉 synergy مع beta-lactam في bacteremia الشديدة.",
@@ -542,11 +582,16 @@ ABX_GUIDELINES = {
         "renal_note_en": "15-20mg/kg q24h. CrCl 40-60: q36h. CrCl 20-40: q48h. CrCl <20: level-guided dosing. Level monitoring mandatory: trough < 5 mcg/mL (extended-interval: < 2-3) + daily creatinine. KDIGO 2024.",
         # AWaRe FIX: amikacin is an Access agent in WHO AWaRe 2025, not Watch.
         "hepatic_caution": False, "aware": "Access", "high_po": False,
-        "preg_status": "Banned",
+        "preg_status": "Warn",
+        # 2026-11-10: was "Banned". Gentamicin is standard obstetric therapy
+        # (ampicillin + gentamicin for intra-amniotic infection, ACOG; severe
+        # pyelonephritis). Documented fetal ototoxicity is with streptomycin /
+        # kanamycin. Caution, once-daily dosing, levels, shortest course.
         "preg_note": (
-            "ممنوع في الحمل — Amikacin:\n"
-            "  سُمية للأذن الجنينية (ototoxicity) — FDA Category D.\n"
-            "  يعبر المشيمة — خطر فقدان السمع الدائم للجنين."
+            "⚠️ Use with Caution — Amikacin في الحمل:\n"
+            "  يعبر المشيمة؛ خطر السمية السمعية الجنينية موثّق أساساً مع Streptomycin/Kanamycin.\n"
+            "  مقبول عند الحاجة (التهاب المشيمة، التهاب حويضة شديد، إنتان) بجرعة يومية واحدة\n"
+            "  ومراقبة المستوى ولأقصر مدة. ACOG."
         ),
         "child_safe": True,
         "interacts_with": ["NSAIDs (مسكنات الألم)"],
@@ -638,11 +683,13 @@ ABX_GUIDELINES = {
         # clinical_matrix.HEPATIC_RULES records DENY, so this flag
         # contradicted both and the side-channel hepatic alert stayed silent.
         "hepatic_caution": True, "aware": "Access", "high_po": True,
-        "preg_status": "Banned",
+        "preg_status": "Warn",
+        # 2026-11-10: was "Banned". ACOG Committee Opinion 717: appropriate in
+        # the 1st trimester when no suitable alternative exists; avoid near term.
         "preg_note": (
-            "ممنوع في الحمل — TMP/SMX:\n"
-            "  يثبط حمض الفوليك — خطر Neural Tube Defects في الـ 1st trimester.\n"
-            "  يسبب kernicterus للجنين في الـ 3rd trimester."
+            "⚠️ Use with Caution — TMP/SMX في الحمل:\n"
+            "  الثلث الأول: مضاد للفولات — فقط عند غياب بديل مناسب (ACOG CO 717) مع حمض الفوليك.\n"
+            "  قرب الولادة: تجنّب — خطر kernicterus. الثلث الثاني: مقبول."
         ),
         "child_safe": True,
         # FIX 2026-08-01: Warfarin alone. The three additions below are the
@@ -736,8 +783,14 @@ ABX_GUIDELINES = {
             "  ACOG 2023 / BNF 2025: لا يُستخدم في الحمل إطلاقاً.\n"
             "  البديل: Amoxicillin-Clavulanate أو Cephalosporin أو Azithromycin."
         ),
-        "child_safe": False,
-        "child_note": "ممنوع <8 سنوات (teeth/bone). >8 سنوات: مقبول للـ atypicals وRickettsia عند الضرورة. BNF 2025.",
+        # FIX 2026-11-10: "contraindicated under 8" is the TETRACYCLINE rule.
+        # AAP Red Book (2018 onward, 2024 ed.): doxycycline binds calcium less
+        # and short courses (<= 21 days) show no dental staining, so it may be
+        # used at any age. The site/age matrix still adds a caution under 8.
+        "child_safe": True,
+        "child_note": ("AAP Red Book 2024: دورة قصيرة (≤ 21 يوم) مقبولة في أي عمر — لا دليل على تصبغ "
+                       "الأسنان مع Doxycycline (بعكس Tetracycline). تحت 8 سنوات: يُفضَّل بديل لغير "
+                       "الريكتسيا عند توفره."),
         "interacts_with": ["Antacids (مضادات الحموضة)"],
         "aliases": ["vibramycin","doxy"],
         # "Rickettsia spp." was removed here on 2026-08-03 with the profile
@@ -791,8 +844,13 @@ ABX_GUIDELINES = {
             "⚠️ خطر نوبات صرع عند الجرعات العالية أو القصور الكلوي. "
             "Cilastatin يمنع تكسره كلوياً."
         ),
-        "renal_limit": 70,  # 50 -> 70: own band starts at 70
-        "renal_note": "CrCl 41-70: 500mg q8h. CrCl 21-40: 250-500mg q8h. CrCl 6-20: 250mg q6-12h. ⚠️ خطر seizures يرتفع عند تراكم الدواء. BNF 2025.", "renal_note_en": "CrCl 41-70: 500mg q8h. CrCl 21-40: 250-500mg q8h. CrCl 6-20: 250mg q6-12h. ⚠️ risk of seizures rises with drug accumulation. BNF 2025.",
+        # FIX 2026-11-10: the bands (41-70 / 21-40 / 6-20) were the pre-2016
+        # weight-based table. The current Primaxin label adjusts below CrCl 90
+        # and does not recommend use below 15 unless HD starts within 48 h.
+        "renal_limit": 89,
+        "renal_note": "Primaxin label الحالي — نظام 500mg q6h: CrCl 60-89 ← 400mg q6h؛ 30-59 ← 300mg q6h؛ 15-29 ← 200mg q6h. نظام 1g q8h: 60-89 ← 500mg q6h؛ 30-59 ← 500mg q8h؛ 15-29 ← 500mg q12h. CrCl <15: لا يُستخدم إلا مع بدء الغسيل خلال 48 ساعة. ⚠️ خطر seizures يرتفع عند التراكم.",
+        "renal_note_en": "Current Primaxin label — 500 mg q6h regimen: CrCl 60-89 -> 400 mg q6h; 30-59 -> 300 mg q6h; 15-29 -> 200 mg q6h. 1 g q8h regimen: 60-89 -> 500 mg q6h; 30-59 -> 500 mg q8h; 15-29 -> 500 mg q12h. CrCl <15: not recommended unless HD starts within 48 h. ⚠️ seizure risk rises with accumulation.",
+        "dose_review": "2026-11-10 review: renal band rewritten against the product label — awaiting clinician countersignature",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
         "preg_status": "Warn",
         "preg_note": (
@@ -1141,7 +1199,12 @@ _EXTRA_ENTRIES_2 = {
             "✅ (مثل Kefzol) IV/IM. 1st-gen cephalosporin الأساسي IV. "
             "تغطية ممتازة لـ MSSA وStrep. مثالي لـ surgical prophylaxis وعدوى الجلد الشديدة."
         ),
-        "renal_limit": 35, "renal_note": "CrCl 11-34: q12h | CrCl ≤10: q24h", "renal_note_en": "CrCl 11-34: q12h| CrCl ≤10: q24h",
+        # FIX 2026-11-10: the dose halving was missing -- the band gave only an
+        # interval, so a full dose q12h was implied.
+        "renal_limit": 54,
+        "renal_note": "CrCl 35-54: الجرعة كاملة q8h أو أطول. CrCl 11-34: نصف الجرعة q12h. CrCl ≤10: نصف الجرعة q18-24h. Cefazolin label.",
+        "renal_note_en": "CrCl 35-54: full dose q8h or longer. CrCl 11-34: half the usual dose q12h. CrCl <=10: half the usual dose q18-24h. Cefazolin label.",
+        "dose_review": "2026-11-10 review: renal band rewritten against the product label — awaiting clinician countersignature",
         "hepatic_caution": False, "aware": "Access", "high_po": False,
         "preg_status": "Safe",
         "preg_note": "مقبول في الحمل — Category B. آمن في كل الثلاثة أشهر.",
@@ -1255,13 +1318,16 @@ _EXTRA_ENTRIES_2 = {
         ),
         "renal_limit": 60, "renal_note": "Extended-interval: 5-7mg/kg q24h. CrCl 40-60: q36h. CrCl <40: monitoring-based. Trough <1 mcg/mL. Peak 15-20 mcg/mL. KDIGO 2024.", "renal_note_en": "Extended-interval: 5-7mg/kg q24h. CrCl 40-60: q36h. CrCl <40: monitoring-based. Trough <1 mcg/mL. Peak 15-20 mcg/mL. KDIGO 2024.",
         "hepatic_caution": False, "aware": "Watch", "high_po": False,
-        "preg_status": "Banned",
+        "preg_status": "Warn",
+        # 2026-11-10: was "Banned". Gentamicin is standard obstetric therapy
+        # (ampicillin + gentamicin for intra-amniotic infection, ACOG; severe
+        # pyelonephritis). Documented fetal ototoxicity is with streptomycin /
+        # kanamycin. Caution, once-daily dosing, levels, shortest course.
         "preg_note": (
-            "⛔ ممنوع في الحمل — Aminoglycoside class:\n"
-            "  سُمية للأذن الجنينية موثقة — فقدان سمع دائم.\n"
-            "  يعبر المشيمة بنسبة عالية.\n"
-            "  ACOG: contraindication مطلقة.\n"
-            "  البديل: Aztreonam (Gram-) أو Cephalosporin."
+            "⚠️ Use with Caution — Tobramycin في الحمل:\n"
+            "  يعبر المشيمة؛ خطر السمية السمعية الجنينية موثّق أساساً مع Streptomycin/Kanamycin.\n"
+            "  مقبول عند الحاجة (التهاب المشيمة، التهاب حويضة شديد، إنتان) بجرعة يومية واحدة\n"
+            "  ومراقبة المستوى ولأقصر مدة. ACOG."
         ),
         "child_safe": True,
         "interacts_with": ["Loop diuretics (Furosemide)", "Vancomycin", "NSAIDs"],
@@ -1635,6 +1701,67 @@ ABX_GUIDELINES.update({
             "Blood": "🛡️ ملاذ أخير — CRAB أو MBL-CRE بلا بديل.",
             "Sputum": "🛡️ HAP/VAP بـ CRAB — راجع إشارة الوفيات في CREDIBLE-CR.",
             "Urine": "🛡️ UTI معقد — إفراز بولي ممتاز.",
+        },
+    },
+    # ── Added 2026-11-10 (review H6) ─────────────────────────────────────
+    # The two agents IDSA AMR Guidance 2026 now ranks first for MBL-producing
+    # Enterobacterales and for CRAB. COMBINATION_THERAPY could not recommend
+    # them without a formulary row, and the engine could not read a result.
+    # DOSES ARE NOT COUNTERSIGNED -- each carries `dose_review`.
+    "Aztreonam + Avibactam": {
+        "priority": 10, "class": "Monobactam + Beta-lactamase Inhibitor (IV)",
+        "note": ("🛡️ (Emblaveo) IV فقط. Aztreonam لا يتحلل بالـ MBL، و Avibactam يحميه من "
+                 "ESBL/AmpC/KPC/OXA-48 المرافقة. **الخيار المفضّل لـ NDM/VIM/IMP-CRE** (IDSA "
+                 "2026، مُقدَّم قليلاً على Ceftazidime-avibactam + Aztreonam). بديل لـ "
+                 "S. maltophilia الغازية. breakpoints لـ Enterobacterales فقط (CLSI Ed36)."),
+        "renal_limit": 50,
+        "renal_note": ("تحميل ثم صيانة بتسريب 3 ساعات: CrCl >50: 2/0.67g ثم 1.5/0.5g q6h. "
+                       "CrCl 31-50: 2/0.67g ثم 0.75/0.25g q6h. CrCl 16-30: 1.35/0.45g ثم "
+                       "0.675/0.225g q8h. CrCl ≤15 أو HD: 1/0.33g ثم 0.675/0.225g q12h (بعد الغسيل). "
+                       "EU SmPC (Emblaveo)."),
+        "renal_note_en": ("Loading then maintenance, 3-h infusions: CrCl >50: 2/0.67 g then "
+                          "1.5/0.5 g q6h. CrCl 31-50: 2/0.67 g then 0.75/0.25 g q6h. CrCl 16-30: "
+                          "1.35/0.45 g then 0.675/0.225 g q8h. CrCl <=15 or HD: 1/0.33 g then "
+                          "0.675/0.225 g q12h (after dialysis). EU SmPC (Emblaveo)."),
+        "dose_review": "2026-11-10: added from the EU SmPC — awaiting clinician countersignature",
+        # SmPC: no dose adjustment in hepatic impairment (transaminase rises
+        # reported -- monitor LFTs). Same flag as aztreonam itself.
+        "hepatic_caution": False, "aware": "Reserve", "high_po": False,
+        "preg_status": "Caution", "preg_note": "بيانات بشرية غير كافية.",
+        "child_safe": False, "interacts_with": [],
+        "aliases": ["emblaveo", "aztreonam-avibactam", "aztreonam/avibactam", "atm-avi"],
+        "organisms": ["Klebsiella spp.", "E. coli", "Enterobacter cloacae",
+                      "Enterobacterales (unspeciated)", "Stenotrophomonas maltophilia"],
+        "specimen_notes": {
+            "Blood": "🛡️ تجرثم دم بـ NDM/VIM/IMP-CRE — الخيار المفضّل (IDSA 2026).",
+            "Sputum": "🛡️ HAP/VAP بـ MBL-CRE.",
+            "Urine": "🛡️ cUTI بـ MBL-CRE.",
+        },
+    },
+    "Sulbactam + Durlobactam": {
+        "priority": 10, "class": "Beta-lactam + Beta-lactamase Inhibitor (IV) — anti-Acinetobacter",
+        "note": ("🛡️ (Xacduro) IV فقط. Durlobactam يحمي Sulbactam من OXA-23/24/58 (الكاربابينيميز "
+                 "الأشيع في A. baumannii). **الأولوية الأولى لـ CRAB** مع Meropenem أو Imipenem "
+                 "(IDSA 2026؛ ATTACK: وفيات 19% مقابل 32% مع Colistin). لا يُستخدم لغير "
+                 "Acinetobacter. لا يغطي MBL."),
+        "renal_limit": 44,
+        # The normal band is written "CrCl ≥45" (not "45-129") so the dose
+        # band parser does not read 129 as the top of an ADJUSTMENT band.
+        "renal_note": ("المعتاد (CrCl ≥45): 1/1 g q6h بتسريب 3 ساعات؛ ومع CrCl ≥130: 1/1 g q4h. "
+                       "CrCl 30-44: 1/1 g q8h. CrCl 15-29: 1/1 g q12h. CrCl <15 أو HD: 1/1 g "
+                       "q12h لأول 3 جرعات ثم q24h (بعد الغسيل). FDA label (Xacduro)."),
+        "renal_note_en": ("Usual (CrCl >=45): 1/1 g q6h as a 3-h infusion; with CrCl >=130: 1/1 g q4h. "
+                          "CrCl 30-44: 1/1 g q8h. CrCl 15-29: 1/1 g q12h. CrCl <15 or HD: 1/1 g "
+                          "q12h for 3 doses then q24h (after dialysis). FDA label (Xacduro)."),
+        "dose_review": "2026-11-10: added from the FDA label — awaiting clinician countersignature",
+        "hepatic_caution": False, "aware": "Reserve", "high_po": False,
+        "preg_status": "Caution", "preg_note": "بيانات بشرية غير كافية.",
+        "child_safe": False, "interacts_with": [],
+        "aliases": ["xacduro", "sulbactam-durlobactam", "sulbactam/durlobactam", "sul-dur"],
+        "organisms": ["Acinetobacter baumannii"],
+        "specimen_notes": {
+            "Blood": "🛡️ تجرثم دم بـ CRAB — مع Meropenem أو Imipenem (IDSA 2026).",
+            "Sputum": "🛡️ HAP/VAP بـ CRAB — المؤشر الذي اعتُمد عليه (ATTACK).",
         },
     },
     "Ceftaroline": {

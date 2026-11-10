@@ -51,6 +51,9 @@ _ORG_CANON_MAP = {
     "klebsiella spp.": "klebsiella", "klebsiella pneumoniae": "klebsiella",
     "klebsiella oxytoca": "klebsiella", "klebsiella": "klebsiella",
     "proteus mirabilis": "proteus", "proteus spp.": "proteus", "proteus": "proteus",
+    "proteus vulgaris": "proteus",
+    "citrobacter spp.": "citrobacter", "citrobacter freundii": "citrobacter",
+    "citrobacter koseri": "citrobacter", "citrobacter": "citrobacter",
     "enterococcus faecalis": "enterococcus", "enterococcus spp.": "enterococcus",
     "enterococcus faecium": "enterococcus", "enterococcus": "enterococcus",
     "vre": "vre",
@@ -60,6 +63,9 @@ _ORG_CANON_MAP = {
     "mrsa": "mrsa",
     "staphylococcus epidermidis": "cons",
     "staphylococcus saprophyticus": "staphylococcus saprophyticus",
+    # S. lugdunensis keeps its own identity: it must never be scored as a
+    # skin contaminant like the other CoNS (2026-11-10).
+    "staphylococcus lugdunensis": "staphylococcus lugdunensis",
     "coagulase negative staphylococcus": "cons",
     "coagulase-negative staphylococci": "cons", "cons": "cons",
     "streptococcus viridans": "viridans streptococci",
@@ -224,11 +230,16 @@ def assess_pathogenicity(
     # ══════════════════════════════════════════════════════════════════
     if "urine" in spec_lower:
 
-        # Pediatric threshold: < 2 years -> any growth significant
+        # Pediatric context. FIX 2026-11-10: this block awarded +20 with
+        # "any colony count clinically significant" for every child under 2,
+        # on top of the colony-count score. AAP (2011, reaffirmed 2016) defines
+        # infant UTI as pyuria PLUS >= 50,000 CFU/mL of one uropathogen on a
+        # catheter specimen; "any count" is true only for suprapubic aspirate.
+        # The count is now judged in _score_colony_count; this only flags.
         if age < 2:
-            score += 20
-            factors_pos.append(f"✅ Infant < 2 yrs -- any colony count clinically significant")
             special_flags.append("PEDIATRIC_UTI")
+            factors_pos.append("ℹ️ Infant < 2 yrs -- AAP: UTI = pyuria + ≥ 5×10⁴ CFU/mL "
+                               "(catheter); any count only for suprapubic aspirate")
 
         # Organism context
         if _org_in(organism, TYPICAL_UROPATHOGENS):
@@ -249,7 +260,10 @@ def assess_pathogenicity(
         # _cfu_report_state() for the measurements.
         cfu_val   = _parse_cfu(colony_count_text)
         cfu_state = _cfu_report_state(colony_count_text)
-        _d, _pos, _neg = _score_colony_count(cfu_state, cfu_val, age, sex)
+        _symptomatic = any(s in ("Dysuria / Frequency / Urgency", "Fever (> 38°C)",
+                                 "Flank pain / Loin pain") for s in (symptoms or []))
+        _d, _pos, _neg = _score_colony_count(cfu_state, cfu_val, age, sex,
+                                             symptomatic=_symptomatic)
         score += _d
         if _pos:
             factors_pos.append(_pos)
@@ -308,8 +322,12 @@ def assess_pathogenicity(
             score += 10
             factors_pos.append("➕ Male > 50 -- prostatic age, any UTI is significant")
         if age < 1:
-            score += 15
-            factors_pos.append("✅ Infant < 1 yr -- all UTIs require treatment")
+            # 2026-11-10: was +15. "Every infant UTI is treated" is true once the
+            # UTI is established -- it is not itself evidence that this growth
+            # IS a UTI, and it stacked on top of the old "any count" bonus.
+            score += 5
+            factors_pos.append("➕ Infant < 1 yr -- a confirmed UTI always needs treatment "
+                               "(no 'asymptomatic bacteriuria' category in febrile infants)")
 
     # ══════════════════════════════════════════════════════════════════
     # SPUTUM -- Murray-Washington criteria
@@ -890,7 +908,8 @@ def _cfu_report_state(text: str) -> str:
     return "counted" if _parse_cfu(raw) > 0 else "unreported"
 
 
-def _score_colony_count(state: str, cfu_val: int, age: int, sex: str):
+def _score_colony_count(state: str, cfu_val: int, age: int, sex: str,
+                        symptomatic: bool = False):
     """(delta, positive_factor, negative_factor) for the colony-count field.
 
     Split out of assess_pathogenicity so the three age/sex branches share one
@@ -911,9 +930,14 @@ def _score_colony_count(state: str, cfu_val: int, age: int, sex: str):
                            "report before treating.")
 
     if age < 2:
+        # AAP 2011/2016: >= 50,000 CFU/mL (catheter) with pyuria.
+        if cfu_val >= 50000:
+            return 25, "✅ Colony count ≥ 5×10⁴ CFU/mL -- significant for age < 2 (AAP, with pyuria)", None
         if cfu_val >= 10000:
-            return 20, "✅ Colony count ≥ 10⁴ CFU/mL (significant for age < 2)", None
-        return 5, f"➕ Colony count {cfu_val:,} -- borderline (pediatric)", None
+            return 5, (f"➕ Colony count {cfu_val:,} -- borderline for age < 2 (significant only "
+                       "with pyuria + fever on a catheter/SPA specimen)"), None
+        return -10, None, (f"⚠️ Colony count {cfu_val:,} < 10⁴ -- insignificant for a bag/catheter "
+                           "specimen (any count counts only for suprapubic aspirate)")
     if sex == "Female" and age >= 12:
         if cfu_val >= 100000:
             return 25, "✅ Colony count ≥ 10⁵ CFU/mL -- significant bacteriuria", None
@@ -922,6 +946,10 @@ def _score_colony_count(state: str, cfu_val: int, age: int, sex: str):
         return -10, None, f"⚠️ Colony count {cfu_val:,} < 10³ -- likely insignificant"
     if cfu_val >= 100000:
         return 25, "✅ Colony count ≥ 10⁵ CFU/mL -- significant bacteriuria", None
+    # FIX 2026-11-10: symptomatic men -- >= 10^3 CFU/mL of a uropathogen is
+    # significant (IDSA ASB 2019 / EAU); it used to score as "insignificant".
+    if sex == "Male" and symptomatic and cfu_val >= 1000:
+        return 15, "✅ Colony count ≥ 10³ CFU/mL -- significant in a symptomatic man", None
     if cfu_val >= 10000:
         return 10, "➕ Colony count 10⁴–10⁵ CFU/mL -- borderline", None
     return -15, None, f"⚠️ Colony count {cfu_val:,} < 10⁴ -- likely insignificant"

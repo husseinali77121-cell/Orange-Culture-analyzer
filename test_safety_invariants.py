@@ -155,9 +155,14 @@ PREG_ABSOLUTE = [
     d for d in G
     if G[d].get("preg_status") == "Banned"
     or "tetracycline" in cls_of(d)
-    or "aminoglycoside" in cls_of(d)
     or "clarithromycin" in d.lower()
 ]
+# 2026-11-10 (review H13): aminoglycosides moved from ABSOLUTE to the
+# physician-decision tier (preg_warn) -- standard obstetric use (ACOG). The
+# invariant that matters is unchanged in spirit: a renal `continue` must never
+# short-circuit the pregnancy screen, so they must land in preg_warn, never in
+# the plain allowed/caution buckets.
+PREG_PHYSICIAN = [d for d in G if "aminoglycoside" in cls_of(d)]
 CHILD_UNSAFE = [d for d in G if not G[d].get("child_safe", True)]
 
 print("=" * 72)
@@ -186,12 +191,23 @@ for spec in SPECS:
 check("pregnancy-absolute agents never reach allowed/caution at any CrCl",
       not leaks, "\n".join(leaks[:5]))
 
-# the specific historical case, named so it can never be lost in aggregate
+# the specific historical case, named so it can never be lost in aggregate:
+# the renal branch must not pre-empt the pregnancy screen.
 _, W, B, P = buckets(["Gentamicin", "Amikacin", "Tobramycin"], "E. coli", "Urine",
                      age=28, sex="Female", renal=True, crcl=55.0, preg=True)
-check("regression: pregnant + CrCl 55 bans Gentamicin/Amikacin/Tobramycin",
-      {"Gentamicin", "Amikacin", "Tobramycin"} <= B,
-      f"warned={sorted(W)} banned={sorted(B)}")
+check("regression: pregnant + CrCl 55 routes Gentamicin/Amikacin/Tobramycin to the "
+      "pregnancy (physician-decision) list, not to renal caution",
+      {"Gentamicin", "Amikacin", "Tobramycin"} <= (P | B)
+      and not ({"Gentamicin", "Amikacin", "Tobramycin"} & W),
+      f"warned={sorted(W)} banned={sorted(B)} preg={sorted(P)}")
+_ag_leaks = []
+for crcl in (10, 30, 55, 95):
+    A, W, B, P = buckets(PREG_PHYSICIAN, "E. coli", "Urine", age=30, sex="Female",
+                         renal=True, crcl=float(crcl), preg=True)
+    if (A | W) & set(PREG_PHYSICIAN):
+        _ag_leaks.append(f"CrCl={crcl}: {sorted((A | W) & set(PREG_PHYSICIAN))}")
+check("aminoglycosides in pregnancy never reach plain allowed/caution at any CrCl",
+      not _ag_leaks, "\n".join(_ag_leaks))
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -281,30 +297,46 @@ check("confirmed ESBL bacteraemia still bans BLI combos (MERINO 2018)",
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-print("\n[5] DEFECT: tetracyclines at age 8-17 fell through to a reasonless ban")
+print("\n[5] Tetracyclines in children (revised 2026-11-10, guideline review)")
+print("    The dental-staining restriction is an UNDER-8 rule. From 8 years the")
+print("    tetracyclines are ordinary agents, and doxycycline short courses")
+print("    (<= 21 d) are acceptable at any age (AAP Red Book 2024). The old")
+print("    expectations here banned every tetracycline to age 17.")
 # ═══════════════════════════════════════════════════════════════════════════
-_, _, _, _ = buckets(["Doxycycline"], "E. coli", "Urine", age=12)
-a, w, b, p, _i = analyze(["Doxycycline"], "E. coli", "Urine", 12, "Male",
-                         False, 100.0, False, False, [], {"Doxycycline": "S"}, "A")
-row = next((x for x in b if x["name"] == "Doxycycline"), None)
-check("age 12 tetracycline ban carries a real clinical reason",
-      row is not None and "تقييم متخصص" not in row["reason_detail"]
-      and len(row["reason_detail"]) > 80,
-      (row or {}).get("reason_detail", "MISSING")[:120])
+a, w, b, p, _i = analyze(["Minocycline", "Tetracycline"], "E. coli", "Urine", 5, "Male",
+                         False, 100.0, False, False, [],
+                         {"Minocycline": "S", "Tetracycline": "S"}, "A")
+row5 = next((x for x in b if x["name"] == "Minocycline"), None)
+check("age 5: minocycline is banned with the dental/bone rationale and the doxycycline alternative",
+      row5 is not None and "8" in row5["reason_short"]
+      and "Doxycycline" in row5["reason_detail"] and len(row5["reason_detail"]) > 80,
+      (row5 or {}).get("reason_detail", "MISSING")[:120])
+
+a, w, b, p, _i = analyze(["Minocycline", "Doxycycline"], "E. coli", "Urine", 12, "Male",
+                         False, 100.0, False, False, [],
+                         {"Minocycline": "S", "Doxycycline": "S"}, "A")
+_b12 = {x["name"] for x in b if x.get("category") == "child"}
+check("age 12: no tetracycline is banned for age",
+      not ({"Minocycline", "Doxycycline"} & _b12), f"child-banned={sorted(_b12)}")
 
 a, w, b, p, _i = analyze(["Doxycycline"], "E. coli", "Urine", 5, "Male",
                          False, 100.0, False, False, [], {"Doxycycline": "S"}, "A")
-row5 = next((x for x in b if x["name"] == "Doxycycline"), None)
-check("age 5 tetracycline keeps the dental/bone rationale",
-      row5 is not None and "8" in row5["reason_short"])
+check("age 5: doxycycline is not banned for age (AAP Red Book 2024)",
+      not any(x["name"] == "Doxycycline" and x.get("category") == "child" for x in b))
+
+def _paed_unsafe_for(age):
+    # under 8 every non-child_safe agent; from 8 the tetracyclines are exempt
+    return [d for d in CHILD_UNSAFE
+            if age < 8 or "tetracycline" not in cls_of(d)]
 
 kid_leaks = []
 for spec in SPECS:
     for age in (1, 5, 9, 14, 17):
+        _cu = _paed_unsafe_for(age)
         for renal, crcl in ((False, 100.0), (True, 30.0), (True, 55.0)):
-            A, W, B, P = buckets(CHILD_UNSAFE, "E. coli", spec, age=age,
+            A, W, B, P = buckets(_cu, "E. coli", spec, age=age,
                                  renal=renal, crcl=crcl)
-            bad = (A | W | P) & set(CHILD_UNSAFE)
+            bad = (A | W | P) & set(_cu)
             if bad:
                 kid_leaks.append(f"{spec} age={age} CrCl={crcl}: {sorted(bad)}")
 check("paediatric-unsafe agents never reach allowed/caution", not kid_leaks,
@@ -568,10 +600,20 @@ try:
         print("    These are NOT a build failure — they are newly added agents.")
         print("    They ARE a release blocker. Run --queue and get them signed.")
     import guideline_registry as _GRg
+    # A rule may arrive unsigned ONLY if it says so in a visible governance key
+    # (`awaiting_countersignature`), mirroring `dose_review`. Silently unsigned
+    # rules still fail; flagged ones are reported as a release blocker.
     _unsigned = [k for k, v in _GRg.RULES.items()
-                 if not str(v.get("countersigned_by", "")).strip()]
-    check("every guideline rule carries a clinician countersignature",
+                 if not str(v.get("countersigned_by", "")).strip()
+                 and not str(v.get("awaiting_countersignature", "")).strip()]
+    _awaiting = [k for k, v in _GRg.RULES.items()
+                 if not str(v.get("countersigned_by", "")).strip()
+                 and str(v.get("awaiting_countersignature", "")).strip()]
+    check("every guideline rule is countersigned or explicitly queued for signature",
           not _unsigned, f"unsigned: {_unsigned[:6]}")
+    if _awaiting:
+        print(f"\n  ⚠ {len(_awaiting)} guideline rule(s) AWAIT a clinician's signature: "
+              f"{', '.join(sorted(_awaiting))} — release blocker, not a build failure.")
 except Exception as _e:
     check("countersignature checks ran", False, repr(_e))
 

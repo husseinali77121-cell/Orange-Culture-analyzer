@@ -102,18 +102,24 @@ SOURCES: Dict[str, Dict[str, str]] = {
     "IDSA_AMR": {
         "title": "IDSA Guidance on the Treatment of Antimicrobial-Resistant "
                  "Gram-Negative Infections (Tamma et al., Clin Infect Dis)",
-        # SUPERSEDED — verified 2026-07-27. IDSA published an updated AMR Guidance
-        # in 2026 covering ESBL-E, AmpC-E, CRE, DTR P. aeruginosa, CRAB and
-        # S. maltophilia, which explicitly replaces earlier versions. IDSA has
-        # stated the guidance is now revised ANNUALLY, so a pinned 2024 citation
-        # will go stale every year by design.
-        "version": "SUPERSEDED: v4.0 (ciae403, 2024) — a 2026 update exists",
-        "dated": "2024-08-07",
-        "superseded_on": "2026",
-        "note": ("Every rule citing IDSA_AMR must be re-read against the 2026 "
-                 "document before the next release. The exact citation details "
-                 "of the 2026 update were NOT verified here and must be filled "
-                 "in from the published text, not assumed."),
+        # Updated 2026-11-10 (guideline review). The 2026 update replaces the
+        # August 2024 version (v4.0, ciae403). Citation from IDSA/Healio coverage
+        # of the publication (26 Aug 2026); the rules below that cite IDSA_AMR
+        # were re-read against its notable-updates list in the same review:
+        # sulbactam-durlobactam + carbapenem as the CRAB priority; aztreonam-
+        # avibactam slightly preferred for MBL-CRE; cefiderocol monotherapy
+        # preferred for invasive S. maltophilia (aztreonam-avibactam an
+        # alternative); pip-tazo an alternative for ESBL cUTI; Hafnia added as
+        # moderate-risk AmpC; continuing ceftriaxone reasonable in responding
+        # non-severe AmpC infection; ceftolozane-tazobactam favoured over
+        # ceftazidime-avibactam for DTR-PA pneumonia.
+        "version": "2026 update (doi:10.1093/cid/ciag481)",
+        "dated": "2026-08",
+        "previous_version": "v4.0 (ciae403, 2024-08-07)",
+        "note": ("IDSA revises this guidance roughly annually; re-check the "
+                 "notable-updates page before each release. Rules citing it were "
+                 "re-read on 2026-11-10 from secondary coverage; the full text "
+                 "still has to be read by the countersigning clinician."),
         "url": "https://www.idsociety.org/practice-guideline/amr-guidance/",
     },
     "WHO_AWARE": {
@@ -525,6 +531,28 @@ RULES: Dict[str, Dict[str, Any]] = {
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": "EUCAST guidance on fosfomycin i.v. breakpoints (May 2024) verbatim: 'The currently revised breakpoint of fosfomycin applies only to E. coli in infections originating from the urinary tract.' Breakpoint tables add: 'Zone diameter breakpoints apply to E. coli only.'",
     },
+    "nobp_gentamicin_pseudomonas": {
+        "assertion": "CLSI eliminated gentamicin as a treatment option for "
+                     "P. aeruginosa (breakpoints removed); suppress it. Amikacin "
+                     "breakpoints apply to urinary isolates only.",
+        "source": "CLSI_M100", "locus": "Ed33 (2023) Table 2B-1 — aminoglycosides",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-11-10",
+        "awaiting_countersignature": "2026-11-10 review fix C5 — release blocker until signed",
+    },
+    "nobp_sulbactam_durlobactam_non_acinetobacter": {
+        "assertion": "Sulbactam-durlobactam has breakpoints only for the "
+                     "A. baumannii-calcoaceticus complex.",
+        "source": "CLSI_M100", "locus": "Table 2B-2 (Acinetobacter)",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-11-10",
+        "awaiting_countersignature": "2026-11-10 review fix H6 — release blocker until signed",
+    },
+    "nobp_aztreonam_avibactam_non_enterobacterales": {
+        "assertion": "Aztreonam-avibactam breakpoints exist for Enterobacterales "
+                     "only (CLSI M100 Ed36, EUCAST).",
+        "source": "CLSI_M100", "locus": "Ed36 Table 2A — new agent",
+        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-11-10",
+        "awaiting_countersignature": "2026-11-10 review fix H6 — release blocker until signed",
+    },
     "nobp_imipenem_proteae": {
         "assertion": "Imipenem has intrinsically LOW activity against Proteus spp., "
                      "Morganella morganii and Providencia spp.; do not rely on a "
@@ -668,12 +696,23 @@ RULES: Dict[str, Dict[str, Any]] = {
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
     },
     "QC004": {
-        "assertion": "Carbapenem R with a cephalosporin S in Enterobacterales is "
-                     "uncommon (OXA-48-like or porin loss) and should be confirmed by "
-                     "a carbapenemase assay.",
+        "assertion": "Meropenem or ertapenem R with a cephalosporin S in "
+                     "Enterobacterales is uncommon (OXA-48-like or porin loss) and "
+                     "should be confirmed by a carbapenemase assay. (Imipenem moved "
+                     "to QC004b on 2026-11-10 so Proteeae are not flagged.)",
         "source": "EUCAST_DETECT", "locus": "carbapenemase detection",
         "verified": "pending",
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
+    },
+    "QC004b": {
+        "assertion": "Imipenem R with a cephalosporin S in Enterobacterales OTHER than "
+                     "Proteeae is uncommon and should be confirmed by a carbapenemase "
+                     "assay. Proteus/Morganella/Providencia are excluded: their imipenem "
+                     "MICs are intrinsically elevated (CDC CRE definition).",
+        "source": "EUCAST_DETECT", "locus": "carbapenemase detection",
+        "verified": "pending",
+        "awaiting_countersignature": "2026-11-10 review fix C3 — release blocker until signed",
+        "note": "Split from QC004 on 2026-11-10 (review fix C3).",
     },
     "QC005": {
         "assertion": "Linezolid resistance in S. aureus is very rare; confirm by a "

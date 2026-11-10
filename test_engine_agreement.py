@@ -200,6 +200,14 @@ for org in [o for o in ORGS if is_esbl_producer(o)]:
                     if d in G and d not in sir})
         A, W, B = buckets(org, spec, sir)
         leak = (A & _OXYIMINO)
+        # 2026-11-10 (review C2): for a chromosomal-AmpC organism this
+        # pattern is DEREPRESSED AmpC, not ESBL, and IDSA AMR Guidance 2024/
+        # 2026 suggests cefepime when it tests S (it is stable to AmpC). The
+        # old expectation encoded the defect. Cefepime stays forbidden for
+        # every non-AmpC producer.
+        _mech = (NS["predict_esbl"](org, sir) or {}).get("probability")
+        if _mech in ("ampc", "ampc_plasmid"):
+            leak = leak - {"Cefepime"}
         if leak:
             _esbl_leaks.append(f"{org}/{spec}: RECOMMENDED {sorted(leak)}")
 check("no oxyimino beta-lactam is RECOMMENDED on a confirmed-ESBL isolate",
@@ -235,7 +243,9 @@ _GRAM_POS_ORGS = {"Staphylococcus aureus", "MRSA", "Enterococcus faecalis",
                   "Streptococcus pyogenes (Group A)",
                   "Streptococcus agalactiae (Group B)",
                   "Listeria monocytogenes",
-                  "Coagulase-negative Staphylococci"}
+                  "Coagulase-negative Staphylococci",
+                  # added 2026-11-10 with the organisms themselves
+                  "Staphylococcus saprophyticus", "Staphylococcus lugdunensis"}
 # Same requirement in the other direction.
 _GRAM_NEG_ORGS = {"E. coli", "Klebsiella spp.", "Pseudomonas aeruginosa",
                   "Acinetobacter baumannii", "Proteus mirabilis",
@@ -243,7 +253,9 @@ _GRAM_NEG_ORGS = {"E. coli", "Klebsiella spp.", "Pseudomonas aeruginosa",
                   "Stenotrophomonas maltophilia", "H. influenzae",
                   "Enterobacterales (unspeciated)", "Enterobacter cloacae",
                   "Serratia marcescens", "Citrobacter freundii",
-                  "Morganella morganii", "Providencia spp.", "Hafnia alvei"}
+                  "Morganella morganii", "Providencia spp.", "Hafnia alvei",
+                  # added 2026-11-10 with the organisms themselves
+                  "Citrobacter koseri", "Proteus vulgaris"}
 
 _gram_leaks = []
 for org in ORGS:
@@ -331,7 +343,9 @@ _sir_mrsa.update({"Oxacillin": "R", "Cefoxitin": "R", "Vancomycin": "S"})
 
 A1, W1, B1 = buckets("Staphylococcus aureus", "Blood", _sir_mrsa)
 A2, W2, B2 = buckets("MRSA", "Blood", _sir_mrsa)
-_bl_offered = (A1 | W1) & (_BETA_LACTAM - {"Oxacillin", "Cefoxitin"})
+# Ceftaroline binds PBP2a: it is the anti-MRSA cephalosporin and the one
+# beta-lactam that SHOULD be offered (2026-11-10 review; IDSA MRSA).
+_bl_offered = (A1 | W1) & (_BETA_LACTAM - {"Oxacillin", "Cefoxitin", "Ceftaroline"})
 check("no beta-lactam is offered on a phenotypically MRSA isolate",
       not _bl_offered, f"offered: {sorted(_bl_offered)}")
 check("the MRSA verdict is identical whether the name reads "

@@ -200,11 +200,20 @@ _xdr = {d: "R" for d in ("Meropenem", "Imipenem/Cilastatin", "Ceftazidime",
 _xdr.update({"Amikacin": "S", "Colistin": "S"})
 _res = A.run_analysis(Patient(age_years=28, sex="Female", is_pregnant=True),
                       "Pseudomonas aeruginosa", "Blood", _xdr)
-_flagged = [o for c in _res["combinations"] for o in c["data"]["options"]
+# 2026-11-10: the DTR-PA panel no longer contains an aminoglycoside regimen
+# (IDSA 2026 prefers the novel beta-lactams as monotherapy), so the host-
+# context check now uses CRAB, whose panel names minocycline / tigecycline /
+# polymyxin -- agents the pregnancy flags must catch.
+_crab = {"Meropenem": "R", "Imipenem/Cilastatin": "R", "Ciprofloxacin": "R",
+         "Piperacillin + Tazobactam": "R", "Ceftazidime": "R",
+         "Minocycline": "S", "Colistin": "S", "Ampicillin/Sulbactam": "S"}
+_res_crab = A.run_analysis(Patient(age_years=28, sex="Female", is_pregnant=True),
+                           "Acinetobacter baumannii", "Blood", _crab)
+_flagged = [o for c in _res_crab["combinations"] for o in c["data"]["options"]
             if o.get("host_flagged")]
 check("a pregnant patient's combination panel carries pregnancy warnings",
       bool(_flagged),
-      "no option flagged despite aminoglycoside-containing regimens")
+      "no option flagged despite tetracycline-containing CRAB regimens")
 
 check("phenotypes, MDR and mechanism are all produced in one pass",
       _res["phenotypes"] and _res["mdr"] and _res["mechanism"],

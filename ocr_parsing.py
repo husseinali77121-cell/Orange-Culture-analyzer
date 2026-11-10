@@ -152,6 +152,7 @@ ORGANISM_OCR_ALIASES: Dict[str, str] = {
     "pseudomonas": "Pseudomonas aeruginosa", "p. aeruginosa": "Pseudomonas aeruginosa",
     "ps. aeruginosa": "Pseudomonas aeruginosa",
     "acinetobacter": "Acinetobacter baumannii", "a. baumannii": "Acinetobacter baumannii",
+    "proteus vulgaris": "Proteus vulgaris", "p. vulgaris": "Proteus vulgaris",
     "proteus": "Proteus mirabilis", "p. mirabilis": "Proteus mirabilis",
     # 2026-08-01 these two pointed at "Enterococcus faecium", which was not a
     # profile key, so they were redirected to E. faecalis as the nearest
@@ -177,6 +178,8 @@ ORGANISM_OCR_ALIASES: Dict[str, str] = {
     "serratia": "Serratia marcescens", "s. marcescens": "Serratia marcescens",
     "serratia marcescens": "Serratia marcescens",
     "citrobacter freundii": "Citrobacter freundii", "c. freundii": "Citrobacter freundii",
+    "citrobacter koseri": "Citrobacter koseri", "c. koseri": "Citrobacter koseri",
+    "citrobacter diversus": "Citrobacter koseri",
     "citrobacter": "Citrobacter freundii",
     "morganella morganii": "Morganella morganii", "morganella": "Morganella morganii",
     "m. morganii": "Morganella morganii",
@@ -205,8 +208,12 @@ ORGANISM_OCR_ALIASES: Dict[str, str] = {
     "s. epidermidis": "Coagulase-negative Staphylococci",
     "staphylococcus haemolyticus": "Coagulase-negative Staphylococci",
     "staphylococcus hominis": "Coagulase-negative Staphylococci",
-    "staphylococcus saprophyticus": "Coagulase-negative Staphylococci",
-    "staphylococcus lugdunensis": "Coagulase-negative Staphylococci",
+    # 2026-11-10: own profiles now (saprophyticus = urinary pathogen with
+    # intrinsic fosfomycin R; lugdunensis = behaves like S. aureus).
+    "staphylococcus saprophyticus": "Staphylococcus saprophyticus",
+    "s. saprophyticus": "Staphylococcus saprophyticus",
+    "staphylococcus lugdunensis": "Staphylococcus lugdunensis",
+    "s. lugdunensis": "Staphylococcus lugdunensis",
     "coagulase negative staphylococci": "Coagulase-negative Staphylococci",
     "coagulase-negative staphylococci": "Coagulase-negative Staphylococci",
     "cons": "Coagulase-negative Staphylococci",

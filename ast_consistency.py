@@ -344,16 +344,20 @@ EXCEPTIONAL_PHENOTYPES: List[Dict[str, Any]] = [
         "id": "rare_colistin_disc",
         "organisms": ["escherichia", "e. coli", "klebsiella", "enterobacter",
                       "pseudomonas", "acinetobacter"],
-        "drug": "colistin", "exclude": [], "max_status": "S",
-        "reason_ar": ("مقاومة الكوليستين تستلزم تأكيداً بـ broth microdilution. "
-                      "EUCAST و CLSI يرفضان قياس الكوليستين بالأقراص أو بالـ "
-                      "gradient strip — الجزيء لا ينتشر في الآجار، فالنتيجة "
-                      "بالقرص غير صالحة أياً كانت."),
-        "reason_en": ("Colistin resistance requires broth microdilution "
-                      "confirmation. EUCAST and CLSI both reject disk diffusion "
-                      "and gradient strips for colistin -- the molecule does not "
-                      "diffuse in agar, so a disk result is invalid whatever it "
-                      "shows."),
+        # FIX 2026-11-10: max_status was "S", so the rule never fired on an
+        # S -- the result a disk most often gets WRONG (false susceptibility),
+        # although the text below says "invalid whatever it shows". It now
+        # fires on every reported colistin result.
+        "drug": "colistin", "exclude": [], "max_status": "S", "always": True,
+        "reason_ar": ("نتيجة الكوليستين تستلزم broth microdilution. EUCAST و CLSI "
+                      "يرفضان قياسه بالأقراص أو بالـ gradient strip — الجزيء لا ينتشر "
+                      "في الآجار، فالنتيجة بالقرص غير صالحة أياً كانت (والخطأ الأشيع "
+                      "حساسية كاذبة). CLSI لا يعرّف فئة S للكوليستين (I ≤ 2 / R ≥ 4)."),
+        "reason_en": ("A colistin result requires broth microdilution. EUCAST and "
+                      "CLSI both reject disk diffusion and gradient strips for "
+                      "colistin -- the molecule does not diffuse in agar, so a disk "
+                      "result is invalid whatever it shows (false susceptibility is "
+                      "the common error). CLSI defines no S category (I <=2 / R >=4)."),
         "fix_ar": ("أكِّد بـ BMD. إذا كانت اللوحة تقيس الكوليستين بالقرص، "
                    "احذف النتيجة من التقرير نهائياً."),
         "fix_en": ("Confirm by BMD. If the panel measured colistin by disk, "
@@ -445,7 +449,10 @@ def check_consistency(organism: str, sir_map: Dict[str, str]) -> List[Dict[str, 
         if not drug:
             continue
         status = str(sir_map.get(drug, "")).strip().upper()
-        if _RANK.get(status, -1) <= _RANK.get(rule["max_status"], 2):
+        if rule.get("always"):
+            if status not in _RANK:
+                continue
+        elif _RANK.get(status, -1) <= _RANK.get(rule["max_status"], 2):
             continue
         _fix_ar = rule["fix_ar"]
         _fix_en = rule["fix_en"]

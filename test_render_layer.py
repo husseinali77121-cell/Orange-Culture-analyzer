@@ -343,7 +343,11 @@ print("    substitution is the whole defect this resolver replaced.")
 # ═══════════════════════════════════════════════════════════════════════════
 _KNOWN = {"renal_adjustment", "hepatic_adjustment", "safety_gate", "neonate",
           "intermediate_culture", "esbl_bli_uti_only", "possible_carbapenemase",
-          "interaction", "pregnancy"}
+          "interaction", "pregnancy",
+          # 2026-11-10 review: these all resolve through `clinical_note`.
+          "novel_agent", "organism_caution", "allergy", "uti_upper",
+          "aminoglycoside_pseudomonas", "colistin", "penicillinase_unconfirmed",
+          "no_breakpoint", "ampc_sdd", "ampc_cefepime"}
 _unhandled = sorted(str(r) for r in _reasons_seen if r and r not in _KNOWN)
 check("every warning_reason the engine emits has a resolver branch",
       not _unhandled, f"unhandled: {_unhandled}")

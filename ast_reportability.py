@@ -251,10 +251,14 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
         "drugs": ["tetracycline", "doxycycline", "minocycline", "tigecycline",
                   "colistin", "polymyxin", "nitrofurantoin"],
         "exclude": [],
-        "reason_ar": "Proteus mirabilis مقاوم جوهرياً للتتراسيكلينات · colistin · nitrofurantoin.",
-        "reason_en": ("Proteus mirabilis is intrinsically resistant to tetracyclines, "
-                      "colistin, nitrofurantoin, tetracycline and doxycycline "
-                      "(minocycline and tigecycline remain active)."),
+        # FIX 2026-11-10: reason_en said "minocycline and tigecycline remain
+        # active" while the drug list above (correctly, per EUCAST) suppresses
+        # both -- the explanation contradicted the rule it explains.
+        "reason_ar": ("Proteus mirabilis مقاوم جوهرياً للتتراسيكلينات (ومنها Doxycycline و "
+                      "Minocycline) و Tigecycline و Colistin و Nitrofurantoin."),
+        "reason_en": ("Proteus mirabilis is intrinsically resistant to the tetracyclines "
+                      "(including doxycycline and minocycline), tigecycline, polymyxins "
+                      "and nitrofurantoin."),
         "reference": "EUCAST Intrinsic Resistance v3.3, Table 2",
     },
     {
@@ -357,15 +361,20 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
         "exclude": ["sulbactam", "sulfamethoxazole", "sulphamethoxazol",
                     "minocycline", "tigecycline"],
         "reason_ar": ("Acinetobacter مقاوم جوهرياً — بما في ذلك "
-                      "Amoxicillin/Clavulanate (الـ clavulanate بلا فاعلية هنا). "
+                      "Amoxicillin/Clavulanate (الـ clavulanate بلا فاعلية هنا) و "
+                      "Tetracycline/Doxycycline (EUCAST)، و CLSI M100 Ed36 (2026) ألغى "
+                      "breakpoints الـ Doxycycline/Tetracycline لـ Acinetobacter — "
+                      "Minocycline هو التتراسيكلين المعتمد. "
                       "(ملاحظة: Ampicillin/Sulbactam استثناء — الـ sulbactam نفسه "
                       "فعّال ضد Acinetobacter.)"),
         "reason_en": ("Acinetobacter is intrinsically resistant — "
                       "amoxicillin-clavulanate included (clavulanate adds nothing "
-                      "here). (Note: ampicillin-sulbactam is an exception — "
-                      "sulbactam itself has intrinsic activity against "
-                      "Acinetobacter.)"),
-        "reference": "EUCAST Intrinsic Resistance v3.3, Table 3",
+                      "here), and tetracycline/doxycycline (EUCAST); CLSI M100 Ed36 "
+                      "(2026) removed the Acinetobacter doxycycline/tetracycline "
+                      "breakpoints, leaving minocycline as the reportable tetracycline. "
+                      "(Note: ampicillin-sulbactam is an exception — sulbactam itself "
+                      "has intrinsic activity against Acinetobacter.)"),
+        "reference": "EUCAST Intrinsic Resistance v3.3, Table 3 · CLSI M100 Ed36",
     },
     {
         "id": "intr_nonfermenter_narrow_spectrum",
@@ -402,7 +411,10 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
                   # Acinetobacter and Serratia, doxycycline IS active here
                   # and must stay reportable, so it is excluded below.
                   "tetracycline"],
-        "exclude": ["doxycycline", "minocycline", "tigecycline"],
+        # "avibactam" (2026-11-10): aztreonam-avibactam is an IDSA 2026
+        # alternative for S. maltophilia -- avibactam inhibits L2, and L1 does
+        # not hydrolyse aztreonam -- so the "aztreonam" token must not catch it.
+        "exclude": ["doxycycline", "minocycline", "tigecycline", "avibactam"],
         "reason_ar": ("S. maltophilia مقاوم جوهرياً لمعظم البيتا-لاكتام "
                       "(بما فيها الكاربابينيمات — L1 metallo-β-lactamase) "
                       "والأمينوجلايكوسيدات. الخيار المعتمد: Trimethoprim/Sulfamethoxazole."),
@@ -667,6 +679,51 @@ NO_BREAKPOINT_RULES: List[Dict[str, Any]] = [
                       "having previously covered all Enterobacterales.) Extrapolation "
                       "is unsupported."),
         "reference": "EUCAST Breakpoint Tables v16.1 · CLSI M100 Ed36",
+    },
+    {
+        # CLSI M100 Ed33 (2023) removed the gentamicin breakpoints for
+        # P. aeruginosa (the highest MIC that predicts efficacy, 0.5 ug/mL, is
+        # below the wild-type ECV) and restricted amikacin to urinary isolates.
+        # EUCAST likewise lists gentamicin for Pseudomonas with no clinical
+        # breakpoint. Added 2026-11-10 (review fix C5).
+        "id": "nobp_gentamicin_pseudomonas",
+        "organisms": ["pseudomonas aeruginosa", "pseudomonas"],
+        "not_organisms": [],
+        "drugs": ["gentamicin"],
+        "exclude": [],
+        "reason_ar": ("CLSI M100 Ed33 (2023) ألغى breakpoints الـ Gentamicin لـ P. aeruginosa "
+                      "— يُحجب من التقرير. Tobramycin هو الأمينوجليكوزيد المعتمد، و Amikacin "
+                      "لعزلات البول فقط."),
+        "reason_en": ("CLSI M100 Ed33 (2023) removed the gentamicin breakpoints for "
+                      "P. aeruginosa -- suppress it. Tobramycin is the reportable "
+                      "aminoglycoside; amikacin is for urinary isolates only."),
+        "reference": "CLSI M100 Ed33 (2023) Table 2B-1",
+    },
+    {
+        "id": "nobp_sulbactam_durlobactam_non_acinetobacter",
+        "organisms": [],          # every organism not excluded below
+        "not_organisms": ["acinetobacter"],
+        "drugs": ["durlobactam"],
+        "exclude": [],
+        "reason_ar": ("Sulbactam-durlobactam معتمد وله breakpoints ضد A. baumannii-calcoaceticus "
+                      "complex فقط."),
+        "reason_en": ("Sulbactam-durlobactam is approved, and has breakpoints, for the "
+                      "A. baumannii-calcoaceticus complex only."),
+        "reference": "CLSI M100 Ed34+ · FDA label (Xacduro)",
+    },
+    {
+        "id": "nobp_aztreonam_avibactam_non_enterobacterales",
+        "organisms": [],          # every organism not excluded below
+        "not_organisms": ENTEROBACTERALES,
+        "drugs": ["aztreonam + avibactam", "aztreonam-avibactam", "aztreonam/avibactam"],
+        "exclude": [],
+        "reason_ar": ("breakpoints الـ Aztreonam-avibactam (CLSI M100 Ed36 و EUCAST) لـ "
+                      "Enterobacterales فقط. استخدامه لـ S. maltophilia توصية علاجية من IDSA "
+                      "بلا breakpoint."),
+        "reason_en": ("Aztreonam-avibactam breakpoints (CLSI M100 Ed36, EUCAST) are for "
+                      "Enterobacterales only. Its use for S. maltophilia is an IDSA "
+                      "treatment suggestion without a breakpoint."),
+        "reference": "CLSI M100 Ed36 · EUCAST v16.1",
     },
     {
         "id": "nobp_imipenem_proteae",

@@ -218,12 +218,23 @@ def run_case(case: dict) -> dict:
     _RENDERABLE = {"esbl_bli_uti_only", "possible_carbapenemase",
                    "intermediate_culture", "renal_adjustment",
                    "hepatic_adjustment", "safety_gate", "neonate",
-                   "possible_mrsa", "interaction", "pregnancy"}
+                   "possible_mrsa", "interaction", "pregnancy",
+                   # 2026-11-10 review: resolved through `clinical_note`
+                   "novel_agent", "organism_caution", "allergy", "uti_upper",
+                   "aminoglycoside_pseudomonas", "colistin",
+                   "penicillinase_unconfirmed", "no_breakpoint", "ampc_sdd",
+                   "ampc_cefepime"}
     for _w in warned:
         _wr = _w.get("warning_reason")
         if _wr and _wr not in _RENDERABLE:
             fail(cid, "INV-14 warning-is-renderable",
                  f"warning_reason={_wr!r} has no display branch")
+        if _wr in ("novel_agent", "organism_caution", "allergy", "uti_upper",
+                   "aminoglycoside_pseudomonas", "colistin",
+                   "penicillinase_unconfirmed", "no_breakpoint", "ampc_sdd",
+                   "ampc_cefepime") and not _w.get("clinical_note"):
+            fail(cid, "INV-14 warning-is-renderable",
+                 f"warning_reason={_wr!r} carries no clinical_note to show")
         if _wr in ("esbl_bli_uti_only", "possible_carbapenemase") and not (
                 _w.get("esbl_note") or _w.get("esbl_note_en")):
             fail(cid, "INV-14 warning-is-renderable",
