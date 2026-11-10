@@ -1965,6 +1965,10 @@ def warned_note_for(item: Dict[str, Any], lang: str = "ar") -> str:
             return f"{short}  \n{detail}" if short and detail else (short or detail)
 
         if reason == "intermediate_culture":
+            if not ar:
+                return ("Result is Intermediate (I) - EUCAST: susceptible, increased exposure. "
+                        "Use only at the higher dose / extended infusion and after excluding a "
+                        "susceptible (S) alternative.")
             return ("النتيجة Intermediate (I) — حسب EUCAST تعني حساسية عند تعرّض أعلى: "
                     "لا تُستخدم إلا بجرعة أعلى/تسريب ممتد وبعد استبعاد بديل حسّاس (S).")
 
@@ -1980,6 +1984,9 @@ def warned_note_for(item: Dict[str, Any], lang: str = "ar") -> str:
         if reason in ("novel_agent", "organism_caution", "allergy", "uti_upper",
                       "aminoglycoside_pseudomonas", "colistin", "penicillinase_unconfirmed",
                       "no_breakpoint", "ampc_sdd", "ampc_cefepime"):
+            if not ar:
+                return (pick("clinical_note_en")
+                        or "Clinical caution applies to this agent for this organism / site - review before use.")
             return pick("clinical_note", "reason_detail", "reason_short")
 
         # Unknown reason: try every explanation slot that exists before giving up,
@@ -1989,7 +1996,9 @@ def warned_note_for(item: Dict[str, Any], lang: str = "ar") -> str:
                     "hepatic_rec", "note")
 
     base = _primary()
-    extra = str(item.get("clinical_note") or "").strip() if isinstance(item, dict) else ""
+    _en_mode = not (lang or "ar").lower().startswith("ar")
+    extra = str(item.get("clinical_note_en" if _en_mode else "clinical_note") or "").strip() \
+        if isinstance(item, dict) else ""
     if extra and extra not in base:
         return f"{base}  \n{extra}" if base else extra
     return base
@@ -2584,6 +2593,13 @@ def analyze_antibiotics(
                 "(EUCAST v16). أكّد بـ mCIM أو PCR قبل التصعيد، وفي العدوى "
                 "الشديدة فضّل الكاربابينيم أو استشر الأمراض المعدية."
             )
+            _w["esbl_note_en"] = (
+                "Carbapenemase is SUSPECTED (a single carbapenem R, or meropenem I) - a "
+                "suspicion, not a confirmation; porin loss with ESBL/AmpC gives the same "
+                "pattern. This agent tests susceptible and is reported as such (EUCAST v16). "
+                "Confirm with mCIM or PCR before escalating; in severe infection prefer a "
+                "carbapenem or seek infectious-diseases advice."
+            )
             warned.append({"name": drug, **_w})
             continue
 
@@ -2842,8 +2858,8 @@ def analyze_antibiotics(
             _ct = (culture_type or "").lower()
             if any(k in _ct for k in ("blood", "csf", "sputum")):
                 interactions_alerts.append(
-                    "⚠️ Fusidic acid: لا يُستخدم منفرداً في العدوى الجهازية — "
-                    "combination إلزامي (+ Rifampicin أو + Vancomycin). مقاومة سريعة."
+                    "⚠️ Fusidic acid: never as monotherapy in systemic infection — resistance "
+                    "emerges rapidly; combination is mandatory (+ Rifampicin or + Vancomycin)."
                 )
 
         # ── Penicillin: Penicillinase في المكورات العنقودية ─────────────────────
@@ -2864,8 +2880,8 @@ def analyze_antibiotics(
         # ── Oxacillin: MSSA alert للـ bacteremia ─────────────────────────────────
         if "oxacillin" in d_low and culture_result == "S" and culture_type == "Blood":
             interactions_alerts.append(
-                "ℹ️ Oxacillin=S (MSSA confirmed). Cefazolin غير أدنى من (flu)cloxacillin "
-                "في bacteremia وأقل إصابة كلوية — CloCeBa (Lancet 2025) / SNAP (NEJM 2026)."
+                "ℹ️ Oxacillin=S (MSSA confirmed). In bacteraemia cefazolin is non-inferior to (flu)cloxacillin "
+                "with less kidney injury — CloCeBa (Lancet 2025) / SNAP (NEJM 2026)."
             )
 
         # ── Enterococcus + TMP-SMX: in-vitro S but clinically unreliable ─────────
@@ -3122,6 +3138,7 @@ def analyze_antibiotics(
     # Applied after every hard ban has had its chance: a note never rescues a
     # drug from `banned`, and a "warn" note only DEMOTES allowed -> warned.
     if _post_notes:
+        from therapy_rules import CLINICAL_NOTE_EN as _NOTE_EN
         _banned_names = {b.get("name") for b in banned if isinstance(b, dict)}
         _new_allowed = []
         for _it in allowed:
@@ -3130,6 +3147,7 @@ def analyze_antibiotics(
                 _lvl, _note, _rsn = _post_notes[_nm]
                 _it = dict(_it)
                 _it["clinical_note"] = _note
+                _it["clinical_note_en"] = _NOTE_EN.get(_rsn, _NOTE_EN["organism_caution"])
                 if _lvl == "warn":
                     _it["warning_reason"] = _rsn
                     warned.append(_it)
@@ -3141,6 +3159,8 @@ def analyze_antibiotics(
                 _nm = _it.get("name")
                 if _nm in _post_notes and not _it.get("clinical_note"):
                     _it["clinical_note"] = _post_notes[_nm][1]
+                    _it["clinical_note_en"] = _NOTE_EN.get(_post_notes[_nm][2],
+                                                           _NOTE_EN["organism_caution"])
 
     # ── The Intermediate fact is INDEPENDENT of warning_reason ───────────────
     # DEFECT 2026-08-01: `warning_reason` is a single slot and the branches above
@@ -4139,8 +4159,9 @@ from pathogenicity import (                                          # noqa: E40
     # v3 option lists -- the UI and the engine read the same strings
     PATHO_ENGINE_VERSION, GRAM_STAIN_OPTIONS, URINE_COLLECTION_METHODS,
     URINE_SYMPTOMS, HOST_FACTORS_URINE, HOST_FACTORS_OTHER,
-    WOUND_TYPES, WOUND_SIGNS, RESPIRATORY_SIGNS,
+    WOUND_TYPES, WOUND_SIGNS, RESPIRATORY_SIGNS, gram_options_for,
 )
+from final_checklist import build_final_checklist, summarize as summarize_checklist, ICON as CHECK_ICON  # noqa: E402
 
 
 
@@ -5892,6 +5913,12 @@ body { font-family:'Segoe UI',Tahoma,Arial,sans-serif; color:#1a1a2e; font-size:
 .sir-R     { color:#922b21; font-weight:bold; }
 .footer    { margin-top:6mm; padding-top:2mm; border-top:1px solid #ddd;
              font-size:7.5pt; color:#888; }
+.org-box   { background:#f7f5fb; border-left:3px solid #6e2fa0; padding:2mm 3mm;
+             border-radius:1.5mm; font-size:8.8pt; line-height:1.45; }
+.org-box .ar { direction:rtl; text-align:right; unicode-bidi:isolate; margin-bottom:1mm;
+               font-family:'Amiri','Noto Naskh Arabic','Segoe UI',Tahoma,Arial,sans-serif; }
+.org-box .ln { direction:ltr; margin-top:0.6mm; }
+.sir-line  { font-size:8.8pt; line-height:1.5; margin:0.8mm 0; }
 .confidential { background:#fdf2f2; color:#922b21; font-weight:bold;
                 text-align:center; padding:1.5mm; border-radius:1.5mm;
                 font-size:8.5pt; margin-bottom:3mm; }
@@ -5925,6 +5952,26 @@ body { font-family:'Segoe UI',Tahoma,Arial,sans-serif; color:#1a1a2e; font-size:
         f'<div><b>Lab ID:</b>&nbsp;{_esc(lab_id or "—")}</div>'
         '</div>'
     )
+
+    # ── Organism summary (2026-11-11) ──────────────────────────────────────
+    # The same guidance card the screen shows under the specimen data, in full,
+    # so the archived QA sheet says what the organism IS, not only its name.
+    _op_qa = ORGANISM_PROFILE.get(organism) or {}
+    if _op_qa:
+        H.append('<div class="sec-ttl">📌 Organism Summary</div>')
+        H.append('<div class="org-box">')
+        if _op_qa.get("note"):
+            H.append(f'<div class="ar">{_md_inline(_op_qa["note"])}</div>')
+        _ctx_qa = (_op_qa.get("specimen_context") or {}).get(specimen, "")
+        if _ctx_qa:
+            H.append(f'<div class="ar"><b>{_esc(specimen)}:</b> {_md_inline(_ctx_qa)}</div>')
+        for _lbl, _key in (("First-line", "first_line"), ("Second-line", "second_line"),
+                           ("Third-line", "third_line"), ("Avoid", "avoid")):
+            if _op_qa.get(_key):
+                H.append(f'<div class="ln"><b>{_lbl}:</b> {_esc(", ".join(_op_qa[_key]))}</div>')
+        if "urine" in str(specimen).lower() and _op_qa.get("urine_note"):
+            H.append(f'<div class="ar">{_md_inline(_op_qa["urine_note"])}</div>')
+        H.append('</div>')
 
     # ── Confidence Score ──────────────────────────────────────────────
     H.append('<div class="sec-ttl">📊 Recommendation Confidence Score</div>')
@@ -6028,19 +6075,19 @@ body { font-family:'Segoe UI',Tahoma,Arial,sans-serif; color:#1a1a2e; font-size:
                     )
 
     # ── Full AST Panel ────────────────────────────────────────────────
+    # Compact since 2026-11-11: one row per drug pushed the sheet onto a
+    # second page for any normal panel. Grouped by result it is three lines,
+    # and nothing is lost -- every tested agent is still named.
     H.append('<div class="sec-ttl">🧪 Full AST Panel as Entered</div>')
     if sir_map:
-        H.append(
-            '<table class="ast-tbl">'
-            '<tr><th>Antibiotic</th><th>Result</th></tr>'
-        )
-        for drug, result in sorted(sir_map.items()):
-            sir_cls = f"sir-{result}" if result in ("S","I","R") else ""
-            H.append(
-                f'<tr><td>{_esc(drug)}</td>'
-                f'<td class="{sir_cls}">{_esc(result)}</td></tr>'
-            )
-        H.append('</table>')
+        for _res, _lbl in (("S", "Susceptible"), ("I", "Intermediate / SDD"), ("R", "Resistant")):
+            _grp = sorted(d for d, r in sir_map.items() if r == _res)
+            if _grp:
+                H.append(f'<div class="sir-line"><span class="sir-{_res}">{_res} — {_lbl} '
+                         f'({len(_grp)}):</span> {_esc(", ".join(_grp))}</div>')
+        _oth = sorted(f"{d} ({r})" for d, r in sir_map.items() if r not in ("S", "I", "R"))
+        if _oth:
+            H.append(f'<div class="sir-line"><b>Other:</b> {_esc(", ".join(_oth))}</div>')
     else:
         H.append('<div style="font-size:9pt;color:#888">No AST data recorded.</div>')
 
@@ -6056,6 +6103,143 @@ body { font-family:'Segoe UI',Tahoma,Arial,sans-serif; color:#1a1a2e; font-size:
 
     try:
         return _wp.HTML(string=pdf_glyph_guard("".join(H))).write_pdf()
+    except Exception:
+        return None
+
+
+def generate_patho_report_pdf(
+    patho_result: Dict[str, Any],
+    organism: str,
+    specimen: str,
+    inputs: Optional[Dict[str, Any]] = None,
+    patient_ref: str = "",
+    lang: str = "ar",
+    return_html: bool = False,
+):
+    """Stand-alone PDF of the Pathogenicity Assessment (added 2026-11-11).
+
+    Everything the panel shows -- score, verdict, threshold, supporting and
+    opposing factors, interpretive notes, recommendations, references -- on
+    one sheet, so the Arabic recommendations can be printed and filed.
+    lang="ar" prints the Arabic interpretation; lang="en" prints the English
+    forms and carries no Arabic. `return_html` allows inspection without
+    WeasyPrint.
+    """
+    if not patho_result:
+        return None
+    if not return_html and (not WEASYPRINT_AVAILABLE or _wp is None):
+        return None
+    en = not str(lang or "ar").lower().startswith("ar")
+    pr = patho_result
+    sc = int(pr.get("score", 0))
+    col = {"error": "#922b21", "warning": "#b7770d"}.get(pr.get("color"), "#1e8449")
+    interp = pr.get("interpretation_en") if en else pr.get("interpretation")
+    recs = pr.get("recommendations_en") if en else pr.get("recommendations")
+    notes = pr.get("notes_en") if en else pr.get("notes")
+    tcls = "ltr" if en else "ar"
+    _conf = {"high": ("High", "عالية"), "moderate": ("Moderate", "متوسطة"),
+             "low": ("Low", "منخفضة")}.get(pr.get("confidence"), ("-", "-"))
+
+    def T(e, a):
+        return e if en else a
+
+    H: List[str] = []
+    H.append("""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+@page { size:A4; margin:12mm 14mm; }
+body { font-family:'Noto Sans','Segoe UI',Tahoma,Arial,'DejaVu Sans',sans-serif; color:#1a1a2e; font-size:10pt; }
+.hdr { border-bottom:2px solid #0b6e6e; padding-bottom:3mm; margin-bottom:4mm; }
+.hdr-title { font-size:16pt; font-weight:bold; color:#0b6e6e; }
+.hdr-sub { font-size:9pt; color:#888; margin-top:1mm; }
+.meta { display:flex; justify-content:space-between; font-size:9pt; margin-bottom:2mm;
+        background:#f2f8f8; padding:2.5mm 3mm; border-radius:2mm; }
+.sec { font-size:11pt; font-weight:bold; color:#0b6e6e; border-bottom:1px solid #ddd;
+       padding-bottom:1mm; margin:4mm 0 2mm 0; }
+.bar { height:4mm; background:#e6e6e6; border-radius:2mm; overflow:hidden; }
+.fill { height:4mm; }
+.verdict { font-size:13pt; font-weight:bold; margin:2mm 0; }
+.ar { direction:rtl; text-align:right; unicode-bidi:isolate; line-height:1.6;
+      font-family:'Amiri','Noto Naskh Arabic','Segoe UI',Tahoma,Arial,sans-serif; }
+.ltr { direction:ltr; text-align:left; line-height:1.5; }
+.row { font-size:9.3pt; margin:1.2mm 0; }
+.pos { color:#1e8449; } .neg { color:#b7770d; }
+.box { background:#f7f7f9; border-left:3px solid #0b6e6e; padding:2mm 3mm; border-radius:1.5mm; }
+.in-tbl { width:100%; border-collapse:collapse; font-size:8.8pt; }
+.in-tbl td { padding:1mm 2mm; border-bottom:1px solid #eee; vertical-align:top; }
+.in-tbl td.k { width:34%; color:#555; }
+.footer { margin-top:6mm; padding-top:2mm; border-top:1px solid #ddd; font-size:7.5pt; color:#888; }
+</style></head><body>""")
+    H.append('<div class="hdr"><div class="hdr-title">Pathogenicity Assessment Report</div>'
+             '<div class="hdr-sub">Infection vs colonisation vs contamination — '
+             f'engine v{_esc(str(pr.get("engine_version", "")))}</div></div>')
+    H.append('<div class="meta">'
+             f'<div><b>Organism:</b>&nbsp;{_esc(organism or "—")}</div>'
+             f'<div><b>Specimen:</b>&nbsp;{_esc(specimen or "—")}</div>'
+             f'<div><b>Generated:</b>&nbsp;{_esc(datetime.now().strftime("%Y-%m-%d  %H:%M"))}</div></div>')
+    if patient_ref:
+        H.append(f'<div class="meta"><div><b>Patient Ref:</b>&nbsp;%%PATIENT%%</div></div>')
+
+    H.append(f'<div class="sec">{T("Result", "النتيجة")}</div>')
+    H.append(f'<div class="bar"><div class="fill" style="width:{sc}%;background:{col}"></div></div>')
+    H.append(f'<div class="verdict" style="color:{col}">{sc}% — {_esc(str(pr.get("verdict", "")))}</div>')
+    H.append(f'<div class="row">{T("Assessment confidence", "ثقة التقييم")}: '
+             f'<b>{_conf[0] if en else _conf[1]}</b></div>')
+    if pr.get("threshold"):
+        H.append(f'<div class="row ltr"><b>Threshold applied:</b> {_esc(pr["threshold"])}</div>')
+    if pr.get("missing_inputs"):
+        H.append(f'<div class="row ltr neg"><b>Not entered (not counted against infection):</b> '
+                 f'{_esc(", ".join(pr["missing_inputs"]))}</div>')
+    if interp:
+        H.append(f'<div class="box {tcls}">{_esc(interp)}</div>')
+
+    if inputs:
+        _rows = [(k, v) for k, v in inputs.items() if v not in (None, "", [], "مش محدد", "مش متعملة")]
+        if _rows:
+            H.append(f'<div class="sec">{T("Data entered", "البيانات المُدخلة")}</div>')
+            H.append('<table class="in-tbl">')
+            for k, v in _rows:
+                v = ", ".join(str(x) for x in v) if isinstance(v, (list, tuple)) else str(v)
+                H.append(f'<tr><td class="k">{_esc(k)}</td><td>{_esc(v)}</td></tr>')
+            H.append('</table>')
+
+    if pr.get("factors_pos"):
+        H.append(f'<div class="sec">{T("Supporting infection", "عوامل تدعم العدوى")}</div>')
+        for f in pr["factors_pos"]:
+            H.append(f'<div class="row pos" style="unicode-bidi:plaintext">{_esc(f)}</div>')
+    if pr.get("factors_neg"):
+        H.append(f'<div class="sec">{T("Against infection", "عوامل ضد العدوى")}</div>')
+        for f in pr["factors_neg"]:
+            H.append(f'<div class="row neg" style="unicode-bidi:plaintext">{_esc(f)}</div>')
+    if notes:
+        H.append(f'<div class="sec">{T("Interpretive notes", "ملاحظات تفسيرية")}</div>')
+        for n_ in notes:
+            H.append(f'<div class="row {tcls}">{_esc(n_)}</div>')
+    if recs:
+        H.append(f'<div class="sec">{T("Recommendations", "التوصيات")}</div>')
+        for r_ in recs:
+            H.append(f'<div class="row {tcls}">• {_esc(r_)}</div>')
+    if pr.get("references"):
+        H.append('<div class="sec">References</div>')
+        H.append(f'<div class="row ltr" style="font-size:8.5pt;color:#555">'
+                 f'{_esc(" · ".join(pr["references"]))}</div>')
+    H.append('<div class="footer">Generated by Orange Lab Pathogenicity Engine. Decision support only: '
+             'the significance of a culture is a clinical judgement that remains with the treating '
+             'physician and the microbiologist.</div></body></html>')
+    html = "".join(H)
+    if en:
+        # UI option labels that carry Arabic words: say them in English first,
+        # so the strip below cannot turn "Organisms بدون WBCs" into "Organisms WBCs".
+        for _a, _e in (("بدون", "without"), ("مش متعملة", "Not done"), ("مش محدد", "Not specified"),
+                       ("طبيعية", "Normal"), ("تاريخ UTIs متكررة", "Recurrent UTIs"),
+                       ("(لاهوائيات)", "")):
+            html = html.replace(_a, _e)
+        # the factor lines are English already; this is the guarantee, not the mechanism
+        html = re.sub(r"[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]+", "", html)
+        html = re.sub(r"\(\s*\)", "", html)
+    html = html.replace("%%PATIENT%%", _esc(patient_ref or ""))
+    if return_html:
+        return html
+    try:
+        return _wp.HTML(string=pdf_glyph_guard(html)).write_pdf()
     except Exception:
         return None
 
@@ -6373,6 +6557,28 @@ def _render_patho_result(patho_result: dict) -> None:
 
     if patho_result.get("references"):
         st.caption("المراجع: " + " · ".join(patho_result["references"]))
+
+    # ── PDF of this assessment only (2026-11-11) ───────────────────────────
+    st.divider()
+    _ctx = st.session_state.get("patho_pdf_ctx") or {}
+    _pl = st.radio("لغة ملف الـ PDF", ["العربية", "English"], horizontal=True,
+                   key=f"patho_pdf_lang_{_ctx.get('panel', 'x')}")
+    if WEASYPRINT_AVAILABLE:
+        _pp = generate_patho_report_pdf(
+            patho_result, _ctx.get("organism", ""), _ctx.get("specimen", ""),
+            inputs=_ctx.get("inputs"),
+            patient_ref=(st.session_state.get("patient_name_final", "")
+                         or st.session_state.get("patient_name_ocr", "") or ""),
+            lang="en" if _pl == "English" else "ar")
+        if _pp:
+            st.download_button(
+                "⬇️ Download Pathogenicity Assessment (PDF)", data=_pp,
+                file_name=f"Pathogenicity-{datetime.now().strftime('%Y%m%d-%H%M')}.pdf",
+                mime="application/pdf", key=f"patho_pdf_dl_{_ctx.get('panel', 'x')}")
+        else:
+            st.caption("⚠️ تعذر إنشاء PDF لتقييم الـ Pathogenicity.")
+    else:
+        st.caption("⚠️ WeasyPrint غير متاح في هذه البيئة — لا يمكن إنشاء PDF.")
 
 
 # =========================================================
@@ -7031,7 +7237,7 @@ if uploaded:
 
                     patho_gram = st.selectbox(
                         "Gram Stain",
-                        GRAM_STAIN_OPTIONS,
+                        gram_options_for(organism_type),
                         key="patho_gram_sel",
                         help="Gram-variable = نتيجة صبغة وليست نوع بكتيريا: Acinetobacter، "
                              "Gardnerella، مزارع قديمة، أو خطأ إزالة اللون."
@@ -7096,6 +7302,19 @@ if uploaded:
                     )
                     patho_result = assess_pathogenicity(**patho_kwargs)
                     st.session_state.patho_result = patho_result
+                    st.session_state.patho_pdf_ctx = {
+                        "panel": "urine", "organism": organism_type, "specimen": culture_type,
+                        "inputs": {
+                            "Colony count": patho_kwargs.get("colony_count_text"),
+                            "Collection method": patho_kwargs.get("collection_method"),
+                            "Culture purity": patho_kwargs.get("culture_purity"),
+                            "Pus cells / HPF": patho_kwargs.get("pus_cells_text"),
+                            "Urinalysis": patho_kwargs.get("urinalysis_result"),
+                            "Gram stain": patho_kwargs.get("gram_stain"),
+                            "Symptoms": patho_kwargs.get("symptoms"),
+                            "Host factors": patho_kwargs.get("host_factors"),
+                            "Age / Sex": f"{patho_kwargs.get('age')} / {patho_kwargs.get('sex')}",
+                        }}
 
                 # ── Display Result (persists after button) ────────────────────
                 patho_result = st.session_state.get("patho_result")
@@ -7135,7 +7354,7 @@ if uploaded:
                     with np_c2:
                         np_gram = st.selectbox(
                             "Gram Stain",
-                            GRAM_STAIN_OPTIONS,
+                            gram_options_for(organism_type),
                             key="np_gram_sel",
                             help="Gram-variable = نتيجة صبغة وليست نوع بكتيريا: Acinetobacter، "
                                  "Gardnerella، مزارع قديمة، أو خطأ إزالة اللون.")
@@ -7222,6 +7441,17 @@ if uploaded:
                             blood_source=np_blood_source,
                             wound_type=np_wound_type,
                         )
+                        st.session_state.patho_pdf_ctx = {
+                            "panel": "other", "organism": organism_type, "specimen": culture_type,
+                            "inputs": {
+                                "Colony count": colony_count, "Culture purity": np_purity,
+                                "Gram stain": np_gram, "Signs / symptoms": np_symptoms,
+                                "SIRS criteria": np_sirs, "Positive bottles": np_blood_source,
+                                "Sputum WBC / LPF": np_sputum_wbc,
+                                "Sputum epithelial / LPF": np_sputum_epi,
+                                "Wound type": np_wound_type, "Host factors": np_host,
+                                "Age / Sex": f"{age} / {sex}",
+                            }}
 
                     _npr = st.session_state.get("patho_result")
                     if _npr:
@@ -8411,6 +8641,46 @@ if uploaded:
                 for _rec in _der["recommendations"]: st.write(_rec)
                 st.caption(f"📚 {_der['ref']}")
 
+            st.divider()
+
+            # ── Final verification checklist (2026-11-11) ───────────────────
+            # One line per question a reviewer asks before release. Nothing
+            # here decides anything new -- it re-checks what the engine did.
+            st.markdown("### ✅ قائمة المراجعة النهائية")
+            _is_urine_ck = classify_specimen(culture_type) == "urine"
+            _gram_ck = st.session_state.get("patho_gram_sel" if _is_urine_ck else "np_gram_sel", "")
+            _panel_ck = None
+            if PANEL_COMPLETENESS_AVAILABLE and _check_panel_completeness_ext and sir_map:
+                try:
+                    _panel_ck = _check_panel_completeness_ext(organism_type, culture_type, sir_map)
+                except Exception:
+                    _panel_ck = None
+            _ck_items = build_final_checklist(
+                organism_type, culture_type, sir_map,
+                allowed=allowed, warned=warned, banned=banned,
+                qc_issues=(run_ast_qc(organism_type, sir_map, specimen=culture_type)
+                           if sir_map else []),
+                gram_stain=_gram_ck,
+                patho_result=st.session_state.get("patho_result"),
+                panel_result=_panel_ck,
+            )
+            _ck_sum = summarize_checklist(_ck_items)
+            for _ck in _ck_items:
+                _line = f"{CHECK_ICON[_ck['status']]} **{_ck['title']}** — {_ck['detail']}"
+                if _ck["status"] == "fail":
+                    st.error(_line)
+                elif _ck["status"] == "warn":
+                    st.warning(_line)
+                elif _ck["status"] == "pass":
+                    st.success(_line)
+                else:
+                    st.caption(_line)
+            if _ck_sum["overall"] == "fail":
+                st.error(f"❌ {_ck_sum['counts']['fail']} بند يحتاج مراجعة قبل إصدار التقرير.")
+            elif _ck_sum["overall"] == "warn":
+                st.warning(f"⚠️ لا أخطاء — {_ck_sum['counts']['warn']} بند يحتاج انتباه.")
+            else:
+                st.success("✅ كل بنود المراجعة سليمة.")
             st.divider()
 
             # ── Commercial Names Toggle ────────────────────────────────────────

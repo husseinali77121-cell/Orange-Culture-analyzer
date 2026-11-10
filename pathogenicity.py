@@ -47,6 +47,7 @@ __all__ = [
     "_parse_cfu", "_cfu_report_state", "_score_colony_count", "_parse_pus",
     # v3 (2026-11-10)
     "PATHO_ENGINE_VERSION", "_urine_threshold", "_gram_type", "_stain_type",
+    "gram_options_for", "_GRAM_COMPATIBLE", "_GRAM_LABEL",
     "HOST_SCI_PARA", "HOST_SCI_QUAD", "HOST_FACTORS_URINE", "HOST_FACTORS_OTHER",
     "URINE_COLLECTION_METHODS", "URINE_SYMPTOMS", "GRAM_STAIN_OPTIONS",
     "WOUND_TYPES", "WOUND_SIGNS", "RESPIRATORY_SIGNS",
@@ -266,6 +267,107 @@ _TK_GRAM_VARIABLE = ("acinetobacter", "gardnerella", "bacillus", "clostridi",
                      "corynebacterium", "lactobacill", "mobiluncus", "actinomyces")
 
 
+# ── English forms (2026-11-11) ──────────────────────────────────────────────
+# The interpretation, recommendations and notes are written in Arabic for the
+# lab. The ENGLISH report must not carry Arabic, so every one of them has an
+# English form here; test_round3.py fails if the engine can emit a note that
+# has none.
+_NOTES_EN = [
+    ("الكائن غير محدد النوع", "Organism not identified to species level: the assessment rests on genus / Gram reaction only. Identification can change the interpretation (e.g. S. aureus is always a pathogen; coagulase-negative staphylococci are common contaminants)."),
+    ("البول العكر أو كريه الرائحة", "Cloudy or foul-smelling urine alone is not evidence of infection and not an indication to culture or treat (IDSA CA-UTI 2009)."),
+    ("تشوش/هذيان بلا أعراض بولية", "Delirium without urinary symptoms or fever in an older patient: look for another cause and observe rather than treat bacteriuria (IDSA ASB 2019)."),
+    ("S. aureus في البول", "S. aureus in urine without a catheter or urological procedure may reflect bacteraemia - draw blood cultures before calling it contamination."),
+    ("GBS في بول الحامل", "Group B Streptococcus in the urine of a pregnant patient at any count = heavy colonisation: intrapartum prophylaxis (ACOG 797); antenatal treatment only at >= 10^5 CFU/mL or with symptoms."),
+    ("عينة الكيس", "Bag specimen: very high contamination rate. A negative result excludes infection; a positive one must be confirmed by catheter or suprapubic aspirate before treatment (AAP)."),
+    ("الـ pyuria مع القسطرة", "Pyuria with a catheter or neurogenic bladder is common without infection - it is not evidence of UTI nor an indication to treat (IDSA CA-UTI 2009)."),
+    ("غياب الـ pyuria لا ينفي", "Absence of pyuria does not exclude infection in a neutropenic patient."),
+    ("تعريف ABU في النساء", "In women, asymptomatic bacteriuria requires two consecutive specimens with the same organism at >= 10^5 CFU/mL (IDSA 2019); one specimen suffices in men."),
+    ("حامل + bacteriuria", "Pregnant with bacteriuria >= 10^5: if asymptomatic this is ASB, which IS treated in pregnancy (IDSA 2019) - record the symptoms."),
+    ("إصابة النخاع الشوكي / المثانة العصبية", "Spinal cord injury / neurogenic bladder: bacteriuria and pyuria are near-constant - do not screen for or treat them without symptoms (IDSA ASB 2019, strong recommendation). Symptoms are atypical: fever, increased spasticity, autonomic dysreflexia, malaise, new leakage around the catheter - not dysuria."),
+    ("عند العلاج: غيّر القسطرة", "When treating: replace a catheter that has been in place >= 2 weeks and culture from the new one; 7 days with prompt response, 10-14 days with delayed response (IDSA CA-UTI 2009). Resistant organisms are more likely - follow the susceptibility result."),
+    ("الأعراض غير مُدخلة: في إصابة النخاع", "Symptoms not entered: in spinal cord injury the culture cannot be interpreted without them."),
+    ("رضيع < سنتين", "Infant < 2 years: UTI = pyuria + >= 5x10^4 CFU/mL of a single organism from catheter or SPA (AAP). Any confirmed UTI is treated."),
+    ("UTI في الذكور", "UTI in males: consider prostatic involvement (longer course, an agent that penetrates the prostate) with fever or recurrence."),
+    ("تشخيص الالتهاب الرئوي يحتاج", "Pneumonia requires a new infiltrate on imaging - a culture alone is not sufficient (ATS/IDSA)."),
+    ("مريض على tracheostomy", "Tracheostomy / ventilated patient: airway colonisation is near-universal. VAP = new infiltrate + two clinical signs + quantitative culture, not the culture alone (ATS/IDSA 2016)."),
+    ("Quadriplegia: ضعف السعال", "Quadriplegia: impaired cough and respiratory muscles cause retained secretions and aspiration; pneumonia is a leading cause of death after cervical injury. Low threshold with fever or changing secretions / oxygenation, but colonisation alone (especially with tracheostomy) is not treated."),
+    ("Paraplegia: الإصابات الصدرية", "Paraplegia: high thoracic lesions impair cough - assess clinically and with imaging."),
+    ("Gram-positive cocci في الدم قبل التعريف", "Gram-positive cocci in blood before identification: in an unstable patient treat as possible S. aureus (MRSA cover) until coagulase / ID is available."),
+    ("CoNS مع قسطرة مركزية", "CoNS with a central line or prosthetic valve: draw two sets (one peripheral) before deciding; the same organism in both = probable CLABSI (IDSA 2009)."),
+    ("S. aureus bacteremia", "S. aureus bacteraemia: repeat blood cultures every 24-48 h until negative, echocardiography, find and remove the source, IV therapy >= 14 days (uncomplicated). ID consultation lowers mortality."),
+    ("إصابة النخاع الشوكي مع bacteremia", "Spinal cord injury with bacteraemia: commonest sources are the urinary tract, pressure ulcers / underlying osteomyelitis and pneumonia; fever may be the only sign."),
+    ("أغلب عدوى الأمعاء", "Most enteric infections need supportive care (fluids). Antibiotics only for: bloody diarrhoea with fever, immunocompromise, infants < 3 months, Shigella, typhoid, C. difficile or severe illness."),
+    ("Salmonella غير التيفية", "Non-typhoidal Salmonella: treat in immunocompromise, infants < 3 months and patients > 50 years with vascular / valvular disease (risk of bacteraemia and endovascular infection)."),
+    ("قرح الفراش", "Pressure ulcers (common with paraplegia / quadriplegia): a surface swab shows colonisation only. Infection is a clinical diagnosis (spreading erythema, pus, odour, fever, non-healing). The valid specimen is deep tissue after debridement; with exposed bone or a non-healing ulcer take a bone biopsy for osteomyelitis."),
+    ("الجروح المزمنة/القدم السكري", "Chronic wounds / diabetic foot: do not culture or treat an ulcer without clinical signs of infection (>= 2 local signs) - IWGDF/IDSA 2023."),
+    ("خلايا صديدية بلا كائنات", "Pus cells without organisms on the stain: prior antibiotics, low bacterial load, or an organism that does not stain (Mycoplasma / Legionella / mycobacteria)."),
+    ("Gram-variable متوافق مع", "Gram-variable staining is consistent with this isolate (Acinetobacter resists decolourisation and may be mistaken for Gram-positive cocci or Neisseria; several Gram-positive rods stain variably in older cultures)."),
+    ("Gram-variable: ليس نوعاً", "Gram-variable is a staining result, not a kind of bacterium. Causes: truly variable organisms (Acinetobacter, Gardnerella, Bacillus / Clostridium in old cultures, Corynebacterium, Actinomyces), a culture older than 24 h, prior antibiotics, or a decolourisation error. Repeat the stain from an 18-24 h culture with a control slide and rely on identification."),
+    ("فلورا مختلطة في الصبغة", "Mixed flora on the stain: contamination with site flora or a polymicrobial infection (abdomen, diabetic foot, aspiration) - the isolate may not be the only organism."),
+    ("عدم توافق الصبغة مع المزرعة", "Stain / culture discordance: a mixed infection where one organism did not grow (anaerobe / fastidious), an overgrowing contaminant, prior antibiotics or a staining error - review the slide and plates before accepting the isolate as the cause."),
+    ("السكري يزيد شدة العدوى", "Diabetes increases the severity and complications of infection, but it is not evidence that this isolate is a pathogen."),
+]
+
+_CATEGORY_EN = {
+    "STERILE_SITE_SIGNIFICANT": ("Sterile-site specimen (CSF) and a recognised pathogen there - any growth is clinically significant.",
+        ["Start treatment immediately at meningitis doses pending susceptibility.",
+         "Consult infectious diseases (and neurosurgery to remove / replace a shunt or drain when one is present).",
+         "Review CSF cells, glucose and protein; repeat the lumbar puncture if there is no improvement within 48 h."]),
+    "POSSIBLE_CONTAMINANT_STERILE_SITE": ("Skin-flora organism in CSF without a shunt, drain or recent neurosurgery: the commonest CSF contaminant (especially growth in broth only).",
+        ["Correlate with CSF cells, glucose, protein and Gram stain: normal values point to contamination.",
+         "Repeat the lumbar puncture if clinical suspicion persists - neither ignore the result nor treat on it alone.",
+         "If the patient has a shunt / EVD or recent neurosurgery, record it under host factors - the interpretation changes."]),
+    "SPECIMEN_REJECT": ("Inadequate specimen (epithelial cells >= 25/LPF): the result reflects oral flora, not the lower respiratory tract.",
+        ["Reject the specimen and request a properly collected sputum (early morning, after rinsing the mouth).",
+         "Consider induced sputum or BAL / endotracheal aspirate if an adequate specimen cannot be obtained."]),
+    "INSUFFICIENT_DATA": ("Essential data were not entered. Judging pathogenicity without them is guesswork - missing data were NOT counted as evidence against infection.",
+        ["Enter the symptoms (or select 'Asymptomatic' explicitly) and the colony count.",
+         "For urine, state the collection method - the threshold differs (midstream / catheter / SPA)."]),
+    "ASB_NO_TREAT": ("Significant bacteriuria without urinary symptoms = asymptomatic bacteriuria. IDSA 2019: do not screen or treat - including older adults, diabetes, catheters, spinal cord injury and renal transplant beyond the first month.",
+        ["Do NOT give antibiotics (IDSA 2019): treatment does not prevent infection and drives resistance and C. difficile.",
+         "Reassess only if symptoms develop.",
+         "The two exceptions: pregnancy, and before a urological procedure with mucosal trauma."]),
+    "ASB_TREAT": ("Asymptomatic bacteriuria in a context that requires treatment (pregnancy / urological procedure with mucosal trauma).",
+        ["Pregnancy: a safe agent by susceptibility for 4-7 days, then a follow-up culture.",
+         "Before a urological procedure: one or two doses starting 30-60 minutes before the procedure (IDSA 2019)."]),
+    "COLONISATION": ("Chronic wound / pressure ulcer without two clinical signs of infection: the growth represents colonisation of the wound surface.",
+        ["No systemic antibiotic - wound care, debridement and pressure relief.",
+         "Reassess if signs of infection appear, and sample deep tissue rather than a surface swab."]),
+    "TRUE_INFECTION": ("The findings strongly support true infection. Treat according to the susceptibility result and the clinical context.",
+        ["Start treatment guided by the AST result.",
+         "Adjust the dose to renal function and use the shortest effective course.",
+         "De-escalate after 48-72 h if the patient improves."]),
+    "POSSIBLE_INFECTION": ("Borderline result. Full clinical assessment is advised before starting treatment; further tests or a repeat culture may be needed.",
+        ["Assess the patient clinically before giving antibiotics.",
+         "Complete the missing data or repeat the culture if the picture is unclear."]),
+    "LIKELY_CONTAMINANT": ("The findings lean towards contamination or colonisation. Repeat the specimen with correct technique before starting treatment.",
+        ["Repeat the specimen with improved technique.",
+         "Do not start treatment on this result alone."]),
+    "CONTAMINANT_OR_COLONISER": ("The findings strongly support contamination or colonisation. Treatment is usually not justified; follow the patient clinically.",
+        ["Do not give antibiotics on the basis of this result.",
+         "Reassess the patient if symptoms persist or progress."]),
+}
+_MISSING_AR = {
+    "Symptoms": "الأعراض", "Colony count": "عدّ المستعمرات",
+    "Urine collection method": "طريقة جمع العينة", "Pyuria / urinalysis": "الصديد / تحليل البول",
+    "Sputum quality (WBC / epithelial cells per LPF)": "جودة البلغم (WBC / خلايا طلائية)",
+    "Quantitative count (BAL / ETA)": "العدّ الكمّي (BAL / ETA)",
+    "Respiratory signs / imaging": "العلامات التنفسية / الأشعة",
+    "Number of positive sets / bottles": "عدد الزجاجات الإيجابية",
+    "SIRS criteria": "معايير SIRS", "GI symptoms": "الأعراض المعوية",
+    "Local signs of infection": "علامات العدوى الموضعية",
+    "Specimen type not recognised": "نوع العينة غير معروف",
+}
+
+
+def _note_en(note: str) -> str:
+    for key, en in _NOTES_EN:
+        if key in note:
+            return en
+    return ""
+
+
+
 def _has(text: str, tokens) -> bool:
     low = (text or "").lower()
     return any(t in low for t in tokens)
@@ -344,6 +446,28 @@ _GRAM_COMPATIBLE = {
 }
 
 
+def gram_options_for(organism: str) -> List[str]:
+    """Gram-stain choices that make sense for this isolate (2026-11-11).
+
+    A correction gate at the point of entry: for E. coli the form no longer
+    offers "Gram Positive Cocci" at all. Morphotypes that contradict the
+    isolate are hidden; the non-committal choices (not done, Gram-variable,
+    mixed flora, organisms / WBCs only, nothing seen) always stay, because a
+    real slide can show any of them. Organisms with no fixed morphology
+    (anaerobes, cell-wall-less, unknown names) keep the full list.
+    """
+    iso = _gram_type(re.sub(r"\s+", " ", (organism or "").strip().lower()))
+    if iso is None or iso == "variable":
+        return list(GRAM_STAIN_OPTIONS)
+    ok = _GRAM_COMPATIBLE.get(iso, {iso})
+    out = []
+    for opt in GRAM_STAIN_OPTIONS:
+        st = _stain_type(opt)
+        if st in (None, "variable", "mixed") or st in ok:
+            out.append(opt)
+    return out
+
+
 def _urine_threshold(collection: str, age, sex: str, symptomatic: bool, sci: bool,
                      catheterised: bool) -> Tuple[int, str]:
     """(CFU/mL threshold, the rule it comes from) for a urine culture."""
@@ -356,6 +480,13 @@ def _urine_threshold(collection: str, age, sex: str, symptomatic: bool, sci: boo
     if "condom" in c:
         return ((10000, "Condom catheter in spinal cord injury: >= 10^4 CFU/mL (NIDRR consensus)")
                 if sci else (100000, "Condom catheter: >= 10^5 CFU/mL (IDSA CA-UTI 2009)"))
+    # Found by fuzzing 2026-11-11: the catheter rule used to run before the
+    # infant rule, so marking "urinary catheter" on a febrile infant dropped
+    # the threshold from 5x10^4 to 10^3. AAP's 5x10^4 IS the catheter-specimen
+    # threshold for this age; it takes precedence.
+    if isinstance(age, (int, float)) and age < 2:
+        return 50000, ("Infant < 2 yr (catheter/SPA): >= 5×10^4 CFU/mL of one uropathogen "
+                       "WITH pyuria (AAP 2011, reaffirmed 2016)")
     if catheterised or "nephrostomy" in c or "conduit" in c:
         if symptomatic:
             return 1000, ("Catheter specimen with compatible symptoms: >= 10^3 CFU/mL "
@@ -363,9 +494,6 @@ def _urine_threshold(collection: str, age, sex: str, symptomatic: bool, sci: boo
         return 100000, ("Catheter specimen WITHOUT symptoms: >= 10^5 CFU/mL defines "
                         "catheter-associated asymptomatic bacteriuria — not an infection "
                         "(IDSA CA-UTI 2009)")
-    if isinstance(age, (int, float)) and age < 2:
-        return 50000, ("Infant < 2 yr (catheter/SPA): >= 5×10^4 CFU/mL of one uropathogen "
-                       "WITH pyuria (AAP 2011, reaffirmed 2016)")
     if symptomatic:
         return 1000, ("Symptomatic patient, midstream urine: >= 10^3 CFU/mL of a uropathogen "
                       "(IDSA / EAU)")
@@ -634,6 +762,12 @@ def assess_pathogenicity(
             if pus_val is not None and pus_val < 5 and not neutropenic:
                 add("pyuria", -15, f"⚠️ No pyuria ({pus_val} WBC/HPF) — in a catheterised / "
                                    "neurogenic bladder this suggests a diagnosis other than UTI")
+            elif pus_val is None and ("طبيعي" in urinalysis_result or "normal" in ua_l) \
+                    and not neutropenic:
+                # Found by fuzzing 2026-11-11: this branch ignored a NORMAL
+                # urinalysis, so adding a catheter or SCI removed a -20 and
+                # raised the score.
+                add("pyuria", -20, "❌ Normal urinalysis -- strongly suggests colonisation, not UTI")
             elif pus_val is not None:
                 add("pyuria", 0, None)
                 notes.append("ℹ️ الـ pyuria مع القسطرة أو المثانة العصبية شائعة بلا عدوى — لا تُحتسب "
@@ -671,11 +805,14 @@ def assess_pathogenicity(
                 notes.append("ℹ️ تعريف ABU في النساء يتطلب عينتين متتاليتين بنفس الكائن ≥ 10⁵ "
                              "(IDSA 2019)؛ عينة واحدة تكفي في الرجال.")
             if pregnant or uro_procedure:
-                add("abu", 20, "✅ Asymptomatic bacteriuria in pregnancy / before a urological "
+                add("abu", 0, "✅ Asymptomatic bacteriuria in pregnancy / before a urological "
                                "procedure with mucosal trauma -- TREAT (IDSA 2019)")
                 special_flags.append("ABU_TREAT")
             else:
-                add("abu", -20, "⚠️ Asymptomatic bacteriuria -- do NOT treat (IDSA 2019)")
+                # 0 points: the verdict is set by the flag. Subtracting here made
+                # the score FALL when the count rose past 10^5 (fuzzing, 2026-11-11).
+                add("abu", 0, None)
+                factors_neg.append("⚠️ Asymptomatic bacteriuria -- do NOT treat (IDSA 2019)")
                 special_flags.append("ABU_NO_TREAT")
         elif pregnant and _sig_count and not symptomatic:
             notes.append("🤰 حامل + bacteriuria ≥ 10⁵: إن كانت بلا أعراض فهي ABU تُعالَج في الحمل "
@@ -1064,8 +1201,8 @@ def assess_pathogenicity(
         score = 45
     if "BLOOD_TRUE_PATHOGEN" in special_flags and score < 70:
         score = 70            # missing metadata must not turn a GNB bacteraemia into "repeat"
-    if "BAG_SPECIMEN" in special_flags and score >= 70:
-        score = 65            # AAP: a bag-specimen positive is never diagnostic on its own
+    if "BAG_SPECIMEN" in special_flags:
+        score = min(score, 65)   # AAP: a bag-specimen positive is never diagnostic on its own
     _core_missing = [m for m in missing if m in ("Symptoms", "Colony count",
                                                  "Respiratory signs / imaging",
                                                  "Local signs of infection",
@@ -1116,7 +1253,8 @@ def assess_pathogenicity(
         category = "INSUFFICIENT_DATA"
         verdict = "⚪ INSUFFICIENT DATA -- Cannot assess significance"
         color = "warning"
-        interpretation = ("البيانات الأساسية غير مُدخلة (" + "، ".join(missing) + "). الحكم على "
+        interpretation = ("البيانات الأساسية غير مُدخلة ("
+                          + "، ".join(_MISSING_AR.get(m, m) for m in missing) + "). الحكم على "
                           "الـ pathogenicity بدونها تخمين — لم يُحتسب غياب البيانات كدليل ضد العدوى.")
         recommendations = [
             "أدخل الأعراض (أو اختر Asymptomatic صراحةً) وعدّ المستعمرات.",
@@ -1203,9 +1341,27 @@ def assess_pathogenicity(
     if "SAUREUS_BACTERIURIA" in special_flags:
         recommendations.append("اسحب مزارع دم: S. aureus في البول قد يدل على bacteremia.")
     if missing and not insufficient:
-        recommendations.append("بيانات ناقصة تُضعف الثقة في التقييم: " + "، ".join(missing) + ".")
+        recommendations.append("بيانات ناقصة تُضعف الثقة في التقييم: "
+                               + "، ".join(_MISSING_AR.get(m, m) for m in missing) + ".")
+
+    # ── English forms for the English report ───────────────────────────────
+    interpretation_en, _recs_en = _CATEGORY_EN.get(category, ("", []))
+    recommendations_en = list(_recs_en)
+    if "BLOOD_CONTAMINANT_RISK" in special_flags and category != "TRUE_INFECTION":
+        recommendations_en.append("Draw two new sets from two separate sites before judging CoNS / skin flora.")
+    if "BAG_SPECIMEN" in special_flags:
+        recommendations_en.append("Bag specimen: confirm with a catheter or SPA specimen before accepting the diagnosis - "
+                                  "do not delay treatment in a febrile, ill-looking infant (collect properly, then start).")
+    if "SAUREUS_BACTERIURIA" in special_flags:
+        recommendations_en.append("Draw blood cultures: S. aureus in urine may indicate bacteraemia.")
+    if missing and not insufficient:
+        recommendations_en.append("Missing data lower the confidence of this assessment: " + ", ".join(missing) + ".")
+    notes_en = [n for n in (_note_en(x) for x in notes) if n]
 
     return {
+        "interpretation_en":  interpretation_en,
+        "recommendations_en": recommendations_en,
+        "notes_en":           notes_en,
         "score":           score,
         "verdict":         verdict,
         "color":           color,

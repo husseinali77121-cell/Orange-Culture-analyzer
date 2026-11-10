@@ -69,6 +69,32 @@ def resolve_uti_syndrome(choice: Optional[str], symptoms: Optional[List[str]] = 
     return None
 
 
+# English wording for the clinical notes, by reason code (2026-11-11). The
+# notes themselves are written in Arabic for the lab; the ENGLISH report must
+# not carry Arabic, so it prints this summary of the same caution instead.
+CLINICAL_NOTE_EN = {
+    "novel_agent": ("Reserve agent: activity depends on the carbapenemase class (KPC / OXA-48 / "
+                    "MBL). Confirm the enzyme and use with infectious-diseases advice "
+                    "(IDSA AMR Guidance 2026)."),
+    "organism_caution": ("Organism-specific caution: for this organism and site this agent is not "
+                         "reliable on the susceptibility result alone (species identification, "
+                         "resistance mechanism or the need for combination therapy) - CLSI M100 / "
+                         "IDSA. Review before use."),
+    "allergy": "Recorded drug allergy or cross-reactivity: avoid, or use only after allergy assessment.",
+    "uti_upper": ("Upper urinary tract / systemic infection: agents that reach only bladder urine "
+                  "are not adequate (IDSA cUTI 2025)."),
+    "aminoglycoside_pseudomonas": ("P. aeruginosa: CLSI M100 lists amikacin for urinary isolates "
+                                   "only; do not rely on an aminoglycoside alone outside the urinary tract."),
+    "colistin": ("Colistin: reserve agent. Only broth microdilution is valid; use in combination, "
+                 "with renal monitoring, when no safer option exists."),
+    "penicillinase_unconfirmed": ("Staphylococcus with penicillin-class 'S': exclude penicillinase "
+                                  "(zone-edge / blaZ test) before relying on it."),
+    "no_breakpoint": "No CLSI / EUCAST breakpoint for this organism-agent pair: the result is uncalibrated.",
+    "ampc_sdd": ("AmpC-producing organism with cefepime SDD / I: a concurrent ESBL is possible - "
+                 "a carbapenem is preferred (IDSA AMR Guidance 2026)."),
+    "ampc_cefepime": "AmpC-producing organism: cefepime is the preferred agent when susceptible (IDSA AMR Guidance 2026).",
+}
+
 CLINICAL_NOTE_REASONS = frozenset({
     "novel_agent", "organism_caution", "allergy", "uti_upper",
     "aminoglycoside_pseudomonas", "colistin", "penicillinase_unconfirmed",

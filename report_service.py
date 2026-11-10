@@ -924,9 +924,15 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:0.6mm 0; }
     if patho_assessment:
         sc     = patho_assessment.get("score",0)
         verd   = _esc(patho_assessment.get("verdict",""))
-        interp = _esc(_xlate_patho(patho_assessment.get("interpretation","")))
+        # Engine v3 supplies English forms; the phrase dictionary is only the
+        # fallback for results produced by an older engine.
+        if _EN and patho_assessment.get("interpretation_en"):
+            interp = _esc(patho_assessment.get("interpretation_en", ""))
+            recs   = [_esc(r) for r in patho_assessment.get("recommendations_en", [])]
+        else:
+            interp = _esc(_xlate_patho(patho_assessment.get("interpretation","")))
+            recs   = [_esc(_xlate_patho(r)) for r in patho_assessment.get("recommendations",[])]
         flags  = patho_assessment.get("special_flags",[])
-        recs   = [_esc(_xlate_patho(r)) for r in patho_assessment.get("recommendations",[])]
         fpos   = patho_assessment.get("factors_pos",[])
         fneg   = patho_assessment.get("factors_neg",[])
         clr2   = _score_color(sc)
@@ -1101,9 +1107,18 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:0.6mm 0; }
                 f'</div>'
             )
             if _pnote:
+                _preg_dropped = 0
                 for _line in _pnote.splitlines():
                     _line = _line.strip()
                     if not _line:
+                        continue
+                    # 2026-11-11: the phrase dictionary translates these notes
+                    # only in part, and a half-translated line ("risk of
+                    # التشوهات ...") is worse than none. In the English report a
+                    # line that still holds Arabic is dropped and replaced by
+                    # one complete English sentence below.
+                    if _EN and re.search(r'[\u0600-\u06FF]', _xlate_preg_note(_line)):
+                        _preg_dropped += 1
                         continue
                     if _line.startswith("⊘"):
                         _lcolor = "#922b21"; _lbg = "#fdf2f2"
@@ -1119,6 +1134,13 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:0.6mm 0; }
                         f'<div style="font-size:9pt;color:{_lcolor};'
                         f'background:{_lbg};padding:0.3mm 2mm;margin-top:0.5mm;'
                         f'border-radius:1mm">{_esc(_xlate_preg_note(_line))}</div>'
+                    )
+                if _EN and _preg_dropped:
+                    H.append(
+                        '<div style="font-size:9pt;color:#444;padding:0.3mm 2mm;margin-top:0.5mm">'
+                        'Pregnancy: not a first-line agent. Use only when no safer alternative exists '
+                        'and the benefit outweighs the risk; the decision rests with the treating '
+                        'physician.</div>'
                     )
             H.append('</div>')
 
@@ -1187,6 +1209,16 @@ hr.dv { border:none; border-top:0.4pt solid #d5d8dc; margin:0.6mm 0; }
                 )
             except Exception:
                 pass
+        # 3. 2026-11-11: the guarantee. Steps 1-2 only REPORT a leak; the user
+        #    requirement is that an English report never carries an Arabic
+        #    word. Any text node that still holds Arabic is replaced whole by
+        #    one English sentence -- never trimmed word by word, which is how
+        #    "risk of ... less than thought" lost its noun. The leak is still
+        #    logged above so the missing _en field gets written.
+        _full_html = re.sub(
+            r'>([^<>]*[' + _AR + r'][^<>]*)<',
+            '>A clinical note for this item is available in the Arabic report.<',
+            _full_html)
         _full_html = re.sub(r'\(\s*\)', '', _full_html)      # empty () left by stripping
         _full_html = re.sub(r'[ \t]{2,}', ' ', _full_html)   # collapse doubled spaces
     # Restore the patient name AFTER the Arabic strip: the name is a patient
@@ -1495,7 +1527,7 @@ def generate_decision_tree_image(
     _age_lbl = f"{age_months} months" if age_months is not None else f"{age} yrs"
     p_lines.append(f"Sex / Age:     {'Male' if sex == 'Male' else 'Female'}, {_age_lbl}")
     if referring_physician:
-        p_lines.append(f"Referred by:   Dr/ {referring_physician}")
+        p_lines.append(f"Referred by:   {referring_physician if str(referring_physician).lower().startswith(('dr', 'د')) else 'Dr/ ' + str(referring_physician)}")
     if is_renal:
         _eff, _meas = resolve_crcl(cl_cr, is_renal)
         p_lines.append(
@@ -1645,7 +1677,7 @@ def generate_decision_tree_image(
         f"Condition:     {culture_condition}",
     ]
     if microbiologist:
-        spec_items.append(f"Microbiologist: Dr/ {microbiologist}")
+        spec_items.append(f"Microbiologist: {microbiologist if str(microbiologist).lower().startswith(('dr', 'د')) else 'Dr/ ' + str(microbiologist)}")
     micro_items = [
         f"Pus Cells: {pus_cells if pus_cells else chr(8212)} /HPF",
         f"RBCs:      {rbcs if rbcs else chr(8212)} /HPF",
@@ -1718,10 +1750,10 @@ def generate_decision_tree_image(
     rbox(draw, (fx1, FY1, fx2, FY2), FOOT_BG, FOOT_BD, radius=12, width=2)
     draw.text((fx1+10*S, FY1+10*S), "SUMMARY", fill=DARK, font=F_SUBTITL)
     sum_items = [
-        (f"~{len(preferred)}",       "Recommended", GREEN_TXT),
-        (f"~{len(use_caution)}",     "Caution",     AMBER_TXT),
-        (f"~{len(contraindicated)}", "Avoided",     RED_TXT),
-        (f"~{len(reserve)}",         "Reserve",     BLUE_TXT),
+        (f"{len(preferred)}",        "Preferred",   GREEN_TXT),
+        (f"{len(use_caution)}",      "Caution",     AMBER_TXT),
+        (f"{len(contraindicated)}",  "Avoided",     RED_TXT),
+        (f"{len(reserve)}",          "Reserve",     BLUE_TXT),
     ]
     sw = (fx2 - fx1 - 16*S) // 4
     for j, (num, lbl, clr) in enumerate(sum_items):
