@@ -80,6 +80,12 @@ jobs:
       # before a "successful" EXE build. Now runs every suite cdss-tests.yml
       # runs, in the same order, so a build can only succeed if the full
       # clinical engine is green on Windows too, not just a sample of it.
+      # Added 2026-11-11: name any file that is not the released version BEFORE
+      # the suites run, so a stale upload is not misread as a clinical failure.
+      # Report-only: legitimate later edits show up here but do not block.
+      - name: "Guard 0 — files match the release manifest"
+        run: python verify_upload.py
+
       - name: Clinical engine tests (full suite, Windows sanity pass)
         run: |
           python -m pip install --upgrade pip
@@ -100,6 +106,8 @@ jobs:
           python test_render_layer.py
           python test_pipeline.py
           python test_modules.py
+          python test_review_fixes.py
+          python test_round2.py
         shell: bash
 
       # ── Stage Tesseract (OCR) ──────────────────────────────────────────

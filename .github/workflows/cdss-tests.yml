@@ -43,6 +43,12 @@ jobs:
       # A missing clinical_data.py is the exact failure that shipped: the import
       # in ast_qa_engine.py fell through to an empty table and the intrinsic
       # check died silently. Fail loudly and early instead of three suites later.
+      # Added 2026-11-11: name any file that is not the released version BEFORE
+      # the suites run, so a stale upload is not misread as a clinical failure.
+      # Report-only: legitimate later edits show up here but do not block.
+      - name: "Guard 0 — files match the release manifest"
+        run: python verify_upload.py
+
       - name: "Guard 1 — the canonical table is actually present"
         run: |
           test -f clinical_data.py || {
@@ -179,6 +185,8 @@ jobs:
       # a defect reproduced on the old code, pinned to the guideline answer.
       - name: "Guard 17b — 2026-11-10 guideline-review regressions"
         run: python test_review_fixes.py
+      - name: Guard 17c — round-2 review (2026-11-10) regression suite
+        run: python test_round2.py
 
       # A suite nobody runs is a suite that does not exist. Every one of the
       # three suites above sat green and unexecuted for weeks precisely because
