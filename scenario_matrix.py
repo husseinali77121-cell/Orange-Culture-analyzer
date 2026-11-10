@@ -296,6 +296,19 @@ UNMAPPED_ORGANISMS: List[Tuple[str, str]] = [
     ("Streptococcus pyogenes",        "Wound Swab"),
     ("Streptococcus agalactiae",      "Urine"),
     ("Listeria monocytogenes",        "CSF"),
+    # not identified to species level (2026-11-10)
+    ("Acinetobacter spp.",            "Sputum"),
+    ("Pseudomonas spp.",              "Urine"),
+    ("Enterobacter spp.",             "Blood"),
+    ("Citrobacter spp.",              "Urine"),
+    ("Proteus spp.",                  "Urine"),
+    ("Serratia spp.",                 "Blood"),
+    ("Enterococcus spp.",             "Urine"),
+    ("Staphylococcus spp.",           "Blood"),
+    ("Streptococcus spp.",            "Blood"),
+    ("Gram-negative bacilli (unidentified)", "Blood"),
+    ("Non-fermenting Gram-negative bacilli (unspeciated)", "Sputum"),
+    ("Gram-positive cocci (unidentified)", "Blood"),
 ]
 
 

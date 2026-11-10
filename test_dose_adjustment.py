@@ -517,6 +517,7 @@ except Exception as _exc:
 # ═══════════════════════════════════════════════════════════════════════════
 _queue = sorted((d, i["dose_review"]) for d, i in G.items() if i.get("dose_review"))
 _signed = sorted(d for d, i in G.items() if i.get("dose_countersigned"))
+_owner = sorted(d for d, i in G.items() if i.get("dose_owner_approved"))
 
 print()
 print("=" * 74)
@@ -528,6 +529,11 @@ if _queue:
     print("  audit and have NOT been checked against a source document by a")
     print("  human. Verify against BNF 2025 / the product label, then delete")
     print("  the 'dose_review' key. Run with --queue to list them.")
+if _owner:
+    print(f"\nDOSE BANDS OWNER-APPROVED: {len(_owner)} row(s) checked against the product "
+          f"label in an AI-assisted review and released on the lab owner's "
+          f"instruction (2026-11-10).")
+    print("  This is NOT a clinician's countersignature: " + ", ".join(_owner))
 if _signed:
     print(f"\nDOSE BANDS COUNTERSIGNED: {len(_signed)} row(s) checked against "
           f"BNF 2025 / product label by a clinician and recorded in-file.")

@@ -245,7 +245,10 @@ _GRAM_POS_ORGS = {"Staphylococcus aureus", "MRSA", "Enterococcus faecalis",
                   "Listeria monocytogenes",
                   "Coagulase-negative Staphylococci",
                   # added 2026-11-10 with the organisms themselves
-                  "Staphylococcus saprophyticus", "Staphylococcus lugdunensis"}
+                  "Staphylococcus saprophyticus", "Staphylococcus lugdunensis",
+                  # not identified to species level (2026-11-10)
+                  "Enterococcus spp.", "Staphylococcus spp.", "Streptococcus spp.",
+                  "Gram-positive cocci (unidentified)"}
 # Same requirement in the other direction.
 _GRAM_NEG_ORGS = {"E. coli", "Klebsiella spp.", "Pseudomonas aeruginosa",
                   "Acinetobacter baumannii", "Proteus mirabilis",
@@ -255,7 +258,12 @@ _GRAM_NEG_ORGS = {"E. coli", "Klebsiella spp.", "Pseudomonas aeruginosa",
                   "Serratia marcescens", "Citrobacter freundii",
                   "Morganella morganii", "Providencia spp.", "Hafnia alvei",
                   # added 2026-11-10 with the organisms themselves
-                  "Citrobacter koseri", "Proteus vulgaris"}
+                  "Citrobacter koseri", "Proteus vulgaris",
+                  # not identified to species level (2026-11-10)
+                  "Acinetobacter spp.", "Pseudomonas spp.", "Enterobacter spp.",
+                  "Citrobacter spp.", "Proteus spp.", "Serratia spp.",
+                  "Gram-negative bacilli (unidentified)",
+                  "Non-fermenting Gram-negative bacilli (unspeciated)"}
 
 _gram_leaks = []
 for org in ORGS:

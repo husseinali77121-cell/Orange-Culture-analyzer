@@ -118,6 +118,7 @@ for key, src in SOURCES.items():
 pending: list[str] = []
 primary: list[str] = []
 unsigned: list[str] = []
+owner_approved: list[str] = []      # released by the lab owner, not clinician-signed
 
 for rid, row in sorted(RULES.items()):
     if row.get("source") not in SOURCES:
@@ -130,7 +131,9 @@ for rid, row in sorted(RULES.items()):
         primary.append(rid)
         if not row.get("checked_by"):
             fail(f"rule '{rid}' is marked {level} but names no checker")
-        if not row.get("countersigned_by"):
+        if row.get("owner_approved") and not row.get("countersigned_by"):
+            owner_approved.append(rid)
+        elif not row.get("countersigned_by"):
             unsigned.append(rid)
         stamp = row.get("checked_on")
         if not stamp:
@@ -174,6 +177,8 @@ print(f"  citation rows     : {len(RULES)}")
 print(f"  checked vs source : {len(primary)}")
 print(f"  pending review    : {len(pending)}")
 print(f"  awaiting human    : {len(unsigned)}  (checked, not yet countersigned)")
+print(f"  owner-approved    : {len(owner_approved)}  (AI source check + lab owner's "
+      f"instruction; NOT a clinician signature)")
 
 if hits:
     total = sum(n for v in hits.values() for _, n in v)

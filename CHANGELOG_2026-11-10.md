@@ -8,9 +8,9 @@ Magiorakos 2012.
 كل خطأ هنا **اتأكّد الأول** بسيناريو فشل على الكود الأصلي، وبعدين اتصلّح، وبعدين اتثبّت
 باختبار في الملف الجديد `test_review_fixes.py` (94 فحص).
 
-> ⚠️ **ده مش توقيع سريري.** 8 صفوف جرعات و4 قواعد جديدة عليها علامة
-> `dose_review` / `awaiting_countersignature` وبتظهر في الاختبارات كـ *release blocker*
-> لحد ما طبيب يراجعها ويوقّع.
+> ⚠️ **تحديث الجولة التانية:** صفوف الجرعات والقواعد اللي كانت مستنية توقيع اتراجعت
+> مقابل النشرة/المصدر واتعتمدت **بتعليمات مالك المعمل** (`dose_owner_approved` /
+> `owner_approved`). ده **مش** توقيع د. طارق ولا أي طبيب، ومكتوب كده جوه كل صف.
 
 ---
 
@@ -119,3 +119,58 @@ Magiorakos 2012.
 - `python test_guidelines.py --queue`: فيه 4 قواعد.
 - جرعات ATM-AVI و SUL-DUR اتنقلت من النشرة **بدون** توقيع.
 - الـ UI ما اتجربش في Streamlit حقيقي، لأن Streamlit مش متسطّب في بيئة الإصلاح. المسار اتختبر بـ stub عن طريق `run_analysis`.
+
+
+---
+
+# الجولة التانية — 2026-11-10 (مراجعة كاملة + اعتماد المعلّق + إضافات)
+
+## اعتماد البنود المعلّقة (بتعليمات المالك — مش توقيع طبيب)
+
+| البند | اتراجع مقابل | النتيجة |
+|---|---|---|
+| جرعات Cefepime · Levofloxacin · Cefazolin · Cefuroxime sodium · Imipenem · Cefoperazone-sulbactam · ATM-AVI · SUL-DUR | نشرة المنتج لكل دواء (Maxipime، DailyMed، Zinacef SmPC، Primaxin، Sulperazon، Emblaveo SmPC، Xacduro) | مطابقة ← `dose_owner_approved` |
+| Pip-tazo الكلوي | نشرة Zosyn | **كان غلط** (عمود الالتهاب الرئوي متقدّم كجرعة عامة) ← اتصلّح واتعتمد |
+| QC004b · nobp_gentamicin_pseudomonas · nobp_sul-dur · nobp_ATM-AVI | CDC/CSTE CRE، CLSI 2023، نشرات الأدوية | مطابقة ← `owner_approved` |
+| 4 لوحات (Steno، Pneumococcus، β-haemolytic، Haemophilus) | جداول CLSI المؤرشفة 1A–1C | `secondary` مع ملاحظة إن جدول Ed36 نفسه ما اتفتحش |
+| QC003 | — | **فاضل pending**: قاعدة استدلالية مالهاش مصدر يتراجع عليه (تنبيه بس) |
+
+## أخطاء اتصلّحت
+
+- **تداخلات**: Meropenem/Ertapenem/MEV من غير Valproate. 14 صنف دوائي متعرّف في التداخلات بس ماكانش ينفع يتختار (ACEi/ARB، Colchicine، MAOI، Tramadol، Tizanidine…) — اتضافوا. `_canon_med` كان بيقرا "spIRONolactone" كـ iron ← بقى word-boundary. اتضافت تداخلات ناقصة (QT، warfarin، حديد، loop diuretics، NMBA، methotrexate).
+- **كلوي**: الـ matrix كان **بيمنع** CZA و C/T و MEV و IMR و Cefiderocol و Ceftaroline تحت CrCl 15 مع إن النشرة فيها جرعة ← تعديل جرعة مش منع.
+- **كبدي**: Metronidazole كان بيتمنع في Child-Pugh C (النص "Avoid/Reduce") ← تخفيض 50%. Clindamycin C ← caution. الـ matrix كان بيمنع 4 أدوية في Child-Pugh B والمحرك caution بس ← اتّسقوا.
+- **ESBL**: E. coli في الدم و Ceftriaxone R بلوحة صغيرة كان "moderate" من غير أي تحذير على Pip-tazo/Cefepime ← Ceftriaxone R = ESBL high (IDSA)، و"moderate" بقى عليها تحذير.
+- **قواعد CLSI جديدة**: Erythromycin R ← Azithro/Clarithro مقاومة · Enterococcus: FQ للبول بس، Meropenem/Ertapenem بلا breakpoints، Ampicillin R يتنبأ بالبنسلينات و Imipenem · Pneumococcus في CSF: Penicillin I = مقاوم، Ceftriaxone I = أضف Vancomycin · Staph في الدم: FQ منفرد تحذير · Ampicillin/Amoxicillin S في Staph محتاج نفي بنسليناز.
+- **Profiles**: Pneumococcus (Ceftazidime/Cefixime/Cipro اتمنعوا، Amoxicillin خط أول) · Staph (Ceftazidime/Cefixime/CZA/C-T) · Legionella (Clindamycin) · Steno (TMP-SMX/Levo "مش منفرد") · اللاهوائيات (Clindamycin خط تاني) · H. influenzae (Amoxicillin) · Enterococcus (Oxacillin).
+- **مقاومة جوهرية**: P. vulgaris — Amox-clav و Amp-sulb و Cefoxitin **مش** جوهرية (اتشالوا، والقاعدة اتقسمت) · Morganella/Providencia — Cefoxitin و Amp-sulb من "جوهري" لـ "غير موصى به" · Hafnia ← Colistin جوهري · Salmonella/Shigella ← Cefoxitin.
+- **حمل**: Moxifloxacin و Gatifloxacin كانوا "Banned" وباقي الـ FQ "Warn" ← موحّد · Tigecycline اتضاف لـ deny في الـ matrix · Nitrofurantoin الثلث الأول = فقط عند غياب بديل (ACOG).
+- **مدد**: CAP 5 أيام (مش 7–10)، الشديد 7 · عدوى البطن 4–7 أيام بعد السيطرة على المصدر (STOP-IT) · استشهادات وهمية اتصلّحت ("IDSA 2024"، "IDSA MRSA updated 2025"، "JAMA 2019"، "IDSA v4.0").
+- **نصوص**: Oxacillin في الـ CNS (هو الخيار لـ MSSA meningitis)، Meropenem "ملاذ أخير"، Imipenem/Meropenem "UTI بـ CRE"، Cefoperazone-sulbactam لـ CRAB، Aztreonam والـ cross-reactivity مع Ceftazidime، Tetracycline AWaRe = Access، Moxifloxacin الكلوي.
+
+## إضافات
+
+1. **Pathogenicity assessment v3** (اتبنى من جديد):
+   - عتبة العدّ حسب **طريقة الجمع** (midstream / Foley / CIC / suprapubic / SPA / condom / bag / nephrostomy) وبتظهر في النتيجة.
+   - **"مش مُدخل" ≠ "غائب"**: خانة أعراض فاضية بقت "بيانات ناقصة" مش "asymptomatic"، وفيه verdict جديد *Insufficient data*.
+   - ABU بيتعرف من العدّ + غياب الأعراض (IDSA 2019) من غير شرط pyuria.
+   - القسطرة ما بقتش **بتزوّد** النقط (كانت +10)؛ الـ pyuria مع القسطرة ما بتتحسبش.
+   - اتشالت نقط الـ prevalence (أنثى +10، ذكر 15–50 −5).
+   - CSF: CoNS من غير shunt = ملوِّث محتمل مش "عالج فوراً".
+   - الدم: GNB / Acinetobacter / أي ممرض حقيقي ما ينزلش تحت "True infection" لو البيانات ناقصة؛ GPC قبل التعريف ما يتسماش ملوِّث.
+   - قرح الفراش والجروح المزمنة: المسحة السطحية = استعمار، والعدوى بتتشخّص سريرياً.
+2. **Paraplegia / Quadriplegia** كعوامل مضيف: مثانة عصبية (لا علاج لـ bacteriuria بلا أعراض — IDSA 2019 توصية قوية)، أعراض SCI (spasticity، autonomic dysreflexia، malaise، تسريب حول القسطرة) بتتحسب، CIC ≥10² مع أعراض (NIDRR)، قرح الفراش وخزعة العظم، ضعف السعال في الإصابات العنقية.
+3. **12 كائن غير محدد النوع**: Acinetobacter spp. · Pseudomonas spp. · Enterobacter spp. · Citrobacter spp. · Proteus spp. · Serratia spp. · Enterococcus spp. · Staphylococcus spp. · Streptococcus spp. · Gram-negative bacilli (unidentified) · Non-fermenting GNB (unspeciated) · Gram-positive cocci (unidentified). كل جنس بيورّث النوع الأشيع والأكثر مقاومة + تحذيرات خاصة بعدم التعريف؛ المستوى الـ Gram ما بيفترضش أي مقاومة خاصة بجنس. متسجّلين في كل الجداول + OCR + الـ matrix + اللوحات + الـ snapshot.
+4. **Gram stain**: Gram-variable (عصيات/coccobacilli، ومن غير WBCs)، Gram-negative cocci، Gram-positive rods، Yeast، Mixed flora، WBCs بلا كائنات + **فحص توافق الصبغة مع المزرعة**.
+
+## الاختبارات
+
+- **19 suite + self_check كلها خضراء.** `test_round2.py` جديد (81 فحص) ومضاف للـ CI (Guard 17c).
+- الـ snapshot: 2,068 حالة. اتراجع مجمّعاً قبل الاعتماد؛ المراجعة كشفت خطأ من الجولة دي نفسها (كلمة "Ofloxacin" في avoid كانت بتمسك "Levofloxacin" بالـ substring) واتصلّح قبل الاعتماد.
+
+## اللي لسه محتاج طبيب
+
+- الاعتماد اللي حصل بتعليماتك **مش توقيع سريري**. د. طارق (أو أي طبيب) يقدر يحوّل `owner_approved` لـ `countersigned_by` بعد مراجعته.
+- QC003 فاضل pending.
+- جدول CLSI M100 Ed36 الأصلي ما اتفتحش (مدفوع)، والمراجعة اعتمدت على الجداول المؤرشفة وملخصات CLSI.
+- الـ UI لسه ما اتجربش في Streamlit حقيقي (اتختبر بـ stub).

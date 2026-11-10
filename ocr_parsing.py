@@ -140,6 +140,32 @@ def detect_age_months(text: str) -> Optional[int]:
     return None
 
 ORGANISM_OCR_ALIASES: Dict[str, str] = {
+    # ── Not identified to species level (2026-11-10) ─────────────────────────
+    # Longest alias wins in detect_organism(), so "acinetobacter spp" is read
+    # as the genus-level entry and is no longer forced onto A. baumannii.
+    "acinetobacter spp": "Acinetobacter spp.", "acinetobacter species": "Acinetobacter spp.",
+    "acinetobacter sp": "Acinetobacter spp.",
+    "pseudomonas spp": "Pseudomonas spp.", "pseudomonas species": "Pseudomonas spp.",
+    "pseudomonas sp": "Pseudomonas spp.",
+    "enterobacter spp": "Enterobacter spp.", "enterobacter species": "Enterobacter spp.",
+    "citrobacter spp": "Citrobacter spp.", "citrobacter species": "Citrobacter spp.",
+    "proteus spp": "Proteus spp.", "proteus species": "Proteus spp.",
+    "serratia spp": "Serratia spp.", "serratia species": "Serratia spp.",
+    "enterococcus spp": "Enterococcus spp.", "enterococcus species": "Enterococcus spp.",
+    "enterococci": "Enterococcus spp.",
+    "staphylococcus spp": "Staphylococcus spp.", "staphylococcus species": "Staphylococcus spp.",
+    "streptococcus spp": "Streptococcus spp.", "streptococcus species": "Streptococcus spp.",
+    "viridans streptococci": "Streptococcus spp.", "streptococcus viridans": "Streptococcus spp.",
+    "gram negative bacilli": "Gram-negative bacilli (unidentified)",
+    "gram-negative bacilli": "Gram-negative bacilli (unidentified)",
+    "gram negative rods": "Gram-negative bacilli (unidentified)",
+    "gram-negative rods": "Gram-negative bacilli (unidentified)",
+    "non fermenting gram negative bacilli": "Non-fermenting Gram-negative bacilli (unspeciated)",
+    "non-fermenting gram-negative bacilli": "Non-fermenting Gram-negative bacilli (unspeciated)",
+    "non fermenter": "Non-fermenting Gram-negative bacilli (unspeciated)",
+    "non-fermenter": "Non-fermenting Gram-negative bacilli (unspeciated)",
+    "gram positive cocci": "Gram-positive cocci (unidentified)",
+    "gram-positive cocci": "Gram-positive cocci (unidentified)",
     "escherichia coli": "E. coli", "e.coli": "E. coli", "e. coli": "E. coli",
     "esch coli": "E. coli", "e coli": "E. coli",
     "klebsiella pneumoniae": "Klebsiella spp.", "klebsiella oxytoca": "Klebsiella spp.",

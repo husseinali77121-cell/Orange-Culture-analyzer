@@ -247,7 +247,9 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
     },
     {
         "id": "intr_proteus_mirabilis",
-        "organisms": ["proteus mirabilis"],
+        # "proteus spp" added 2026-11-10: the genus-level entry shares exactly
+        # these agents (they are intrinsic to every Proteus species).
+        "organisms": ["proteus mirabilis", "proteus spp"],
         "drugs": ["tetracycline", "doxycycline", "minocycline", "tigecycline",
                   "colistin", "polymyxin", "nitrofurantoin"],
         "exclude": [],
@@ -263,26 +265,46 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
     },
     {
         "id": "intr_morganella_providencia_proteus_vulgaris",
-        "organisms": ["morganella", "providencia", "proteus vulgaris",
-                      "proteus penneri"],
-        # "amoxicillin" and the oral 1st-gen cephalosporins were absent, so
-        # amox-clav / cephalexin / cefadroxil / cefaclor / cefoxitin escaped the
-        # rule here while clinical_data.INTRINSIC_RESISTANCE banned them. Sulbactam
-        # is NOT excluded: chromosomal AmpC is not inhibited by it, so
-        # ampicillin-sulbactam stays intrinsically resistant for this tribe.
+        # FIX 2026-11-10 (round 2): P. vulgaris / P. penneri moved to their own
+        # rule below (no AmpC -- amoxicillin-clavulanate and cefoxitin are NOT
+        # intrinsic for them). For Morganella / Providencia, cefoxitin and
+        # ampicillin-sulbactam left the INTRINSIC list (neither CLSI Appendix B
+        # nor EUCAST lists them; a cefoxitin-S Morganella is a normal result);
+        # they remain "not recommended" through the organism profile.
+        "organisms": ["morganella", "providencia"],
         "drugs": ["ampicillin", "amoxicillin", "cephalexin", "cefadroxil",
                   "cephradine", "cefaclor", "cefuroxime", "cefazolin",
-                  "cephalothin", "cefoxitin",
+                  "cephalothin",
                   "tetracycline", "doxycycline", "minocycline", "tigecycline",
                   "colistin", "polymyxin", "nitrofurantoin"],
-        "exclude": ["tazobactam", "avibactam"],
+        "exclude": ["tazobactam", "avibactam", "sulbactam"],
         "reason_ar": ("مقاومة جوهرية (AmpC كروموسومي + خصائص نوعية) — "
-                      "أمينوبنسلينات · سيفالوسبورين ١/٢ · تتراسيكلينات · "
-                      "colistin · nitrofurantoin."),
+                      "أمينوبنسلينات (ومنها amoxicillin-clavulanate) · سيفالوسبورين ١/٢ · "
+                      "تتراسيكلينات · colistin · nitrofurantoin."),
         "reason_en": ("Intrinsic (chromosomal AmpC plus species traits) — "
-                      "aminopenicillins, 1st/2nd-gen cephalosporins, tetracyclines, "
-                      "colistin, nitrofurantoin."),
-        "reference": "EUCAST Intrinsic Resistance v3.3, Table 2",
+                      "aminopenicillins (amoxicillin-clavulanate included), 1st/2nd-gen "
+                      "cephalosporins, tetracyclines, colistin, nitrofurantoin."),
+        "reference": "CLSI M100 Appendix B · EUCAST Expected Resistant Phenotypes, Table 1",
+    },
+    {
+        "id": "intr_proteus_vulgaris_penneri",
+        "organisms": ["proteus vulgaris", "proteus penneri"],
+        "drugs": ["ampicillin", "amoxicillin", "cephalexin", "cefadroxil",
+                  "cephradine", "cefaclor", "cefuroxime", "cefazolin",
+                  "cephalothin",
+                  "tetracycline", "doxycycline", "minocycline", "tigecycline",
+                  "colistin", "polymyxin", "nitrofurantoin"],
+        # the class-A cefuroximase is inhibited by clavulanate / sulbactam
+        "exclude": ["clavulan", "sulbactam", "tazobactam", "avibactam"],
+        "reason_ar": ("Proteus vulgaris/penneri: مقاومة جوهرية (cefuroximase كروموسومي من "
+                      "الفئة A) — ampicillin/amoxicillin · سيفالوسبورين الجيل الأول · "
+                      "cefuroxime · تتراسيكلينات · colistin · nitrofurantoin. "
+                      "Amoxicillin-clavulanate و Cefoxitin ليست جوهرية."),
+        "reason_en": ("Proteus vulgaris/penneri: intrinsic (chromosomal class-A "
+                      "cefuroximase) — ampicillin/amoxicillin, 1st-gen cephalosporins, "
+                      "cefuroxime, tetracyclines, colistin, nitrofurantoin. "
+                      "Amoxicillin-clavulanate and cefoxitin are NOT intrinsic."),
+        "reference": "CLSI M100 Appendix B · EUCAST Expected Resistant Phenotypes, Table 1",
     },
     {
         "id": "intr_serratia",
@@ -307,6 +329,7 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
     {
         "id": "intr_enterobacter_citrobacter_ampc",
         "organisms": ["enterobacter", "klebsiella aerogenes", "citrobacter freundii",
+                      "citrobacter spp",           # genus-level entry (2026-11-10)
                       "hafnia"],
         # Chromosomal AmpC is not inhibited by sulbactam either, so ampicillin-
         # sulbactam must NOT be exempted (it was, via the "sulbactam" exclude).
@@ -323,8 +346,35 @@ INTRINSIC_RULES: List[Dict[str, Any]] = [
         "reference": "EUCAST Intrinsic Resistance v3.3, Table 2",
     },
     {
+        # Added 2026-11-10 (round 2) with the clinical_data correction.
+        "id": "intr_hafnia_colistin",
+        "organisms": ["hafnia"],
+        "drugs": ["colistin", "polymyxin"],
+        "exclude": [],
+        "reason_ar": "Hafnia alvei مقاومة جوهرياً للبوليميكسينات (Colistin / Polymyxin B).",
+        "reason_en": "Hafnia alvei is intrinsically resistant to the polymyxins.",
+        "reference": "EUCAST Expected Resistant Phenotypes, Table 1 · Jayol et al., AAC 2017",
+    },
+    {
+        # Added 2026-11-10 with the genus-level organisms: only the agents that
+        # P. aeruginosa, A. baumannii AND S. maltophilia all resist.
+        "id": "intr_nonfermenter_unspeciated",
+        "organisms": ["non-fermenting"],
+        "drugs": ["ampicillin", "amoxicillin", "cephalexin", "cefadroxil", "cephradine",
+                  "cefazolin", "cefaclor", "cefuroxime", "cefoxitin", "cefotaxime",
+                  "ceftriaxone", "ertapenem", "nitrofurantoin"],
+        "exclude": ["sulbactam", "avibactam"],
+        "reason_ar": ("Non-fermenter غير محدد النوع: مقاومة جوهرية مشتركة بين Pseudomonas و "
+                      "Acinetobacter و Stenotrophomonas — أمينوبنسلينات، سيفالوسبورين ١/٢، "
+                      "Cefotaxime/Ceftriaxone، Ertapenem، Nitrofurantoin."),
+        "reason_en": ("Unspeciated non-fermenter: intrinsic resistance shared by P. aeruginosa, "
+                      "A. baumannii and S. maltophilia — aminopenicillins, 1st/2nd-gen "
+                      "cephalosporins, cefotaxime/ceftriaxone, ertapenem, nitrofurantoin."),
+        "reference": "EUCAST Expected Resistant Phenotypes, Table 2 (intersection)",
+    },
+    {
         "id": "intr_pseudomonas",
-        "organisms": ["pseudomonas aeruginosa"],
+        "organisms": ["pseudomonas aeruginosa", "pseudomonas spp"],
         "drugs": ["ampicillin", "amoxicillin", "cefazolin", "cephalothin",
                   "cefuroxime", "cefoxitin", "cefotaxime", "ceftriaxone",
                   "ertapenem", "tetracycline", "doxycycline", "tigecycline",
@@ -643,14 +693,19 @@ NO_BREAKPOINT_RULES: List[Dict[str, Any]] = [
         "not_organisms": [],
         "drugs": ["cefoperazone"],
         "exclude": [],
-        "reason_ar": ("Cefoperazone (منفرداً أو مع sulbactam): لا توجد breakpoints "
-                      "في EUCAST، و CLSI سحبت breakpoints الـ cefoperazone. "
-                      "التركيبة مع sulbactam ليس لها breakpoints في أي من المرجعين. "
-                      "شائع في مصر لكن النتيجة غير مُعايَرة."),
-        "reason_en": ("Cefoperazone (alone or with sulbactam): EUCAST has no "
-                      "breakpoints and CLSI withdrew the cefoperazone breakpoints. "
-                      "The sulbactam combination has none in either. Widely used in "
-                      "Egypt, but the result is uncalibrated."),
+        # 2026-11-10 (round 2): "CLSI withdrew the cefoperazone breakpoints" was
+        # too broad. CLSI's archived-drugs table archives cefoperazone for
+        # P. aeruginosa (after M100-S20) and staphylococci; a legacy criterion
+        # for cefoperazone ALONE survives for Enterobacterales only.
+        "reason_ar": ("Cefoperazone-sulbactam: لا توجد breakpoints للتركيبة في CLSI ولا في "
+                      "EUCAST. Cefoperazone منفرداً: لا شيء في EUCAST، و CLSI أرشفت معاييره "
+                      "لـ P. aeruginosa والمكورات العنقودية وأبقت معياراً قديماً "
+                      "للـ Enterobacterales فقط. شائع في مصر لكن النتيجة غير مُعايَرة."),
+        "reason_en": ("Cefoperazone-sulbactam has no breakpoints in CLSI or EUCAST. "
+                      "Cefoperazone alone: none in EUCAST; CLSI archived its criteria for "
+                      "P. aeruginosa and staphylococci and keeps only a legacy "
+                      "Enterobacterales criterion. Widely used in Egypt, but the result "
+                      "is uncalibrated."),
         "reference": "EUCAST Breakpoint Tables v16.1 · CLSI M100 Ed36",
     },
     {

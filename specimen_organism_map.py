@@ -143,6 +143,18 @@ for _sp, _orgs in (
         if _o not in SPECIMEN_ORGANISM_MAP.get(_sp, []):
             SPECIMEN_ORGANISM_MAP.setdefault(_sp, []).append(_o)
 
+# ── Organisms not identified to species level (2026-11-10) ───────────────────
+_GENUS_LEVEL = ("Acinetobacter spp.", "Pseudomonas spp.", "Enterobacter spp.",
+                "Citrobacter spp.", "Proteus spp.", "Serratia spp.",
+                "Enterococcus spp.", "Staphylococcus spp.", "Streptococcus spp.",
+                "Gram-negative bacilli (unidentified)",
+                "Non-fermenting Gram-negative bacilli (unspeciated)",
+                "Gram-positive cocci (unidentified)")
+for _sp in ("Urine", "Blood", "Sputum", "Wound Swab", "Pus", "CSF"):
+    for _o in _GENUS_LEVEL:
+        if _o not in SPECIMEN_ORGANISM_MAP.get(_sp, []):
+            SPECIMEN_ORGANISM_MAP.setdefault(_sp, []).append(_o)
+
 # CoNS everywhere it is actually reported — which is everywhere, because the
 # question it raises (contaminant or not) is a question at every site.
 for _sp in ("Blood", "Urine", "Wound Swab", "Pus", "CSF"):

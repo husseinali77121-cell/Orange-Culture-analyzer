@@ -580,6 +580,13 @@ try:
     # A row must never hold BOTH: that is a signature and a pending flag on the
     # same milligrams, and whichever a reader believes, the other is a lie.
     check("no dose band is both signed and pending", not _both, f"{_both}")
+    _owner_rows = [d for d, i in _AG.items() if i.get("dose_owner_approved")]
+    check("no dose band is owner-approved AND (pending or clinician-signed)",
+          not [d for d in _owner_rows
+               if _AG[d].get("dose_review") or _AG[d].get("dose_countersigned")])
+    if _owner_rows:
+        print(f"\n  ℹ {len(_owner_rows)} dose band(s) released on the lab owner's instruction "
+              f"after a label check (no clinician signature): {', '.join(sorted(_owner_rows))}")
 
     # HARD: a signature must never disappear. Sixteen bands were countersigned
     # on 2026-08-03; if that count drops, someone deleted a signature rather
@@ -603,9 +610,28 @@ try:
     # A rule may arrive unsigned ONLY if it says so in a visible governance key
     # (`awaiting_countersignature`), mirroring `dose_review`. Silently unsigned
     # rules still fail; flagged ones are reported as a release blocker.
+    # 2026-11-10 (round 2): a third visible state, `owner_approved` -- the lab
+    # owner released the rule after an AI-assisted source check. It is NOT a
+    # clinician countersignature and must say so in its own text.
+    _owner = [k for k, v in _GRg.RULES.items()
+              if not str(v.get("countersigned_by", "")).strip()
+              and str(v.get("owner_approved", "")).strip()]
+    check("an owner-approved rule states that it is not a clinician countersignature "
+          "and records what was checked",
+          all("NOT a clinician countersignature" in str(_GRg.RULES[k]["owner_approved"])
+              and str(_GRg.RULES[k].get("source_check", "")).strip() for k in _owner),
+          f"{_owner}")
+    check("no rule holds both a clinician signature and an owner approval",
+          not [k for k, v in _GRg.RULES.items()
+               if str(v.get("countersigned_by", "")).strip()
+               and str(v.get("owner_approved", "")).strip()])
+    if _owner:
+        print(f"\n  ℹ {len(_owner)} guideline rule(s) released on the lab owner's instruction "
+              f"(AI-assisted source check, no clinician signature): {', '.join(sorted(_owner))}")
     _unsigned = [k for k, v in _GRg.RULES.items()
                  if not str(v.get("countersigned_by", "")).strip()
-                 and not str(v.get("awaiting_countersignature", "")).strip()]
+                 and not str(v.get("awaiting_countersignature", "")).strip()
+                 and not str(v.get("owner_approved", "")).strip()]
     _awaiting = [k for k, v in _GRg.RULES.items()
                  if not str(v.get("countersigned_by", "")).strip()
                  and str(v.get("awaiting_countersignature", "")).strip()]

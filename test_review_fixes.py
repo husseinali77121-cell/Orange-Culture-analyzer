@@ -223,9 +223,21 @@ check("tigecycline Child-Pugh C maintenance is 25 mg q12h",
       "25mg q12h" in str(A.HEPATIC_DOSING["Tigecycline"]["C"]))
 _unsigned_edits = [d for d in ("Cefepime", "Levofloxacin", "Cefoperazone + Sulbactam", "Cefazolin",
                                "Cefuroxime sodium", "Imipenem/Cilastatin")
-                   if G[d].get("dose_countersigned") or not G[d].get("dose_review")]
-check("every rewritten dose band is queued for countersignature, none carries a stale signature",
+                   if G[d].get("dose_countersigned")
+                   or not (G[d].get("dose_review") or G[d].get("dose_owner_approved"))]
+# 2026-11-10 (round 2): the queue was cleared on the lab owner's instruction
+# after each band was checked against its label. That is recorded as
+# `dose_owner_approved` -- a third state, kept apart from a clinician's
+# `dose_countersigned`, which none of these rows may claim.
+check("every rewritten dose band is queued OR owner-approved with its source, and "
+      "none carries a clinician signature it did not earn",
       not _unsigned_edits, _unsigned_edits)
+check("an owner approval names the document it was checked against and says it is "
+      "not a clinician countersignature",
+      all("NOT a clinician countersignature" in str(i.get("dose_owner_approved"))
+          and "checked" in str(i.get("dose_owner_approved")).lower()
+          or "label" in str(i.get("dose_owner_approved")).lower()
+          for i in G.values() if i.get("dose_owner_approved")))
 
 # ═══════════════════════════════════════════════════════════════════════════
 print("\n[C5] Aminoglycosides for P. aeruginosa (CLSI M100 Ed33)")

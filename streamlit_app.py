@@ -287,6 +287,26 @@ COMMON_MEDS = [
     "Loop diuretics (Furosemide)",
     "Theophylline (ثيوفيلين)",
     "Neuromuscular blocking agents (مرخيات العضلات)",
+    # Added 2026-11-10 (round 2). The same defect as above, found again: these
+    # classes are declared in abx_guidelines.py but could not be selected, so
+    # TMP-SMX + ACE inhibitor (hyperkalaemia), clarithromycin + colchicine
+    # (fatal toxicity), linezolid + MAOI / tramadol (serotonin syndrome) and
+    # ciprofloxacin + tizanidine (contraindicated) could never fire.
+    "ACE inhibitors (مثبطات ACE)",
+    "ARBs (حاصرات الأنجيوتنسين)",
+    "Spironolactone (مدر حافظ للبوتاسيوم)",
+    "Phenytoin (فينيتوين)",
+    "Sulfonylureas (خافضات السكر)",
+    "Azathioprine (آزاثيوبرين)",
+    "Colchicine (كولشيسين)",
+    "Digoxin (ديجوكسين)",
+    "Calcium channel blockers (حاصرات الكالسيوم)",
+    "Ergot alkaloids (إرجوتامين)",
+    "MAOI (مثبطات MAO)",
+    "Tramadol / Pethidine (أفيونات سيروتونينية)",
+    "Sympathomimetics (سودوإيفيدرين / دوبامين)",
+    "Tizanidine (تيزانيدين)",
+    "Nephrotoxic drugs (Amphotericin / Cyclosporine / Tacrolimus)",
 ]
 
 # ── Interaction matching ────────────────────────────────────────────────────
@@ -344,6 +364,12 @@ _MED_CANON = {
     "verapamil": "ccb", "diltiazem": "ccb", "nifedipine": "ccb",
     "atorvastatin": "statins", "simvastatin": "statins",
     "rosuvastatin": "statins", "lovastatin": "statins",
+    # ── Added 2026-11-10 (round 2) ────────────────────────────────────────────
+    "tizanidine": "tizanidine",
+    "nephrotoxic drugs": "nephrotoxic", "nephrotoxic": "nephrotoxic",
+    "amphotericin": "nephrotoxic", "cyclosporine": "nephrotoxic",
+    "ciclosporin": "nephrotoxic", "tacrolimus": "nephrotoxic",
+    "cisplatin": "nephrotoxic",
 }
 
 
@@ -356,9 +382,13 @@ def _canon_med(name: str) -> str:
     base = re.split(r"[(\uFF08]", str(name or ""), 1)[0].strip().lower()
     if base in _MED_CANON:
         return _MED_CANON[base]
-    for key, canon in _MED_CANON.items():
-        if base.startswith(key) or key in base:
-            return canon
+    # FIX 2026-11-10 (round 2): this was a bare substring test in dict order, so
+    # "iron" fired inside "spIRONolactone" and "arb" inside "cARBamazepine" --
+    # a potassium-sparing diuretic was matched as an iron supplement. Whole
+    # words only, longest key first (an optional plural "s" is tolerated).
+    for key in sorted(_MED_CANON, key=len, reverse=True):
+        if re.search(r"(?<![a-z0-9])" + re.escape(key) + r"s?(?![a-z0-9])", base):
+            return _MED_CANON[key]
     return base
 
 RENAL_BAN_REASONS = {
@@ -1587,14 +1617,14 @@ NEONATAL_RESTRICTIONS: Dict[str, Dict[str, Any]] = {
 HEPATIC_DOSING: Dict[str, Dict] = {
     # ── Keys match abx_guidelines.py drug names exactly for lookup to work ──
     # Drugs marked [MDR/REF only] not in active formulary -- kept for reference display.
-    "Metronidazole":                 {"A": ("Normal","No adjustment"), "B": ("Reduce 50%","Reduce dose by 50%"), "C": ("Avoid/Reduce","Avoid if possible; if essential max 500mg q12h"), "note": "Extensive hepatic metabolism"},
-    "Clindamycin":                   {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution; reduce 25-50%"), "C": ("Avoid","Avoid -- accumulation risk"), "note": "Primary hepatic metabolism [MDR/REF only]"},
+    "Metronidazole":                 {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment (label) -- monitor for adverse effects"), "C": ("Reduce 50%","Child-Pugh C: reduce the dose by 50% (label)"), "note": "Extensive hepatic metabolism. FIX 2026-11-10: the level string 'Avoid/Reduce' contained 'avoid' and BANNED metronidazole in Child-Pugh C; the label halves the dose"},
+    "Clindamycin":                   {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Caution","No fixed reduction -- half-life is prolonged in severe liver disease; monitor liver enzymes (label)"), "note": "Primary hepatic metabolism. FIX 2026-11-10: was 'Avoid' in Child-Pugh C; the label asks for monitoring, not avoidance"},
     "Rifampicin":                    {"A": ("Normal (no jaundice)","Normal if no jaundice"), "B": ("Max 8mg/kg/d","Max 8mg/kg/day; weekly LFTs"), "C": ("Avoid","Avoid -- hepatotoxic + CYP inducer"), "note": "Hepatotoxic + strong CYP inducer [MDR/REF only]"},
     "Erythromycin":                  {"A": ("Normal","No adjustment"), "B": ("Reduce 25%","Reduce dose by 25%"), "C": ("Reduce 50%","Reduce 50% or avoid"), "note": "Cholestatic hepatitis risk [MDR/REF only]"},
     "Ceftriaxone":                   {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment; max 2g/day"), "C": ("Max 2g/day","2g/day maximum -- biliary sludge risk"), "note": "Dual hepatic/renal elimination"},
     "Linezolid":                     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal","No adjustment -- primarily renal"), "note": "No hepatic dose adjustment required"},
     "Vancomycin":                    {"A": ("Renal-based","AUC/MIC monitoring"), "B": ("Renal-based","AUC/MIC monitoring"), "C": ("Renal-based","AUC/MIC monitoring"), "note": "Primarily renal -- no hepatic adjustment"},
-    "Ciprofloxacin":                 {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Reduce 50%","Reduce by 50% in severe failure"), "note": "Partial hepatic metabolism"},
+    "Ciprofloxacin":                 {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Caution","No dose adjustment established -- use with caution in severe impairment (label)"), "note": "Partial hepatic metabolism"},
     "Doxycycline":                   {"A": ("Normal","No adjustment"), "B": ("Caution","Use with caution"), "C": ("Avoid","Avoid in severe hepatic failure"), "note": "Biliary excretion pathway"},
     "Amoxicillin + Clavulanic acid": {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Avoid","Avoid -- Clavulanate-associated DILI risk"), "note": "Clavulanate linked to drug-induced liver injury"},
     "Piperacillin + Tazobactam":     {"A": ("Normal","No adjustment"), "B": ("Normal","No adjustment"), "C": ("Normal (renal)","No hepatic adjustment -- monitor renal"), "note": "Primarily renal elimination"},
@@ -2353,7 +2383,7 @@ def analyze_antibiotics(
                 "no_breakpoint")
 
         # ── Penicillin-S S. aureus needs a negative penicillinase test ────────
-        if (drug == "Penicillin" and culture_result == "S"
+        if (drug in ("Penicillin", "Ampicillin", "Amoxicillin") and culture_result == "S"
                 and ("staph" in _org_l_aa or "mssa" in _org_l_aa)):
             _bz = str(sir_map.get("Penicillinase") or sir_map.get("Beta-lactamase")
                       or sir_map.get("blaZ") or "").strip().upper()
@@ -2376,6 +2406,99 @@ def analyze_antibiotics(
                 continue
             _add_note(drug, "warn", "CLSI M100 Ed36: مقبول لعدوى الجلد والأنسجة الرخوة فقط.",
                                  "no_breakpoint")
+
+        # ══════════════════════════════════════════════════════════════════
+        # ROUND-2 RULES (2026-11-10) -- results that test S but must not be
+        # reported as a treatment option, each from a CLSI M100 comment.
+        # ══════════════════════════════════════════════════════════════════
+        _is_staph_r2 = any(k in _org_l_aa for k in ("staph", "mrsa", "mssa"))
+        _is_strep_r2 = "strep" in _org_l_aa or "pneumoc" in _org_l_aa
+        _is_entero_r2 = "enterococc" in _org_l_aa or _org_l_aa.strip() == "vre"
+        _is_pneumo_r2 = "pneumoniae" in _org_l_aa and "strep" in _org_l_aa
+
+        # ── Macrolides: erythromycin predicts azithromycin / clarithromycin ──
+        # CLSI M100 Table 1 footnote: "susceptibility and resistance to
+        # azithromycin and clarithromycin can be predicted by testing
+        # erythromycin" (staphylococci, streptococci). erm / mef are shared.
+        if (drug in ("Azithromycin", "Clarithromycin") and culture_result in ("S", "I")
+                and sir_map.get("Erythromycin") == "R"
+                and (_is_staph_r2 or _is_strep_r2)):
+            banned.append(build_banned_item(
+                drug, "cross_resistance",
+                "Erythromycin R ← مقاومة متصالبة لكل الماكروليدات.",
+                f"{drug} ظهر حساساً بينما Erythromycin = R. في المكورات العنقودية والعقدية "
+                "نتيجة Erythromycin تتنبأ بـ Azithromycin و Clarithromycin (CLSI M100، "
+                "آلية erm/mef مشتركة) — النتيجة تُعامل كمقاومة ويُراجَع الاختبار."))
+            continue
+
+        # ── Enterococci ───────────────────────────────────────────────────────
+        if _is_entero_r2 and culture_result in ("S", "I"):
+            # Fluoroquinolones: CLSI lists them for URINARY isolates only.
+            if "fluoroquinolone" in cls and _spec_cat_aa != "urine":
+                banned.append(build_banned_item(
+                    drug, "no_breakpoint",
+                    "CLSI: الفلوروكينولون مع Enterococcus للبول فقط.",
+                    "CLSI M100 يدرج Ciprofloxacin/Levofloxacin مع المكورات المعوية لعزلات "
+                    "البول فقط (Group U) — لا تُبلَّغ ولا تُستخدم في الدم أو الجروح أو غيرها. "
+                    "البديل: Ampicillin إن كان حساساً، وإلا Vancomycin / Linezolid / Daptomycin."))
+                continue
+            # Meropenem / ertapenem: no enterococcal breakpoints, unreliable.
+            if drug in ("Meropenem", "Ertapenem", "Meropenem + Vaborbactam"):
+                banned.append(build_banned_item(
+                    drug, "no_breakpoint",
+                    "لا breakpoints لهذا الكاربابينيم مع Enterococcus.",
+                    f"{drug}: لا توجد breakpoints في CLSI أو EUCAST مع المكورات المعوية ونشاطه "
+                    "غير موثوق (Ertapenem بلا نشاط). Imipenem فقط يُتنبأ به من Ampicillin "
+                    "في E. faecalis."))
+                continue
+            # Ampicillin R predicts the other penicillins and imipenem.
+            if (sir_map.get("Ampicillin") == "R"
+                    and drug in ("Penicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
+                                 "Ampicillin/Sulbactam", "Piperacillin + Tazobactam",
+                                 "Imipenem/Cilastatin", "Imipenem + Relebactam")):
+                banned.append(build_banned_item(
+                    drug, "cross_resistance",
+                    "Ampicillin R ← مقاومة متوقعة لهذا البيتا-لاكتام.",
+                    f"{drug} ظهر حساساً بينما Ampicillin = R. في Enterococcus نتيجة Ampicillin "
+                    "تتنبأ بـ Amoxicillin و Amoxicillin-clavulanate و Ampicillin-sulbactam و "
+                    "Piperacillin-tazobactam و Imipenem (CLSI M100) — تُعامل كمقاومة."))
+                continue
+
+        # ── S. pneumoniae in CSF: meningitis breakpoints have no "I" ─────────
+        if _is_pneumo_r2 and _spec_cat_aa == "csf" and culture_result == "I":
+            if drug in ("Penicillin", "Ampicillin", "Amoxicillin"):
+                banned.append(build_banned_item(
+                    drug, "no_breakpoint",
+                    "التهاب السحايا: Penicillin غير الحساس = مقاوم.",
+                    "breakpoints التهاب السحايا لـ S. pneumoniae (CLSI M100): S ≤ 0.06 و "
+                    "R ≥ 0.12 µg/mL — لا توجد فئة Intermediate. النتيجة I تُعامل كمقاومة: "
+                    "Ceftriaxone/Cefotaxime بجرعة عالية + Vancomycin حتى ظهور الـ MIC."))
+                continue
+            if drug in ("Ceftriaxone", "Cefotaxime"):
+                _add_note(drug, "warn", (
+                    "التهاب السحايا بـ S. pneumoniae مع Ceftriaxone/Cefotaxime = I "
+                    "(MIC 1 µg/mL): لا يكفي منفرداً — أضف Vancomycin (IDSA Bacterial "
+                    "Meningitis)."), "organism_caution")
+
+        # ── S. aureus bacteraemia / CNS: no fluoroquinolone monotherapy ──────
+        if (_is_staph_r2 and "fluoroquinolone" in cls and culture_result in ("S", "I")
+                and _spec_cat_aa in ("blood", "csf")):
+            _add_note(drug, "warn", (
+                "Staphylococcus في الدم/CSF: الفلوروكينولون منفرداً غير موصى به (مقاومة تظهر "
+                "أثناء العلاج) — الخيار: Cefazolin أو Oxacillin (MSSA) / Vancomycin أو "
+                "Daptomycin (MRSA)."), "organism_caution")
+
+        # ── ESBL "moderate" = not excluded: say so on the beta-lactams ───────
+        if (_mech_prob == "moderate" and culture_result in ("S", "I")
+                and not (_spec_cat_aa == "urine" and not _uti_upper)
+                and drug not in NOVEL_BL_AGENTS and "carbapenem" not in cls
+                and ("cephalosporin" in cls
+                     or drug in ("Piperacillin + Tazobactam", "Aztreonam",
+                                 "Amoxicillin + Clavulanic acid", "Ampicillin/Sulbactam"))):
+            _add_note(drug, "warn", (
+                "ESBL غير مستبعد (مقاومة سيفالوسبورين بلوحة محدودة): في العدوى الغازية لا "
+                "يُعتمد على هذا البيتا-لاكتام قبل نفي ESBL (اختبر Ceftriaxone/Ceftazidime أو "
+                "DDST) — الكاربابينيم أضمن (IDSA AMR Guidance 2026)."), "organism_caution")
 
         # ── AmpC + Cefepime (IDSA AMR Guidance 2024 / 2026) ───────────────────
         # FIX 2026-11-10: AmpC was routed through the ESBL branch below and
@@ -2741,8 +2864,8 @@ def analyze_antibiotics(
         # ── Oxacillin: MSSA alert للـ bacteremia ─────────────────────────────────
         if "oxacillin" in d_low and culture_result == "S" and culture_type == "Blood":
             interactions_alerts.append(
-                "ℹ️ Oxacillin=S (MSSA confirmed). Cefazolin مفضل على Oxacillin "
-                "في bacteremia (أقل interstitial nephritis). IDSA 2024."
+                "ℹ️ Oxacillin=S (MSSA confirmed). Cefazolin غير أدنى من (flu)cloxacillin "
+                "في bacteremia وأقل إصابة كلوية — CloCeBa (Lancet 2025) / SNAP (NEJM 2026)."
             )
 
         # ── Enterococcus + TMP-SMX: in-vitro S but clinically unreliable ─────────
@@ -2848,7 +2971,8 @@ def analyze_antibiotics(
             if "clarithromycin" in d_low:
                 preg_note = info.get("preg_note") or (
                     "⛔ ممنوع في الحمل -- Clarithromycin.\n"
-                    "ارتبط بتشوهات قلبية خلقية (JAMA 2019 cohort study).\n"
+                    "ارتبط بزيادة الإجهاض (Andersen, PLoS One 2013) وإشارة لتشوهات في الثلث "
+                    "الأول مع الماكروليدات (Fan, BMJ 2020).\n"
                     "BNF 2025: تجنّب في الحمل.\n"
                     "البديل الآمن: Azithromycin."
                 )
@@ -2888,7 +3012,8 @@ def analyze_antibiotics(
                     "name": drug, **info,
                     "preg_note": info.get("preg_note") or (
                         "⚠️ Nitrofurantoin -- Use with Caution في الحمل:\n"
-                        "✅ مسموح في الـ 1st و 2nd trimester (ACOG 2023).\n"
+                        "الثلث الأول: فقط عند غياب بديل مناسب (ACOG CO 717).\n"
+                        "✅ الثلث الثاني وبداية الثالث: مقبول لالتهاب المثانة.\n"
                         "⛔ تجنّب في الـ 3rd trimester وعند الـ term (≥36 أسبوع):\n"
                         "   خطر hemolytic anemia جنينية (G6PD) ونيونيتل hemolysis.\n"
                         "البديل في 3rd trim: Fosfomycin جرعة واحدة أو Cephalexin.\n"
@@ -3661,6 +3786,7 @@ AMPC_PRODUCERS = frozenset([
     "serratia marcescens", "serratia spp.",
     "morganella morganii", "providencia spp.",
     "pseudomonas aeruginosa", "hafnia alvei",
+    "pseudomonas spp.",          # unspeciated: treated as P. aeruginosa (2026-11-10)
 ])
 
 ESBL_MARKERS = {
@@ -3798,7 +3924,7 @@ def predict_esbl(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
                     "الشرق الأوسط). الاثنان يبدوان متطابقين على أقراص البيتا-لاكتام."
                 ),
                 "action": (
-                    "الخيارات المفضّلة (IDSA AMR v4.0): Ceftolozane-Tazobactam · "
+                    "الخيارات المفضّلة (IDSA AMR Guidance 2026): Ceftolozane-Tazobactam · "
                     "Ceftazidime-Avibactam · Imipenem-Relebactam · Cefiderocol — "
                     "اطلب حساسية لها تحديداً. لا تعتمد على Colistin كخط أول. "
                     "أكّد وجود كاربابينيميز (mCIM / PCR للـ MBL) فقط إذا كان "
@@ -3960,8 +4086,16 @@ def predict_esbl(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
             _detail += (" ⚠️ لوحة محدودة: تم اختبار سيفالوسبورين أساسي واحد فقط "
                         "-- التفسير أقل موثوقية؛ وسّع اللوحة (Ceftazidime/Cefotaxime).")
         return {
-            "probability": ("high" if carbS else "moderate") if not _thin_panel else "moderate",
-            "confidence": _base_conf,
+            # FIX 2026-11-10 (round 2): a thin panel forced "moderate", and at
+            # "moderate" the engine applied NO ESBL handling at all -- E. coli in
+            # blood with Ceftriaxone R as the only 3rd-gen tested had
+            # piperacillin-tazobactam and cefepime recommended without a word.
+            # IDSA AMR Guidance: ceftriaxone non-susceptibility is the accepted
+            # proxy for ESBL production in E. coli / Klebsiella / P. mirabilis.
+            "probability": ("high" if (primary_R[0] in ("Ceftriaxone", "Cefotaxime")
+                                       or (carbS and not _thin_panel)) else "moderate"),
+            "confidence": (max(_base_conf, 70)
+                           if primary_R[0] in ("Ceftriaxone", "Cefotaxime") else _base_conf),
             "mechanism": "Probable ESBL — Predicted",
             "markers_R": primary_R + med_R,
             "detail": _detail,
@@ -4002,6 +4136,10 @@ from pathogenicity import (                                          # noqa: E40
     _ORG_CANON_MAP, _canon_org, _org_in,
     _CFU_SUPERSCRIPTS, _CFU_VERBAL, _PUS_VERBAL,
     _parse_cfu, _cfu_report_state, _score_colony_count, _parse_pus,
+    # v3 option lists -- the UI and the engine read the same strings
+    PATHO_ENGINE_VERSION, GRAM_STAIN_OPTIONS, URINE_COLLECTION_METHODS,
+    URINE_SYMPTOMS, HOST_FACTORS_URINE, HOST_FACTORS_OTHER,
+    WOUND_TYPES, WOUND_SIGNS, RESPIRATORY_SIGNS,
 )
 
 
@@ -4062,15 +4200,24 @@ TREATMENT_DURATION_DB: Dict[str, Any] = {
     },
     "CAP_moderate": {
         "label": "CAP -- Moderate (Inpatient)",
-        "days": (7, 10), "standard": 7, "iv_days": 2, "po_days": 5,
-        "notes": "IV until clinical stability -> oral step-down. CRP-guided preferred.",
-        "follow_up_culture": False, "ref": "IDSA/ATS 2019",
+        # FIX 2026-11-10 (round 2): was 7-10 d. ATS/IDSA 2019: treat until
+        # clinically stable and for no less than 5 days; ATS 2025 suggests even
+        # shorter courses for stable non-severe CAP.
+        "days": (5, 7), "standard": 5, "iv_days": 2, "po_days": 3,
+        "notes": "5d minimum and until clinically stable (afebrile 48-72h, <=1 instability "
+                 "sign); ATS 2025: 3-5d is enough for non-severe CAP that stabilises early. "
+                 "IV -> oral step-down at stability. 7d for MRSA / P. aeruginosa.",
+        "follow_up_culture": False, "ref": "ATS/IDSA CAP 2019 | ATS CAP 2025",
     },
     "CAP_severe": {
         "label": "CAP -- Severe (ICU)",
-        "days": (10, 14), "standard": 10, "iv_days": 7, "po_days": 3,
-        "notes": "Reassess at day 5. Consider PCT/CRP-guided de-escalation.",
-        "follow_up_culture": True, "ref": "IDSA/ATS 2019",
+        # FIX 2026-11-10 (round 2): was 10-14 d. Severity alone does not
+        # lengthen CAP therapy; complications and specific pathogens do.
+        "days": (5, 10), "standard": 7, "iv_days": 4, "po_days": 3,
+        "notes": ">=5d and until clinically stable; 7d for MRSA / P. aeruginosa (ATS/IDSA 2019). "
+                 "Longer only for empyema, abscess, S. aureus bacteraemia, Legionella with slow "
+                 "response. PCT can support stopping.",
+        "follow_up_culture": True, "ref": "ATS/IDSA CAP 2019 | ATS CAP 2025",
     },
     "HAP_VAP": {
         "label": "HAP / VAP",
@@ -4120,7 +4267,7 @@ TREATMENT_DURATION_DB: Dict[str, Any] = {
         "label": "MRSA Bacteremia",
         "days": (14, 42), "standard": 14, "iv_days": 14, "po_days": 0,
         "notes": "Vancomycin AUC/MIC target 400-600. Min 14d (uncomplicated) | 42d (endocarditis).",
-        "follow_up_culture": True, "ref": "IDSA MRSA Guidelines 2011 (updated 2025)",
+        "follow_up_culture": True, "ref": "IDSA MRSA Guidelines 2011 | ASHP/IDSA/PIDS/SIDP vancomycin consensus 2020",
     },
     "Meningitis_pneumococcal": {
         "label": "Pneumococcal Meningitis",
@@ -4180,7 +4327,7 @@ TREATMENT_DURATION_DB: Dict[str, Any] = {
         "label": "Osteomyelitis",
         "days": (42, 84), "standard": 42, "iv_days": 14, "po_days": 28,
         "notes": "IV 2 weeks -> high-bioavailability oral 4+ weeks. Total ≥6 weeks.",
-        "follow_up_culture": True, "ref": "IDSA Osteomyelitis 2012",
+        "follow_up_culture": True, "ref": "IDSA Vertebral Osteomyelitis 2015 | OVIVA (NEJM 2019)",
     },
     "Intraabdominal_mild": {
         "label": "Intraabdominal Infection (Source Controlled)",
@@ -4190,9 +4337,12 @@ TREATMENT_DURATION_DB: Dict[str, Any] = {
     },
     "Intraabdominal_severe": {
         "label": "Intraabdominal Infection (Severe)",
-        "days": (7, 14), "standard": 7, "iv_days": 5, "po_days": 2,
-        "notes": "7-10d. Ongoing signs -> reassess source control.",
-        "follow_up_culture": True, "ref": "IDSA IAI 2010",
+        # FIX 2026-11-10 (round 2): was 7-14 d. With adequate source control
+        # ~4 days is as good as longer (STOP-IT, NEJM 2015; SIS 2017).
+        "days": (4, 7), "standard": 5, "iv_days": 4, "po_days": 1,
+        "notes": "4-7d AFTER adequate source control (STOP-IT). Persisting signs beyond day 7 "
+                 "mean failed source control -> re-image, do not just extend antibiotics.",
+        "follow_up_culture": True, "ref": "STOP-IT (NEJM 2015) | SIS 2017 | IDSA IAI 2010",
     },
     "GI_mild": {
         "label": "GI Infection -- Mild/Moderate (Supportive Care)",
@@ -4205,7 +4355,7 @@ TREATMENT_DURATION_DB: Dict[str, Any] = {
     "GI_severe": {
         "label": "Severe GI Infection / Immunocompromised",
         "days": (3, 7), "standard": 5, "iv_days": 2, "po_days": 3,
-        "notes": "Azithromycin or Ciprofloxacin 3-5d. C. diff -> Vancomycin/Fidaxomicin 10-14d. "
+        "notes": "Azithromycin or Ciprofloxacin 3-5d. C. diff -> Fidaxomicin or Vancomycin 10d (IDSA/SHEA 2021). "
                  "Salmonella typhi -> 7-14d. Reassess daily.",
         "follow_up_culture": True, "ref": "IDSA 2017 | Sanford 2025",
     },
@@ -5096,7 +5246,7 @@ PHENOTYPE_RULES = {
         "isolation": False,
     },
     "MRSA": {
-        "organisms": ["Staphylococcus aureus","MRSA"],
+        "organisms": ["Staphylococcus aureus","MRSA","Staphylococcus spp."],
         "markers":   [("Oxacillin","R"), ("Cefoxitin","R")],
         "require_any": 1,  # CLSI M100: أي surrogate لوحده (Oxacillin أو Cefoxitin) R يؤكد MRSA
         "fallback":  [("Vancomycin","S"), ("Linezolid","S")],  # حساس لهم -> likely MRSA
@@ -5107,7 +5257,7 @@ PHENOTYPE_RULES = {
         "isolation": True,
     },
     "VRE": {
-        "organisms": ["Enterococcus faecalis","Enterococcus faecium","VRE"],
+        "organisms": ["Enterococcus faecalis","Enterococcus faecium","VRE","Enterococcus spp."],
         "markers":   [("Vancomycin","R")],
         "icon":  "🔴",
         "label": "VRE -- Vancomycin-Resistant Enterococcus",
@@ -5137,7 +5287,7 @@ PHENOTYPE_RULES = {
                       "Enterobacter cloacae", "Enterobacter spp.",
                       "Proteus mirabilis", "Proteus vulgaris", "Proteus spp.",
                       "Klebsiella pneumoniae", "Klebsiella oxytoca",
-                      "Serratia marcescens", "Citrobacter spp.",
+                      "Serratia marcescens", "Serratia spp.", "Citrobacter spp.",
                       "Citrobacter freundii", "Citrobacter koseri",
                       "Morganella morganii", "Providencia spp.",
                       "Hafnia alvei", "Salmonella spp.", "Shigella spp.",
@@ -5160,7 +5310,7 @@ PHENOTYPE_RULES = {
         "isolation": True,
     },
     "CRAB": {
-        "organisms": ["Acinetobacter baumannii"],
+        "organisms": ["Acinetobacter baumannii", "Acinetobacter spp."],
         "markers":   [("Imipenem/Cilastatin","R"),("Meropenem","R")],
         "require_any": 1,
         "icon":  "🚨",
@@ -5199,7 +5349,7 @@ PHENOTYPE_RULES = {
         #
         # Ertapenem is deliberately absent: P. aeruginosa is INTRINSICALLY
         # resistant to it, so an ertapenem-R result carries no information here.
-        "organisms": ["Pseudomonas aeruginosa"],
+        "organisms": ["Pseudomonas aeruginosa", "Pseudomonas spp."],
         # Doripenem belongs in this definition clinically but is NOT in this
         # formulary's 51 agents, so a marker naming it can never match and is
         # exactly the dead-rule pattern this audit keeps removing. Add it back
@@ -5241,7 +5391,7 @@ PHENOTYPE_RULES = {
         # That is the faithful reading of "non-susceptible to all" under partial
         # testing, and it is handled by `require_all_tested` below rather than
         # by require_any.
-        "organisms": ["Pseudomonas aeruginosa"],
+        "organisms": ["Pseudomonas aeruginosa", "Pseudomonas spp."],
         "markers":   [("Piperacillin + Tazobactam", "R"), ("Ceftazidime", "R"),
                       ("Cefepime", "R"), ("Aztreonam", "R"),
                       ("Meropenem", "R"), ("Imipenem/Cilastatin", "R"),
@@ -5352,7 +5502,8 @@ def detect_resistance_phenotypes(
         detected.append(_derived("STENO"))
 
     # MRSA fallback: لو S. aureus + Vancomycin S + Linezolid S -> اشتباه MRSA
-    if "staphylococcus aureus" in org_lower and "MRSA" not in [d["phenotype"] for d in detected]:
+    if (("staphylococcus aureus" in org_lower or "staphylococcus spp" in org_lower)
+            and "MRSA" not in [d["phenotype"] for d in detected]):
         vanco_s   = sir_map.get("Vancomycin") == "S"
         linezo_s  = sir_map.get("Linezolid")  == "S"
         beta_r    = any(sir_map.get(d) == "R" for d in
@@ -6140,7 +6291,7 @@ def get_infection_syndrome(
 # =========================================================
 def _render_patho_result(patho_result: dict) -> None:
     """Render a pathogenicity assessment result (score, verdict, factors, recs).
-    Shared by the urine and non-urine pathogenicity panels."""
+    Shared by the urine and non-urine pathogenicity panels (engine v3)."""
     sc    = patho_result["score"]
     color = patho_result["color"]
     flags = patho_result.get("special_flags", [])
@@ -6155,11 +6306,31 @@ def _render_patho_result(patho_result: dict) -> None:
     else:
         st.success(patho_result["verdict"])
 
+    _conf = patho_result.get("confidence")
+    if _conf:
+        _conf_ar = {"high": "عالية", "moderate": "متوسطة", "low": "منخفضة"}.get(_conf, _conf)
+        st.caption(f"ثقة التقييم: **{_conf_ar}** · Engine v{patho_result.get('engine_version', '')}")
+    if patho_result.get("threshold"):
+        st.caption(f"📏 العتبة المطبّقة: {patho_result['threshold']}")
+    if patho_result.get("missing_inputs"):
+        st.warning("بيانات غير مُدخلة (لم تُحتسب ضد العدوى): "
+                   + "، ".join(patho_result["missing_inputs"]))
+
     # Special-flag badges (specimen-specific)
     if patho_result.get("abu_detected"):
         st.info("🔵 **Asymptomatic Bacteriuria (ABU) Detected** -- راجع IDSA 2019")
     if "PEDIATRIC_UTI" in flags:
-        st.info("👶 **Pediatric threshold applied** (Age < 2 yrs -- any growth significant)")
+        st.info("👶 **Pediatric threshold applied** (Age < 2 yrs -- AAP: pyuria + ≥ 5×10⁴ CFU/mL; "
+                "any count only for suprapubic aspirate)")
+    if "SCI" in flags:
+        st.info("♿ **Spinal cord injury context applied** -- neurogenic bladder / pressure ulcer / "
+                "impaired cough rules")
+    if "UNSPECIATED_ORGANISM" in flags:
+        st.info("🔬 **Organism not identified to species level** -- التقييم على مستوى الجنس/الصبغة")
+    if "GRAM_VARIABLE" in flags:
+        st.info("🔬 **Gram-variable stain** -- راجع الملاحظة أسفل")
+    if "GRAM_DISCORDANT" in flags:
+        st.warning("🔬 **Gram stain / culture discordance** -- الصبغة لا تطابق العزلة")
     if "MW_REJECT" in flags:
         st.warning("🧪 **Specimen quality: REJECT** -- Murray-Washington (saliva contamination). أعِد العينة.")
     if "MW_ADEQUATE" in flags:
@@ -6167,11 +6338,15 @@ def _render_patho_result(patho_result: dict) -> None:
     if "SIRS_HIGH" in flags:
         st.error("🌡️ **SIRS ≥3 criteria -- Sepsis probable**")
     if "CSF_ALWAYS_SIGNIFICANT" in flags:
-        st.error("🧠 **Sterile site (CSF) -- any growth is clinically significant**")
+        st.error("🧠 **Sterile site (CSF) -- growth of this organism is clinically significant**")
+    if "CSF_SKIN_FLORA" in flags:
+        st.warning("🧠 **CSF skin flora without a device** -- possible contaminant; correlate with CSF cells")
     if "GI_TRUE_PATHOGEN" in flags:
-        st.error("🦠 **Obligate GI pathogen -- always significant**")
-    if "BLOOD_CONTAMINANT_RISK" in flags:
-        st.warning("🩸 **Possible blood-culture contaminant (CoNS/Coryne)** -- يتطلب ≥2 bottles.")
+        st.error("🦠 **Enteric pathogen -- always significant**")
+    if "BLOOD_CONTAMINANT_RISK" in flags and "MULTI_SET_SKIN_FLORA" not in flags:
+        st.warning("🩸 **Possible blood-culture contaminant (CoNS / skin flora)** -- يتطلب نفس الكائن في ≥2 sets.")
+    if "BLOOD_PENDING_ID" in flags:
+        st.warning("🩸 **Identification pending** -- لا تعتبره ملوِّثاً قبل نفي S. aureus.")
 
     st.info(patho_result["interpretation"])
 
@@ -6187,9 +6362,17 @@ def _render_patho_result(patho_result: dict) -> None:
             for f in patho_result["factors_neg"]:
                 st.write(f)
 
+    if patho_result.get("notes"):
+        st.markdown("**🧭 ملاحظات تفسيرية:**")
+        for _n in patho_result["notes"]:
+            st.write(_n)
+
     st.markdown("**📋 التوصيات:**")
     for rec in patho_result["recommendations"]:
         st.write(f"• {rec}")
+
+    if patho_result.get("references"):
+        st.caption("المراجع: " + " · ".join(patho_result["references"]))
 
 
 # =========================================================
@@ -6848,12 +7031,10 @@ if uploaded:
 
                     patho_gram = st.selectbox(
                         "Gram Stain",
-                        ["مش متعملة",
-                         "WBCs + Gram Positive Cocci",
-                         "WBCs + Gram Negative Rods",
-                         "Organisms بدون WBCs",
-                         "طبيعية (No organisms seen)"],
-                        key="patho_gram_sel"
+                        GRAM_STAIN_OPTIONS,
+                        key="patho_gram_sel",
+                        help="Gram-variable = نتيجة صبغة وليست نوع بكتيريا: Acinetobacter، "
+                             "Gardnerella، مزارع قديمة، أو خطأ إزالة اللون."
                     )
                     st.session_state.patho_gram_stain = patho_gram
 
@@ -6866,28 +7047,35 @@ if uploaded:
                     )
                     st.session_state.patho_urinalysis = patho_urinalysis
 
+                    patho_collection = st.selectbox(
+                        "طريقة جمع العينة",
+                        URINE_COLLECTION_METHODS,
+                        key="patho_coll_sel",
+                        help="عتبة عدّ المستعمرات تختلف حسب طريقة الجمع: midstream / قسطرة "
+                             "(≥10³ مع أعراض) / SPA (أي نمو) — IDSA 2009 و AAP."
+                    )
+
                 # ── Urine symptoms ─────────────────────────────────────────
                 patho_symptoms = st.multiselect(
                     "الأعراض الكلينيكية",
-                    ["Dysuria / Frequency / Urgency", "Fever (> 38°C)",
-                     "Flank pain / Loin pain", "Nocturnal enuresis",
-                     "Abdominal pain", "Nausea / Vomiting", "Asymptomatic"],
-                    default=st.session_state.patho_symptoms,
-                    key="patho_symp_urine"
+                    URINE_SYMPTOMS,
+                    default=[x for x in st.session_state.patho_symptoms if x in URINE_SYMPTOMS],
+                    key="patho_symp_urine",
+                    help="اختر Asymptomatic صراحةً لو المريض بلا أعراض — ترك الخانة فاضية معناه "
+                         "«غير مُدخل» ولا يُحتسب ضد العدوى. أعراض (SCI) تُحتسب مع إصابة النخاع "
+                         "الشوكي أو القسطرة فقط."
                 )
                 st.session_state.patho_symptoms = patho_symptoms
 
                 # Host factors
                 patho_host = st.multiselect(
                     "عوامل المضيف",
-                    ["Immunosuppressants / Steroids",
-                     "Urinary catheter", "Central line / PICC",
-                     "تاريخ UTIs متكررة", "Recurrent infections",
-                     "Diabetes",
-                     "Renal abnormality / Vesicoureteral reflux",
-                     "Pregnant", "Pre-surgical"],
-                    default=st.session_state.patho_host_factors,
-                    key="patho_host_sel"
+                    HOST_FACTORS_URINE,
+                    default=[x for x in st.session_state.patho_host_factors
+                             if x in HOST_FACTORS_URINE],
+                    key="patho_host_sel",
+                    help="Paraplegia / Quadriplegia = مثانة عصبية: الـ bacteriuria شبه دائمة ولا "
+                         "تُعالَج بلا أعراض، والأعراض غير نمطية (spasticity / dysreflexia)."
                 )
                 st.session_state.patho_host_factors = patho_host
 
@@ -6904,6 +7092,7 @@ if uploaded:
                         age=age,
                         sex=sex,
                         host_factors=patho_host,
+                        collection_method=patho_collection,
                     )
                     patho_result = assess_pathogenicity(**patho_kwargs)
                     st.session_state.patho_result = patho_result
@@ -6911,45 +7100,7 @@ if uploaded:
                 # ── Display Result (persists after button) ────────────────────
                 patho_result = st.session_state.get("patho_result")
                 if patho_result:
-                    sc    = patho_result["score"]
-                    color = patho_result["color"]
-                    flags = patho_result.get("special_flags", [])
-
-                    st.markdown(f"### Pathogenicity Score: **{sc}%**")
-                    st.progress(sc / 100)
-
-                    if color == "error":
-                        st.error(patho_result["verdict"])
-                    elif color == "warning":
-                        st.warning(patho_result["verdict"])
-                    else:
-                        st.success(patho_result["verdict"])
-
-                    # ABU badge
-                    if patho_result.get("abu_detected"):
-                        st.info("🔵 **Asymptomatic Bacteriuria (ABU) Detected** -- راجع IDSA 2019")
-
-                    # Pediatric badge
-                    if "PEDIATRIC_UTI" in flags:
-                        st.info("👶 **Pediatric threshold applied** (Age < 2 yrs -- any growth significant)")
-
-                    st.info(patho_result["interpretation"])
-
-                    col_pos, col_neg = st.columns(2)
-                    with col_pos:
-                        if patho_result["factors_pos"]:
-                            st.markdown("**✅ Supporting Factors**")
-                            for f in patho_result["factors_pos"]:
-                                st.write(f)
-                    with col_neg:
-                        if patho_result["factors_neg"]:
-                            st.markdown("**⚠️ Against Infection**")
-                            for f in patho_result["factors_neg"]:
-                                st.write(f)
-
-                    st.markdown("**📋 التوصيات:**")
-                    for rec in patho_result["recommendations"]:
-                        st.write(f"• {rec}")
+                    _render_patho_result(patho_result)
 
         # ═══════════════════════════════════════════════════════════════════════
         # الفرع (ب): Resistance Profile -- لكل المزارع غير البول
@@ -6984,12 +7135,10 @@ if uploaded:
                     with np_c2:
                         np_gram = st.selectbox(
                             "Gram Stain",
-                            ["مش متعملة",
-                             "WBCs + Gram Positive Cocci",
-                             "WBCs + Gram Negative Rods",
-                             "Organisms بدون WBCs",
-                             "طبيعية (No organisms seen)"],
-                            key="np_gram_sel")
+                            GRAM_STAIN_OPTIONS,
+                            key="np_gram_sel",
+                            help="Gram-variable = نتيجة صبغة وليست نوع بكتيريا: Acinetobacter، "
+                                 "Gardnerella، مزارع قديمة، أو خطأ إزالة اللون.")
 
                     # ── Category-specific inputs ───────────────────────────
                     np_sirs = []; np_blood_source = ""
@@ -7022,8 +7171,7 @@ if uploaded:
                                 key="np_spepi")
                         np_symptoms = st.multiselect(
                             "الأعراض التنفسية",
-                            ["Productive cough / Purulent sputum",
-                             "Fever (> 38°C)", "Dyspnea", "Pleuritic chest pain"],
+                            RESPIRATORY_SIGNS,
                             key="np_symp_resp")
 
                     elif _pcat == "stool":
@@ -7036,25 +7184,24 @@ if uploaded:
                     elif _pcat in ("wound", "pus"):
                         np_wound_type = st.selectbox(
                             "نوع الجرح",
-                            ["مش محدد", "Surgical / Post-op",
-                             "Chronic / Diabetic", "Superficial"],
+                            WOUND_TYPES,
                             key="np_wtype_sel")
                         np_symptoms = st.multiselect(
                             "علامات العدوى الموضعية",
-                            ["Erythema / Warmth / Swelling", "Purulent discharge",
-                             "Fever (> 38°C)", "Pain / Tenderness"],
+                            WOUND_SIGNS,
                             key="np_symp_wound")
 
                     elif _pcat == "csf":
-                        st.info("🧠 CSF موقع معقم -- أي نمو يُعدّ مرضياً. اضغط الحساب للتوصيات.")
+                        st.info("🧠 CSF موقع معقم. فلورا الجلد (CoNS وغيرها) بدون shunt/EVD أو "
+                                "جراحة أعصاب حديثة قد تكون تلوثاً — سجّل الجهاز في عوامل المضيف.")
 
                     # ── Host factors (shared) ──────────────────────────────
                     np_host = st.multiselect(
                         "عوامل المضيف",
-                        ["Immunosuppressants / Steroids", "Diabetes",
-                         "Central line / PICC", "Catheter",
-                         "Recurrent infections"],
-                        key="np_host_sel")
+                        HOST_FACTORS_OTHER,
+                        key="np_host_sel",
+                        help="Paraplegia / Quadriplegia: قرح الفراش (مسحة سطحية = استعمار) وضعف "
+                             "السعال في الإصابات العنقية يغيّران تفسير المزرعة.")
 
                     if st.button("🔬 احسب Pathogenicity Score",
                                  use_container_width=True, key="np_calc_btn"):

@@ -75,28 +75,37 @@ INTRINSIC_RESISTANCE = {
     "proteus spp.":      ["Tetracycline", "Doxycycline", "Minocycline", "Tigecycline",
                           "Nitrofurantoin", "Colistin", "Polymyxin B", "Oxacillin", "Penicillin"],
     # P. vulgaris/penneri add inducible β-lactamase → aminopenicillins + 1st/2nd ceph
+    # FIX 2026-11-10 (round 2): amoxicillin-clavulanate, ampicillin-sulbactam and
+    # cefoxitin were listed here. P. vulgaris / P. penneri carry a chromosomal
+    # CLASS A cefuroximase, which clavulanate and sulbactam inhibit and which
+    # does not hydrolyse cephamycins -- none of the three is intrinsic (CLSI
+    # M100 Appendix B; EUCAST Expected Resistant Phenotypes: 7 R marks =
+    # ampicillin, 1st-gen cephalosporins, cefuroxime, tetracyclines,
+    # tigecycline, polymyxins, nitrofurantoin).
     "proteus vulgaris":  ["Tetracycline", "Doxycycline", "Minocycline", "Tigecycline",
                           "Nitrofurantoin", "Colistin", "Polymyxin B",
                           "Ampicillin", "Amoxicillin",
-                          "Amoxicillin + Clavulanic acid",
-                          "Ampicillin/Sulbactam",
                           "Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin",
                           "Cefaclor", "Cefuroxime", "Cefuroxime sodium",
-                          "Cefoxitin", "Oxacillin", "Penicillin"],
+                          "Oxacillin", "Penicillin"],
 
     # Morganella: chromosomal AmpC + tribe intrinsics
+    # FIX 2026-11-10 (round 2): ampicillin-sulbactam and cefoxitin are NOT in the
+    # intrinsic tables of CLSI (Appendix B) or EUCAST for Morganella /
+    # Providencia, and a cefoxitin-S Morganella is a normal finding -- listing
+    # it here made the QA engine call a correct result "impossible". They stay
+    # NOT RECOMMENDED (AmpC) through the organism profile's `avoid`, which is
+    # shown as "not recommended", not as "intrinsic resistance".
     "morganella morganii": ["Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
-                            "Ampicillin/Sulbactam",
                             "Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin",
-                            "Cefuroxime", "Cefuroxime sodium", "Cefaclor", "Cefoxitin",
+                            "Cefuroxime", "Cefuroxime sodium", "Cefaclor",
                             "Tetracycline", "Doxycycline", "Minocycline", "Tigecycline",
                             "Nitrofurantoin", "Colistin", "Polymyxin B", "Oxacillin", "Penicillin"],
 
     # Providencia: AmpC + tribe + intrinsic aminoglycoside (gentamicin/tobramycin)
     "providencia spp.": ["Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
-                         "Ampicillin/Sulbactam",
                          "Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin",
-                         "Cefuroxime", "Cefuroxime sodium", "Cefaclor", "Cefoxitin",
+                         "Cefuroxime", "Cefuroxime sodium", "Cefaclor",
                          "Tetracycline", "Doxycycline", "Minocycline", "Tigecycline",
                          "Nitrofurantoin", "Colistin", "Polymyxin B",
                          "Gentamicin", "Tobramycin", "Oxacillin", "Penicillin"],
@@ -134,7 +143,10 @@ INTRINSIC_RESISTANCE = {
     "hafnia alvei":          ["Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
                              "Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin",
                           "Cefuroxime", "Cefuroxime sodium",
-                             "Cefoxitin", "Oxacillin", "Penicillin"],
+                             # 2026-11-10 (round 2): colistin added -- EUCAST lists
+                             # H. alvei as intrinsically polymyxin-resistant
+                             # (Expert Rules v3.2 onwards; Jayol et al. 2017).
+                             "Cefoxitin", "Colistin", "Polymyxin B", "Oxacillin", "Penicillin"],
 
     # Citrobacter freundii = AmpC; C. koseri = penicillinase only
     "citrobacter freundii":  ["Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
@@ -147,11 +159,14 @@ INTRINSIC_RESISTANCE = {
     # Salmonella / Shigella: 1st/2nd-gen cephalosporins & aminoglycosides may
     # test S in vitro but are CLINICALLY INEFFECTIVE for invasive infection
     # (EUCAST/CLSI "do not report S"). Routed to Avoid here.
+    # 2026-11-10 (round 2): Cefoxitin added to both. CLSI M100 Table 2A warning:
+    # for Salmonella and Shigella, 1st/2nd-generation cephalosporins, CEPHAMYCINS
+    # and aminoglycosides may appear active in vitro but are not effective.
     "salmonella": ["Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin", "Cefaclor",
-                   "Cefuroxime", "Cefuroxime sodium",
+                   "Cefuroxime", "Cefuroxime sodium", "Cefoxitin",
                    "Gentamicin", "Amikacin", "Tobramycin", "Nitrofurantoin", "Oxacillin", "Penicillin"],
     "shigella":   ["Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin", "Cefaclor",
-                   "Cefuroxime", "Cefuroxime sodium",
+                   "Cefuroxime", "Cefuroxime sodium", "Cefoxitin",
                    "Gentamicin", "Amikacin", "Tobramycin", "Nitrofurantoin", "Oxacillin", "Penicillin"],
 
     # ── Non-fermenters ──────────────────────────────────────────────────────
@@ -511,3 +526,37 @@ for _k in ("coagulase-negative staphylococci", "coagulase negative staphylococci
 _merge_row("staphylococcus saprophyticus", ["Fosfomycin", "Fusidic acid"])
 
 del _k
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  ORGANISMS NOT IDENTIFIED TO SPECIES LEVEL — added 2026-11-10
+#  Built AFTER every merge above so each row inherits the completed list of the
+#  species it is treated as (see organism_profile.UNSPECIATED_AS). The lookup
+#  is by substring of the organism name, so the genus-level key must exist as
+#  its own row: "acinetobacter baumannii" is not a substring of
+#  "acinetobacter spp." and that organism used to inherit nothing.
+# ════════════════════════════════════════════════════════════════════════════
+for _new, _ref in (("acinetobacter spp.", "acinetobacter baumannii"),
+                   ("pseudomonas spp.", "pseudomonas aeruginosa")):
+    INTRINSIC_RESISTANCE[_new] = list(INTRINSIC_RESISTANCE[_ref])
+
+# Unspeciated streptococci: what every streptococcus shares.
+INTRINSIC_RESISTANCE["streptococcus spp."] = list(dict.fromkeys(
+    list(INTRINSIC_RESISTANCE["streptococcus pyogenes"])))
+
+# Gram-level reports: only the agents with no activity on that side of the Gram
+# stain at all. Nothing genus-specific is assumed.
+# Only what NO Gram-negative bacillus is treated with. Macrolides and
+# rifampicin are left out (Haemophilus, Campylobacter, Legionella), and so is
+# penicillin (Pasteurella multocida is penicillin-susceptible).
+INTRINSIC_RESISTANCE["gram-negative bacilli (unidentified)"] = [
+    d for d in _GRAM_POS_ONLY_CORE if d != "Penicillin"]
+INTRINSIC_RESISTANCE["non-fermenting gram-negative bacilli"] = list(dict.fromkeys(
+    _GRAM_POS_ONLY_CORE + _GRAM_POS_ONLY_ENTERIC + [
+        # shared by P. aeruginosa, A. baumannii and S. maltophilia
+        "Ampicillin", "Amoxicillin", "Amoxicillin + Clavulanic acid",
+        "Cephalexin", "Cefadroxil", "Cephradine", "Cefazolin", "Cefaclor",
+        "Cefuroxime", "Cefuroxime sodium", "Cefoxitin",
+        "Cefotaxime", "Ceftriaxone", "Ertapenem", "Nitrofurantoin"]))
+INTRINSIC_RESISTANCE["gram-positive cocci (unidentified)"] = list(_GRAM_NEG_ONLY_CORE)
+del _new, _ref

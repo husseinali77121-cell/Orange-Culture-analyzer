@@ -390,6 +390,20 @@ _GROUPS_BY_ID: Dict[str, Dict[str, Any]] = {g["id"]: g for g in GROUPS}
 # check), so nothing silently goes unevaluated by omission from this table.
 ORGANISM_NAMES: Dict[str, Optional[str]] = {
     "Acinetobacter baumannii": "panel_acinetobacter",
+    # not identified to species level (2026-11-10): the genus panel applies;
+    # Gram-level reports have no defined panel -- silence over a guess.
+    "Acinetobacter spp.": "panel_acinetobacter",
+    "Pseudomonas spp.": "panel_pseudomonas",
+    "Enterobacter spp.": "panel_enterobacterales",
+    "Citrobacter spp.": "panel_enterobacterales",
+    "Proteus spp.": "panel_enterobacterales",
+    "Serratia spp.": "panel_enterobacterales",
+    "Enterococcus spp.": "panel_enterococcus",
+    "Staphylococcus spp.": "panel_staphylococcus",
+    "Streptococcus spp.": None,
+    "Gram-negative bacilli (unidentified)": None,
+    "Non-fermenting Gram-negative bacilli (unspeciated)": None,
+    "Gram-positive cocci (unidentified)": None,
     "Anaerobes (لاهوائيات)": None,
     "Campylobacter jejuni": None,
     "Citrobacter freundii": "panel_enterobacterales",

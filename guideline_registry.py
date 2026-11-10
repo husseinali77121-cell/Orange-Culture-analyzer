@@ -150,6 +150,15 @@ SOURCES: Dict[str, Dict[str, str]] = {
 # key = the rule id used in the engine. Keep these in sync; test_guidelines.py
 # fails the build if an engine rule has no row here.
 _AI = "AI-assisted review (Claude, code-review session 2026-07-23)"
+# Round-2 review, 2026-11-10. Two governance states are recorded honestly and
+# kept apart from Dr. Tarek's countersignatures:
+#   * `source_check`   -- what was actually opened and read on that date.
+#   * `owner_approved` -- the lab owner instructed that the pending items be
+#     approved where they agree with the guidelines. It clears the release
+#     queue; it is NOT a clinician's countersignature and never claims to be.
+_AI2 = "AI-assisted source check (Claude, review session 2026-11-10)"
+_OWNER = ("2026-11-10 — approved on the lab owner's instruction (Hussein) after the "
+          "AI-assisted source check recorded in this row. NOT a clinician countersignature.")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # SYSTEM_CITATIONS — rows that describe a CLASSIFICATION SYSTEM applied across
@@ -313,14 +322,34 @@ RULES: Dict[str, Dict[str, Any]] = {
         "note": 'EUCAST Expert Rules paper names P. mirabilis resistant to nitrofurantoin and colistin as a worked example of intrinsic resistance.',
     },
     "intr_morganella_providencia_proteus_vulgaris": {
-        "assertion": "Morganella, Providencia, P. vulgaris/penneri: chromosomal AmpC "
-                     "plus tribe traits -> aminopenicillins (inhibitor combinations "
-                     "included), 1st/2nd-gen cephalosporins, cephamycins, "
-                     "tetracyclines, colistin, nitrofurantoin.",
+        "assertion": "Morganella, Providencia: chromosomal AmpC plus tribe traits -> "
+                     "aminopenicillins (amoxicillin-clavulanate included), 1st/2nd-gen "
+                     "cephalosporins, tetracyclines, tigecycline, colistin, "
+                     "nitrofurantoin.",
         "source": "EUCAST_INTRINSIC", "locus": "Table 2",
         "verified": "secondary", "checked_by": _AI, "checked_on": "2026-07-22",
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'EUCAST v3.2 changelog moved Providencia cefuroxime/tigecycline out of the intrinsic table into the expert rules — verify the current placement when the v16 tables are read.',
+        "amended_after_signature": ("2026-11-10: P. vulgaris/penneri moved to "
+                                    "intr_proteus_vulgaris_penneri; cephamycins and "
+                                    "ampicillin-sulbactam removed (in neither CLSI "
+                                    "Appendix B nor EUCAST Table 1 for these genera). "
+                                    "The signature above predates this wording."),
+    },
+    "intr_proteus_vulgaris_penneri": {
+        "assertion": "Proteus vulgaris / P. penneri: ampicillin/amoxicillin, 1st-gen "
+                     "cephalosporins, cefuroxime, tetracyclines, tigecycline, polymyxins "
+                     "and nitrofurantoin are intrinsic. Amoxicillin-clavulanate, "
+                     "ampicillin-sulbactam and cefoxitin are NOT (class-A cefuroximase, "
+                     "inhibitor-susceptible, does not hydrolyse cephamycins).",
+        "source": "EUCAST_INTRINSIC", "locus": "Table 1 (Enterobacterales); CLSI M100 Appendix B",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
+        "owner_approved": _OWNER,
+        "source_check": ("EUCAST Intrinsic Resistance v3.3 Table 1 (PDF text): the P. vulgaris "
+                         "and P. penneri rows carry exactly 7 R marks -- the seven agents above; "
+                         "the three inhibitor/cephamycin columns are therefore blank. Column "
+                         "positions could not be read directly from the extracted text."),
+        "note": "Split from intr_morganella_providencia_proteus_vulgaris on 2026-11-10 (round 2).",
     },
     "intr_serratia": {
         "assertion": "Serratia marcescens: chromosomal AmpC -> aminopenicillins, "
@@ -330,6 +359,28 @@ RULES: Dict[str, Dict[str, Any]] = {
         "verified": "source", "checked_by": _AI, "checked_on": "2026-07-22",
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
         "note": 'EUCAST v3.3 Table 2 fn.5: intrinsically R to tetracycline and doxycycline but NOT minocycline or tigecycline. The code had both halves wrong — tigecycline was banned, tetracycline/doxycycline were missing. Corrected.',
+    },
+    "intr_nonfermenter_unspeciated": {
+        "assertion": "An unspeciated non-fermenting GNB is reported resistant only to the agents "
+                     "that P. aeruginosa, A. baumannii and S. maltophilia all resist "
+                     "intrinsically (aminopenicillins, 1st/2nd-gen cephalosporins, "
+                     "cefotaxime/ceftriaxone, ertapenem, nitrofurantoin).",
+        "source": "EUCAST_INTRINSIC", "locus": "Table 2 (non-fermenters), intersection of three rows",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
+        "owner_approved": _OWNER,
+        "source_check": ("Derived, not quoted: the intersection of the P. aeruginosa, "
+                         "A. baumannii and S. maltophilia rows already encoded in "
+                         "clinical_data.INTRINSIC_RESISTANCE (themselves countersigned). No new "
+                         "document was opened for this row."),
+    },
+    "intr_hafnia_colistin": {
+        "assertion": "Hafnia alvei is intrinsically resistant to colistin / polymyxin B.",
+        "source": "EUCAST_INTRINSIC", "locus": "Table 1 (Enterobacterales), Hafnia alvei",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
+        "owner_approved": _OWNER,
+        "source_check": ("EUCAST Intrinsic Resistance v3.3 change log (PDF text): for Hafnia alvei "
+                         "'colistin R was added' while cefoxitin, cefuroxime and "
+                         "ampicillin-sulbactam were removed; the row carries 3 R marks."),
     },
     "intr_enterobacter_citrobacter_ampc": {
         "assertion": "Inducible chromosomal AmpC (Enterobacter, K. aerogenes, "
@@ -495,8 +546,9 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "cephalosporins, nitrofurantoin or norfloxacin against "
                      "Acinetobacter / Stenotrophomonas / Burkholderia.",
         "source": "EUCAST_BP", "locus": "non-fermenter tables; CLSI M100 Table 2B-2/2B-3",
-        "verified": "pending",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
+        "source_check": 'CLSI archived Tables 1A-1C (https://clsi.org/media/swcaq1ra/m100_archived_tables_1a-1c.pdf): cefazolin, cephalexin, cefuroxime, nitrofurantoin and norfloxacin appear in NO group for Acinetobacter, B. cepacia complex, S. maltophilia or other non-Enterobacterales.',
     },
     "nobp_azithromycin_enterobacterales": {
         "assertion": "Azithromycin breakpoints exist only for Salmonella Typhi/Paratyphi "
@@ -508,12 +560,15 @@ RULES: Dict[str, Dict[str, Any]] = {
     },
     "nobp_cefoperazone": {
         "recheck": "EUCAST reissued the 'When there are no breakpoints' guidance in 2026; re-read.",
-        "assertion": "Cefoperazone alone or with sulbactam has no EUCAST breakpoints; "
-                     "CLSI withdrew the cefoperazone breakpoints. Widely used in Egypt, "
+        "assertion": "Cefoperazone-sulbactam has no CLSI or EUCAST breakpoints. Cefoperazone alone: none "
+                     "in EUCAST; CLSI archived it for P. aeruginosa and staphylococci and "
+                     "keeps only a legacy Enterobacterales criterion. Widely used in Egypt, "
                      "but the result is uncalibrated.",
         "source": "EUCAST_BP", "locus": "absent from tables; CLSI M100 Ed36",
-        "verified": "pending",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
+        "source_check": "CLSI 'M100 archived drugs table' (https://clsi.org/media/1828/_m100_archived_drugs_table.pdf): cefoperazone is archived for P. aeruginosa (last in M100-S20) and Staphylococcus; it is not archived for Enterobacteriaceae. Cefoperazone-sulbactam appears nowhere.",
+        "amended_after_signature": "2026-11-10: the countersigned wording said 'CLSI withdrew the cefoperazone breakpoints'; that was too broad and was narrowed to what the CLSI archive table states. The signature above predates this wording.",
     },
     "nobp_nitrofurantoin_non_ecoli": {
         "assertion": "EUCAST nitrofurantoin breakpoints are for E. coli only "
@@ -536,22 +591,25 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "P. aeruginosa (breakpoints removed); suppress it. Amikacin "
                      "breakpoints apply to urinary isolates only.",
         "source": "CLSI_M100", "locus": "Ed33 (2023) Table 2B-1 — aminoglycosides",
-        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-11-10",
-        "awaiting_countersignature": "2026-11-10 review fix C5 — release blocker until signed",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
+        "owner_approved": _OWNER,
+        "source_check": "CLSI AST News Update, June 2023 (clsi.org): 'elimination of gentamicin as a suggested treatment option for P. aeruginosa'; 'Report amikacin only on urine isolates'.",
     },
     "nobp_sulbactam_durlobactam_non_acinetobacter": {
         "assertion": "Sulbactam-durlobactam has breakpoints only for the "
                      "A. baumannii-calcoaceticus complex.",
         "source": "CLSI_M100", "locus": "Table 2B-2 (Acinetobacter)",
-        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-11-10",
-        "awaiting_countersignature": "2026-11-10 review fix H6 — release blocker until signed",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
+        "owner_approved": _OWNER,
+        "source_check": 'Xacduro prescribing information (DailyMed, setid c0167aec): indicated for susceptible isolates of the Acinetobacter baumannii-calcoaceticus complex only; CLSI lists sulbactam-durlobactam breakpoints for Acinetobacter only.',
     },
     "nobp_aztreonam_avibactam_non_enterobacterales": {
         "assertion": "Aztreonam-avibactam breakpoints exist for Enterobacterales "
                      "only (CLSI M100 Ed36, EUCAST).",
         "source": "CLSI_M100", "locus": "Ed36 Table 2A — new agent",
-        "verified": "secondary", "checked_by": _AI, "checked_on": "2026-11-10",
-        "awaiting_countersignature": "2026-11-10 review fix H6 — release blocker until signed",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
+        "owner_approved": _OWNER,
+        "source_check": 'Emblaveo SmPC (medicines.org.uk/emc/product/15895) and published summaries of CLSI M100 Ed36: aztreonam-avibactam breakpoints are for Enterobacterales. The M100 Ed36 table itself was not opened.',
     },
     "nobp_imipenem_proteae": {
         "assertion": "Imipenem has intrinsically LOW activity against Proteus spp., "
@@ -694,6 +752,10 @@ RULES: Dict[str, Dict[str, Any]] = {
         "source": "EUCAST_EXPERT", "locus": "unusual phenotypes",
         "verified": "pending",
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
+        "source_check": ("2026-11-10: NOT verifiable as written. This is a laboratory "
+                         "plausibility heuristic, not a quotation from a guideline; no "
+                         "primary locus exists to check it against. It only raises an "
+                         "informational flag and never changes a recommendation."),
     },
     "QC004": {
         "assertion": "Meropenem or ertapenem R with a cephalosporin S in "
@@ -701,8 +763,9 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "should be confirmed by a carbapenemase assay. (Imipenem moved "
                      "to QC004b on 2026-11-10 so Proteeae are not flagged.)",
         "source": "EUCAST_DETECT", "locus": "carbapenemase detection",
-        "verified": "pending",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
+        "source_check": "EUCAST guidelines for detection of resistance mechanisms v1.0 (eucast.org): with OXA-48-like enzymes 'the organisms may appear fully susceptible to cephalosporins'; meropenem screening cut-off > 0.12 mg/L.",
     },
     "QC004b": {
         "assertion": "Imipenem R with a cephalosporin S in Enterobacterales OTHER than "
@@ -710,16 +773,18 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "assay. Proteus/Morganella/Providencia are excluded: their imipenem "
                      "MICs are intrinsically elevated (CDC CRE definition).",
         "source": "EUCAST_DETECT", "locus": "carbapenemase detection",
-        "verified": "pending",
-        "awaiting_countersignature": "2026-11-10 review fix C3 — release blocker until signed",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
+        "owner_approved": _OWNER,
         "note": "Split from QC004 on 2026-11-10 (review fix C3).",
+        "source_check": "State health-department CRE case definition (Alaska DPH, mirroring CDC): Proteus, Providencia and Morganella non-susceptible ONLY to imipenem but susceptible to other carbapenems are attributed to the intrinsic mechanism. EUCAST detection guidance: imipenem is 'not recommended for use as a stand-alone screening test compound'.",
     },
     "QC005": {
         "assertion": "Linezolid resistance in S. aureus is very rare; confirm by a "
                      "reference method before reporting.",
-        "source": "CLSI_M100", "locus": "Table 2C notes",
-        "verified": "pending",
+        "source": "CLSI_M100", "locus": "surveillance data; M100 Appendix A (not opened)",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-03",
+        "source_check": 'LEADER surveillance 2015 (JMI Laboratories, IDWeek 2016): 1 of 3,031 S. aureus isolates was linezolid-resistant (<0.1%). CLSI archived Table 1: linezolid is a Group B agent for staphylococci.',
     },
     "QC006": {
         "assertion": "A susceptible cephalosporin in a suspected ESBL producer is "
@@ -829,9 +894,10 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "primary = Trimethoprim/Sulfamethoxazole, Levofloxacin, "
                      "Minocycline; supplemental = none.",
         "source": "CLSI_M100", "locus": "M100 Ed36 Table 1B — Stenotrophomonas maltophilia",
-        "verified": "pending", "checked_by": _AI, "checked_on": "2026-08-21",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-22",
         "note": "Minocycline moved from supplemental to primary on 2026-08-21: CLSI's own 'AST News Update' (Jan 2024, Table Tips) uses this exact organism/agent as its worked example of a Tier-1 gap ('minocycline is in Tier 1' for Stenotrophomonas), which is a primary-adjacent CLSI source, not a guess -- but the rest of this row has not been independently re-verified against the full Ed36 Table 1B, so it stays 'pending' rather than 'secondary'. Deliberately narrow otherwise -- cross-checked against clinical_data.INTRINSIC_RESISTANCE before adding anything, since Stenotrophomonas is intrinsically resistant to carbapenems and most beta-lactams/aminoglycosides and this list must never contradict that table.",
+        "source_check": "CLSI archived Tables 1A-1C (https://clsi.org/media/swcaq1ra/m100_archived_tables_1a-1c.pdf): Group A for S. maltophilia = levofloxacin, minocycline, trimethoprim-sulfamethoxazole. CLSI 'Updates to susceptibility breakpoints for S. maltophilia': ceftazidime removed, minocycline S <= 1 mg/L. The tiered Ed36 Table 1 itself was not opened.",
     },
     "panel_staphylococcus": {
         "assertion": "Expected AST panel for Staphylococcus spp. (S. aureus/"
@@ -869,25 +935,28 @@ RULES: Dict[str, Dict[str, Any]] = {
                      "Clindamycin, Trimethoprim/Sulfamethoxazole, Levofloxacin, "
                      "Vancomycin.",
         "source": "CLSI_M100", "locus": "M100 Ed36 Table 1G — Streptococcus pneumoniae",
-        "verified": "pending", "checked_by": _AI, "checked_on": "2026-08-20",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-22",
+        "source_check": 'CLSI archived Tables 1A-1C (https://clsi.org/media/swcaq1ra/m100_archived_tables_1a-1c.pdf): S. pneumoniae Group A = erythromycin, penicillin, trimethoprim-sulfamethoxazole; Group B includes cefotaxime/ceftriaxone, clindamycin, levofloxacin, vancomycin. This panel promotes ceftriaxone to primary and keeps TMP-SMX supplemental -- a local curation, not a CLSI tier. The tiered Ed36 table was not opened.',
     },
     "panel_beta_hemolytic_strep": {
         "assertion": "Expected AST panel for beta-haemolytic Streptococcus (Group "
                      "A/B): primary = Penicillin, Clindamycin, Erythromycin; "
                      "supplemental = Vancomycin.",
         "source": "CLSI_M100", "locus": "M100 Ed36 Table 1F — beta-haemolytic streptococci",
-        "verified": "pending", "checked_by": _AI, "checked_on": "2026-08-20",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-22",
         "note": "Penicillin resistance has never been reported in GAS/GBS; it stays on the panel because CLSI still lists it as test-and-report, and because the erythromycin/clindamycin pair exists for the penicillin-allergic pathway, not as a fallback for penicillin failure.",
+        "source_check": 'CLSI archived Tables 1A-1C (https://clsi.org/media/swcaq1ra/m100_archived_tables_1a-1c.pdf): beta-haemolytic streptococci Group A = clindamycin, erythromycin, penicillin (or ampicillin); vancomycin in Group B. The tiered Ed36 table was not opened.',
     },
     "panel_haemophilus": {
         "assertion": "Expected AST panel for Haemophilus influenzae: primary = "
                      "Ampicillin, Ceftriaxone; supplemental = Amoxicillin+"
                      "Clavulanic acid, Azithromycin, Trimethoprim/Sulfamethoxazole.",
         "source": "CLSI_M100", "locus": "M100 Ed36 Table 1D — Haemophilus spp.",
-        "verified": "pending", "checked_by": _AI, "checked_on": "2026-08-20",
+        "verified": "secondary", "checked_by": _AI2, "checked_on": "2026-11-10",
         "countersigned_by": "Dr. Tarek El-Shafei, Laboratory Director — 2026-08-22",
+        "source_check": 'CLSI archived Tables 1A-1C (https://clsi.org/media/swcaq1ra/m100_archived_tables_1a-1c.pdf): Haemophilus Group A = ampicillin; ceftriaxone/cefotaxime in Group B; amoxicillin-clavulanate, azithromycin and TMP-SMX in Group C. Ceftriaxone as primary is a local curation. The tiered Ed36 table was not opened.',
     },
 }
 

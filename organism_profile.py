@@ -922,3 +922,274 @@ __all__ = [
     "normalize_organism_key",
     "validate_organism_profile",
 ]
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  ROUND-2 CORRECTIONS — 2026-11-10
+#  --------------------------------------------------------------------------
+#  Applied as explicit, commented amendments so each change is readable on its
+#  own and the reason sits next to it.
+# ════════════════════════════════════════════════════════════════════════════
+def _r2_extend(name, key, items):
+    row = ORGANISM_PROFILE[name]
+    cur = list(row.get(key) or [])
+    row[key] = cur + [i for i in items if i not in cur]
+
+
+def _r2_notes(name, key, mapping):
+    row = ORGANISM_PROFILE[name]
+    merged = dict(row.get(key) or {})
+    merged.update(mapping)
+    row[key] = merged
+
+
+# S. pneumoniae -- amoxicillin is the first-line oral agent (ATS/IDSA CAP 2019);
+# amox-clav and the respiratory quinolone are second line. Ceftazidime, cefixime
+# and ciprofloxacin test "S" on some panels but have NO pneumococcal breakpoints
+# (CLSI/EUCAST) and poor activity -- they were being offered.
+ORGANISM_PROFILE["Streptococcus pneumoniae"]["first_line"] = ["Amoxicillin", "Penicillin", "Ceftriaxone"]
+ORGANISM_PROFILE["Streptococcus pneumoniae"]["second_line"] = [
+    "Amoxicillin + Clavulanic acid", "Levofloxacin", "Cefuroxime", "Doxycycline",
+    "Azithromycin", "Erythromycin", "Clarithromycin", "Clindamycin"]
+_r2_extend("Streptococcus pneumoniae", "avoid", [
+    # NOTE: "Ofloxacin" is deliberately absent -- the avoid matcher is a
+    # substring test and "ofloxacin" sits inside "levOFLOXACIN" and
+    # "moxifloxacin" is safe only by spelling. Caught by the snapshot review.
+    "Ceftazidime", "Cefixime", "Ciprofloxacin", "Norfloxacin",
+    "Cephalexin", "Cefadroxil", "Cephradine", "Cefoxitin", "Cefoperazone",
+    "Cefoperazone + Sulbactam", "Ceftazidime + Avibactam", "Ceftolozane + Tazobactam",
+    "Nitrofurantoin", "Fosfomycin"])
+
+# Staphylococci -- EUCAST: ceftazidime, cefixime, ceftazidime-avibactam and
+# ceftolozane-tazobactam have no breakpoints and "should not be used for
+# staphylococcal infections", whatever the oxacillin result.
+for _n in ("Staphylococcus aureus", "Coagulase-negative Staphylococci",
+           "Staphylococcus saprophyticus", "Staphylococcus lugdunensis"):
+    _r2_extend(_n, "avoid", ["Ceftazidime", "Cefixime", "Ceftazidime + Avibactam",
+                             "Ceftolozane + Tazobactam"])
+
+# Legionella -- intracellular: clindamycin has no useful activity.
+_r2_extend("Legionella pneumophila", "avoid", ["Clindamycin"])
+_r2_notes("Legionella pneumophila", "caution", {
+    "Trimethoprim/Sulfamethoxazole": ("Legionella: بديل ضعيف وبلا دليل سريري كافٍ — الخيار "
+                                      "Levofloxacin أو Azithromycin (ATS/IDSA CAP 2019).")})
+
+# Anaerobes -- clindamycin is no longer first line: B. fragilis group resistance
+# is commonly >= 30% (IDSA intra-abdominal guidance removed it).
+ORGANISM_PROFILE["Anaerobes (لاهوائيات)"]["first_line"] = ["Metronidazole", "Amoxicillin + Clavulanic acid"]
+ORGANISM_PROFILE["Anaerobes (لاهوائيات)"]["second_line"] = [
+    "Piperacillin + Tazobactam", "Meropenem", "Imipenem/Cilastatin",
+    "Ampicillin/Sulbactam", "Clindamycin"]
+_r2_notes("Anaerobes (لاهوائيات)", "agent_notes", {
+    "Clindamycin": ("اللاهوائيات: مقاومة Bacteroides fragilis للكليندامايسين شائعة (≥ 30%) — لا يُعتمد "
+                    "عليه تجريبياً في عدوى البطن (IDSA IAI)؛ مقبول فوق الحجاب الحاجز مع ثبوت الحساسية.")})
+
+# H. influenzae -- a beta-lactamase-negative isolate (Ampicillin S) is treated
+# with amoxicillin; it was missing from the lines altogether.
+ORGANISM_PROFILE["H. influenzae"]["first_line"] = ["Amoxicillin", "Amoxicillin + Clavulanic acid", "Ceftriaxone"]
+ORGANISM_PROFILE["H. influenzae"]["second_line"] = [
+    "Cefuroxime", "Azithromycin", "Levofloxacin", "Trimethoprim/Sulfamethoxazole"]
+_r2_notes("H. influenzae", "agent_notes", {
+    "Amoxicillin": ("H. influenzae: Amoxicillin للعزلة سالبة البيتا-لاكتاماز (Ampicillin S). "
+                    "في السحايا/العدوى الغازية: Ceftriaxone.")})
+
+# Stenotrophomonas -- CLSI M100 Ed34+ carries the comment that levofloxacin and
+# trimethoprim-sulfamethoxazole "should not be used alone"; IDSA 2026 prefers
+# cefiderocol monotherapy for invasive infection.
+_r2_notes("Stenotrophomonas maltophilia", "caution", {
+    "Trimethoprim/Sulfamethoxazole": ("Stenotrophomonas: CLSI M100 Ed34+ — لا يُستخدم منفرداً في العدوى "
+                                      "الغازية؛ ضمن توليفة (مع Minocycline أو Levofloxacin) أو "
+                                      "Cefiderocol منفرداً (IDSA AMR Guidance 2026)."),
+    "Levofloxacin": ("Stenotrophomonas: CLSI M100 Ed34+ — لا يُستخدم منفرداً (مقاومة تظهر أثناء "
+                     "العلاج)؛ ضمن توليفة فقط."),
+})
+
+# Morganella / Providencia -- ampicillin-sulbactam and cefoxitin left the
+# INTRINSIC table (they are in neither CLSI Appendix B nor EUCAST Table 1), but
+# chromosomal AmpC makes both unreliable, so they stay "not recommended".
+for _n in ("Morganella morganii", "Providencia spp."):
+    _r2_extend(_n, "avoid", ["Ampicillin/Sulbactam", "Cefoxitin"])
+
+# Enterococci -- the anti-staphylococcal penicillins have no useful activity
+# (no CLSI/EUCAST breakpoints); "Oxacillin S" on a panel is not a treatment
+# option. Not an intrinsic-resistance claim, so it lives here.
+for _n in ("Enterococcus faecalis", "Enterococcus faecium", "VRE"):
+    _r2_extend(_n, "avoid", ["Oxacillin"])
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  ORGANISMS NOT IDENTIFIED TO SPECIES LEVEL — added 2026-11-10
+#  --------------------------------------------------------------------------
+#  Local reports often stop at the genus ("Acinetobacter spp.") or at the Gram
+#  stain ("Gram negative bacilli"). Until now the only choices were to force a
+#  species the lab never named, or to fall back on "Enterobacterales
+#  (unspeciated)" for an organism that may be a non-fermenter.
+#
+#  RULE USED: each genus-level entry inherits the lines of the species that is
+#  both the commonest and the most resistant in that genus (`unspeciated_as`),
+#  so nothing is ever more permissive than the worst case, and it adds the
+#  cautions that only matter because the species is unknown. The Gram-level
+#  entries assume nothing genus-specific at all.
+# ════════════════════════════════════════════════════════════════════════════
+import copy as _copy
+
+UNSPECIATED_AS = {
+    "Acinetobacter spp.":  "Acinetobacter baumannii",
+    "Pseudomonas spp.":    "Pseudomonas aeruginosa",
+    "Enterobacter spp.":   "Enterobacter cloacae",
+    "Citrobacter spp.":    "Citrobacter freundii",
+    "Proteus spp.":        "Proteus mirabilis",
+    "Serratia spp.":       "Serratia marcescens",
+    "Enterococcus spp.":   "Enterococcus faecalis",
+    "Staphylococcus spp.": "Staphylococcus aureus",
+}
+
+_UNSPECIATED_NOTES = {
+    "Acinetobacter spp.": (
+        "🔬 **Acinetobacter غير محدد النوع** — يُعامل كـ *A. baumannii-calcoaceticus complex* "
+        "(الأشيع والأكثر مقاومة) إلى أن يُحدَّد النوع. الأنواع خارج المركّب (A. lwoffii، "
+        "A. junii، A. haemolyticus) أقل مقاومة وكثيراً ما تكون استعماراً أو تلوثاً. "
+        "Sulbactam-durlobactam معتمد لمركّب baumannii-calcoaceticus فقط."),
+    "Pseudomonas spp.": (
+        "🔬 **Pseudomonas غير محدد النوع** — يُعامل كـ *P. aeruginosa* احتياطاً. الأنواع الأخرى "
+        "(P. putida، P. fluorescens، P. stutzeri) لها breakpoints مختلفة في CLSI (Other "
+        "Non-Enterobacterales) وأقل شراسة — اطلب التعريف قبل الحكم على DTR/CRPA."),
+    "Enterobacter spp.": (
+        "🔬 **Enterobacter غير محدد النوع** — يُعامل كـ *E. cloacae complex*: AmpC كروموسومي "
+        "مُحدَث (خطر متوسط — IDSA). Cefepime مفضّل في العدوى الغازية."),
+    "Citrobacter spp.": (
+        "🔬 **Citrobacter غير محدد النوع** — يُعامل كـ *C. freundii* (AmpC) احتياطاً. "
+        "*C. koseri* لا يحمل AmpC مُحدَثاً ويمكن علاجه بالجيل الثالث — التعريف يغيّر الاختيار."),
+    "Proteus spp.": (
+        "🔬 **Proteus غير محدد النوع** — الخطوط كـ *P. mirabilis*، لكن الأنواع موجبة الإندول "
+        "(P. vulgaris / P. penneri) مقاومة جوهرياً لـ Ampicillin والجيل الأول و Cefuroxime. "
+        "اختبار الإندول يحسمها."),
+    "Serratia spp.": (
+        "🔬 **Serratia غير محدد النوع** — يُعامل كـ *S. marcescens* (AmpC منخفض الخطر، مقاومة "
+        "جوهرية لـ Colistin و Nitrofurantoin والجيل الأول)."),
+    "Enterococcus spp.": (
+        "🔬 **Enterococcus غير محدد النوع** — نتيجة Ampicillin هي المفتاح: الحساس غالباً "
+        "*E. faecalis*، والمقاوم غالباً *E. faecium* (وعندها Vancomycin أو Linezolid). "
+        "السيفالوسبورينات و Clindamycin و TMP-SMX بلا فاعلية أياً كان النوع."),
+    "Staphylococcus spp.": (
+        "🔬 **Staphylococcus غير محدد النوع (اختبار التخثّر غير مذكور)** — يُعامل كـ "
+        "*S. aureus* احتياطاً: في الدم والمواقع المعقمة لا يُعتبر ملوِّثاً قبل نفي S. aureus. "
+        "نتيجة Oxacillin/Cefoxitin تحدد MRSA. السالب للتخثّر (CoNS) ملوِّث شائع ويُفسَّر بعدد "
+        "الزجاجات ووجود أجهزة مزروعة."),
+}
+
+for _new, _ref in UNSPECIATED_AS.items():
+    _row = _copy.deepcopy(ORGANISM_PROFILE[_ref])
+    _row["unspeciated_as"] = _ref
+    _row["note"] = _UNSPECIATED_NOTES[_new]
+    ORGANISM_PROFILE[_new] = _row
+
+# Proteus spp.: agents that are fine for P. mirabilis but intrinsically inactive
+# against the indole-positive species.
+_r2_notes("Proteus spp.", "caution", {
+    _d: ("Proteus غير محدد النوع: لو كان موجب الإندول (P. vulgaris / P. penneri) فهذا الدواء "
+         "مقاوم جوهرياً — أكّد النوع قبل الاعتماد عليه.")
+    for _d in ("Ampicillin", "Amoxicillin", "Cephalexin", "Cefadroxil", "Cephradine",
+               "Cefazolin", "Cefaclor", "Cefuroxime", "Cefuroxime sodium")})
+# Citrobacter spp.: the 3rd-gen caution already comes with the C. freundii copy.
+# Enterococcus spp.: ampicillin decides the species in practice.
+_r2_notes("Enterococcus spp.", "agent_notes", {
+    "Ampicillin": ("Enterococcus غير محدد النوع: Ampicillin S ← غالباً E. faecalis وهو الخيار "
+                   "الأول؛ Ampicillin R ← غالباً E. faecium."),
+})
+
+ORGANISM_PROFILE.update({
+    "Streptococcus spp.": {
+        "first_line":  ["Penicillin", "Ampicillin", "Amoxicillin", "Ceftriaxone"],
+        "second_line": ["Vancomycin", "Clindamycin", "Levofloxacin", "Linezolid"],
+        "third_line":  [],
+        "avoid": ["Aminoglycosides", "Ciprofloxacin", "Ceftazidime", "Cefixime",
+                  "Nitrofurantoin", "Fosfomycin"],
+        "urine_note": ("Streptococcus غير محدد النوع في البول: غالباً فلورا مهبلية/إحليلية. "
+                       "في الحامل استبعد Group B (S. agalactiae)."),
+        "specimen_context": {
+            "Blood":      "🔴 Streptococcus في الدم — عرّف النوع: pneumococcus / beta-haemolytic / "
+                          "viridans (endocarditis) / anginosus (خراج).",
+            "Sputum":     "🔬 قد يكون S. pneumoniae أو فلورا فموية — optochin / bile solubility.",
+            "CSF":        "🔴 عامِل كـ S. pneumoniae حتى التعريف (breakpoints التهاب السحايا).",
+            "Wound Swab": "🔬 beta-haemolytic ممرض؛ viridans غالباً فلورا.",
+            "Pus":        "🔬 مجموعة anginosus تسبب الخراجات — غالباً حساسة للبنسلين.",
+            "Urine":      "🔬 غالباً تلوث — استبعد GBS في الحامل.",
+        },
+        "note": ("🔬 **Streptococcus غير محدد النوع** (يشمل مجموعة viridans). البنسلين/"
+                 "Ceftriaxone أساس العلاج، لكن مقاومة البنسلين موجودة في viridans و "
+                 "S. pneumoniae — اعتمد على الـ MIC في العدوى الغازية. الأمينوجليكوزيد منفرداً "
+                 "غير فعّال (يُضاف للتآزر فقط في endocarditis)."),
+    },
+    "Gram-negative bacilli (unidentified)": {
+        "first_line":  ["Ceftriaxone", "Piperacillin + Tazobactam", "Ciprofloxacin"],
+        "second_line": ["Cefepime", "Amikacin", "Meropenem"],
+        "third_line":  [],
+        "avoid": [],
+        "urine_note": ("عصيات سالبة الجرام غير معرّفة: قد تكون Enterobacterales أو non-fermenter "
+                       "(Pseudomonas / Acinetobacter). لا تُفترض مقاومة جوهرية ولا تُستنتج آلية "
+                       "(ESBL/AmpC) قبل التعريف."),
+        "specimen_context": {
+            "Blood":      "🔴 GNB في الدم = ممرض حقيقي دائماً — اطلب ID + MIC عاجل.",
+            "Urine":      "🔬 افصل ABU عن UTI بالأعراض + العدّ.",
+            "Sputum":     "⚠️ قيّم جودة العينة — استعمار مجرى الهواء شائع.",
+            "CSF":        "🔴 التهاب سحايا بـ GNB — Meropenem أو Ceftriaxone/Ceftazidime حتى التعريف.",
+            "Wound Swab": "🔬 افصل الاستعمار عن العدوى بالعلامات السريرية.",
+            "Pus":        "🔬 شائع في خراجات البطن — غالباً مع لاهوائيات.",
+        },
+        "note": ("🔬 **عصيات سالبة الجرام غير معرّفة**. لا جنس معروف ← لا مقاومة جوهرية مفترضة "
+                 "ولا استنتاج ESBL/AmpC/Carbapenemase من اللوحة. العلاج بنتيجة الحساسية، والتعريف "
+                 "(oxidase + lactose كحد أدنى) يغيّر التفسير: oxidase موجب = non-fermenter."),
+    },
+    "Non-fermenting Gram-negative bacilli (unspeciated)": {
+        "first_line":  ["Ceftazidime", "Cefepime", "Piperacillin + Tazobactam"],
+        "second_line": ["Meropenem", "Ciprofloxacin", "Levofloxacin", "Amikacin",
+                        "Trimethoprim/Sulfamethoxazole"],
+        "third_line":  ["Colistin"],
+        "avoid": ["Ertapenem", "Nitrofurantoin", "Cephalexin", "Cefuroxime", "Ceftriaxone"],
+        "urine_note": ("Non-fermenter غير محدد النوع: غالباً مكتسب من المستشفى أو مع قسطرة — "
+                       "الاستعمار شائع، عالِج فقط مع أعراض."),
+        "specimen_context": {
+            "Blood":      "🔴 Non-fermenter في الدم — ابحث عن قسطرة مركزية كمصدر؛ ID عاجل.",
+            "Sputum":     "⚠️ استعمار شائع في مرضى التنفس الصناعي — VAP يُشخَّص سريرياً وبالأشعة.",
+            "Urine":      "🔬 غالباً مع قسطرة — افصل الاستعمار عن العدوى.",
+            "Wound Swab": "🔬 مستعمِر شائع للحروق والجروح المزمنة.",
+            "Pus":        "🔬 قيّم مع الصورة السريرية.",
+        },
+        "note": ("🔬 **Non-fermenter غير محدد النوع** (Pseudomonas / Acinetobacter / "
+                 "Stenotrophomonas / Burkholderia). الفروق بينها كبيرة: Stenotrophomonas مقاوم "
+                 "جوهرياً للكاربابينيم، و Acinetobacter لـ Aztreonam، و Pseudomonas لـ TMP-SMX — "
+                 "لذلك لا يُعتمد على نتيجة S لهذه الأدوية قبل التعريف."),
+        "caution": {
+            "Meropenem": "Non-fermenter غير معرّف: Stenotrophomonas مقاوم جوهرياً للكاربابينيم — أكّد النوع.",
+            "Imipenem/Cilastatin": "Non-fermenter غير معرّف: Stenotrophomonas مقاوم جوهرياً للكاربابينيم — أكّد النوع.",
+            "Trimethoprim/Sulfamethoxazole": "Non-fermenter غير معرّف: Pseudomonas مقاوم جوهرياً لـ TMP-SMX — أكّد النوع.",
+            "Aztreonam": "Non-fermenter غير معرّف: Acinetobacter و Stenotrophomonas مقاومان جوهرياً لـ Aztreonam — أكّد النوع.",
+        },
+    },
+    "Gram-positive cocci (unidentified)": {
+        "first_line":  ["Vancomycin"],
+        "second_line": ["Linezolid", "Daptomycin", "Teicoplanin"],
+        "third_line":  [],
+        "avoid": [],
+        "urine_note": ("مكورات موجبة الجرام غير معرّفة في البول: Enterococcus أو "
+                       "S. saprophyticus أو تلوث بفلورا الجلد — التعريف مطلوب."),
+        "specimen_context": {
+            "Blood":      "🔴 قبل التعريف عامِلها كـ S. aureus محتملة في المريض غير المستقر "
+                          "(clusters = staph، chains = strep/enterococcus).",
+            "CSF":        "🔴 Vancomycin + Ceftriaxone حتى التعريف.",
+            "Urine":      "🔬 Enterococcus / S. saprophyticus / تلوث.",
+            "Wound Swab": "🔬 S. aureus و beta-haemolytic strep ممرضان؛ CoNS غالباً استعمار.",
+            "Pus":        "🔬 غالباً S. aureus — الصرف أساس العلاج.",
+            "Sputum":     "🔬 pneumococcus أو S. aureus أو فلورا فموية.",
+        },
+        "note": ("🔬 **مكورات موجبة الجرام غير معرّفة**. Vancomycin يغطي المكورات العنقودية "
+                 "(ومنها MRSA) والعقدية والمعوية الحساسة إلى أن يظهر التعريف؛ بعده انزل لأضيق "
+                 "دواء (Cefazolin/Oxacillin لـ MSSA، Penicillin للعقديات، Ampicillin لـ "
+                 "E. faecalis)."),
+    },
+})
+for _n in ("Streptococcus spp.", "Gram-negative bacilli (unidentified)",
+           "Non-fermenting Gram-negative bacilli (unspeciated)",
+           "Gram-positive cocci (unidentified)"):
+    ORGANISM_PROFILE[_n]["unspeciated_as"] = None

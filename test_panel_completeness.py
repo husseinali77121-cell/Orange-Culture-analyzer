@@ -327,14 +327,25 @@ if _has_registry:
                  if not str(RULES[rid].get("countersigned_by", "")).strip()]
     check("every panel_* row is countersigned (Dr. Tarek reviewed the full "
           "batch 2026-08-22)", not _unsigned, _unsigned)
-    _still_pending = {rid for rid in _registry_panel_ids if RULES[rid].get("verified") == "pending"}
-    check("the 4 rows not independently checked against Ed36 (Stenotrophomonas, "
-          "S. pneumoniae, beta-haemolytic Strep, H. influenzae) still say "
-          "'pending', not 'secondary' -- being signed does not mean being "
+    # UPDATED 2026-11-10 (round 2). These four rows were pinned to 'pending'
+    # because nobody had opened a CLSI document for them. On 2026-11-10 they
+    # were cross-checked against CLSI's own archived Tables 1A-1C (the pre-tier
+    # Group A/B/C listing) and moved to 'secondary'. The honesty requirement
+    # this check enforces is unchanged: the tiered Ed36 table itself was NOT
+    # opened, so each row must either still say 'pending' or carry a
+    # `source_check` that says so in words. A bare upgrade fails.
+    _four = {"panel_stenotrophomonas", "panel_strep_pneumoniae",
+             "panel_beta_hemolytic_strep", "panel_haemophilus"}
+    _bad = sorted(rid for rid in _four
+                  if RULES[rid].get("verified") != "pending"
+                  and not (RULES[rid].get("verified") == "secondary"
+                           and "not opened" in str(RULES[rid].get("source_check", ""))))
+    _still_pending = _bad
+    check("the 4 panel rows not checked against the tiered Ed36 table are either "
+          "'pending' or 'secondary' WITH a source_check stating that Ed36 was not "
+          "opened -- being signed, or being upgraded, is not the same as being "
           "verified against the primary source",
-          _still_pending == {"panel_stenotrophomonas", "panel_strep_pneumoniae",
-                              "panel_beta_hemolytic_strep", "panel_haemophilus"},
-          _still_pending)
+          not _bad, _bad)
 else:
     print("  SKIP  guideline_registry not importable")
 

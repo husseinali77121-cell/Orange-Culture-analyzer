@@ -204,6 +204,35 @@ _ORG_CANON: Dict[str, str] = {
     "coagulase negative staphylococci": "Coagulase-negative Staphylococci",
     "coagulase-negative staphylococci": "Coagulase-negative Staphylococci",
     "anaerobes (لاهوائيات)": "Anaerobes (لاهوائيات)", "anaerobes": "Anaerobes (لاهوائيات)",
+    # ── Not identified to species level (2026-11-10). Exact keys, so they win
+    # over the bare-genus substring fallbacks above ("acinetobacter" -> A.
+    # baumannii) and keep their own name through the gate.
+    "acinetobacter spp.": "Acinetobacter spp.", "acinetobacter species": "Acinetobacter spp.",
+    "pseudomonas spp.": "Pseudomonas spp.", "pseudomonas species": "Pseudomonas spp.",
+    "enterobacter spp.": "Enterobacter spp.", "citrobacter spp.": "Citrobacter spp.",
+    "proteus spp.": "Proteus spp.", "serratia spp.": "Serratia spp.",
+    "enterococcus spp.": "Enterococcus spp.", "staphylococcus spp.": "Staphylococcus spp.",
+    "streptococcus spp.": "Streptococcus spp.",
+    "gram-negative bacilli (unidentified)": "Gram-negative bacilli (unidentified)",
+    "gram negative bacilli": "Gram-negative bacilli (unidentified)",
+    "non-fermenting gram-negative bacilli (unspeciated)":
+        "Non-fermenting Gram-negative bacilli (unspeciated)",
+    "gram-positive cocci (unidentified)": "Gram-positive cocci (unidentified)",
+    "gram positive cocci": "Gram-positive cocci (unidentified)",
+}
+
+# The species each genus-level name is treated as (mirrors
+# organism_profile.UNSPECIATED_AS). Site-plausibility and intrinsic-addenda rows
+# are inherited from it below, once those tables exist.
+_UNSPECIATED_AS: Dict[str, str] = {
+    "Acinetobacter spp.": "Acinetobacter baumannii",
+    "Pseudomonas spp.": "Pseudomonas aeruginosa",
+    "Enterobacter spp.": "Enterobacter cloacae",
+    "Citrobacter spp.": "Citrobacter freundii",
+    "Proteus spp.": "Proteus mirabilis",
+    "Serratia spp.": "Serratia marcescens",
+    "Enterococcus spp.": "Enterococcus faecalis",
+    "Staphylococcus spp.": "Staphylococcus aureus",
 }
 
 
@@ -501,8 +530,10 @@ SITE_PENETRATION: Dict[str, Dict[str, Tuple[str, str, str]]] = {
     "Vancomycin": {"Urine": (CAUTION, "IV vancomycin is not a preferred urinary agent; ORAL vancomycin is NOT absorbed",
                              "الفانكومايسين الوريدي ليس مفضلاً للمسالك؛ والفموي لا يُمتص إطلاقاً"),
                    "Blood": _OK,
-                   "Sputum": (CAUTION, "poor lung penetration — linezolid preferred for MRSA pneumonia",
-                              "اختراق رئوي ضعيف — يُفضل اللاينزوليد في الالتهاب الرئوي بـ MRSA"),
+                   # 2026-11-10 (round 2): was CAUTION "linezolid preferred". ATS/IDSA
+                   # HAP/VAP 2016 recommends vancomycin OR linezolid for MRSA
+                   # pneumonia (strong recommendation, neither preferred).
+                   "Sputum": _OK,
                    "Wound Swab": _OK, "Pus": _OK,
                    "Stool": (CAUTION, "ORAL vancomycin for C. difficile only — IV has no enteric effect",
                              "الفانكومايسين الفموي للمطثية العسيرة فقط — الوريدي بلا تأثير معوي"),
@@ -615,6 +646,10 @@ PREGNANCY_DENY: Dict[str, Tuple[str, str]] = {
                     "تتراسيكلين — تصبّغ أسنان الجنين وتثبيط نمو العظام"),
     "Tetracycline": ("tetracycline — fetal tooth staining, bone growth inhibition, maternal hepatotoxicity",
                      "تتراسيكلين — تصبّغ الأسنان وتثبيط نمو العظام وسمية كبدية للأم"),
+    # 2026-11-10 (round 2): the engine bans tigecycline (a glycylcycline shares
+    # the tetracycline fetal effects); the matrix had no row for it.
+    "Tigecycline": ("glycylcycline — tetracycline-class fetal tooth and bone effects",
+                    "جلايسيل سيكلين — نفس تأثير التتراسيكلينات على أسنان وعظام الجنين"),
 }
 PREGNANCY_CAUTION: Dict[str, Tuple[str, str]] = {
     "Ciprofloxacin": ("fluoroquinolone — not first line; use only without a safer alternative (ENTIS / ACOG)",
@@ -662,6 +697,16 @@ LACTATION_CAUTION = {"Ciprofloxacin", "Levofloxacin", "Doxycycline", "Tetracycli
 ASSUMED_CRCL_UNKNOWN: float = 30.0
 
 # Renal: (CrCl below which a dose change is mandatory, CrCl below which the drug is refused)
+# Genus-level organisms inherit the site-plausibility and intrinsic-addenda rows
+# of the species they are treated as (2026-11-10).
+for _new, _ref in _UNSPECIATED_AS.items():
+    for _site_rows in SITE_ORGANISM_PLAUSIBILITY.values():
+        if _ref in _site_rows and _new not in _site_rows:
+            _site_rows[_new] = _site_rows[_ref]
+    if _ref in INTRINSIC_ADDENDA and _new not in INTRINSIC_ADDENDA:
+        INTRINSIC_ADDENDA[_new] = dict(INTRINSIC_ADDENDA[_ref])
+del _new, _ref
+
 RENAL_RULES: Dict[str, Tuple[Optional[float], Optional[float], str, str]] = {
     "Nitrofurantoin": (60, 45, "ineffective (inadequate urinary levels) and neuropathy risk below CrCl 45",
                        "غير فعّال (تركيز بولي غير كافٍ) وخطر اعتلال أعصاب تحت CrCl 45"),
@@ -848,22 +893,26 @@ SITE_PENETRATION.update({
 })
 
 RENAL_RULES.update({
-    "Ceftazidime + Avibactam": (50, 6, "dose reduction required below CrCl 50",
-                                "يلزم خفض الجرعة تحت CrCl 50"),
-    "Ceftolozane + Tazobactam": (50, 15, "dose reduction required below CrCl 50",
-                                 "يلزم خفض الجرعة تحت CrCl 50"),
-    "Meropenem + Vaborbactam": (50, 15, "dose reduction required below CrCl 50",
-                                "يلزم خفض الجرعة تحت CrCl 50"),
-    "Imipenem + Relebactam": (90, 15, "dose reduction required below CrCl 90",
-                              "يلزم خفض الجرعة تحت CrCl 90"),
+    # FIX 2026-11-10 (round 2): these rows carried a REFUSE threshold (6 / 15),
+    # so the gate DENIED the agent in exactly the patients it is dosed for --
+    # every one of these labels publishes a dose down to ESRD / haemodialysis.
+    # A reserve agent with a labelled dose is adjusted, not refused.
+    "Ceftazidime + Avibactam": (50, None, "dose reduction below CrCl 50 — the label doses down to CrCl <=5 and HD (0.94 g q48h)",
+                                "خفض الجرعة تحت CrCl 50 — النشرة تحدد جرعة حتى CrCl ≤5 والغسيل (0.94 g q48h)"),
+    "Ceftolozane + Tazobactam": (50, None, "dose reduction below CrCl 50; below 15 the label doses only on haemodialysis",
+                                 "خفض الجرعة تحت CrCl 50؛ تحت 15 الجرعة في النشرة لمرضى الغسيل فقط"),
+    "Meropenem + Vaborbactam": (50, None, "dose reduction below eGFR 50 — the label doses down to eGFR <15 (1 g q12h)",
+                                "خفض الجرعة تحت eGFR 50 — النشرة تحدد جرعة حتى eGFR <15 (1 g q12h)"),
+    "Imipenem + Relebactam": (90, None, "dose reduction below CrCl 90; below 15 only if haemodialysis is in place",
+                              "خفض الجرعة تحت CrCl 90؛ تحت 15 فقط مع الغسيل الكلوي"),
     "Aztreonam + Avibactam": (50, None, "dose reduction below CrCl 50 (loading + maintenance)",
                               "خفض الجرعة تحت CrCl 50 (تحميل + صيانة)"),
     "Sulbactam + Durlobactam": (44, None, "interval extension below CrCl 45; q4h if CrCl >=130",
                                 "إطالة الفترة تحت CrCl 45؛ وكل 4 ساعات إذا CrCl ≥130"),
-    "Cefiderocol": (60, 15, "dose reduction below CrCl 60; INCREASE if CrCl >=120",
-                    "خفض الجرعة تحت CrCl 60؛ وزيادتها إذا CrCl ≥120"),
-    "Ceftaroline": (50, 15, "dose reduction required below CrCl 50",
-                    "يلزم خفض الجرعة تحت CrCl 50"),
+    "Cefiderocol": (60, None, "dose reduction below CrCl 60 (0.75 g q12h below 15 / HD); INCREASE if CrCl >=120",
+                    "خفض الجرعة تحت CrCl 60 (0.75 g q12h تحت 15 / الغسيل)؛ وزيادتها إذا CrCl ≥120"),
+    "Ceftaroline": (50, None, "dose reduction below CrCl 50 (200 mg q12h in ESRD / HD)",
+                    "خفض الجرعة تحت CrCl 50 (200 mg q12h في ESRD / الغسيل)"),
     "Daptomycin": (30, None, "extend to every 48 hours below CrCl 30; monitor CPK",
                    "تمديد الفترة إلى كل 48 ساعة تحت CrCl 30 مع مراقبة CPK"),
     "Teicoplanin": (60, None, "reduce maintenance from day 4; monitor trough",
@@ -873,6 +922,9 @@ RENAL_RULES.update({
 
 # Hepatic: Child-Pugh C verdict. This layer was previously INERT — the flag
 # produced only a side-channel text alert that the PDF truncated to 4 items.
+# Agents refused from Child-Pugh B onwards (HEPATIC_DOSING says "Avoid" at B).
+HEPATIC_DENY_FROM_B = frozenset({"Fusidic acid"})
+
 HEPATIC_RULES: Dict[str, Tuple[str, str, str]] = {
     "Amoxicillin + Clavulanic acid": (
         DENY, "clavulanate is the single commonest cause of drug-induced liver injury worldwide",
@@ -892,8 +944,8 @@ HEPATIC_RULES: Dict[str, Tuple[str, str, str]] = {
                                  "إخراج صفراوي أساساً — يتراكم؛ راقب INR"),
     "Metronidazole": (CAUTION, "extensive hepatic metabolism — halve the dose in Child-Pugh C",
                       "استقلاب كبدي واسع — تُنصّف الجرعة في Child-Pugh C"),
-    "Clindamycin": (CAUTION, "primary hepatic metabolism — reduce 25-50%",
-                    "استقلاب كبدي أساسي — تُخفض 25-50%"),
+    "Clindamycin": (CAUTION, "hepatic metabolism — half-life prolonged in severe disease; monitor liver enzymes",
+                    "استقلاب كبدي — نصف العمر يطول في المرض الشديد؛ راقب إنزيمات الكبد"),
     "Erythromycin": (CAUTION, "cholestatic hepatitis (estolate salt especially)",
                      "التهاب كبدي ركودي (خاصة ملح الإستولات)"),
     "Clarithromycin": (CAUTION, "hepatic metabolism and strong CYP3A4 inhibition",
@@ -906,8 +958,8 @@ HEPATIC_RULES: Dict[str, Tuple[str, str, str]] = {
                     "التهاب كبدي مناعي و DRESS موثقان"),
     "Tetracycline": (CAUTION, "dose-dependent microvesicular steatosis",
                      "تنكس دهني دقيق الحويصلات معتمد على الجرعة"),
-    "Ciprofloxacin": (CAUTION, "partial hepatic metabolism — reduce 50% in severe failure",
-                      "استقلاب كبدي جزئي — تُخفض 50% في الفشل الشديد"),
+    "Ciprofloxacin": (CAUTION, "partial hepatic metabolism — no dose adjustment established; caution in severe failure",
+                      "استقلاب كبدي جزئي — لا تعديل جرعة مُثبت؛ بحذر في الفشل الشديد"),
     "Levofloxacin": (CAUTION, "rare fulminant hepatitis", "التهاب كبدي خاطف نادر"),
     "Moxifloxacin": (CAUTION, "hepatic metabolism, no renal escape route — highest FQ hepatotoxicity signal",
                      "استقلاب كبدي بلا مخرج كلوي — أعلى إشارة سمية كبدية بين الكينولونات"),
@@ -1064,8 +1116,14 @@ def evaluate(
     # ---- Layer 7: hepatic (previously inert) ------------------------------
     if is_hepatic and drug in HEPATIC_RULES:
         lvl, en, ar = HEPATIC_RULES[drug]
-        if child_pugh and str(child_pugh).upper().startswith("A") and lvl == DENY:
-            lvl = CAUTION  # Child-Pugh A rarely warrants outright refusal
+        # FIX 2026-11-10 (round 2): only Child-Pugh A was softened, so the gate
+        # DENIED amox-clav, nitrofurantoin, TMP-SMX and tinidazole at Child-Pugh
+        # B while analyze_antibiotics (HEPATIC_DOSING) only cautions there. The
+        # two layers now agree: refusal at C; at B only where the engine also
+        # says avoid.
+        _cp = str(child_pugh or "C").strip().upper()[:1]
+        if lvl == DENY and (_cp == "A" or (_cp == "B" and drug not in HEPATIC_DENY_FROM_B)):
+            lvl = CAUTION
         v.add(lvl, "hepatic", en, ar, "BNF 2025 hepatic impairment; LiverTox NIH")
 
     # ---- Layer 8: age ------------------------------------------------------
