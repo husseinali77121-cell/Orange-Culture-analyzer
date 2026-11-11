@@ -6156,13 +6156,10 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Anti-staphylococcal Beta-lactams",
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
   "phenotypes": [],
@@ -6205,13 +6202,10 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Antipseudomonal Penics",
    "Carbapenems",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
   "phenotypes": [],
@@ -6254,11 +6248,9 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
   "phenotypes": [],
@@ -6349,9 +6341,8 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Non-Extended-Sp Cephalosporins"
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
   "phenotypes": [],
@@ -6397,7 +6388,7 @@
   "mdr": null,
   "mdr_cats": [
    "Carbapenems",
-   "Extended-Sp Cephalosporins"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
   "phenotypes": [],
@@ -6442,14 +6433,14 @@
   "mdr": "PDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Antipseudomonal Penics",
+   "Anti-staphylococcal Beta-lactams",
    "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
+   "Glycopeptides",
+   "Lipopeptides",
+   "Oxazolidinones",
    "Tetracyclines"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
@@ -6602,14 +6593,14 @@
   "mdr": "PDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Antipseudomonal Penics",
+   "Anti-staphylococcal Beta-lactams",
    "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
+   "Glycopeptides",
+   "Lipopeptides",
+   "Oxazolidinones",
    "Tetracyclines"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
@@ -11439,9 +11430,6 @@
  "Blood|Salmonella spp.|ampc": {
   "allowed": [
    "Azithromycin",
-   "Cefepime",
-   "Cefoperazone + Sulbactam",
-   "Ceftazidime",
    "Ciprofloxacin",
    "Ertapenem",
    "Imipenem/Cilastatin",
@@ -11454,15 +11442,18 @@
   "banned": [
    "Amoxicillin + Clavulanic acid",
    "Ampicillin/Sulbactam",
+   "Cefepime",
    "Cefixime",
+   "Cefoperazone + Sulbactam",
    "Cefotaxime",
+   "Ceftazidime",
    "Ceftriaxone",
    "Doxycycline",
    "Piperacillin + Tazobactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "high",
+  "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
@@ -11470,7 +11461,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🔴 Likely TRUE INFECTION -- Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "ESBL"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_azithromycin_enterobacterales:Azithromycin",
@@ -11505,8 +11498,8 @@
    "Piperacillin + Tazobactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
@@ -11530,37 +11523,39 @@
  "Blood|Salmonella spp.|esbl": {
   "allowed": [
    "Azithromycin",
-   "Cefepime",
    "Ciprofloxacin",
    "Ertapenem",
    "Imipenem/Cilastatin",
    "Levofloxacin",
    "Meropenem",
    "Minocycline",
-   "Piperacillin + Tazobactam",
    "Tetracycline",
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
    "Amoxicillin + Clavulanic acid",
    "Ampicillin/Sulbactam",
+   "Cefepime",
    "Cefixime",
    "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftazidime",
    "Ceftriaxone",
-   "Doxycycline"
+   "Doxycycline",
+   "Piperacillin + Tazobactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "high",
+  "esbl_conf": 88,
   "mdr": null,
   "mdr_cats": [
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🔴 Likely TRUE INFECTION -- Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "ESBL"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_azithromycin_enterobacterales:Azithromycin",
@@ -11596,8 +11591,8 @@
    "Doxycycline"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "low",
+  "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [],
   "patho": "🔴 Likely TRUE INFECTION -- Treat",
@@ -11614,38 +11609,40 @@
  },
  "Blood|Salmonella spp.|mdr": {
   "allowed": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Azithromycin",
-   "Cefepime",
-   "Cefoperazone + Sulbactam",
-   "Ceftazidime",
    "Ertapenem",
    "Imipenem/Cilastatin",
    "Meropenem",
    "Minocycline",
-   "Piperacillin + Tazobactam",
    "Tetracycline",
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
    "Cefixime",
+   "Cefoperazone + Sulbactam",
    "Cefotaxime",
+   "Ceftazidime",
    "Ceftriaxone",
    "Ciprofloxacin",
    "Doxycycline",
-   "Levofloxacin"
+   "Levofloxacin",
+   "Piperacillin + Tazobactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "high",
+  "esbl_conf": 88,
   "mdr": null,
   "mdr_cats": [
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🔴 Likely TRUE INFECTION -- Treat",
-  "phenotypes": [],
+  "phenotypes": [
+   "ESBL"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_azithromycin_enterobacterales:Azithromycin",
@@ -11657,18 +11654,12 @@
  },
  "Blood|Salmonella spp.|oxa48_like": {
   "allowed": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Azithromycin",
-   "Cefepime",
-   "Cefoperazone + Sulbactam",
-   "Ceftazidime",
    "Ciprofloxacin",
    "Imipenem/Cilastatin",
    "Levofloxacin",
    "Meropenem",
    "Minocycline",
-   "Piperacillin + Tazobactam",
    "Tetracycline",
    "Trimethoprim/Sulfamethoxazole"
   ],
@@ -11680,8 +11671,8 @@
    "Ertapenem"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "possible_carbapenemase",
+  "esbl_conf": 62,
   "mdr": null,
   "mdr_cats": [
    "Carbapenems",
@@ -11697,7 +11688,13 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
-   "Colistin"
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Colistin",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Blood|Salmonella spp.|pdr": {
@@ -11725,8 +11722,8 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
   "mdr": "PDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
@@ -11756,8 +11753,8 @@
    "Ampicillin/Sulbactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "low",
+  "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [
    "Penicillins+BLI"
@@ -11793,8 +11790,8 @@
    "Doxycycline"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "low",
+  "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [],
   "patho": "🔴 Likely TRUE INFECTION -- Treat",
@@ -11832,8 +11829,8 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
   "mdr": "XDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
@@ -19950,13 +19947,10 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Anti-staphylococcal Beta-lactams",
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -19999,13 +19993,10 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Antipseudomonal Penics",
    "Carbapenems",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -20048,11 +20039,9 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -20143,9 +20132,8 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Non-Extended-Sp Cephalosporins"
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -20191,7 +20179,7 @@
   "mdr": null,
   "mdr_cats": [
    "Carbapenems",
-   "Extended-Sp Cephalosporins"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
   "phenotypes": [],
@@ -20236,14 +20224,14 @@
   "mdr": "PDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Antipseudomonal Penics",
+   "Anti-staphylococcal Beta-lactams",
    "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
+   "Glycopeptides",
+   "Lipopeptides",
+   "Oxazolidinones",
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -20396,14 +20384,14 @@
   "mdr": "PDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Antipseudomonal Penics",
+   "Anti-staphylococcal Beta-lactams",
    "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
+   "Glycopeptides",
+   "Lipopeptides",
+   "Oxazolidinones",
    "Tetracyclines"
   ],
   "patho": "🔴 ALWAYS SIGNIFICANT -- Treat Immediately",
@@ -32698,13 +32686,10 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Anti-staphylococcal Beta-lactams",
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟠 LIKELY CONTAMINANT -- Repeat Recommended",
   "phenotypes": [],
@@ -32747,13 +32732,10 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Antipseudomonal Penics",
    "Carbapenems",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟠 LIKELY CONTAMINANT -- Repeat Recommended",
   "phenotypes": [],
@@ -32796,11 +32778,9 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟠 LIKELY CONTAMINANT -- Repeat Recommended",
   "phenotypes": [],
@@ -32891,9 +32871,8 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Non-Extended-Sp Cephalosporins"
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
   ],
   "patho": "🟠 LIKELY CONTAMINANT -- Repeat Recommended",
   "phenotypes": [],
@@ -32939,7 +32918,7 @@
   "mdr": null,
   "mdr_cats": [
    "Carbapenems",
-   "Extended-Sp Cephalosporins"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟠 LIKELY CONTAMINANT -- Repeat Recommended",
   "phenotypes": [],
@@ -32984,14 +32963,14 @@
   "mdr": "PDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Antipseudomonal Penics",
+   "Anti-staphylococcal Beta-lactams",
    "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
+   "Glycopeptides",
+   "Lipopeptides",
+   "Oxazolidinones",
    "Tetracyclines"
   ],
   "patho": "🟠 LIKELY CONTAMINANT -- Repeat Recommended",
@@ -33144,14 +33123,14 @@
   "mdr": "PDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Antipseudomonal Penics",
+   "Anti-staphylococcal Beta-lactams",
    "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
+   "Glycopeptides",
+   "Lipopeptides",
+   "Oxazolidinones",
    "Tetracyclines"
   ],
   "patho": "🟠 LIKELY CONTAMINANT -- Repeat Recommended",
@@ -45547,13 +45526,10 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Anti-staphylococcal Beta-lactams",
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -45596,13 +45572,10 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Antipseudomonal Penics",
    "Carbapenems",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -45645,11 +45618,9 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -45740,9 +45711,8 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Non-Extended-Sp Cephalosporins"
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -45788,7 +45758,7 @@
   "mdr": null,
   "mdr_cats": [
    "Carbapenems",
-   "Extended-Sp Cephalosporins"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -45833,14 +45803,14 @@
   "mdr": "PDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Antipseudomonal Penics",
+   "Anti-staphylococcal Beta-lactams",
    "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
+   "Glycopeptides",
+   "Lipopeptides",
+   "Oxazolidinones",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -45993,14 +45963,14 @@
   "mdr": "PDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Antipseudomonal Penics",
+   "Anti-staphylococcal Beta-lactams",
    "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
+   "Glycopeptides",
+   "Lipopeptides",
+   "Oxazolidinones",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -54895,9 +54865,6 @@
  "Stool|Salmonella spp.|ampc": {
   "allowed": [
    "Azithromycin",
-   "Cefepime",
-   "Cefoperazone + Sulbactam",
-   "Ceftazidime",
    "Ciprofloxacin",
    "Ertapenem",
    "Imipenem/Cilastatin",
@@ -54910,15 +54877,18 @@
   "banned": [
    "Amoxicillin + Clavulanic acid",
    "Ampicillin/Sulbactam",
+   "Cefepime",
    "Cefixime",
+   "Cefoperazone + Sulbactam",
    "Cefotaxime",
+   "Ceftazidime",
    "Ceftriaxone",
    "Doxycycline",
    "Piperacillin + Tazobactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "high",
+  "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
@@ -54926,7 +54896,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
-  "phenotypes": [],
+  "phenotypes": [
+   "ESBL"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_azithromycin_enterobacterales:Azithromycin",
@@ -54961,8 +54933,8 @@
    "Piperacillin + Tazobactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
@@ -54986,37 +54958,39 @@
  "Stool|Salmonella spp.|esbl": {
   "allowed": [
    "Azithromycin",
-   "Cefepime",
    "Ciprofloxacin",
    "Ertapenem",
    "Imipenem/Cilastatin",
    "Levofloxacin",
    "Meropenem",
    "Minocycline",
-   "Piperacillin + Tazobactam",
    "Tetracycline",
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
    "Amoxicillin + Clavulanic acid",
    "Ampicillin/Sulbactam",
+   "Cefepime",
    "Cefixime",
    "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftazidime",
    "Ceftriaxone",
-   "Doxycycline"
+   "Doxycycline",
+   "Piperacillin + Tazobactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "high",
+  "esbl_conf": 88,
   "mdr": null,
   "mdr_cats": [
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
-  "phenotypes": [],
+  "phenotypes": [
+   "ESBL"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_azithromycin_enterobacterales:Azithromycin",
@@ -55052,8 +55026,8 @@
    "Doxycycline"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "low",
+  "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
@@ -55070,38 +55044,40 @@
  },
  "Stool|Salmonella spp.|mdr": {
   "allowed": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Azithromycin",
-   "Cefepime",
-   "Cefoperazone + Sulbactam",
-   "Ceftazidime",
    "Ertapenem",
    "Imipenem/Cilastatin",
    "Meropenem",
    "Minocycline",
-   "Piperacillin + Tazobactam",
    "Tetracycline",
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
    "Cefixime",
+   "Cefoperazone + Sulbactam",
    "Cefotaxime",
+   "Ceftazidime",
    "Ceftriaxone",
    "Ciprofloxacin",
    "Doxycycline",
-   "Levofloxacin"
+   "Levofloxacin",
+   "Piperacillin + Tazobactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "high",
+  "esbl_conf": 88,
   "mdr": null,
   "mdr_cats": [
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
-  "phenotypes": [],
+  "phenotypes": [
+   "ESBL"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_azithromycin_enterobacterales:Azithromycin",
@@ -55113,18 +55089,12 @@
  },
  "Stool|Salmonella spp.|oxa48_like": {
   "allowed": [
-   "Amoxicillin + Clavulanic acid",
-   "Ampicillin/Sulbactam",
    "Azithromycin",
-   "Cefepime",
-   "Cefoperazone + Sulbactam",
-   "Ceftazidime",
    "Ciprofloxacin",
    "Imipenem/Cilastatin",
    "Levofloxacin",
    "Meropenem",
    "Minocycline",
-   "Piperacillin + Tazobactam",
    "Tetracycline",
    "Trimethoprim/Sulfamethoxazole"
   ],
@@ -55136,8 +55106,8 @@
    "Ertapenem"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "possible_carbapenemase",
+  "esbl_conf": 62,
   "mdr": null,
   "mdr_cats": [
    "Carbapenems",
@@ -55153,7 +55123,13 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
-   "Colistin"
+   "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Colistin",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Stool|Salmonella spp.|pdr": {
@@ -55181,8 +55157,8 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
   "mdr": "PDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
@@ -55212,8 +55188,8 @@
    "Ampicillin/Sulbactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "low",
+  "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [
    "Penicillins+BLI"
@@ -55249,8 +55225,8 @@
    "Doxycycline"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "low",
+  "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
@@ -55288,8 +55264,8 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
   "mdr": "XDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
@@ -55316,9 +55292,6 @@
  "Stool|Shigella spp.|ampc": {
   "allowed": [
    "Azithromycin",
-   "Cefepime",
-   "Cefoperazone + Sulbactam",
-   "Ceftazidime",
    "Ciprofloxacin",
    "Doxycycline",
    "Ertapenem",
@@ -55332,13 +55305,16 @@
   "banned": [
    "Amoxicillin + Clavulanic acid",
    "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefotaxime",
+   "Ceftazidime",
    "Ceftriaxone",
    "Piperacillin + Tazobactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "high",
+  "esbl_conf": 88,
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
@@ -55346,7 +55322,9 @@
    "Penicillins+BLI"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
-  "phenotypes": [],
+  "phenotypes": [
+   "ESBL"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -55379,8 +55357,8 @@
    "Piperacillin + Tazobactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
   "mdr": "MDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
@@ -55403,7 +55381,6 @@
  "Stool|Shigella spp.|esbl": {
   "allowed": [
    "Azithromycin",
-   "Cefepime",
    "Ciprofloxacin",
    "Doxycycline",
    "Ertapenem",
@@ -55411,28 +55388,31 @@
    "Levofloxacin",
    "Meropenem",
    "Minocycline",
-   "Piperacillin + Tazobactam",
    "Tetracycline",
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
    "Amoxicillin + Clavulanic acid",
    "Ampicillin/Sulbactam",
+   "Cefepime",
    "Cefoperazone + Sulbactam",
    "Cefotaxime",
    "Ceftazidime",
-   "Ceftriaxone"
+   "Ceftriaxone",
+   "Piperacillin + Tazobactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "high",
+  "esbl_conf": 88,
   "mdr": null,
   "mdr_cats": [
    "Extended-Sp Cephalosporins",
    "Penicillins+BLI"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
-  "phenotypes": [],
+  "phenotypes": [
+   "ESBL"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -55466,8 +55446,8 @@
    "Amoxicillin + Clavulanic acid"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "low",
+  "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
@@ -55483,37 +55463,39 @@
  },
  "Stool|Shigella spp.|mdr": {
   "allowed": [
-   "Ampicillin/Sulbactam",
    "Azithromycin",
-   "Cefepime",
-   "Cefoperazone + Sulbactam",
-   "Ceftazidime",
    "Doxycycline",
    "Ertapenem",
    "Imipenem/Cilastatin",
    "Meropenem",
    "Minocycline",
-   "Piperacillin + Tazobactam",
    "Tetracycline",
    "Trimethoprim/Sulfamethoxazole"
   ],
   "banned": [
    "Amoxicillin + Clavulanic acid",
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
    "Cefotaxime",
+   "Ceftazidime",
    "Ceftriaxone",
    "Ciprofloxacin",
-   "Levofloxacin"
+   "Levofloxacin",
+   "Piperacillin + Tazobactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "high",
+  "esbl_conf": 88,
   "mdr": null,
   "mdr_cats": [
    "Extended-Sp Cephalosporins",
    "Fluoroquinolones"
   ],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
-  "phenotypes": [],
+  "phenotypes": [
+   "ESBL"
+  ],
   "preg_warn": [],
   "qc_ids": [
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
@@ -55524,18 +55506,13 @@
  },
  "Stool|Shigella spp.|oxa48_like": {
   "allowed": [
-   "Ampicillin/Sulbactam",
    "Azithromycin",
-   "Cefepime",
-   "Cefoperazone + Sulbactam",
-   "Ceftazidime",
    "Ciprofloxacin",
    "Doxycycline",
    "Imipenem/Cilastatin",
    "Levofloxacin",
    "Meropenem",
    "Minocycline",
-   "Piperacillin + Tazobactam",
    "Tetracycline",
    "Trimethoprim/Sulfamethoxazole"
   ],
@@ -55546,8 +55523,8 @@
    "Ertapenem"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "possible_carbapenemase",
+  "esbl_conf": 62,
   "mdr": null,
   "mdr_cats": [
    "Carbapenems",
@@ -55562,7 +55539,12 @@
    "nobp_cefoperazone:Cefoperazone + Sulbactam"
   ],
   "warned": [
-   "Colistin"
+   "Ampicillin/Sulbactam",
+   "Cefepime",
+   "Cefoperazone + Sulbactam",
+   "Ceftazidime",
+   "Colistin",
+   "Piperacillin + Tazobactam"
   ]
  },
  "Stool|Shigella spp.|pdr": {
@@ -55589,8 +55571,8 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
   "mdr": "PDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
@@ -55619,8 +55601,8 @@
    "Ampicillin/Sulbactam"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "low",
+  "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [
    "Penicillins+BLI"
@@ -55655,8 +55637,8 @@
    "Amoxicillin + Clavulanic acid"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "low",
+  "esbl_conf": 10,
   "mdr": null,
   "mdr_cats": [],
   "patho": "🟡 POSSIBLE INFECTION -- Clinical Correlation Required",
@@ -55692,8 +55674,8 @@
    "Trimethoprim/Sulfamethoxazole"
   ],
   "dtr": null,
-  "esbl": null,
-  "esbl_conf": 0,
+  "esbl": "carbapenemase",
+  "esbl_conf": 92,
   "mdr": "XDR",
   "mdr_cats": [
    "Antipseudomonal Penics",
@@ -61821,13 +61803,10 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Anti-staphylococcal Beta-lactams",
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "⚪ INSUFFICIENT DATA -- Cannot assess significance",
   "phenotypes": [],
@@ -61874,13 +61853,10 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Antipseudomonal Penics",
    "Carbapenems",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "⚪ INSUFFICIENT DATA -- Cannot assess significance",
   "phenotypes": [],
@@ -61927,11 +61903,9 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "⚪ INSUFFICIENT DATA -- Cannot assess significance",
   "phenotypes": [],
@@ -62030,9 +62004,8 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Non-Extended-Sp Cephalosporins"
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
   ],
   "patho": "⚪ INSUFFICIENT DATA -- Cannot assess significance",
   "phenotypes": [],
@@ -62082,7 +62055,7 @@
   "mdr": null,
   "mdr_cats": [
    "Carbapenems",
-   "Extended-Sp Cephalosporins"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "⚪ INSUFFICIENT DATA -- Cannot assess significance",
   "phenotypes": [],
@@ -62132,15 +62105,15 @@
   "mdr": "PDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Antipseudomonal Penics",
+   "Anti-staphylococcal Beta-lactams",
    "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
+   "Glycopeptides",
+   "Lipopeptides",
+   "Oxazolidinones",
    "Tetracyclines"
   ],
   "patho": "⚪ INSUFFICIENT DATA -- Cannot assess significance",
@@ -62255,15 +62228,15 @@
   "mdr": "PDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Antipseudomonal Penics",
+   "Anti-staphylococcal Beta-lactams",
    "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
    "Fosfomycins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
+   "Glycopeptides",
+   "Lipopeptides",
+   "Oxazolidinones",
    "Tetracyclines"
   ],
   "patho": "⚪ INSUFFICIENT DATA -- Cannot assess significance",
@@ -76503,13 +76476,10 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Antipseudomonal Penics",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Anti-staphylococcal Beta-lactams",
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -76552,13 +76522,10 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Antipseudomonal Penics",
    "Carbapenems",
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -76601,11 +76568,9 @@
   "dtr": null,
   "esbl": null,
   "esbl_conf": 0,
-  "mdr": "MDR",
+  "mdr": null,
   "mdr_cats": [
-   "Extended-Sp Cephalosporins",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -76696,9 +76661,8 @@
   "mdr": "MDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Extended-Sp Cephalosporins",
-   "Fluoroquinolones",
-   "Non-Extended-Sp Cephalosporins"
+   "Cephalosporins (pneumococcal)",
+   "Fluoroquinolones"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -76744,7 +76708,7 @@
   "mdr": null,
   "mdr_cats": [
    "Carbapenems",
-   "Extended-Sp Cephalosporins"
+   "Cephalosporins (pneumococcal)"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
   "phenotypes": [],
@@ -76789,14 +76753,14 @@
   "mdr": "PDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Antipseudomonal Penics",
+   "Anti-staphylococcal Beta-lactams",
    "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
+   "Glycopeptides",
+   "Lipopeptides",
+   "Oxazolidinones",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",
@@ -76949,14 +76913,14 @@
   "mdr": "PDR",
   "mdr_cats": [
    "Aminoglycosides",
-   "Antipseudomonal Penics",
+   "Anti-staphylococcal Beta-lactams",
    "Carbapenems",
-   "Cephamycins",
-   "Extended-Sp Cephalosporins",
+   "Cephalosporins (pneumococcal)",
    "Fluoroquinolones",
    "Folate PI",
-   "Non-Extended-Sp Cephalosporins",
-   "Penicillins+BLI",
+   "Glycopeptides",
+   "Lipopeptides",
+   "Oxazolidinones",
    "Tetracyclines"
   ],
   "patho": "🟢 LIKELY CONTAMINANT / COLONIZER -- Do Not Treat",

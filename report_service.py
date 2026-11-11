@@ -1573,6 +1573,13 @@ def generate_decision_tree_image(
         alert_title = "🔴 MDR/XDR ALERT"
     elif _esbl_prob in ("ampc", "ampc_plasmid"):
         alert_title = "⚠  AmpC ALERT"
+    # 2026-11-11 (round 4): these two fell into "ESBL ALERT" -- a P. aeruginosa
+    # (never an ESBL call in this engine) with meropenem I, and an isolated
+    # ertapenem R, were both headed ESBL on the summary image.
+    elif _esbl_prob == "crpa":
+        alert_title = "⚠  CR-P. aeruginosa ALERT"
+    elif _esbl_prob == "possible_carbapenemase":
+        alert_title = "⚠  CARBAPENEMASE SUSPECTED"
     elif _has_esbl:
         alert_title = "⚠  ESBL ALERT"
     else:
@@ -1932,6 +1939,11 @@ def generate_report(
         if prob == "carbapenemase":
             L += [f"\n🚨 {esbl_r.get('mechanism','POSSIBLE CARBAPENEMASE PRODUCER').upper()}", sep2,
                   esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
+        elif prob == "possible_carbapenemase":
+            # 2026-11-11 (round 4): this tier was the one mechanism the text
+            # report never printed, so its "confirm with mCIM / PCR" was lost.
+            L += [f"\n⚠️  {esbl_r.get('mechanism','POSSIBLE CARBAPENEMASE').upper()}", sep2,
+                  esbl_r.get("detail", ""), f"Action: {esbl_r.get('action', '')}", ""]
         elif prob in ("ampc", "ampc_plasmid"):
             L += ["\n⚠️  POSSIBLE AmpC β-LACTAMASE PRODUCER", sep2,
                   esbl_r["detail"], f"Action: {esbl_r['action']}", ""]
@@ -1997,9 +2009,21 @@ def generate_report(
                 # through to renal_note and printed an empty reason.
                 L.append("Reason    : " + (item.get("esbl_note_en")
                                            or item.get("esbl_note", "-")))
-            else:
+            elif item.get("warning_reason") in ("renal_adjustment", "", None):
                 L += [f"Renal note: {item.get('renal_note','-')}",
                       f"Limit CrCl: <= {item.get('renal_limit','-')} ml/min"]
+            else:
+                # FIX 2026-11-12 (round 5). Every other reason -- hepatic,
+                # safety gate, neonate, possible MRSA, allergy, organism
+                # caution -- fell through to the RENAL note above: a Child-Pugh
+                # caution or a CSF gate caution printed renal dosing and no
+                # reason at all. The PDF and the screen were moved to the one
+                # resolver on 2026-08-03; the text report was left behind.
+                _why = (warned_note_for(item, "en") if warned_note_for else "") or \
+                    str(item.get("note") or "Caution recorded with no explanation — review manually.")
+                _wl = [x for x in str(_why).splitlines() if x.strip()]
+                L.append("Reason    : " + (_wl[0].strip() if _wl else "-"))
+                L.extend("            " + x.strip() for x in _wl[1:])
             if show_commercial_names:
                 _brands = get_commercial_name(item["name"])
                 if _brands:

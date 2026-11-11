@@ -67,6 +67,8 @@ python test_comprehensive.py         # فضاء المزارع الكامل
 python test_guidelines.py            # تتبّع الاستشهادات
 python test_clinical_matrix.py       # خريطة القيود السريرية
 python test_safety_invariants.py     # ثوابت بوابات الأمان
+python test_round4.py                # مراجعة logic النهائية 2026-11-11 (الحمل↔البوابة، OCR، تصفير المريض، Schwartz)
+python test_round5.py                # مراجعة مستقلة 2026-11-12 (سطر بنتيجتين، أكواد الأقراص، العمر، الكلى/الكبد في فروع ESBL)
 ```
 
 الـ CI (9 guards) بيشغّل السبعة + `compileall` + **import حقيقي لكل module**.

@@ -234,7 +234,9 @@ check('analyze_antibiotics still defaults child_pugh="C"',
 
 # The analysis call moved into run_analysis() on 2026-08-03, so the anchor is
 # now the UI's single entry into the pipeline rather than the inlined call.
-_i_sel = _src.find('key="cp_sel_sidebar"')
+# 2026-11-11 (round 4): the widget key is now per uploaded file
+# (key=f"cp_sel_sidebar_{_fh}") so a new report starts ungraded.
+_i_sel = _src.find('key=f"cp_sel_sidebar_')
 _i_call = _src.find("_res = run_analysis(")
 check("the Child-Pugh selector renders BEFORE the analysis call",
       0 < _i_sel < _i_call,

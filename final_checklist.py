@@ -46,10 +46,18 @@ def build_final_checklist(
     gram_stain: str = "",
     patho_result: Optional[Dict[str, Any]] = None,
     panel_result: Any = None,
+    preg_warn: Optional[List[Any]] = None,
 ) -> List[Dict[str, str]]:
-    """Return [{key, title, status, detail}] in the order a reviewer reads."""
+    """Return [{key, title, status, detail}] in the order a reviewer reads.
+
+    `preg_warn` (2026-11-11, round 4): the pregnancy-caution bucket is a list
+    of options the clinician may still use. Without it a pregnant patient whose
+    only usable agents were "use with caution in pregnancy" got a red "no
+    treatment option" line, and checks 4 and 5 never looked at those agents.
+    """
     sir_map = dict(sir_map or {})
     allowed, warned, banned = list(allowed or []), list(warned or []), list(banned or [])
+    preg_warn = list(preg_warn or [])
     out: List[Dict[str, str]] = []
 
     def add(key, title, status, detail):
@@ -117,7 +125,7 @@ def build_final_checklist(
             f"{len(sir_map)} مضاد مختبَر — لا نتيجة تتعارض مع المقاومة الجوهرية.")
 
     # 4 ── nothing resistant / intrinsic is recommended (self-check) ──────────
-    rec = [_name(x) for x in allowed + warned]
+    rec = [_name(x) for x in allowed + warned + preg_warn]
     leak = sorted(d for d in rec if sir_map.get(d) == "R" or d in intrinsic)
     if leak:
         add("recommendation_safety", "التوصيات لا تحتوي مضاداً مقاوماً", FAIL,
@@ -130,7 +138,7 @@ def build_final_checklist(
     try:
         import clinical_matrix as CM
         site_bad = []
-        for d in [_name(x) for x in allowed]:
+        for d in [_name(x) for x in allowed + preg_warn]:
             row = CM.SITE_PENETRATION.get(d, {})
             lvl = (row.get(site) or (CM.ALLOW,))[0] if site else CM.ALLOW
             if lvl == CM.DENY:
@@ -174,10 +182,12 @@ def build_final_checklist(
 
     # 8 ── at least one option exists ─────────────────────────────────────────
     if allowed:
-        add("options", "وجود خيار علاجي", PASS, f"{len(allowed)} خيار مسموح و{len(warned)} بحذر.")
-    elif warned:
+        add("options", "وجود خيار علاجي", PASS,
+            f"{len(allowed)} خيار مسموح و{len(warned) + len(preg_warn)} بحذر.")
+    elif warned or preg_warn:
         add("options", "وجود خيار علاجي", WARN,
-            f"لا يوجد خيار بلا تحفظ — {len(warned)} خيار بحذر فقط.")
+            f"لا يوجد خيار بلا تحفظ — {len(warned) + len(preg_warn)} خيار بحذر فقط"
+            + (" (منها حمل)." if preg_warn else "."))
     else:
         add("options", "وجود خيار علاجي", FAIL,
             "لا يوجد أي خيار علاجي من اللوحة المختبَرة — استشارة أمراض معدية واختبار مضادات إضافية.")

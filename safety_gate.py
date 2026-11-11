@@ -45,9 +45,9 @@ from clinical_matrix import (
 
 logger = logging.getLogger("orange_cdss.safety_gate")
 
-__all__ = ["apply_safety_gate", "gate_summary_lines", "GATE_VERSION"]
+__all__ = ["apply_safety_gate", "gate_pregnancy_bucket", "gate_summary_lines", "GATE_VERSION"]
 
-GATE_VERSION = "1.0.0"
+GATE_VERSION = "1.1.0"   # 1.1.0 (2026-11-11): the pregnancy bucket is gated too
 
 
 
@@ -261,6 +261,93 @@ def apply_safety_gate(
     report["counts"] = {"allowed": len(new_allowed), "warned": len(new_warned),
                         "banned": len(new_banned), "moved": len(report["moves"])}
     return new_allowed, new_warned, new_banned, report
+
+
+def gate_pregnancy_bucket(
+    preg_warn: List[Any],
+    banned: List[Any],
+    *,
+    organism: Optional[str] = None,
+    specimen: Optional[str] = None,
+    age_years: Optional[float] = None,
+    age_months: Optional[float] = None,
+    is_pregnant: bool = True,
+    is_lactating: bool = False,
+    cl_cr: Optional[float] = None,
+    is_renal: bool = False,
+    is_hepatic: bool = False,
+    child_pugh: Optional[str] = None,
+) -> Tuple[List[Any], List[Any], List[Dict[str, Any]]]:
+    """The same terminal check, applied to the pregnancy-caution bucket.
+
+    ADDED 2026-11-11 (round 4). apply_safety_gate() receives allowed / warned /
+    banned only, so the fourth bucket analyze_antibiotics() returns -- drugs
+    the clinician may use in pregnancy "with caution" -- never met the gate.
+    Gentamicin and amikacin for a pregnant woman with meningitis, linezolid
+    for a stool isolate, nitrofurantoin at a refused clearance: each was
+    DENIED by the gate for any other patient and offered to this one.
+
+    Demote-only, like the gate itself:
+      * DENY from any layer          -> moved to `banned`;
+      * CAUTION from a layer OTHER than pregnancy -> stays in the pregnancy
+        bucket with that reason appended to its note (the pregnancy caution
+        itself is already the reason the item is here).
+    Returns (preg_warn, banned, moves).
+    """
+    from clinical_utils import resolve_age_years as _resolve_age
+    host = dict(age_years=_resolve_age(age_years, age_months), is_pregnant=is_pregnant,
+                is_lactating=is_lactating, cl_cr=cl_cr, is_renal=is_renal,
+                is_hepatic=is_hepatic, child_pugh=child_pugh)
+    new_preg: List[Any] = []
+    new_banned: List[Any] = list(banned)
+    moves: List[Dict[str, Any]] = []
+    banned_names = {_name(b) for b in new_banned}
+    for item in preg_warn:
+        drug = _name(item)
+        if not drug or drug in banned_names:
+            continue
+        try:
+            v = evaluate(drug, organism, specimen, strict_unknown=False, **host)
+        except Exception as exc:                      # never break the report
+            logger.warning("pregnancy gate failed on %s: %s", drug, exc, exc_info=True)
+            new_preg.append(item)
+            continue
+        if v.level == DENY:
+            enriched = dict(item) if isinstance(item, dict) else {"name": drug}
+            enriched.update({
+                "gate_blocked": True,
+                "reason_short": "غير مناسب لموقع العدوى أو لحالة المريض.",
+                "reason_detail": _reason_block(v, "ar"),
+                "reason_detail_en": _reason_block(v, "en"),
+                "gate_layers": sorted({r["layer"] for r in v.blocking}),
+                "category": "safety_gate",
+            })
+            new_banned.append(enriched)
+            banned_names.add(drug)
+            moves.append({"drug": drug, "from": "preg_warn", "to": "banned",
+                          "layers": enriched["gate_layers"],
+                          "why": _reason_block(v, "en"),
+                          "reason_ar": _reason_block(v, "ar"),
+                          "reason_en": _reason_block(v, "en")})
+            continue
+        extra = [r for r in v.cautions if r.get("layer") != "pregnancy"]
+        if extra and isinstance(item, dict):
+            enriched = dict(item)
+            _ar = " · ".join(f"[{r['layer']}] {r.get('ar') or r.get('en')}" for r in extra)
+            _en = " · ".join(f"[{r['layer']}] {r.get('en')}" for r in extra)
+            _note = str(enriched.get("preg_note") or "").rstrip()
+            # English line so the English report keeps it (lines carrying
+            # Arabic are replaced there by a generic sentence).
+            enriched["preg_note"] = (_note + "\n" if _note else "") + f"🛡️ Safety gate: {_en}"
+            enriched.update({"gate_caution": True, "gate_note": _ar, "gate_note_en": _en,
+                             "gate_layers": sorted({r["layer"] for r in extra})})
+            new_preg.append(enriched)
+            moves.append({"drug": drug, "from": "preg_warn", "to": "preg_warn",
+                          "layers": enriched["gate_layers"], "why": _en,
+                          "reason_ar": _ar, "reason_en": _en})
+        else:
+            new_preg.append(item)
+    return new_preg, new_banned, moves
 
 
 def gate_summary_lines(report: Dict[str, Any], lang: str = "ar") -> List[str]:

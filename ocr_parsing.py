@@ -47,7 +47,8 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "fuzzy_match", "normalize_ocr_text", "clean_patient_name",
-    "detect_age_months", "ORGANISM_OCR_ALIASES", "ABX_DISK_CODES",
+    "detect_age_months", "parse_patient_age", "age_reading_is_ambiguous",
+    "parse_result_line", "ORGANISM_OCR_ALIASES", "ABX_DISK_CODES",
     "_scan_line_for_disk_codes", "_scan_line_for_drugs",
     "extract_detected_drugs", "_SIR_ALIASES", "normalize_sir_value",
     "normalize_sir_map", "match_antibiotic_from_text",
@@ -118,26 +119,135 @@ def clean_patient_name(name: str) -> str:
         return ""
     return name.title() if re.search(r"[A-Za-z]", name) else name
 
+# ── Patient age ──────────────────────────────────────────────────────────────
+# FIX 2026-11-11 (round 4). The unit patterns used to be searched over the
+# WHOLE report, before the "Age:" field was even looked at. A culture report
+# always carries some "N days" -- "growth after 2 days incubation", "valid for
+# 3 months", "repeat in 7 days" -- so a 45-year-old came back as age 0, months
+# 0: a neonate. That pre-ticks the under-one box and switches on every neonatal
+# ban (ceftriaxone, TMP-SMX, nitrofurantoin) and the paediatric FQ ban for an
+# adult. "Age: 18 months" was the opposite error: 0 years and NO months, so the
+# engine could not apply a single month-based rule.
+#
+# The age is now read from the AGE FIELD first, with its own unit; a bare
+# "N <unit> old" is the only unlabelled form accepted for days/weeks/months,
+# and an unlabelled number with a year unit is the last resort.
+_AGE_UNIT = (r"(?P<unit>years?|yrs?|y(?![a-z])|سنة|سنه|سنوات|سنين|عام|"
+             r"months?|mons?|mths?|mo(?![a-z])|mos(?![a-z])|شهر|شهور|أشهر|اشهر|"
+             r"weeks?|wks?|wk(?![a-z])|w(?![a-z])|أسبوع|اسبوع|أسابيع|اسابيع|"
+             r"days?|d(?![a-z])(?!\.\s*o)|يوم|أيام|ايام)")
+# FIX 2026-11-12 (round 5). Between the label and the number the old pattern
+# allowed ANY 15 non-digit characters, so an empty age field read the next
+# field instead: "Age:    Date: 12/11/2026" -> 12 years. Only separators, a
+# "/Sex" label and a "(years)" hint may sit there now, and a number that
+# continues as a date ("12/11", "12-11") is not an age. "السن" no longer
+# matches inside "السنة", and "45 D.O.B" is not 45 days.
+_AGE_GAP = (r"(?:\s*/\s*(?:sex|gender))?(?:\s+in\s+years)?"
+            r"\s*(?:\(\s*(?:years?|yrs?|y)\s*\))?[\s:;=\-._|]{0,8}")
+_AGE_LABELLED = re.compile(
+    r"(?:(?<![a-z])age(?![a-z])|العمر|السن(?![\u0600-\u06FF]))" + _AGE_GAP +
+    r"(?P<n>\d{1,3})(?!\d)(?:[.,]\d)?"
+    r"(?:\s*/\s*(?P<den>12|52)(?!\d))?(?!\s*[/\-]\s*\d)\s*" + _AGE_UNIT + r"?", re.I)
+# "0 Y 6 M" / "0 years, 6 months": the month part of a compound age.
+_AGE_MONTH_PART = re.compile(
+    r"\s*[,&+]?\s*(?P<m>\d{1,2})\s*(?:months?|mons?|mths?|mos?|m|شهور|شهر|أشهر|اشهر)(?![a-z])", re.I)
+_AGE_BARE_M = re.compile(r"\s+m(?![a-z/])", re.I)
+_AGE_OLD = re.compile(r"(?P<n>\d{1,3})\s*-?\s*" + _AGE_UNIT + r"[\s\-]*old(?![a-z])", re.I)
+_AGE_YEARS_FREE = re.compile(
+    r"(?P<n>\d{1,3})\s*(?:years?|yrs?)(?![a-z])|(?P<n2>\d{1,3})\s*(?:سنة|سنه|سنوات)", re.I)
+
+
+def _age_from_parts(n: str, den: Optional[str], unit: Optional[str]
+                    ) -> Tuple[Optional[int], Optional[int]]:
+    """(years, months-if-under-one) from one parsed age expression."""
+    try:
+        v = int(n)
+    except (TypeError, ValueError):
+        return None, None
+    u = (unit or "").lower()
+    days: Optional[int] = None
+    months_total: Optional[int] = None
+    if den == "12":
+        months_total = v
+    elif den == "52":
+        days = v * 7
+    elif u.startswith(("mo", "mth", "شهر", "شهو", "أشه", "اشه")):
+        months_total = v
+    elif u.startswith(("w", "أسب", "اسب", "أساب", "اساب")):
+        days = v * 7
+    elif u.startswith(("d", "يوم", "أيام", "ايام")):
+        days = v
+    else:                                   # years, or no unit at all
+        return (v, None) if 0 <= v <= 120 else (None, None)
+    if days is not None:
+        if days < 365:
+            return 0, min(11, days // 30)
+        return days // 365, None
+    if months_total is not None:
+        if months_total <= 11:
+            return 0, months_total
+        yrs = months_total // 12
+        return (yrs, None) if yrs <= 120 else (None, None)
+    return None, None
+
+
+def parse_patient_age(text: str) -> Tuple[Optional[int], Optional[int]]:
+    """(age in years, age in months when under one year) from a report header.
+
+    Years is 0 for any patient under one; months is None from one year up or
+    when nothing usable was printed.
+    """
+    t = str(text or "")
+    # Every candidate is tried (round 5): one unusable match -- "Age: 2026" --
+    # used to end the search and hide a good "Age: 45 Y" further down.
+    for rx in (_AGE_LABELLED, _AGE_OLD):
+        for m in rx.finditer(t):
+            unit = m.group("unit")
+            yrs, mons = _age_from_parts(m.group("n"), m.groupdict().get("den"), unit)
+            if yrs is None:
+                continue
+            # "Age: 0 Y 6 M" -> six months, not "0 years, months unknown".
+            if yrs == 0 and mons is None and (unit or "").lower()[:1] in ("y", "س", "ع"):
+                mp = _AGE_MONTH_PART.match(t, m.end())
+                if mp and 0 <= int(mp.group("m")) <= 11:
+                    mons = int(mp.group("m"))
+            return yrs, mons
+    m = _AGE_YEARS_FREE.search(t)
+    if m:
+        v = int(m.group("n") or m.group("n2"))
+        if 0 <= v <= 120:
+            return v, None
+    return None, None
+
+
+def age_reading_is_ambiguous(text: str) -> bool:
+    """True when the age field reads "N M" with no unit -- months, or Male?
+
+    Added 2026-11-12 (round 5). "Age: 3 M" is how many laboratories print a
+    three-MONTH-old, and it is also how they print "3 years, Male". The parser
+    cannot know, and reads years. A three-month-old read as a three-year-old
+    loses every infant restriction, so the UI asks the operator to confirm
+    instead of trusting either reading silently.
+    """
+    t = str(text or "")
+    for m in _AGE_LABELLED.finditer(t):
+        if m.group("unit") or m.groupdict().get("den"):
+            return False
+        try:
+            n = int(m.group("n"))
+        except (TypeError, ValueError):
+            continue
+        return bool(n <= 36 and _AGE_BARE_M.match(t, m.end("n")))
+    return False
+
+
 def detect_age_months(text: str) -> Optional[int]:
     """Age in MONTHS for an under-one patient, or None.
 
     Feeds the NEONATAL_RESTRICTIONS gate, which cannot distinguish a two-week-old
     from an eleven-month-old without it and therefore warns instead of deciding.
     """
-    t = str(text or "")
-    m = re.search(r"(\d+)\s*(?:day|days|d\b|يوم|أيام)", t, re.I)
-    if m:
-        return min(11, int(m.group(1)) // 30)
-    m = re.search(r"(\d+)\s*(?:week|weeks|wk|w\b|أسبوع|اسبوع)", t, re.I)
-    if m:
-        return min(11, int(m.group(1)) // 4)
-    m = re.search(r"(\d+)\s*(?:month|months|mo\b|mos|شهر|شهور|أشهر)", t, re.I)
-    if m and 0 <= int(m.group(1)) <= 11:
-        return int(m.group(1))
-    m = re.search(r"(?:age|العمر|السن)\s*[:\-]?\s*(\d{1,2})\s*/\s*12\b", t, re.I)
-    if m and 0 <= int(m.group(1)) <= 11:
-        return int(m.group(1))
-    return None
+    return parse_patient_age(text)[1]
 
 ORGANISM_OCR_ALIASES: Dict[str, str] = {
     # ── Not identified to species level (2026-11-10) ─────────────────────────
@@ -313,11 +423,53 @@ ABX_DISK_CODES: Dict[str, str] = {
     "CT": "Colistin", "CST": "Colistin", "COL": "Colistin",
     "MTZ": "Metronidazole", "MET": "Metronidazole",
     "RD": "Rifampicin", "RA": "Rifampicin",
+    # HiMedia labels (2026-11-11), the other disk brand common in Egypt.
+    "PIT": "Piperacillin + Tazobactam", "LE": "Levofloxacin", "LZ": "Linezolid",
+    "TEI": "Teicoplanin", "CPZ": "Cefoperazone", "CFS": "Cefoperazone + Sulbactam",
 }
 
 _DISK_CODE_TOKEN = re.compile(r"[A-Za-z]{1,4}\d{0,3}")
+# Words that may sit on a disk-code row without being a code (round 5).
+_DISK_ROW_FILLER = frozenset({"MM", "MCG", "UG", "MG", "IU", "U", "MIC", "ZONE",
+                              "DISK", "DISC", "CODE", "DIAMETER"})
 
-def _scan_line_for_disk_codes(line: str) -> List[str]:
+
+def _disk_code_name(tok: str) -> Optional[str]:
+    name = ABX_DISK_CODES.get(tok.upper())
+    if not name:
+        name = ABX_DISK_CODES.get(re.sub(r"\d+$", "", tok.upper()))
+    return name if name in ABX_GUIDELINES else None
+
+
+def _is_pure_disk_row(tokens: List[str]) -> bool:
+    """True when every word on the line is a disk code, a verdict or a unit.
+
+    FIX 2026-11-12 (round 5). Many codes are ordinary letters and words -- F
+    (nitrofurantoin), P, E, OF (ofloxacin), DO, AM, AN, TE -- and the only
+    guard was "the line carries a verdict somewhere". A header or a comment
+    passes that easily:
+        "Sex: F   Age: 30 Y   Ref: Dr. S"   -> Nitrofurantoin = S
+        "Heavy growth of Klebsiella, resistant strain" -> Ofloxacin = R
+    Both put a drug nobody tested on the panel, one of them as susceptible. A
+    genuine code row ("AMC 30 S", "CIP5 R / MEM S") holds nothing but codes,
+    numbers, verdicts and units, so that is now required.
+    """
+    for tok in tokens:
+        if normalize_sir_value(tok) is not None:
+            continue
+        core = tok.strip(".+")
+        if not core or not re.search(r"[A-Za-z\u0600-\u06FF]", core):
+            continue                                  # a number / symbol
+        if core.upper() in _DISK_ROW_FILLER:
+            continue
+        if _DISK_CODE_TOKEN.fullmatch(core) and _disk_code_name(core):
+            continue
+        return False
+    return True
+
+
+def _scan_line_for_disk_codes(line: str, require_verdict: bool = True,
+                              check_row: bool = True) -> List[str]:
     """Antibiotics named by CLSI/EUCAST disk code on ONE result row.
 
     Returns [] unless the line also carries an S/I/R verdict — a bare code in
@@ -341,7 +493,9 @@ def _scan_line_for_disk_codes(line: str) -> List[str]:
     if not tokens:
         return []
     # Does this line look like a result row at all?
-    if not any(normalize_sir_value(t) is not None for t in tokens):
+    if require_verdict and not any(normalize_sir_value(t) is not None for t in tokens):
+        return []
+    if check_row and not _is_pure_disk_row(tokens):
         return []
     found: List[str] = []
     for tok in tokens:
@@ -351,8 +505,13 @@ def _scan_line_for_disk_codes(line: str) -> List[str]:
             continue
         if not _DISK_CODE_TOKEN.fullmatch(tok):
             continue
-        name = ABX_DISK_CODES.get(tok.upper())
-        if name and name in ABX_GUIDELINES and name not in found:
+        # FIX 2026-11-11 (round 4): disks are printed with their potency and
+        # OCR often fuses the two ("CIP5", "AK30", "CN10", "AMC30"). Only the
+        # exact token was looked up, so a fused code named no drug and the row
+        # vanished from the panel. The exact token still wins -- "CN30" is
+        # HiMedia's cephalexin, not gentamicin -- then the potency is dropped.
+        name = _disk_code_name(tok)
+        if name and name not in found:
             found.append(name)
     return found
 
@@ -439,6 +598,116 @@ def normalize_sir_map(sir_map: Optional[Dict[str, Any]]) -> Dict[str, str]:
         elif value not in (None, ""):
             logger.warning("unreadable AST value %r for %r -- dropped from the "
                            "panel rather than assumed susceptible", value, drug)
+    return out
+
+
+# ── One printed line -> every (drug, result) pair on it ─────────────────────
+# FIX 2026-11-12 (round 5). The reader took ONE verdict and ONE drug per line:
+# the first verdict word by a fixed priority (sensitive before resistant) and
+# the LONGEST drug name. Two-column reports and "Sensitive to: a, b, c" lists
+# are common, and on those it produced a WRONG S:
+#     "Amikacin Sensitive    Ciprofloxacin Resistant"  -> Ciprofloxacin = S
+#     "Gentamicin R    Piperacillin/Tazobactam S"      -> fine by luck only
+# and silently dropped every other drug on the line. A line is now cut at each
+# verdict and a verdict belongs to the drug printed just before it.
+_VERDICT_RX = re.compile(
+    r"(?P<ns>non[\s\-]?susceptible|not\s+susceptible)"
+    r"|(?P<sdd>susceptible[\s\-]*dose[\s\-]*dependent|\bsdd\b)"
+    r"|(?P<s>\b(?:sensitive|susceptible|sens)\b|حسّاس|حساس)"
+    r"|(?P<r>\b(?:resistant|resist)\b|مقاوم)"
+    r"|(?P<i>\b(?:intermediate|inter)\b|متوسطة|متوسط)"
+    r"|(?P<ns2>\bns\b)"
+    r"|(?P<letter>(?<![A-Za-z0-9.+/])[SIR](?![A-Za-z0-9+])(?!\.\s*[A-Za-z]))", re.I)
+_VERDICT_VALUE = {"ns": "R", "ns2": "R", "sdd": "I", "s": "S", "r": "R", "i": "I"}
+_LIST_SEP = re.compile(r"[,،;&]|\band\b|\bو\b", re.I)
+
+
+def _verdict_of(m: "re.Match") -> str:
+    g = m.lastgroup or ""
+    return m.group(0).upper() if g == "letter" else _VERDICT_VALUE[g]
+
+
+def _segment_drugs(seg: str) -> List[str]:
+    """Drugs named in a piece of a result line (names first, then codes)."""
+    norm = normalize_abx_key(seg)
+    if not norm:
+        return []
+    claimed: List[Tuple[int, int]] = []
+    hits: List[Tuple[int, str]] = []
+    for alias_norm, abx_name in _ABX_ALIAS_SORTED:
+        start = 0
+        while True:
+            i = norm.find(alias_norm, start)
+            if i < 0:
+                break
+            j = i + len(alias_norm)
+            if not any(s <= i and j <= e for s, e in claimed):
+                claimed.append((i, j))
+                hits.append((i, abx_name))
+            start = i + 1
+    if hits:
+        out: List[str] = []
+        for _, n in sorted(hits):                      # in printed order
+            if n not in out:
+                out.append(n)
+        return out
+    return _scan_line_for_disk_codes(seg, require_verdict=False, check_row=False)
+
+
+def parse_result_line(line: str, classify=None) -> List[Tuple[str, str]]:
+    """Every (antibiotic, 'S'|'I'|'R') pair printed on ONE line.
+
+    `classify` is the caller's one-line classifier (the app passes its own, so
+    the two cannot drift); it is used for the ordinary one-drug row.
+    """
+    line = str(line or "").strip()
+    if not line:
+        return []
+    drugs = _scan_line_for_drugs(line)
+    verdicts = list(_VERDICT_RX.finditer(line))
+
+    if len(drugs) <= 1:
+        v = classify(line) if classify else None
+        if v is None:
+            words = [m for m in verdicts if m.lastgroup != "letter"]
+            letters = [m for m in verdicts if m.lastgroup == "letter"]
+            if words:
+                v = _verdict_of(words[0])
+            elif drugs and len(letters) == 1:
+                # "Nitrofurantoin   S   32": the zone / MIC is printed AFTER
+                # the verdict, so the end-of-line rule missed it and the row
+                # lost its result.
+                v = _verdict_of(letters[0])
+        if not v:
+            return []
+        d = match_antibiotic_from_text(line)
+        return [(d, v)] if d else []
+
+    if not verdicts:
+        return []
+    out: List[Tuple[str, str]] = []
+    seen = set()
+    prev = 0
+    for m in verdicts:
+        seg = line[prev:m.start()]
+        ds = _segment_drugs(seg)
+        if ds:
+            # Several drugs before one verdict: a list ("a, b: Sensitive")
+            # shares it; otherwise only the drug NEXT to the verdict owns it --
+            # the earlier one lost its own result to the OCR and must not
+            # inherit its neighbour's.
+            owners = ds if (len(ds) == 1 or _LIST_SEP.search(seg)) else ds[-1:]
+            for d in owners:
+                if d not in seen:
+                    seen.add(d)
+                    out.append((d, _verdict_of(m)))
+            prev = m.end()
+        elif m.lastgroup != "letter":
+            prev = m.end()
+    tail = _segment_drugs(line[prev:])
+    if tail and not out and len(verdicts) == 1 and verdicts[0].lastgroup != "letter":
+        # "Resistant to: Ciprofloxacin, Ceftriaxone, Cefepime"
+        out = [(d, _verdict_of(verdicts[0])) for d in tail]
     return out
 
 

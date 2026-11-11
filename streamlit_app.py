@@ -652,6 +652,51 @@ def init_session_state() -> None:
 
 init_session_state()
 
+
+# ── A new report is a new patient ───────────────────────────────────────────
+# FIX 2026-11-11 (round 4). Uploading the next report reset only the S/I/R
+# panel. Everything else the clinician had entered for the PREVIOUS patient
+# stayed live and flowed into the new patient's analysis and report: the
+# pregnancy, renal and hepatic flags, the creatinine, current medications,
+# drug allergies, the carbapenemase class, the UTI syndrome, the colony count,
+# pus cells and RBCs (whose OCR auto-fill then refused to overwrite them), the
+# patient's name, and -- when the specimen type matched -- the previous
+# pathogenicity verdict, printed in the new report. Widgets that hold patient
+# facts are either keyed per file (and so recreated) or listed here and reset.
+_PATIENT_WIDGET_KEYS = (
+    "colony_count_input", "date_in_input", "pus_cells_input", "rbcs_input",
+    "ref_phys_input", "culture_cond_sel",
+    "patho_purity_sel", "patho_gram_sel", "patho_ua_sel", "patho_coll_sel",
+    "patho_symp_urine", "patho_host_sel",
+    "np_purity_sel", "np_gram_sel", "np_sirs_ms", "np_bsrc_sel", "np_spwbc",
+    "np_spepi", "np_symp_gi", "np_wtype_sel", "np_symp_wound", "np_symp_resp",
+    "np_host_sel",
+    "sev_sel_ui", "sw_drug_sel", "sw_days_num", "sw_i_chk", "sw_o_chk", "sw_b_chk",
+    "de_h_num", "de_i_chk",
+)
+_PATIENT_STATE_KEYS = (
+    "patient_name_ocr", "patient_name_final", "colony_count", "date_in",
+    "pus_cells_text", "rbcs_text", "referring_physician", "culture_condition",
+    "patho_culture_purity", "patho_symptoms", "patho_urinalysis", "patho_gram_stain",
+    "patho_host_factors", "patho_sputum_pus", "patho_sputum_epi", "patho_sirs",
+    "patho_blood_source", "patho_wound_type", "patho_result", "patho_pdf_ctx",
+    "last_patho_specimen", "severity_level", "child_pugh_class", "carb_type_now",
+    "days_on_iv", "clinical_improving_48h", "tolerating_oral", "bacteremia_resolved",
+    "hours_on_treatment", "de_clinical_improving",
+    "_img_bytes", "_img_hash", "_img_error", "_rpt_text", "_rpt_hash",
+    "_pdf_bytes", "_pdf_hash", "_pdf_lang_used",
+)
+
+
+def reset_patient_state() -> None:
+    """Forget every patient-specific input before a different report is read."""
+    for _k in _PATIENT_WIDGET_KEYS + _PATIENT_STATE_KEYS:
+        st.session_state.pop(_k, None)
+    for _k in [k for k in list(st.session_state.keys())
+               if str(k).startswith("severity_manual_")]:
+        st.session_state.pop(_k, None)
+    init_session_state()          # re-seed the data keys with their defaults
+
 # =========================================================
 # أدوات مساعدة
 # =========================================================
@@ -668,7 +713,7 @@ from ocr_parsing import (                                            # noqa: E40
     ORGANISM_OCR_ALIASES, ABX_DISK_CODES,
     _scan_line_for_disk_codes, _scan_line_for_drugs, extract_detected_drugs,
     _SIR_ALIASES, normalize_sir_value, normalize_sir_map,
-    match_antibiotic_from_text,
+    match_antibiotic_from_text, parse_result_line, age_reading_is_ambiguous,
 )
 
 
@@ -693,6 +738,32 @@ def calc_creatinine_clearance(age: int, weight: float, scr: float, sex: str) -> 
     # `cl_cr <= renal_limit` test at once and print "CrCl -14 ml/min" in the
     # report, so clamp at the source rather than trusting the caller.
     return max(0.0, crcl)
+
+
+def calc_paediatric_egfr(height_cm: Optional[float], scr: Optional[float],
+                         age_years: Optional[float],
+                         age_months: Optional[int] = None) -> Optional[float]:
+    """Paediatric eGFR (ml/min/1.73 m²) -- bedside Schwartz, or None.
+
+    Added 2026-11-11 (round 4). Cockcroft-Gault is an ADULT equation; in a
+    child it is driven by body weight and badly underestimates clearance (a
+    healthy 3.5 kg neonate with SCr 0.5 came out at ~14 ml/min).
+      * 1-17 years: bedside Schwartz (CKiD, Schwartz et al. JASN 2009),
+        eGFR = 0.413 x height(cm) / SCr(mg/dL)
+      * under 1 year: the original Schwartz constant for TERM infants, 0.45
+        (0.33 applies to pre-term infants, which this form cannot tell apart).
+    Returns None without a height -- the equation cannot be applied.
+    """
+    try:
+        h = float(height_cm or 0)
+        s = float(scr or 0)
+    except (TypeError, ValueError):
+        return None
+    if h <= 0 or s <= 0:
+        return None
+    infant = (age_months is not None) or (age_years is not None and age_years < 1)
+    k = 0.45 if infant else 0.413
+    return round(k * h / s, 1)
 
 
 # ── UNKNOWN vs NORMAL CLEARANCE ──────────────────────────────────────────────
@@ -1092,23 +1163,12 @@ def detect_age(text: str) -> Optional[int]:
     are therefore matched BEFORE the bare number, and `detect_age_months`
     supplies the precision the neonatal table needs.
     """
-    t = str(text or "")
-    # days / weeks / months -> under one year
-    if re.search(r"(\d+)\s*(?:day|days|d\b|يوم|أيام)", t, re.I): return 0
-    if re.search(r"(\d+)\s*(?:week|weeks|wk|w\b|أسبوع|اسبوع)", t, re.I): return 0
-    if re.search(r"(\d+)\s*(?:month|months|mo\b|mos|شهر|شهور|أشهر)", t, re.I): return 0
-    # "6/12" means 6 months; "18/12" would be 18 months = 1 year
-    m = re.search(r"(?:age|العمر|السن)\s*[:\-]?\s*(\d{1,2})\s*/\s*12\b", t, re.I)
-    if m:
-        return int(m.group(1)) // 12
-    for pattern in [r"(\d+)\s*[Yy]ears?", r"(\d+)\s*[Yy]\b", r"(\d+)\s*سنة",
-                    r"Age[:\s]+(\d+)", r"العمر[:\s]+(\d+)"]:
-        match = re.search(pattern, t)
-        if match:
-            value = safe_int(match.group(1), -1)
-            if 0 <= value <= 120:
-                return value
-    return None
+    # FIX 2026-11-11 (round 4): the unit patterns ran over the WHOLE report
+    # first, so "growth after 2 days incubation" made a 45-year-old age 0. The
+    # age is now read from the age field itself -- see
+    # ocr_parsing.parse_patient_age for the rules and the history.
+    from ocr_parsing import parse_patient_age
+    return parse_patient_age(text)[0]
 
 
 
@@ -1167,10 +1227,49 @@ def classify_specimen(specimen: str) -> str:
             return category
     return ""
 
+_SPEC_CAT_TO_TYPE = {"urine": "Urine", "blood": "Blood", "sputum": "Sputum",
+                     "wound": "Wound Swab", "pus": "Pus", "stool": "Stool", "csf": "CSF",
+                     "abdomen": "Pus"}
+
+
 def detect_specimen(text_lower: str) -> Optional[str]:
-    for specimen in SPECIMEN_TYPES:
-        if specimen.lower() in text_lower:
-            return specimen
+    """Specimen type from the OCR text.
+
+    FIX 2026-11-11 (round 4): this returned the FIRST specimen name found
+    anywhere in the text, in list order (Urine, Blood, Sputum, ...). Analyte
+    lines name other specimens: a CSF report prints "RBCs (red blood cells)"
+    and a stool report "occult blood", so both came back as BLOOD -- which
+    then filtered the organism list and pre-selected a bloodstream workflow.
+    Now: the labelled specimen field first, then "<x> culture", then the most
+    specific words, with the analyte words ("blood", "pus") last.
+    """
+    t = str(text_lower or "").lower()
+
+    def _typ(cat: str) -> Optional[str]:
+        name = _SPEC_CAT_TO_TYPE.get(cat)
+        return name if name in SPECIMEN_TYPES else None
+
+    for m in re.finditer(r"(?:specimen|sample|type of specimen|نوع العينة|العينة)"
+                         r"\s*(?:type)?\s*[:\-]\s*([^\n|]{2,40})", t):
+        cat = classify_specimen(m.group(1))
+        if cat and _typ(cat):
+            return _typ(cat)
+    m = re.search(r"(?<![a-z])(urine|blood|sputum|stool|csf|wound|pus|throat|tracheal|bal)"
+                  r"\s*(?:culture|c\s*/\s*s|c\s*&\s*s)", t)
+    if m:
+        cat = classify_specimen(m.group(1))
+        if cat and _typ(cat):
+            return _typ(cat)
+    for name, keys in (("CSF", ("csf", "cerebrospinal", "نخاعي")),
+                       ("Stool", ("stool", "faec", "fecal", "براز")),
+                       ("Sputum", ("sputum", "bronch", "tracheal", "بلغم")),
+                       ("Urine", ("urine", "بول")),
+                       ("Wound Swab", ("wound", "swab", "جرح", "مسحة")),
+                       ("Blood", ("blood culture", "bacteraem", "bacterem", "bottle")),
+                       ("Pus", ("abscess", "pus ", "صديد", "خراج")),
+                       ("Blood", ("blood",))):
+        if name in SPECIMEN_TYPES and any(k in t for k in keys):
+            return name
     return None
 
 # Spellings a laboratory actually prints, mapped to the profile key. Detection
@@ -1313,10 +1412,41 @@ def detect_pus_cells(text: str) -> str:
     # count elsewhere in the report is not misread as the pus-cell value.
     _pus_line = ""
     for _ln in text_l.splitlines():
-        if re.search(r"pus\s*cells?|w\.?b\.?c|leu[ck]ocyt|صديد", _ln):
+        # Round 5: "Leukocyte esterase: +++" is a dipstick line, not a cell
+        # count -- it used to win over the real "Pus cells: 2-4" line below it
+        # and came back as ">100". "Pus: 50-60" (no "cells") is accepted.
+        if "esterase" in _ln:
+            continue
+        if re.search(r"pus\s*cells?|(?<![a-z])pus\s*[:=]|w\.?b\.?c|leu[ck]ocyt|صديد", _ln):
             _pus_line = _ln
             break
-    scope = _pus_line or text_l   # fall back to whole text only if unlabeled
+    # FIX 2026-11-11 (round 4): this used to fall back to the WHOLE report when
+    # no pus/WBC line existed, and the generic qualifiers below then read the
+    # culture section as microscopy -- "Colony count: >100,000 CFU/mL" became
+    # pus cells ">100" and "Moderate growth of Klebsiella" became "10-20",
+    # both fed to the pathogenicity score as pyuria the report never stated.
+    # Without a labelled line there is no pus-cell value to qualify; only the
+    # bare N/HPF fallback at the end (which has its own guards) may still run.
+    if not _pus_line:
+        if not re.search(r"r\.?\s*b\.?\s*c|red\s*b|erythro|cast|epithel|crystal|"
+                         r"yeast|bacteri|حمراء|بلورات", text_l):
+            for pat in (r"(\d+\s*[-–]\s*\d+)\s*/\s*hpf", r"(\d+)\s*/\s*hpf"):
+                m = re.search(pat, text_l, re.IGNORECASE)
+                if m:
+                    return m.group(1).strip()
+        return ""
+    scope = _pus_line
+
+    # Round 5: a NUMBER printed right after the label is the value. The verbal
+    # qualifiers below used to be tried first over the whole line, so
+    # "Pus cells 15-20 /HPF, many bacteria" came back as ">30" -- the word
+    # belongs to the bacteria.
+    _after = re.split(r"pus\s*cells?|(?<![a-z])pus(?=\s*[:=])|w\.?\s*b\.?\s*c\.?s?|"
+                      r"leu[ck]ocytes?|صديد", scope, maxsplit=1)[-1]
+    _m_num = re.match(r"(?:[\s:=\-–/().]|h\.?p\.?f\.?)*(\d+\s*[-–]\s*\d+|\d+)(?![\d,.]*\d)",
+                      _after)
+    if _m_num:
+        return _m_num.group(1).strip()
 
     # ── Text qualifiers (check first, within scope) ──────────────────────────
     # ADDED 2026-08-03. This extractor and pathogenicity._parse_pus disagreed
@@ -1352,7 +1482,7 @@ def detect_pus_cells(text: str) -> str:
 
     # ── Numeric patterns (anchored to pus/wbc first) ─────────────────────────
     patterns = [
-        r"pus\s*cells?\s*[:\-]?\s*(\d+\s*[-–]\s*\d+|\d+)",
+        r"pus(?:\s*cells?)?\s*[:\-]?\s*(\d+\s*[-–]\s*\d+|\d+)",
         r"wbcs?\s*[:\-]?\s*(\d+\s*[-–]\s*\d+|\d+)",
         r"(\d+\s*[-–]\s*\d+)\s*/\s*hpf",
         r"(\d+)\s*/\s*hpf",
@@ -1407,9 +1537,15 @@ def detect_rbcs(text: str) -> str:
         m = re.search(pat, text_l, re.IGNORECASE)
         if m:
             return m.group(1).strip()
-    # Handle text qualifiers for RBCs
-    if re.search(r"tntc", text_l) and "pus" not in text_l[:text_l.find("tntc")]:
-        return "TNTC"
+    # Handle text qualifiers for RBCs -- ONLY on a line that names red cells.
+    # FIX 2026-11-11 (round 4): the old test ("TNTC somewhere, and the word
+    # 'pus' not before it") turned "WBC: TNTC" / "Leucocytes: TNTC" into an RBC
+    # value, and fired on any TNTC in a report with no pus label at all.
+    for _ln in text_l.splitlines():
+        if (re.search(r"tntc|too\s+numerous|full\s*field", _ln)
+                and re.search(r"r\.?\s*b\.?\s*c|red\s*b|erythro|كريات\s*حمراء", _ln)
+                and not re.search(r"pus|w\.?\s*b\.?\s*c|leu[ck]|صديد", _ln)):
+            return "TNTC"
     # Fallback: find the /HPF line that actually NAMES red cells. Never guess by
     # position -- the old "second /HPF line" rule returned the pus-cell count as
     # RBCs whenever the RBC label was dotted (R.B.Cs), and fabricated a value from
@@ -1453,11 +1589,16 @@ def extract_all_data_cached(file_bytes: bytes) -> Dict[str, Any]:
         line = line.strip()
         if not line:
             continue
-        result = classify_sir_from_line(line)
-        if not result:
-            continue
-        matched_abx = match_antibiotic_from_text(line)
-        if matched_abx:
+        # Round 5 (2026-11-12): a line may carry more than one result (two
+        # columns, "Sensitive to: a, b"). One verdict + the longest drug name
+        # per line read "Amikacin Sensitive  Ciprofloxacin Resistant" as
+        # Ciprofloxacin = S. See ocr_parsing.parse_result_line.
+        for matched_abx, result in parse_result_line(line, classify_sir_from_line):
+            # The same drug printed twice with different results is not
+            # readable: keep the more resistant reading, never the S.
+            _old = sir_map.get(matched_abx)
+            if _old and _old != result:
+                result = max(_old, result, key="SIR".index)
             sir_map[matched_abx] = result
     return {
         "patient": {
@@ -1468,6 +1609,7 @@ def extract_all_data_cached(file_bytes: bytes) -> Dict[str, Any]:
             # notice. Without it the OCR could read "Age: 6/12" correctly as
             # under one year and the form would still open on the adult branch.
             "AgeMonths": detect_age_months(full_text),
+            "AgeAmbiguous": age_reading_is_ambiguous(full_text),
             "Sex":      detect_sex(text_lower),
             "Specimen": detect_specimen(text_lower),
             "Organism": detect_organism(text_lower),
@@ -1825,6 +1967,23 @@ def run_analysis(
             is_pregnant=k["is_preg"], cl_cr=k["cl_cr"], is_renal=k["is_renal"],
             is_hepatic=k["is_hepatic"], child_pugh=k["child_pugh"],
         )
+        # 2026-11-11 (round 4): the pregnancy-caution bucket passes the same
+        # terminal check -- it used to be the one list the gate never saw.
+        if preg_warn:
+            from safety_gate import gate_pregnancy_bucket
+            preg_warn, banned, _pmoves = gate_pregnancy_bucket(
+                preg_warn, banned,
+                organism=organism, specimen=specimen,
+                age_years=k["age"], age_months=k["age_months"],
+                is_pregnant=k["is_preg"], cl_cr=k["cl_cr"], is_renal=k["is_renal"],
+                is_hepatic=k["is_hepatic"], child_pugh=k["child_pugh"],
+            )
+            if _pmoves:
+                gate_report.setdefault("moves", []).extend(_pmoves)
+                _c = gate_report.setdefault("counts", {})
+                _c["banned"] = len(banned)
+                _c["preg_warn"] = len(preg_warn)
+                _c["moved"] = len(gate_report["moves"])
 
     phenotypes = detect_resistance_phenotypes(organism, sir_map)
     mechanism = predict_esbl(organism, sir_map)
@@ -1837,12 +1996,16 @@ def run_analysis(
         organism=organism, carbapenemase_type=carbapenemase_type,
     )
 
+    # FIX 2026-11-11 (round 4): this passed `cl_cr or 95`, so an UNKNOWN
+    # clearance on a patient flagged renal -- and a measured clearance of 0 --
+    # was read as a normal 95 ml/min and never made a UTI "complicated".
+    # suggest_severity() resolves None itself (resolve_crcl), like every other
+    # layer.
     severity = suggest_severity(specimen, k["age"], k["sex"], k["is_preg"],
-                                k["is_renal"], k["cl_cr"] or 95)
-    syndrome = get_infection_syndrome(specimen, organism, k["age"], k["is_preg"])
-    _syn_key = syndrome.get("syndrome", "") if isinstance(syndrome, dict) else (syndrome or "")
-    if uti_syndrome == "upper" and classify_specimen(specimen) == "urine":
-        _syn_key = "pyelonephritis"
+                                k["is_renal"], k["cl_cr"])
+    syndrome = get_infection_syndrome(specimen, organism, k["age"], k["is_preg"],
+                                      sex=k["sex"])
+    _syn_key = duration_syndrome_key(syndrome, uti_syndrome, specimen)
     duration = get_treatment_duration(
         specimen, organism, _syn_key, k["age"], k["sex"], k["is_renal"],
         phenotypes, severity.get("suggested", "moderate"),
@@ -1884,6 +2047,24 @@ def run_analysis(
         "degraded": degraded,
         "gate_applied": bool(apply_gate and SAFETY_GATE_AVAILABLE),
     }
+
+
+def duration_syndrome_key(syndrome: Any, uti_syndrome: Optional[str], specimen: str) -> str:
+    """The syndrome string the duration engine dispatches on.
+
+    ONE place for it (2026-11-11, round 4). run_analysis() turned an "upper"
+    UTI into "pyelonephritis" before asking for a duration, but the on-screen
+    Treatment Duration panel and the PDF each asked again with the bare
+    syndrome label ("Urinary Tract Infection (UTI)"). A clinician who picked
+    "pyelonephritis / cUTI" in the sidebar therefore saw nitrofurantoin and
+    fosfomycin removed by the engine and, in the panel below, the 5-day
+    uncomplicated-cystitis course (nitrofurantoin 5 d | fosfomycin single dose).
+    """
+    key = syndrome.get("syndrome", "") if isinstance(syndrome, dict) else str(syndrome or "")
+    if (str(uti_syndrome or "").lower() in ("upper", "pyelonephritis", "urosepsis")
+            and classify_specimen(specimen) == "urine"):
+        return "pyelonephritis"
+    return key
 
 
 def warned_note_for(item: Dict[str, Any], lang: str = "ar") -> str:
@@ -2929,6 +3110,20 @@ def analyze_antibiotics(
         # Absolute teratogenic contraindications must be resolved before any
         # branch that can exit the loop early.
         # ══════════════════════════════════════════════════════════════════
+        #
+        # FIX 2026-11-11 (round 4): every pregnancy CAUTION used to end in
+        # `continue`, straight into preg_warn_items. Nothing after this block
+        # ran for those drugs -- not the hepatic contraindication, not the renal
+        # adjustment, not the Intermediate flag -- and run_analysis() never
+        # passed the pregnancy bucket through the terminal safety gate either.
+        # So a pregnant woman in Child-Pugh C was shown TMP-SMX and
+        # Nitrofurantoin (hepatic AVOID) as "use with caution", and a pregnant
+        # woman with meningitis was shown Gentamicin/Amikacin (no CSF
+        # penetration) as options: 322 of 6,000 random cases. A pregnancy
+        # caution is now RECORDED here and the drug keeps walking through the
+        # remaining hard checks; it is bucketed at the end of the loop.
+        _preg_item: Optional[Dict[str, Any]] = None
+        _preg_extra: List[str] = []
         if is_preg:
 
             # ── 1. Tetracyclines: ALWAYS BANNED (class-based override) ────────
@@ -2952,7 +3147,7 @@ def analyze_antibiotics(
             # kanamycin; gentamicin/tobramycin/amikacin carry a theoretical risk
             # managed by once-daily dosing, levels and short courses.
             if "aminoglycoside" in cls:
-                preg_warn_items.append({
+                _preg_item = {
                     "name": drug, **info,
                     "preg_note": (
                         f"⚠️ Use with Caution — {drug} في الحمل:\n"
@@ -2961,17 +3156,16 @@ def analyze_antibiotics(
                         "مقبول عند الحاجة (التهاب المشيمة: Ampicillin + Gentamicin؛ التهاب حويضة "
                         "شديد أو إنتان) بجرعة يومية واحدة ومراقبة المستوى ولأقصر مدة.\n"
                         ">>> القرار النهائي للطبيب المعالج حصراً. <<<"),
-                })
-                continue
+                }
 
             # ── 3. TMP-SMX: USE WITH CAUTION, trimester-dependent (2026-11-10) ─
             # FIX: was an absolute ban. ACOG Committee Opinion 717 (reaffirmed):
             # sulfonamides remain appropriate in the 1st trimester when no
             # suitable alternative exists; avoid near term (kernicterus). It is
             # also the alternative for Listeria in penicillin allergy.
-            if ("sulfonamide" in cls or "trimethoprim" in d_low
+            elif ("sulfonamide" in cls or "trimethoprim" in d_low
                     or "sulfamethox" in d_low):
-                preg_warn_items.append({
+                _preg_item = {
                     "name": drug, **info,
                     "preg_note": (
                         "⚠️ TMP-SMX — Use with Caution في الحمل:\n"
@@ -2980,11 +3174,10 @@ def analyze_antibiotics(
                         "قرب الولادة (≥ 32-36 أسبوع): تجنّب — خطر kernicterus.\n"
                         "الثلث الثاني: مقبول.\n"
                         ">>> القرار النهائي للطبيب المعالج حسب الـ trimester. <<<"),
-                })
-                continue
+                }
 
             # ── 4. Clarithromycin: BANNED ─────────────────────────────────────
-            if "clarithromycin" in d_low:
+            elif "clarithromycin" in d_low:
                 preg_note = info.get("preg_note") or (
                     "⛔ ممنوع في الحمل -- Clarithromycin.\n"
                     "ارتبط بزيادة الإجهاض (Andersen, PLoS One 2013) وإشارة لتشوهات في الثلث "
@@ -3000,7 +3193,7 @@ def analyze_antibiotics(
                 continue
 
             # ── 5. Any remaining preg_status="Banned": BANNED ─────────────────
-            if preg_status_of(info) == "Banned":
+            elif preg_status_of(info) == "Banned":
                 preg_note = info.get("preg_note") or "⛔ ممنوع في الحمل."
                 banned.append(build_banned_item(
                     drug, "pregnancy",
@@ -3010,8 +3203,8 @@ def analyze_antibiotics(
                 continue
 
             # ── 6. Fluoroquinolones: USE WITH CAUTION ────────────────────────
-            if "fluoroquinolone" in cls:
-                preg_warn_items.append({
+            elif "fluoroquinolone" in cls:
+                _preg_item = {
                     "name": drug, **info,
                     "preg_note": info.get("preg_note") or (
                         "⚠️ Use with Caution -- Fluoroquinolone في الحمل:\n"
@@ -3019,12 +3212,11 @@ def analyze_antibiotics(
                         "لا يُستخدم كخط أول -- فقط عند غياب البديل الأكثر أمانًا.\n"
                         ">>> القرار النهائي للطبيب المعالج حصراً. <<<"
                     ),
-                })
-                continue
+                }
 
             # ── 7. Nitrofurantoin: CAUTION (trimester-dependent) ─────────────
-            if "nitrofurantoin" in d_low:
-                preg_warn_items.append({
+            elif "nitrofurantoin" in d_low:
+                _preg_item = {
                     "name": drug, **info,
                     "preg_note": info.get("preg_note") or (
                         "⚠️ Nitrofurantoin -- Use with Caution في الحمل:\n"
@@ -3035,12 +3227,11 @@ def analyze_antibiotics(
                         "البديل في 3rd trim: Fosfomycin جرعة واحدة أو Cephalexin.\n"
                         ">>> القرار النهائي للطبيب المعالج حسب الـ trimester. <<<"
                     ),
-                })
-                continue
+                }
 
             # ── 8. Metronidazole / Nitroimidazoles: CAUTION ───────────────────
-            if "nitroimidazole" in cls or "metronidazole" in d_low:
-                preg_warn_items.append({
+            elif "nitroimidazole" in cls or "metronidazole" in d_low:
+                _preg_item = {
                     "name": drug, **info,
                     "preg_note": info.get("preg_note") or (
                         "⚠️ Metronidazole -- Use with Caution:\n"
@@ -3048,13 +3239,11 @@ def analyze_antibiotics(
                         "يُفضل تجنبه في الـ 1st trimester إن وُجد بديل آمن.\n"
                         ">>> القرار النهائي للطبيب المعالج حصراً. <<<"
                     ),
-                })
-                continue
+                }
 
             # ── 9. Carbapenems / Vancomycin / Colistin (Warn): physician ──────
-            if preg_status_of(info) == "Warn":
-                preg_warn_items.append({"name": drug, **info})
-                continue
+            elif preg_status_of(info) == "Warn":
+                _preg_item = {"name": drug, **info}
 
         # ══════════════════════════════════════════════════════════════════
         # HEPATIC CONTRAINDICATIONS -- enforced, not merely annotated
@@ -3085,10 +3274,16 @@ def analyze_antibiotics(
                     continue
                 if str(_lvl).lower() not in ("normal", "renal-based", "auc/mic monitoring",
                                              "normal (renal)"):
-                    warned.append({"name": drug, **info,
-                                   "warning_reason": "hepatic_adjustment",
-                                   "hepatic_level": _lvl, "hepatic_rec": _rec})
-                    continue
+                    if _preg_item is not None:
+                        # Stays in the pregnancy bucket, but the hepatic fact
+                        # travels with it instead of being dropped.
+                        _preg_item.update(hepatic_level=_lvl, hepatic_rec=_rec)
+                        _preg_extra.append(f"🫀 Hepatic (Child-Pugh {_grade}): {_lvl} — {_rec}")
+                    else:
+                        warned.append({"name": drug, **info,
+                                       "warning_reason": "hepatic_adjustment",
+                                       "hepatic_level": _lvl, "hepatic_rec": _rec})
+                        continue
 
         # ── Renal dose adjustment (a CAUTION, so it must run last) ────────────
         # Kept below every absolute contraindication on purpose: this branch
@@ -3097,21 +3292,112 @@ def analyze_antibiotics(
         renal_limit = info.get("renal_limit", 0)
         if (is_renal and renal_limit > 0 and _crcl is not None
                 and _crcl <= renal_limit):
-            warned.append({"name": drug, **info,
-                           "warning_reason": "renal_adjustment",
-                           # Carried on the item so the renderers do not each
-                           # have to re-derive them. The PDF, the text report and
-                           # the on-screen panel previously printed three
-                           # different amounts of renal detail.
-                           "crcl_used": _crcl,
-                           "crcl_measured": _crcl_measured})
-            continue
+            if _preg_item is not None:
+                _preg_item.update(renal_adjustment=True, crcl_used=_crcl,
+                                  crcl_measured=_crcl_measured)
+                _rn = str(info.get("renal_note_en") or info.get("renal_note") or "").strip()
+                _preg_extra.append(
+                    f"🫘 Renal: CrCl {_crcl:.0f} ml/min"
+                    + ("" if _crcl_measured else " (assumed — no creatinine entered)")
+                    + f" ≤ {renal_limit} — dose adjustment required"
+                    + (f": {_rn}" if _rn else "."))
+            else:
+                warned.append({"name": drug, **info,
+                               "warning_reason": "renal_adjustment",
+                               # Carried on the item so the renderers do not each
+                               # have to re-derive them. The PDF, the text report and
+                               # the on-screen panel previously printed three
+                               # different amounts of renal detail.
+                               "crcl_used": _crcl,
+                               "crcl_measured": _crcl_measured})
+                continue
 
         if culture_result == "I":
-            warned.append({"name": drug, **info, "warning_reason": "intermediate_culture"})
+            if _preg_item is not None:
+                _preg_extra.append("🟡 Culture result I (susceptible, increased exposure) — "
+                                   "only at the high-dose regimen, and only if no S alternative exists.")
+            else:
+                warned.append({"name": drug, **info, "warning_reason": "intermediate_culture"})
+                continue
+
+        if _preg_item is not None:
+            if _preg_extra:
+                _preg_item["preg_note"] = ((_preg_item.get("preg_note") or "").rstrip()
+                                           + "\n" + "\n".join(_preg_extra)).strip()
+            preg_warn_items.append(_preg_item)
             continue
 
         allowed.append({"name": drug, **info})
+
+    # ── Host checks for cautions that left the loop EARLY (round 5, 2026-11-12) ─
+    # Same defect family as the round-4 pregnancy fix. The ESBL-cystitis
+    # carve-out, the possible-carbapenemase caution, the possible-MRSA caution
+    # and the neonatal "months unknown" caution all end in `continue` ABOVE the
+    # hepatic and renal blocks, so those drugs never met either:
+    #   * Cefepime / Pip-Tazo on an ESBL cystitis with CrCl 15 were printed as
+    #     "caution" with the ESBL note only -- no renal dose adjustment, while
+    #     Meropenem beside them carried one (cefepime accumulation =
+    #     encephalopathy);
+    #   * Cefoperazone and Cefoperazone-Sulbactam (hepatic AVOID in Child-Pugh
+    #     C) stayed a caution: 21 of 12,000 random cases.
+    # The checks run here, after the loop, so no early exit can skip them: a
+    # hepatic AVOID bans; a hepatic or renal adjustment is recorded on the item
+    # and written into the note every renderer already prints for that reason.
+    _EARLY_NOTE_KEYS = {
+        "esbl_bli_uti_only":      ("esbl_note", "esbl_note_en"),
+        "possible_carbapenemase": ("esbl_note", "esbl_note_en"),
+        "possible_mrsa":          ("possible_mrsa_note",),
+        "neonate":                ("reason_detail",),
+        # The hepatic CAUTION branch also ends in `continue`, above the renal
+        # block: Cefoperazone-Sulbactam in Child-Pugh B with CrCl 15 was a
+        # hepatic caution with no renal adjustment. Renal part only here.
+        "hepatic_adjustment":     ("hepatic_note",),
+    }
+    _kept_warned: List[Dict] = []
+    for _it in warned:
+        _nkeys = _EARLY_NOTE_KEYS.get(_it.get("warning_reason") or "")
+        if not _nkeys:
+            _kept_warned.append(_it)
+            continue
+        _nm = _it.get("name")
+        _inf = ABX_GUIDELINES.get(_nm) or {}
+        _extra: List[str] = []
+        if (is_hepatic and HEPATIC_DOSING.get(_nm)
+                and _it.get("warning_reason") != "hepatic_adjustment"):
+            _hrow = HEPATIC_DOSING[_nm]
+            _g = (child_pugh or "C").strip().upper()[:1] or "C"
+            if _g not in ("A", "B", "C"):
+                _g = "C"
+            _hl, _hr = _hrow.get(_g, ("Normal", "No adjustment"))
+            if "avoid" in str(_hl).lower():
+                banned.append(build_banned_item(
+                    _nm, "hepatic",
+                    f"ممنوع في القصور الكبدي (Child-Pugh {_g}).",
+                    f"{_nm}: {_hr}. {_hrow.get('note', '')} "
+                    f"المرجع: BNF 2025 (hepatic impairment) / LiverTox NIH.",
+                ))
+                continue
+            if str(_hl).lower() not in ("normal", "renal-based", "auc/mic monitoring",
+                                        "normal (renal)"):
+                _it.update(hepatic_level=_hl, hepatic_rec=_hr)
+                _extra.append(f"🫀 Hepatic (Child-Pugh {_g}): {_hl} — {_hr}")
+        _rl = _inf.get("renal_limit", 0) or 0
+        if is_renal and _rl > 0 and _crcl is not None and _crcl <= _rl:
+            _it.update(renal_adjustment=True, crcl_used=_crcl,
+                       crcl_measured=_crcl_measured)
+            _rn = str(_inf.get("renal_note_en") or _inf.get("renal_note") or "").strip()
+            _extra.append(
+                f"🫘 Renal: CrCl {_crcl:.0f} ml/min"
+                + ("" if _crcl_measured else " (assumed — no creatinine entered)")
+                + f" ≤ {_rl} — dose adjustment required"
+                + (f": {_rn}" if _rn else "."))
+        if _extra:
+            _add = "\n".join(_extra)
+            _present = [k for k in _nkeys if str(_it.get(k) or "").strip()] or [_nkeys[0]]
+            for _k in _present:
+                _it[_k] = (str(_it.get(_k) or "").rstrip() + "\n" + _add).strip()
+        _kept_warned.append(_it)
+    warned = _kept_warned
 
     # ── Upper UTI / pyelonephritis: lower-tract-only agents (2026-11-10) ──────
     # Nitrofurantoin, oral fosfomycin and norfloxacin do not reach renal tissue
@@ -3577,12 +3863,22 @@ def classify_mdr(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
             MDR_CATEGORIES_STAPH, "staphylococcus",
             "Magiorakos 2012, Table 1" if _is_aureus
             else "S. aureus categories applied to CoNS — outside Magiorakos scope")
-    elif any(g in org_l for g in GRAM_POSITIVE_ORGANISMS):
+    elif (any(g in org_l for g in GRAM_POSITIVE_ORGANISMS)
+          or "gram-positive" in org_l or "gram positive" in org_l):
+        # "Gram-positive cocci (unidentified)" (added 2026-11-10) matched no
+        # key here and fell through to the GRAM-NEGATIVE set, reported as
+        # "Magiorakos 2012, Tables 3-5" -- a Gram-negative framework applied to
+        # a Gram-positive isolate (FIX 2026-11-11, round 4).
         applicable, _group, _basis = (MDR_CATEGORIES_GRAM_POS, "gram-positive (other)",
                                       "outside Magiorakos scope")
     else:
         applicable, _group, _basis = (MDR_CATEGORIES_GRAM_NEG, "gram-negative",
                                       "Magiorakos 2012, Tables 3-5")
+    # An isolate identified only by its Gram stain is not one of the organisms
+    # Magiorakos tabulated; say so rather than quote the paper for it.
+    if (("unidentified" in org_l or "unspeciated" in org_l or "non-fermenting" in org_l)
+            and "enterobacterales" not in org_l and "Magiorakos" in _basis):
+        _basis = "organism not identified — provisional, outside Magiorakos scope"
     if any(k in org_l for k in MDR_OUTSIDE_MAGIORAKOS) and "Magiorakos" in _basis:
         _basis = "outside Magiorakos scope — literature convention"
     is_gram_pos = _group != "gram-negative"
@@ -3694,7 +3990,7 @@ def classify_mdr(organism: str, sir_map: Dict[str, str]) -> Dict[str, Any]:
         warnings.append("ℹ️ MDR بحكم التعريف: كل MRSA يُصنَّف MDR — مقاومة "
                         "Oxacillin/Cefoxitin تتنبأ بعدم الحساسية لكل فئات "
                         "البيتا-لاكتام (Magiorakos 2012, Table 1, criterion i).")
-    if _basis.startswith("outside") or "MDRSP" in _basis:
+    if "outside" in _basis or "MDRSP" in _basis:
         warnings.append(f"ℹ️ أساس التصنيف: {_basis}. Magiorakos 2012 يغطي "
                         "S. aureus · Enterococcus · Enterobacteriaceae · "
                         "P. aeruginosa · Acinetobacter فقط.")
@@ -3757,6 +4053,13 @@ ESBL_PRODUCERS = frozenset([
     "serratia marcescens", "serratia spp.",
     "morganella morganii", "providencia spp.",
     "enterobacterales", "hafnia alvei",
+    # 2026-11-11 (round 4): Salmonella and Shigella are Enterobacterales and
+    # CTX-M ESBLs are well documented in both (Egypt included); the AmpC note
+    # further down names Salmonella explicitly. Missing here, a Salmonella
+    # bacteraemia with ceftriaxone AND cefotaxime R came back with no mechanism
+    # at all -- piperacillin-tazobactam and cefepime RECOMMENDED -- while the
+    # identical E. coli panel had both refused (IDSA AMR Guidance 2026).
+    "salmonella spp.", "salmonella", "shigella spp.", "shigella",
 ])
 
 # ── Organism matching now lives in clinical_utils.py ────────────────────────
@@ -4326,6 +4629,55 @@ TREATMENT_DURATION_DB: Dict[str, Any] = {
         "notes": "21d IV for aerobic Gram-negative bacillary meningitis. Verify CSF sterilization.",
         "follow_up_culture": True, "ref": "IDSA Bacterial Meningitis 2004",
     },
+    # ── Added 2026-11-11 (round 4) ─────────────────────────────────────────
+    # Every CSF isolate that was not pneumococcus / meningococcus /
+    # H. influenzae / Listeria / GBS fell to "Gram-Negative Meningitis, 21 d" --
+    # S. aureus, MRSA, CoNS, enterococci and unidentified Gram-positive cocci
+    # included.
+    "Meningitis_staph": {
+        "label": "Staphylococcal Meningitis / Ventriculitis",
+        "days": (10, 14), "standard": 14, "iv_days": 14, "po_days": 0,
+        "notes": "Usually shunt / EVD / post-neurosurgical: remove or externalise the device. "
+                 "S. aureus 10-14d; CoNS 10d with minimal CSF abnormality, 10-14d with "
+                 "pleocytosis / low glucose -- counted from the first sterile CSF culture. "
+                 "Repeat CSF cultures until sterile.",
+        "follow_up_culture": True,
+        "ref": "IDSA Healthcare-Associated Ventriculitis and Meningitis 2017",
+    },
+    "Meningitis_other": {
+        "label": "Bacterial Meningitis (other / not fully identified)",
+        "days": (10, 21), "standard": 14, "iv_days": 14, "po_days": 0,
+        "notes": "No organism-specific duration: set it on the FINAL identification and the CSF "
+                 "response (pneumococcus 10-14d, GBS 14-21d, staphylococci 10-14d, enterococci / "
+                 "viridans streptococci >=14d). Identify the organism; ID consultation.",
+        "follow_up_culture": True,
+        "ref": "IDSA Bacterial Meningitis 2004 | IDSA 2017",
+    },
+    "Bacteremia_GPC_unidentified": {
+        "label": "Gram-positive cocci bacteremia (not yet identified)",
+        "days": (5, 14), "standard": 14, "iv_days": 14, "po_days": 0,
+        "notes": "Treat as S. aureus until identified (clusters on Gram stain): repeat blood "
+                 "cultures, no oral step-down, echo if S. aureus. Re-set the duration on the "
+                 "identification -- CoNS 5-7d after line removal, streptococci 10-14d, "
+                 "enterococci 7-14d.",
+        "follow_up_culture": True, "ref": "IDSA MRSA 2011 (SAB principles) | IDSA CRBSI 2009",
+    },
+    "Bacteremia_Listeria": {
+        "label": "Listeria Bacteremia",
+        "days": (14, 21), "standard": 14, "iv_days": 14, "po_days": 0,
+        "notes": "Ampicillin +/- gentamicin, 2 weeks IV for bacteraemia without CNS involvement; "
+                 "LP / brain imaging if any neurological sign (>=21d for CNS infection). "
+                 "Cephalosporins are inactive.",
+        "follow_up_culture": True, "ref": "Expert consensus | IDSA Bacterial Meningitis 2004",
+    },
+    "Bacteremia_anaerobe": {
+        "label": "Anaerobic Bacteremia",
+        "days": (7, 14), "standard": 10, "iv_days": 3, "po_days": 7,
+        "notes": "Duration follows the source (intra-abdominal, pelvic, abscess) and its control; "
+                 "drain collections. Metronidazole is ~100% bioavailable -- oral step-down once "
+                 "stable.",
+        "follow_up_culture": False, "ref": "Expert consensus | IDSA IAI 2010",
+    },
     "SSTI_mild": {
         "label": "SSTI -- Mild (Cellulitis)",
         "days": (5, 7), "standard": 5, "iv_days": 0, "po_days": 5,
@@ -4577,14 +4929,24 @@ def get_treatment_duration(
     elif _cat == "blood":
         # 2026-11-10: every non-S. aureus isolate used to get the GNB course
         # (CoNS, enterococci and streptococci included).
+        # 2026-11-11 (round 4): "Staphylococcus spp." inherits S. aureus
+        # everywhere else in the engine, but here it fell to the CoNS course
+        # ("single bottle = contaminant"); unidentified Gram-positive cocci,
+        # Listeria and anaerobes fell to "GNB Bacteremia".
         if has_mrsa or "mrsa" in org:           key = "Bacteremia_MRSA"
-        elif ("staphylococcus aureus" in org or "lugdunensis" in org):
+        elif ("staphylococcus aureus" in org or "lugdunensis" in org
+              or org.strip().startswith("staphylococcus spp")):
             key = "Bacteremia_MSSA"            # S. lugdunensis behaves like S. aureus
         elif "coagulase" in org or "staphylococc" in org:
             key = "Bacteremia_CoNS"
         elif "enterococc" in org or org.strip() == "vre":
             key = "Bacteremia_Enterococcus"
         elif "streptococc" in org:               key = "Bacteremia_Strep"
+        elif "gram-positive" in org or "gram positive" in org:
+            key = "Bacteremia_GPC_unidentified"
+        elif "listeria" in org:                  key = "Bacteremia_Listeria"
+        elif "anaerob" in org or "لاهوائ" in org or "bacteroides" in org:
+            key = "Bacteremia_anaerobe"
         else:                                    key = "Bacteremia_GNB"
     elif _cat == "csf":
         # Match pneumococcus explicitly so Klebsiella *pneumoniae* (a GNB) is not
@@ -4599,6 +4961,11 @@ def get_treatment_duration(
         elif "listeria" in org:                  key = "Meningitis_listeria"
         elif "agalactiae" in org or "group b" in org:
             key = "Meningitis_GBS"
+        elif has_mrsa or any(k in org for k in ("staphylococc", "mrsa", "mssa", "coagulase")):
+            key = "Meningitis_staph"
+        elif any(k in org for k in ("enterococc", "streptococc", "gram-positive",
+                                    "gram positive")) or org.strip() == "vre":
+            key = "Meningitis_other"
         else:                                    key = "Meningitis_GNB"
     elif _cat in ("wound", "pus"):
         if any(k in synd for k in ["necrotiz", "fasciitis", "gangrene"]): key = "SSTI_severe"
@@ -4664,13 +5031,30 @@ def evaluate_iv_po_switch(
     drug_name: str, syndrome: str,
     clinical_improving: bool, tolerating_oral: bool,
     bacteremia_resolved: bool, days_on_iv: int,
+    organism: str = "",
 ) -> Dict[str, Any]:
-    """OPAT IV->PO Evaluation -- IDSA 2019 | BNF 2025"""
+    """OPAT IV->PO Evaluation -- IDSA 2019 | BNF 2025
+
+    `organism` added 2026-11-11 (round 4): ALWAYS_IV_SYNDROMES names
+    "staphylococcus aureus bacteremia", but the syndrome passed in is the
+    specimen-level label ("Bloodstream Infection (BSI) / Bacteremia"), which
+    never carries the organism -- so the rule could not fire and S. aureus
+    bacteraemia was cleared for oral switch like any Gram-negative one.
+    """
     bioavail, matched = 0, ""
+    # Exact name first (2026-11-11, round 4): with one substring pass in dict
+    # order, "Ofloxacin" matched inside "Ciprofloxacin" and the panel quoted
+    # the wrong drug's bioavailability.
+    _dl = (drug_name or "").lower()
     for k, v in HIGH_BIOAVAILABILITY.items():
-        if k.lower() == drug_name.lower() or drug_name.lower() in k.lower():
+        if k.lower() == _dl:
             bioavail, matched = v, k
             break
+    else:
+        for k, v in HIGH_BIOAVAILABILITY.items():
+            if _dl and _dl in k.lower():
+                bioavail, matched = v, k
+                break
 
     blockers, supporters = [], []
     if not clinical_improving: blockers.append("No clinical improvement in 48-72h")
@@ -4688,6 +5072,13 @@ def evaluate_iv_po_switch(
     synd_lower = (syndrome or "").lower()
     if any(s in synd_lower for s in ALWAYS_IV_SYNDROMES):
         blockers.append(f"{syndrome} -- requires prolonged IV therapy")
+    _org_l = (organism or "").lower()
+    if (("aureus" in _org_l or "mrsa" in _org_l or "mssa" in _org_l or "lugdunensis" in _org_l)
+            and any(k in synd_lower for k in ("bacteremia", "bacteraemia", "bloodstream", "bsi"))
+            and "staphylococcus aureus bacteremia" not in synd_lower):
+        blockers.append("S. aureus bacteraemia -- IV therapy (>= 14 d from the first negative "
+                        "culture); early oral step-down only for low-risk SAB after ID review "
+                        "(SABATO, Lancet Infect Dis 2024)")
     if days_on_iv < 2:    blockers.append(f"Less than 48h on IV ({days_on_iv}d) -- complete initial IV course")
     else:                  supporters.append(f"{days_on_iv} days on IV -- appropriate reassessment window")
 
@@ -5191,10 +5582,19 @@ def get_combination_therapy(
 def evaluate_deescalation(
     allowed: List[Dict], phenotypes: List[Dict],
     hours_on_treatment: int, clinical_improving: bool,
+    mdr_level: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """De-escalation advisor -- WHO AWaRe 2025 | IDSA Stewardship 2025"""
+    """De-escalation advisor -- WHO AWaRe 2025 | IDSA Stewardship 2025
+
+    FIX 2026-11-11 (round 4): "MDR" / "XDR" / "PDR" were looked for among the
+    PHENOTYPE names, where no detector ever emits them (the level comes from
+    classify_mdr), and DTR-P. aeruginosa was missing -- so an XDR or DTR
+    isolate got "de-escalation recommended" with no ID caution. The MDR level
+    is now passed in.
+    """
     ph_names    = [p.get("phenotype", "") for p in phenotypes]
-    is_reserve  = any(p in ph_names for p in ["MDR", "XDR", "PDR", "CRE", "CRPA", "CRAB"])
+    is_reserve  = (any(p in ph_names for p in ["MDR", "XDR", "PDR", "CRE", "CRPA", "CRAB", "DTR_PA"])
+                   or str(mdr_level or "").upper() in ("MDR", "XDR", "PDR"))
     access_drugs = [d for d in allowed if d.get("aware") == "Access"]
     watch_drugs  = [d for d in allowed if d.get("aware") == "Watch"]
     recs, can_de = [], False
@@ -6361,11 +6761,19 @@ INFECTION_SYNDROMES = {
     },
     ("Sputum", None): {
         "syndrome":  "Respiratory Tract Infection",
+        # FIX 2026-11-11 (round 4): age > 65 alone was labelled "Severe CAP".
+        # Age is ONE CURB-65 point; severity needs the score (or ATS/IDSA
+        # major/minor criteria), and suggest_severity() already rates an
+        # otherwise-well 70-year-old as moderate. The label now says what is
+        # actually known.
         "classify":  lambda age, is_preg, is_cath: (
-            "HAP/VAP" if is_cath else ("Severe CAP" if age > 65 else "CAP")
+            "HAP/VAP" if is_cath else ("CAP (age > 65 — assess CURB-65 / PSI)" if age > 65 else "CAP")
         ),
         "first_choice": ["Amoxicillin + Clavulanic acid","Levofloxacin","Azithromycin"],
-        "duration": {"CAP": "5 أيام كحد أدنى حتى الاستقرار", "Severe CAP": "5-7 أيام (أطول لـ MRSA/Pseudomonas)",
+        "duration": {"CAP": "5 أيام كحد أدنى حتى الاستقرار",
+                     "CAP (age > 65 — assess CURB-65 / PSI)": (
+                         "5 أيام كحد أدنى حتى الاستقرار — 7 أيام للحالات الشديدة أو MRSA/Pseudomonas"),
+                     "Severe CAP": "5-7 أيام (أطول لـ MRSA/Pseudomonas)",
                      "HAP/VAP": "7 أيام (ATS/IDSA 2016)"},
         "escalation": "Pseudomonas/Acinetobacter -> anti-pseudomonal mandatory",
         # FIX 2026-11-10: BAL threshold is 10^4 CFU/mL (10^3 for PSB, 10^5-10^6
@@ -6428,9 +6836,15 @@ def get_infection_syndrome(
     age:       int,
     is_preg:   bool,
     is_cath:   bool = False,
+    sex:       str = "",
 ) -> Optional[Dict[str, Any]]:
     """
     يعيد السياق السريري للعدوى -- يدعم مطابقة مرنة لأسماء العينات.
+
+    `sex` added 2026-11-11 (round 4): a urinary infection in a man is a
+    complicated UTI (IDSA cUTI 2025) -- suggest_severity() and the duration
+    engine already said so, while this panel, which never knew the sex, called
+    it "Uncomplicated UTI" with the 1-7 day cystitis course on the same screen.
     """
     # Try exact match first
     syndrome_data = INFECTION_SYNDROMES.get((specimen, None))
@@ -6457,6 +6871,9 @@ def get_infection_syndrome(
         return None
 
     sub_type = syndrome_data["classify"](age, is_preg, is_cath)
+    if (sub_type == "Uncomplicated UTI"
+            and str(sex or "").strip().lower() in ("male", "m", "ذكر")):
+        sub_type = "Complicated UTI"
     duration  = syndrome_data["duration"].get(sub_type, "حسب الاستجابة السريرية")
 
     return {
@@ -6874,6 +7291,8 @@ if uploaded:
             keys_to_delete = [k for k in st.session_state if old_hash[:8] in str(k)]
             for key in keys_to_delete:
                 del st.session_state[key]
+            # A different report = a different patient (round 4, 2026-11-11).
+            reset_patient_state()
 
         with st.spinner("🔍 جاري تحليل صورة التقرير..."):
             try:
@@ -6917,10 +7336,19 @@ if uploaded:
         )
         st.session_state.patient_name_final = patient_name.strip()
 
+        # Round 5 (2026-11-12): specimen, organism, age, months, sex and weight
+        # had NO key, so Streamlit identified them by their parameters. When
+        # the next report's OCR produced the same default (e.g. age unread ->
+        # 25 both times, or the same organism), the widget was "the same
+        # widget" and kept the PREVIOUS patient's manually entered value --
+        # a child analysed at the last adult's age. Keyed per file like the
+        # round-4 widgets, so a new report always starts from its own OCR.
+        _fh = file_hash[:8]
         culture_type = st.selectbox(
             "🧫 Specimen",
             SPECIMEN_TYPES,
-            index=best_default_index(SPECIMEN_TYPES, patient.get("Specimen"))
+            index=best_default_index(SPECIMEN_TYPES, patient.get("Specimen")),
+            key=f"specimen_sel_{_fh}",
         )
 
         filtered_organisms = [
@@ -6935,6 +7363,7 @@ if uploaded:
             filtered_organisms,
             index=best_default_index(filtered_organisms, patient.get("Organism")),
             help=f"بكتيريا شائعة في عينة {culture_type}",
+            key=f"organism_sel_{_fh}_{culture_type}",
         )
 
         # ── Atypical organisms: NOT recovered on routine culture, NO disc AST ──
@@ -7052,21 +7481,34 @@ if uploaded:
         _ocr_months = patient.get("AgeMonths")
         _ocr_under_1 = (_ocr_months is not None
                         or safe_int(patient.get("Age"), 25) == 0)
-        _under_1 = st.checkbox("👶 أقل من سنة (< 1 year)", value=bool(_ocr_under_1))
+        # Round 5: an age the OCR could not read used to become "25 years"
+        # with nothing on screen saying it was a guess, and "Age: 3 M" (three
+        # months, or 3 years / Male?) was read as years. Both now ask.
+        if patient.get("Age") is None:
+            st.warning("⚠️ العمر لم يُقرأ من التقرير — القيمة 25 سنة افتراضية وليست عمر "
+                       "المريض. أدخل العمر الصحيح: حظر أدوية الأطفال والرضّع يعتمد عليه.")
+        elif patient.get("AgeAmbiguous"):
+            st.warning(f"⚠️ العمر مكتوب «{patient.get('Age')} M» — قد يعني شهوراً أو "
+                       "(سنوات + Male). قُرئ كسنوات؛ لو المريض رضيع علّم «أقل من سنة» "
+                       "وأدخل الشهور.")
+        _under_1 = st.checkbox("👶 أقل من سنة (< 1 year)", value=bool(_ocr_under_1),
+                               key=f"under1_{_fh}")
         if _under_1:
             age_months = st.number_input(
                 "Age (months)", min_value=0, max_value=11,
-                value=safe_int(_ocr_months, 6), step=1)
+                value=safe_int(_ocr_months, 6), step=1, key=f"age_months_{_fh}")
             age = 0
             st.caption(f"👶 رضيع {age_months} شهر -- يُقيَّم إكلينيكياً كعمر 0 "
                        f"(Infant < 1 yr: أي عدد مستعمرات ذو دلالة).")
         else:
             age_months = None
             age = st.number_input("Age (years)", min_value=0, max_value=120,
-                                   value=safe_int(patient.get("Age"), 25))
+                                   value=safe_int(patient.get("Age"), 25),
+                                   key=f"age_years_{_fh}")
         default_sex = patient.get("Sex") if patient.get("Sex") in ["Female", "Male"] else "Male"
         sex    = st.selectbox("Gender", ["Female", "Male"],
-                              index=0 if default_sex == "Female" else 1)
+                              index=0 if default_sex == "Female" else 1,
+                              key=f"sex_sel_{_fh}")
         # Age-appropriate default (APLS estimate) so pediatric CrCl/dosing isn't
         # seeded with an adult 70 kg. Still fully editable.
         # Infants use the WHO/APLS infant rule: kg ≈ (months + 9) / 2.
@@ -7080,30 +7522,66 @@ if uploaded:
         # A neonate is ~3.5 kg, so the adult-oriented 5 kg floor has to drop for
         # infants or the correct weight simply cannot be entered.
         _wt_min = 1 if age_months is not None else 5
+        # The key carries the age so the age-appropriate default is re-seeded
+        # when the age changes (a keyed widget keeps its value otherwise).
         weight = st.number_input("Weight (kg)", min_value=_wt_min, max_value=300,
-                                 value=_wt_default)
+                                 value=_wt_default,
+                                 key=f"weight_{_fh}_{age}_{age_months}")
 
         st.divider()
 
-        _renal_flag = st.checkbox("🚩 Renal Impairment")
+        # Patient-fact widgets are keyed PER FILE (round 4, 2026-11-11): a new
+        # report recreates them empty instead of inheriting the last patient's
+        # flags. The old keys carry the old hash and are deleted on upload.
+        # (_fh is defined above, with the specimen widget.)
+        _renal_flag = st.checkbox("🚩 Renal Impairment", key=f"renal_flag_{_fh}")
         # Always offered, not hidden behind the checkbox: a reduced clearance that
         # nobody thought to flag is exactly the case that needs catching.
         s_cr = st.number_input(
             "Serum Creatinine (mg/dL) — leave 0 if not available",
             min_value=0.0, max_value=20.0, value=0.0, step=0.1,
-            help="If entered, CrCl is calculated (Cockcroft-Gault) and a CrCl "
-                 "below 60 ml/min engages renal dosing on its own.")
+            key=f"scr_{_fh}",
+            help="If entered, CrCl is calculated (Cockcroft-Gault for adults, "
+                 "bedside Schwartz for under-18s) and a value below 60 ml/min "
+                 "engages renal dosing on its own.")
+        # Children: Cockcroft-Gault is validated in adults only. Fed an infant's
+        # weight and creatinine it reports a healthy neonate (3.5 kg, SCr 0.5)
+        # as ~14 ml/min -- kidney failure -- which refused gentamicin (the
+        # standard neonatal sepsis partner) and cut the dose of everything
+        # renally cleared. Under 18 the bedside Schwartz equation is used, and
+        # it needs the height (round 4, 2026-11-11).
+        _height = 0.0
+        if age < 18 and s_cr > 0:
+            _height = st.number_input(
+                "Height (cm) — needed for paediatric eGFR (Schwartz)",
+                min_value=0.0, max_value=200.0, value=0.0, step=1.0,
+                key=f"height_{_fh}")
         # cl_cr is None when nothing was measured. It used to be set to 100.0,
         # which is a NORMAL clearance, so ticking the impairment box without a
         # creatinine produced exactly the same recommendations as a patient with
         # healthy kidneys: no dose-adjustment note on any agent (no renal_limit
         # reaches 100) and Nitrofurantoin recommended rather than refused.
-        if s_cr > 0:
+        cl_cr = None
+        if s_cr > 0 and age >= 18:
             cl_cr = calc_creatinine_clearance(age, weight, s_cr, sex)
             st.metric("CrCl (Cockcroft-Gault)", f"{cl_cr:.1f} ml/min",
                       delta=get_renal_severity(cl_cr),
                       delta_color="normal" if cl_cr >= 60 else ("off" if cl_cr >= 30 else "inverse"))
-        else:
+        elif s_cr > 0:
+            cl_cr = calc_paediatric_egfr(_height, s_cr, age, age_months)
+            if cl_cr is None:
+                st.warning("⚠️ Cockcroft-Gault غير صالح تحت 18 سنة — أدخل الطول لحساب "
+                           "eGFR بمعادلة Schwartz. لم تُحسب وظيفة الكلى من الكرياتينين.")
+            else:
+                st.metric("eGFR (bedside Schwartz)", f"{cl_cr:.1f} ml/min/1.73m²",
+                          delta=get_renal_severity(cl_cr),
+                          delta_color="normal" if cl_cr >= 60 else ("off" if cl_cr >= 30 else "inverse"))
+        # Under two years a GFR below 60 is physiological (it matures over the
+        # first two years), so it must not switch adult renal dosing on by
+        # itself; the value is used only if the clinician flags impairment.
+        if cl_cr is not None and age < 2 and not _renal_flag:
+            st.caption("ℹ️ GFR الطبيعي أقل من البالغين في أول سنتين — لم يُفعَّل تعديل الجرعة "
+                       "الكلوي تلقائياً. علّم Renal Impairment إن كان هناك قصور فعلي.")
             cl_cr = None
         # Engage renal handling if EITHER the clinician flagged it OR the measured
         # clearance is impaired.
@@ -7118,7 +7596,7 @@ if uploaded:
             st.warning(f"⚠️ CrCl {cl_cr:.0f} ml/min — renal dose adjustment applied "
                        "automatically (the impairment box was not ticked).")
 
-        is_hepatic = st.checkbox("🚩 Hepatic Impairment")
+        is_hepatic = st.checkbox("🚩 Hepatic Impairment", key=f"hepatic_{_fh}")
         # ── Child-Pugh is captured HERE, next to the flag that needs it ────────
         # It used to be asked for inside an expander further down the page, which
         # in Streamlit's top-to-bottom execution runs AFTER analyze_antibiotics().
@@ -7134,7 +7612,7 @@ if uploaded:
                 format_func=lambda x: {"A": "A — Mild (5-6 pts)",
                                        "B": "B — Moderate (7-9 pts)",
                                        "C": "C — Severe (10-15 pts)"}[x],
-                key="cp_sel_sidebar",
+                key=f"cp_sel_sidebar_{_fh}",
                 help="Starts at C (most conservative) until graded. Grade the "
                      "patient — C refuses agents that are acceptable in A.")
             st.session_state.child_pugh_class = child_pugh_class
@@ -7143,12 +7621,12 @@ if uploaded:
         is_preg    = False
         if sex == "Female":
             is_preg = st.checkbox(
-                "🤰 Patient is Pregnant",
+                "🤰 Patient is Pregnant", key=f"preg_{_fh}",
                 help="Shown for every female patient. The age window used to hide "
                      "this control entirely, which made the pregnancy safety rules "
                      "unreachable outside 15-55 rather than merely unticked.")
 
-        current_meds = st.multiselect("💊 Current Medications", COMMON_MEDS)
+        current_meds = st.multiselect("💊 Current Medications", COMMON_MEDS, key=f"meds_{_fh}")
 
         # ─── Added 2026-11-10 (guideline review) ─────────────────────────────
         # Three facts the engine could not know, and which change the answer:
@@ -7160,16 +7638,16 @@ if uploaded:
             ["Penicillin — mild / delayed rash", "Penicillin — severe / anaphylaxis",
              "Cephalosporin", "Ceftazidime", "Sulfonamide (sulfa)",
              "Fluoroquinolone", "Macrolide"],
-            key="allergies_input",
+            key=f"allergies_input_{_fh}",
             help="الحساسية المسجّلة تحظر الصنف نفسه، وتضيف تحذير تفاعل متصالب للأصناف القريبة.")
         carbapenemase_choice = st.selectbox(
             "🧬 Carbapenemase type (if tested)", list(CARBAPENEMASE_TYPE_OPTIONS),
-            key="carb_type_input",
+            key=f"carb_type_input_{_fh}",
             help="من NG-Test CARBA-5 أو Xpert Carba-R أو PCR. يحدد أي عامل حديث يعمل "
                  "(KPC / OXA-48 / MBL) — IDSA AMR Guidance 2026.")
         uti_syndrome_choice = st.selectbox(
             "🫘 UTI syndrome (urine only)", list(UTI_SYNDROME_OPTIONS),
-            key="uti_syndrome_input",
+            key=f"uti_syndrome_input_{_fh}",
             help="تلقائي: حمى أو ألم الخاصرة ← التهاب حويضة/cUTI. Nitrofurantoin و Fosfomycin "
                  "الفموي و Norfloxacin لا تصلح للحويضة.")
 
@@ -7286,6 +7764,13 @@ if uploaded:
                 st.session_state.patho_host_factors = patho_host
 
                 if st.button("🔬 احسب Pathogenicity Score", use_container_width=True, key="patho_calc_btn"):
+                    # FIX 2026-11-11 (round 4): the engine read pregnancy only
+                    # from this multiselect, never from the sidebar flag, so a
+                    # pregnant patient's asymptomatic bacteriuria >= 10^5 came
+                    # back "do NOT treat" -- IDSA 2019 says treat it -- unless
+                    # "Pregnant" was ticked a second time here.
+                    if is_preg and "Pregnant" not in patho_host:
+                        patho_host = list(patho_host) + ["Pregnant"]
                     patho_kwargs = dict(
                         specimen=culture_type,
                         organism=organism_type,
@@ -7502,9 +7987,22 @@ if uploaded:
                         f"(confidence {_conf}%)  \n"
                         f"{_esbl_r.get('detail','')}  \n🔹 {_esbl_r.get('action','')}"
                     )
-                elif _prob == "ampc":
+                elif _prob == "possible_carbapenemase":
+                    # Round 4 (2026-11-11): this tier, plasmid AmpC and CR-PA
+                    # were not rendered in this panel at all.
+                    st.warning(
+                        f"⚠️ **{_mech or 'Possible carbapenemase'}** (confidence {_conf}%)  \n"
+                        f"{_esbl_r.get('detail','')}  \n🔹 {_esbl_r.get('action','')}"
+                    )
+                elif _prob in ("ampc", "ampc_plasmid"):
                     st.error(
-                        f"⚠️ **Possible AmpC β-Lactamase** (confidence {_conf}%)  \n"
+                        f"⚠️ **{_mech if _prob == 'ampc_plasmid' else 'Possible AmpC β-Lactamase'}** "
+                        f"(confidence {_conf}%)  \n"
+                        f"{_esbl_r.get('detail','')}  \n🔹 {_esbl_r.get('action','')}"
+                    )
+                elif _prob == "crpa":
+                    (st.error if _esbl_r.get("dtr") else st.warning)(
+                        f"{'🚨' if _esbl_r.get('dtr') else '⚠️'} **{_mech}** (confidence {_conf}%)  \n"
                         f"{_esbl_r.get('detail','')}  \n🔹 {_esbl_r.get('action','')}"
                     )
                 elif _prob == "high":
@@ -8019,6 +8517,14 @@ if uploaded:
                            f"(confidence {_conf}%)\n"
                            + esbl_result["detail"] + "  \n🔹 " + esbl_result["action"])
                     st.error(_em)
+                elif prob == "possible_carbapenemase":
+                    # FIX 2026-11-11 (round 4): this tier (one carbapenem R, an
+                    # isolated ertapenem R, or meropenem I) opened this expander
+                    # and then printed nothing -- its mCIM / PCR instruction
+                    # never reached the screen.
+                    _em = (f"[!] {_mech or 'Possible carbapenemase'} (confidence {_conf}%)\n"
+                           + esbl_result.get("detail", "") + "  \n🔹 " + esbl_result.get("action", ""))
+                    st.warning(_em)
                 elif prob in ("ampc", "ampc_plasmid"):
                     _em = (f"[!] Possible AmpC β-Lactamase (confidence {_conf}%)\n"
                            + esbl_result["detail"] + "  \n🔹 " + esbl_result["action"])
@@ -8220,6 +8726,7 @@ if uploaded:
             age=age,
             is_preg=is_preg,
             is_cath=False,
+            sex=sex,
         )
         if syndrome_info:
             with st.expander(f"🏥 Infection Syndrome: {syndrome_info['syndrome']}", expanded=False):
@@ -8246,18 +8753,32 @@ if uploaded:
 
         if banned:
             with st.expander("🚫 Contraindicated / Ineffective", expanded=True):
+                # Every category the engine and the gate emit (2026-11-11, round
+                # 4): ten of them had no label and printed an empty "[]".
                 cat_labels = {
                     "resistant": "مقاوم في المزرعة",
                     "renal":     "قصور كلوي",
                     "pregnancy": "ممنوع في الحمل",
                     "child":     "غير مناسب للعمر",
+                    "neonate":   "حديثو الولادة / الرضع",
+                    "hepatic":   "قصور كبدي",
+                    "allergy":   "حساسية دوائية",
                     "organism":  "غير فعال للجرثومة",
+                    "cross_resistance": "مقاومة متصالبة",
+                    "no_breakpoint": "لا breakpoint / غير مُبلَّغ",
+                    "d_test_inducible": "مقاومة مستحثة (D-test)",
+                    "penicillinase_producer": "Penicillinase",
+                    "specimen":  "غير مناسب للعينة",
+                    "uti_upper": "لا يصلح للحويضة / cUTI",
+                    "safety_gate": "بوابة الأمان (الموقع / حالة المريض)",
+                    "unreadable": "نتيجة غير مقروءة",
                     "other":     "موانع أخرى",
                 }
                 for item in banned:
+                    _cat = item.get("category", "")
                     st.error(
-                        f"💊 {item['name']}  [{cat_labels.get(item['category'],'')}]\n"
-                        f"{item['reason_short']}"
+                        f"💊 {item['name']}  [{cat_labels.get(_cat, _cat)}]\n"
+                        f"{item.get('reason_short', '')}"
                     )
 
         if warned:
@@ -8488,7 +9009,7 @@ if uploaded:
                     st.session_state[_sev_key] = False
 
                 st.session_state.severity_level = _sev
-                _syn_lbl = syndrome_info["syndrome"] if syndrome_info else ""
+                _syn_lbl = duration_syndrome_key(syndrome_info, _uti_syn_now, culture_type)
                 _dur = get_treatment_duration(
                     specimen=culture_type, organism=organism_type,
                     syndrome=_syn_lbl, age=age, sex=sex,
@@ -8577,7 +9098,8 @@ if uploaded:
                         drug_name=_sw_drug,
                         syndrome=syndrome_info["syndrome"] if syndrome_info else "",
                         clinical_improving=_sw_i, tolerating_oral=_sw_o,
-                        bacteremia_resolved=_sw_b, days_on_iv=_sw_days)
+                        bacteremia_resolved=_sw_b, days_on_iv=_sw_days,
+                        organism=organism_type)
                     (st.success if _swr["can_switch"] else st.warning)(_swr["verdict"])
                     _sc1, _sc2 = st.columns(2)
                     with _sc1:
@@ -8634,7 +9156,8 @@ if uploaded:
                     st.session_state.de_clinical_improving = _de_i
                 _der = evaluate_deescalation(
                     allowed=allowed, phenotypes=phenotypes,
-                    hours_on_treatment=_de_h, clinical_improving=_de_i)
+                    hours_on_treatment=_de_h, clinical_improving=_de_i,
+                    mdr_level=(mdr_result or {}).get("level"))
                 if _der["can_deescalate"]: st.success("✅ De-escalation recommended")
                 elif _de_h < 48: st.info("ℹ️ Complete 48h course before reassessment")
                 else: st.warning("⚠️ Review required before de-escalation")
@@ -8663,6 +9186,7 @@ if uploaded:
                 gram_stain=_gram_ck,
                 patho_result=st.session_state.get("patho_result"),
                 panel_result=_panel_ck,
+                preg_warn=preg_warn_items,
             )
             _ck_sum = summarize_checklist(_ck_items)
             for _ck in _ck_items:
@@ -8713,11 +9237,26 @@ if uploaded:
                 st.session_state.get("patho_result") or {},
                 sort_keys=True, default=str, ensure_ascii=False,
             )
+            # FIX 2026-11-11 (round 4): the buckets were hashed by their LENGTH.
+            # Two different verdicts of equal size (a drug swapping between
+            # caution and avoid after a Child-Pugh change, a novel agent's note
+            # after a carbapenemase class was entered) kept the old report, and
+            # current medications / interactions, allergies, Child-Pugh, the
+            # carbapenemase class and the UTI syndrome were not hashed at all --
+            # so adding warfarin left the interaction out of the report.
+            def _bsig(items):
+                return ";".join(
+                    f"{i.get('name')}:{i.get('warning_reason') or i.get('category') or ''}"
+                    f":{len(str(i.get('clinical_note') or i.get('preg_note') or ''))}"
+                    for i in (items or []))
             _rpt_input_hash = hashlib.md5(
                 f"{_pt}|{age}|{age_months}|{sex}|{weight}|{cl_cr}|{is_renal}|{is_preg}|{is_hepatic}"
+                f"|{_child_pugh_now}|{sorted(current_meds or [])}|{sorted(allergies or [])}"
+                f"|{_carb_type_now}|{_uti_syn_now}"
                 f"|{organism_type}|{culture_type}|{colony_count}|{date_in}"
                 f"|{pus_cells_text}|{rbcs_text}|{str(sorted(sir_map.items()))}"
-                f"|{str(len(allowed))}|{str(len(warned))}|{str(len(banned))}"
+                f"|{_bsig(allowed)}|{_bsig(warned)}|{_bsig(banned)}|{_bsig(preg_warn_items)}"
+                f"|{sorted(interactions_alerts or [])}"
                 f"|{show_commercial}|{_lab}|{_city}|{_patho_sig}".encode()
             ).hexdigest()[:16]
 
@@ -8810,7 +9349,7 @@ if uploaded:
                              help="Click to generate report -- takes a few seconds"):
                     _dur_for_pdf = get_treatment_duration(
                         specimen=culture_type, organism=organism_type,
-                        syndrome=syndrome_info["syndrome"] if syndrome_info else "",
+                        syndrome=duration_syndrome_key(syndrome_info, _uti_syn_now, culture_type),
                         age=age, sex=sex, is_renal=is_renal,
                         phenotypes=phenotypes, severity=_sev_pdf,
                     ) if _pdf_dur else None
@@ -8918,7 +9457,7 @@ if uploaded:
                     ",".join(notes),
                 ])
                 _img_input_hash = hashlib.md5(
-                    f"{patient_name}|{age}|{age_months}|{sex}|{cl_cr}|{is_renal}|{is_preg}"
+                    f"{patient_name}|{age}|{age_months}|{sex}|{weight}|{cl_cr}|{is_renal}|{is_preg}"
                     f"|{organism_type}|{culture_type}|{colony_count}|{date_in}"
                     f"|{pus_cells_text}|{rbcs_text}|{str(sorted(sir_map.items()))}"
                     f"|{_lists_sig}"

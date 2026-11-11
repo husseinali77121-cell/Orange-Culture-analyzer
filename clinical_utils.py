@@ -185,7 +185,12 @@ class Patient:
     cl_cr: Optional[float] = None
 
     is_hepatic: bool = False
-    child_pugh: str = "A"
+    # "C", not "A" (2026-11-11, round 4): analyze_antibiotics(), the UI seed
+    # and the PDF all fail CLOSED to the worst grade when it is not known.
+    # This default was the one place that assumed the mildest liver disease
+    # for a caller who set is_hepatic=True and nothing else. It has no effect
+    # while is_hepatic is False.
+    child_pugh: str = "C"
 
     current_meds: list = field(default_factory=list)
     host_factors: list = field(default_factory=list)
