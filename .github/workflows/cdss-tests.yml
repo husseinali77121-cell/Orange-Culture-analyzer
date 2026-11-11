@@ -192,6 +192,20 @@ jobs:
       - name: "Guard 17d — round-3 fuzz and property tests (2026-11-11)"
         run: python test_round3.py
 
+      # Final logic review (round 4, 2026-11-11): the pregnancy bucket meets the
+      # hepatic / renal / safety-gate checks, OCR age and microscopy, patient
+      # state reset between reports, paediatric eGFR, duration labels, MDR for
+      # unidentified Gram-positives, Salmonella/Shigella ESBL, report cache.
+      - name: "Guard 17e — round-4 final logic review (2026-11-11)"
+        run: python test_round4.py
+
+      # Independent review of v4: multi-result OCR lines, disk-code rows vs
+      # header lines, the age field, pus cells, renal/hepatic checks on cautions
+      # that leave the engine loop early, per-file keys on the remaining
+      # patient widgets, the text report's reason fallthrough.
+      - name: "Guard 17f — round-5 independent review (2026-11-12)"
+        run: python test_round5.py
+
       # A suite nobody runs is a suite that does not exist. Every one of the
       # three suites above sat green and unexecuted for weeks precisely because
       # nothing checked this.
